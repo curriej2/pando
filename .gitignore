@@ -1,0 +1,54 @@
+# ---- data and papers never go in git ----
+data/*
+!data/.gitkeep
+refs/*
+!refs/.gitkeep
+
+*.h5
+*.h5ad
+*.loom
+*.bam
+*.cram
+*.fastq
+*.fastq.gz
+*.fq.gz
+*.npy
+*.npz
+*.parquet
+*.feather
+*.pickle
+*.pkl
+*.rds
+*.RData
+*.pdf
+
+# large / derived outputs
+outputs/
+checkpoints/
+*.log
+slurm-*.out
+lsf-*.out
+*.err
+
+# ---- Claude Code ----
+.claude/settings.local.json
+CLAUDE.local.md
+.claude/projects/
+.claude/history/
+
+# ---- python ----
+__pycache__/
+*.py[cod]
+.ipynb_checkpoints/
+.venv/
+venv/
+env/
+*.egg-info/
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+
+# ---- editors / os ----
+.vscode/settings.json
+.idea/
+.DS_Store
