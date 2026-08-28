@@ -52,3 +52,7 @@ env/
 .vscode/settings.json
 .idea/
 .DS_Store
+
+# ---- derived per-node tables carry clone barcodes from unpublished data ----
+analyses/*/results/*.tsv.gz
+analyses/*/results/*.tsv

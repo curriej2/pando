@@ -1,0 +1,128 @@
+{
+  "Initial": {
+    "alphabet": 103,
+    "q_site1": 0.017224704193949676,
+    "birthday": 10.775541693745284,
+    "cells": 35571,
+    "nodes": 1041997,
+    "by_level": {
+      "0": {
+        "n_nodes": 302371,
+        "median_n_next": 9.0,
+        "median_s": 3.0,
+        "median_m": 3.0539645887141025,
+        "mean_recurrences": 0.2219497365920939,
+        "frac_with_recurrence": 0.0535600305584861,
+        "frac_above_birthday": 0.07100879383274189
+      },
+      "1": {
+        "n_nodes": 336750,
+        "median_n_next": 5.0,
+        "median_s": 2.0,
+        "median_m": 2.0174758285010004,
+        "mean_recurrences": 0.07626585681834071,
+        "frac_with_recurrence": 0.00873645137342242,
+        "frac_above_birthday": 0.013496659242761692
+      },
+      "2": {
+        "n_nodes": 230157,
+        "median_n_next": 4.0,
+        "median_s": 2.0,
+        "median_m": 2.0173822485182984,
+        "mean_recurrences": 0.053120908583829445,
+        "frac_with_recurrence": 0.004027685449497517,
+        "frac_above_birthday": 0.006252253896253427
+      },
+      "3": {
+        "n_nodes": 115315,
+        "median_n_next": 4.0,
+        "median_s": 2.0,
+        "median_m": 2.017193464905794,
+        "mean_recurrences": 0.03267165601243273,
+        "frac_with_recurrence": 0.0010666435416034341,
+        "frac_above_birthday": 0.0018644582231279539
+      },
+      "4": {
+        "n_nodes": 46786,
+        "median_n_next": 3.0,
+        "median_s": 2.0,
+        "median_m": 2.017686460438724,
+        "mean_recurrences": 0.022951059694729728,
+        "frac_with_recurrence": 0.0003419826443807977,
+        "frac_above_birthday": 0.0005770957123925961
+      },
+      "5": {
+        "n_nodes": 10618,
+        "median_n_next": 3.0,
+        "median_s": 2.0,
+        "median_m": 2.018384482687949,
+        "mean_recurrences": 0.021548302994611985,
+        "frac_with_recurrence": 0.00018835938971557733,
+        "frac_above_birthday": 0.00047089847428894333
+      }
+    }
+  },
+  "Subclone": {
+    "alphabet": 106,
+    "q_site1": 0.016988423904039516,
+    "birthday": 10.85021773067381,
+    "cells": 38936,
+    "nodes": 262944,
+    "by_level": {
+      "0": {
+        "n_nodes": 2125,
+        "median_n_next": 933.0,
+        "median_s": 9.0,
+        "median_m": 9.670442750013061,
+        "mean_recurrences": 16.039861948438954,
+        "frac_with_recurrence": 0.40847058823529414,
+        "frac_above_birthday": 0.40847058823529414
+      },
+      "1": {
+        "n_nodes": 16749,
+        "median_n_next": 13.0,
+        "median_s": 3.0,
+        "median_m": 3.0,
+        "mean_recurrences": 6.169994053409445,
+        "frac_with_recurrence": 0.16669651919517584,
+        "frac_above_birthday": 0.18287658964714312
+      },
+      "2": {
+        "n_nodes": 37142,
+        "median_n_next": 8.0,
+        "median_s": 3.0,
+        "median_m": 3.052649672595552,
+        "mean_recurrences": 3.556455157726702,
+        "frac_with_recurrence": 0.1632383824242098,
+        "frac_above_birthday": 0.16331915351892737
+      },
+      "3": {
+        "n_nodes": 65630,
+        "median_n_next": 7.0,
+        "median_s": 3.0,
+        "median_m": 3.056715601530714,
+        "mean_recurrences": 1.7873366325890465,
+        "frac_with_recurrence": 0.12070699375285693,
+        "frac_above_birthday": 0.13694956574737163
+      },
+      "4": {
+        "n_nodes": 84123,
+        "median_n_next": 6.0,
+        "median_s": 3.0,
+        "median_m": 3.052415508274107,
+        "mean_recurrences": 0.6475486264124325,
+        "frac_with_recurrence": 0.07521129774259121,
+        "frac_above_birthday": 0.07528262187511145
+      },
+      "5": {
+        "n_nodes": 57175,
+        "median_n_next": 5.0,
+        "median_s": 3.0,
+        "median_m": 3.0,
+        "mean_recurrences": 0.4890152928558879,
+        "frac_with_recurrence": 0.06074333187581985,
+        "frac_above_birthday": 0.07179711412330564
+      }
+    }
+  }
+}

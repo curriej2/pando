@@ -1,0 +1,256 @@
+{
+  "rarefaction": [
+    {
+      "table": "Initial",
+      "M_obs": 244,
+      "edits": 13892618,
+      "q": 0.01690519946349135,
+      "M_rarefied": 201,
+      "rarefied": true
+    },
+    {
+      "table": "Mouse1",
+      "M_obs": 197,
+      "edits": 5809280,
+      "q": 0.017399679723263135,
+      "M_rarefied": 168,
+      "rarefied": true
+    },
+    {
+      "table": "Mouse2",
+      "M_obs": 184,
+      "edits": 3339410,
+      "q": 0.017168046930004965,
+      "M_rarefied": 163,
+      "rarefied": true
+    },
+    {
+      "table": "Mouse3",
+      "M_obs": 167,
+      "edits": 1322277,
+      "q": 0.01725631161891195,
+      "M_rarefied": 167,
+      "rarefied": false
+    },
+    {
+      "table": "Subclone",
+      "M_obs": 218,
+      "edits": 22116803,
+      "q": 0.016888612379259583,
+      "M_rarefied": 157,
+      "rarefied": true
+    }
+  ],
+  "per_site": [
+    {
+      "table": "Initial",
+      "site": "Site1",
+      "M_obs": 217,
+      "edits": 4615568,
+      "q": 0.017204168525097558
+    },
+    {
+      "table": "Initial",
+      "site": "Site2",
+      "M_obs": 219,
+      "edits": 3881075,
+      "q": 0.01687627685838027
+    },
+    {
+      "table": "Initial",
+      "site": "Site3",
+      "M_obs": 206,
+      "edits": 2690823,
+      "q": 0.016792650972545065
+    },
+    {
+      "table": "Initial",
+      "site": "Site4",
+      "M_obs": 187,
+      "edits": 1629176,
+      "q": 0.016616025636954492
+    },
+    {
+      "table": "Initial",
+      "site": "Site5",
+      "M_obs": 169,
+      "edits": 838718,
+      "q": 0.017076899701255772
+    },
+    {
+      "table": "Initial",
+      "site": "Site6",
+      "M_obs": 142,
+      "edits": 237258,
+      "q": 0.017725468943258316
+    },
+    {
+      "table": "Mouse1",
+      "site": "Site1",
+      "M_obs": 143,
+      "edits": 1205697,
+      "q": 0.018074157065888854
+    },
+    {
+      "table": "Mouse1",
+      "site": "Site2",
+      "M_obs": 150,
+      "edits": 1180379,
+      "q": 0.017864841829754417
+    },
+    {
+      "table": "Mouse1",
+      "site": "Site3",
+      "M_obs": 150,
+      "edits": 1128057,
+      "q": 0.017482216606780954
+    },
+    {
+      "table": "Mouse1",
+      "site": "Site4",
+      "M_obs": 154,
+      "edits": 1013124,
+      "q": 0.01794893934008953
+    },
+    {
+      "table": "Mouse1",
+      "site": "Site5",
+      "M_obs": 150,
+      "edits": 821070,
+      "q": 0.01873949524523432
+    },
+    {
+      "table": "Mouse1",
+      "site": "Site6",
+      "M_obs": 142,
+      "edits": 460953,
+      "q": 0.020081779026315878
+    },
+    {
+      "table": "Mouse2",
+      "site": "Site1",
+      "M_obs": 139,
+      "edits": 668589,
+      "q": 0.01795106573820473
+    },
+    {
+      "table": "Mouse2",
+      "site": "Site2",
+      "M_obs": 146,
+      "edits": 667566,
+      "q": 0.020241580016468013
+    },
+    {
+      "table": "Mouse2",
+      "site": "Site3",
+      "M_obs": 142,
+      "edits": 649271,
+      "q": 0.019221821258562907
+    },
+    {
+      "table": "Mouse2",
+      "site": "Site4",
+      "M_obs": 146,
+      "edits": 616878,
+      "q": 0.018484064566708185
+    },
+    {
+      "table": "Mouse2",
+      "site": "Site5",
+      "M_obs": 138,
+      "edits": 496792,
+      "q": 0.017654634605232155
+    },
+    {
+      "table": "Mouse2",
+      "site": "Site6",
+      "M_obs": 128,
+      "edits": 240314,
+      "q": 0.022900436567865407
+    },
+    {
+      "table": "Mouse3",
+      "site": "Site1",
+      "M_obs": 127,
+      "edits": 264865,
+      "q": 0.017516288019557853
+    },
+    {
+      "table": "Mouse3",
+      "site": "Site2",
+      "M_obs": 130,
+      "edits": 260453,
+      "q": 0.017392942312434673
+    },
+    {
+      "table": "Mouse3",
+      "site": "Site3",
+      "M_obs": 130,
+      "edits": 253146,
+      "q": 0.017262211359532344
+    },
+    {
+      "table": "Mouse3",
+      "site": "Site4",
+      "M_obs": 133,
+      "edits": 236923,
+      "q": 0.017633899776079966
+    },
+    {
+      "table": "Mouse3",
+      "site": "Site5",
+      "M_obs": 128,
+      "edits": 198488,
+      "q": 0.017404736015229957
+    },
+    {
+      "table": "Mouse3",
+      "site": "Site6",
+      "M_obs": 122,
+      "edits": 108402,
+      "q": 0.018414650138720304
+    },
+    {
+      "table": "Subclone",
+      "site": "Site1",
+      "M_obs": 160,
+      "edits": 5037539,
+      "q": 0.016978014827166495
+    },
+    {
+      "table": "Subclone",
+      "site": "Site2",
+      "M_obs": 154,
+      "edits": 4834337,
+      "q": 0.01868693878437688
+    },
+    {
+      "table": "Subclone",
+      "site": "Site3",
+      "M_obs": 161,
+      "edits": 4405669,
+      "q": 0.016806286677541162
+    },
+    {
+      "table": "Subclone",
+      "site": "Site4",
+      "M_obs": 178,
+      "edits": 3700458,
+      "q": 0.018060967373472393
+    },
+    {
+      "table": "Subclone",
+      "site": "Site5",
+      "M_obs": 170,
+      "edits": 2755149,
+      "q": 0.016738012385283472
+    },
+    {
+      "table": "Subclone",
+      "site": "Site6",
+      "M_obs": 146,
+      "edits": 1383651,
+      "q": 0.018060778916120738
+    }
+  ]
+}

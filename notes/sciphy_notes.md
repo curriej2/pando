@@ -41,7 +41,7 @@
 > 4. Then **Schiffman (PATH)** and **Zwaans (GABI)**; then **LAML** and **ConvexML**. *(Downstream
 >    of the tree — not blocking the design.)*
 > 5. Verify the $H_m$ quadrature recursion for time-varying $f$ (§1c.7) numerically.
-> 6. Identifiability: can $f(t)$ be recovered from $N=6$ ordered positions?
+> 6. Identifiability: can $\xi(t)$ be recovered from $N=6$ ordered positions?
 > 7. Experimental design (§I) — three tiers; cancer/HPCS application most developed.
 >
 > **Also worth adding to the list:** *Liao et al. 2024* (Mulberry's citation for "$k$ is hard to
@@ -249,8 +249,8 @@ identifiability boundary.
 
 | Perturbation | Acts in | Data signature | Where it lives in SciPhy |
 |---|---|---|---|
-| pegRNA cassette copy number | **trans** | changes **which symbol** is written → shifts $f_i$, **not** $r$ | insert probabilities $f$ ✓ |
-| pegRNA cassette chromatin / silencing | **trans** | same — shifts $f_i$ for that symbol | $f$ ✓ |
+| pegRNA cassette copy number | **trans** | changes **which symbol** is written → shifts $\xi_i$, **not** $\lambda$ | insert probabilities $\xi$ ✓ |
+| pegRNA cassette chromatin / silencing | **trans** | same — shifts $\xi_i$ for that symbol | $f$ ✓ |
 | PE copy number / PE silencing | **trans** | scales **all** tapes in that cell by a common factor | ✗ **not modeled** — would need a per-lineage rate multiplier |
 | TAPE locus chromatin / accessibility | ***cis*** | changes that **one** tape's rate | per-tape clock rate $r_z$ ✓ |
 | TAPE array length / contraction | ***cis*** | changes that tape's saturation point | $N$ per tape ✓ |
@@ -396,7 +396,7 @@ Populate as we work through the methods. Each row is a candidate extension point
 |---|---|---|---|
 | A1 | Constant editing rate $r_z$ per tape, constant **in time** (strict clock) | ZGA burst → quiescence → resumption (mouse paper, Discussion) | ENGRAM *requires* time-varying rates; this assumption must go |
 | A2 | Rate does not depend on cell state | Hematopoietic slowdown (mouse paper) | Rate becomes a function of lineage/state — same machinery as signal-dependence |
-| A3 | Insert probabilities $f_i$ shared across tapes, sites, and **time** | Symbol frequency ∝ pegRNA abundance × intrinsic bias; abundance is manipulable and, in ENGRAM, signal-driven | **This is the single most important hook.** ENGRAM ⇒ $f_i = f_i(t, \text{signal})$ |
+| A3 | Insert probabilities $\xi_i$ shared across tapes, sites, and **time** | Symbol frequency ∝ pegRNA abundance × intrinsic bias; abundance is manipulable and, in ENGRAM, signal-driven | **This is the single most important hook.** ENGRAM ⇒ $f_i = \xi_i(t, \text{signal})$ |
 | A4 | Equal editing rate across sites within a tape | ~14% elongation-over-initiation excess; 1–10% decline after site 2 | Site-indexed rates, or an explicit latent frailty |
 | A5 | Independence across tapes given the tree | Shared per-cell PE/pegRNA supply, shared cell-cycle phase ⇒ frailty couples tapes within a cell | Breaks likelihood factorization over tapes → strong argument for SBI |
 | A6 | No dropout / missing-data model (stated limitation) | ~50% of the mouse cell × TAPE matrix missing; circTAPE recovery from nuclei poor | Needs an observation model; easy to *simulate*, hard to write down |
@@ -416,8 +416,8 @@ Populate as we work through the methods. Each row is a candidate extension point
 | $N$ | **sites** per tape | 5 (three tapes have 4) | 6 |
 | $M$ | **alphabet** size | 19 | 8–13 |
 | $\Gamma=\{\gamma_1,\dots,\gamma_M\}$ | the alphabet | 19 trinucleotides | 3-nt symbols (+1 4-nt) |
-| $r$ | **editing / clock rate**, per tape | inferred | inferred |
-| $\eta=(f_1,\dots,f_M)$ | insert probabilities, $\sum f_i = 1$ | inferred (Dirichlet(1.5)) | inferred |
+| $\lambda$ | **editing / clock rate**, per tape | inferred | inferred |
+| $\xi=(\xi_1,\dots,\xi_M)$ | insert probabilities, $\sum \xi_i = 1$ | inferred (Dirichlet(1.5)) | inferred |
 
 ## 1a.2 Definition 1 — sequential susceptibility
 
@@ -467,15 +467,15 @@ no ratchet; each instant is a fresh independent trial.
 
 Write $a\oplus\gamma_i$ for "$a$ with $\gamma_i$ appended". Then
 
-$$q_{a,\,a\oplus\gamma_i} = r f_i \quad (|a|<N), \qquad q_{ab}=0 \ \text{otherwise}$$
+$$q_{a,\,a\oplus\gamma_i} = \lambda \xi_i \quad (|a|<N), \qquad q_{ab}=0 \ \text{otherwise}$$
 
 Total exit rate from any non-absorbing state:
-$\lambda_a=\sum_i r f_i = r\sum_i f_i = r$.
-Jump chain picks $\gamma_i$ w.p. $rf_i/r=f_i$ — a Categorical($\eta$) draw **independent
+$\lambda_a=\sum_i \lambda \xi_i = \lambda\sum_i \xi_i = \lambda$.
+Jump chain picks $\gamma_i$ w.p. $\lambda\xi_i/\lambda=\xi_i$ — a Categorical($\xi$) draw **independent
 of the clock**.
 
 > **The whole editing model is: an $\text{Exp}(r)$ clock plus an independent
-> Categorical($\eta$) symbol draw, repeated until the tape is full.** The two-step
+> Categorical($\xi$) symbol draw, repeated until the tape is full.** The two-step
 > factorization of the transition probability is then inevitable, not clever.
 
 Toy chain, $N=2$, $M=2$:
@@ -521,20 +521,20 @@ Jukes–Cantor goes), but violates the usual assumptions:
 
 ## 1a.4 Definition 2 and the "bounded Poisson process"
 
-$$X(t) = \min\big(N(t),\,N\big), \qquad N(t)\sim\text{Poisson}(rt)$$
+$$X(t) = \min\big(N(t),\,N\big), \qquad N(t)\sim\text{Poisson}(\lambda t)$$
 
 **View A — truncated count.** Ordinary Poisson body, piled-up tail:
 
-$$P(X(t)=j)=e^{-rt}\frac{(rt)^j}{j!}\ (j<N),\qquad P(X(t)=N)=1-\sum_{j=0}^{N-1}e^{-rt}\frac{(rt)^j}{j!}$$
+$$P(X(t)=j)=e^{-\lambda t}\frac{(\lambda t)^j}{j!}\ (j<N),\qquad P(X(t)=N)=1-\sum_{j=0}^{N-1}e^{-\lambda t}\frac{(\lambda t)^j}{j!}$$
 
 All mass that "would have been" at $N,N{+}1,\dots$ collapses onto $N$. → Eq. 5.
 
-**View B — absorbed CTMC.** Pure-birth on $\{0,\dots,N\}$, rate $r$ for $j<N$, rate 0 at
+**View B — absorbed CTMC.** Pure-birth on $\{0,\dots,N\}$, rate $\lambda$ for $j<N$, rate 0 at
 $N$. Same object; A is how to compute, B is what it is.
 
 ### Why the count is *exactly* Poisson
 
-**Every non-absorbing state has the identical exit rate $r$.** That is what makes jump
+**Every non-absorbing state has the identical exit rate $\lambda$.** That is what makes jump
 times a genuine Poisson process. A rate depending on tape fullness would give a general
 pure-birth process and none of the clean formulas.
 
@@ -546,7 +546,7 @@ total rate $\propto$ (unedited sites remaining), which **declines**. Measured in
 Fig. 3D: idealized non-sequential $1\times66$ (red) falls **~6-fold**, 8.8 → 1.5
 edits/day; sequential (blue) holds flat at ~4.1/day.
 
-> **"Bounded Poisson" = constant rate $r$ until a hard wall, then zero.**
+> **"Bounded Poisson" = constant rate $\lambda$ until a hard wall, then zero.**
 > Constant-until-saturation is the design goal of DNA Typewriter and the reason the maths
 > is this clean.
 
@@ -585,7 +585,7 @@ pegRNAs in the cell. Co-integration is a delivery convenience, not a functional 
 **Different structural roles:**
 - $k$ = **replicate recording channels**. Likelihood *factorizes* over $k$ ("embarrassingly
   parallel").
-- $M$ = **alphabet size**. Enters only *inside* a single transition probability, via $\eta$.
+- $M$ = **alphabet size**. Enters only *inside* a single transition probability, via $\xi$.
 
 Capacity: $M^N$ per tape, $M^{kN}$ per cell. Mouse $8^6\approx2.6\times10^5$ per tape,
 $8^{66}\approx10^{59}$ per cell — the number the mouse paper quotes.
@@ -641,7 +641,7 @@ Why bother: $(a,b)$ carries the same information as $(a,c)$, and $c$ splits clea
 "how many" ($|c|$, the clock) and "which ones in what order" ($c$, the jump chain) —
 **independent by construction of the generator**:
 
-$$P_{a,b}(\Delta t;\eta,r)=\underbrace{P(|c|\mid\Delta t,r)}_{\text{bounded Poisson}}\times\underbrace{P(c\mid |c|,\eta)}_{\text{product of }f_i}$$
+$$P_{a,b}(\Delta t;\xi,\lambda)=\underbrace{P(|c|\mid\Delta t,\lambda)}_{\text{bounded Poisson}}\times\underbrace{P(c\mid |c|,\xi)}_{\text{product of }\xi_i}$$
 
 → Session 1b.
 
@@ -651,11 +651,11 @@ $$P_{a,b}(\Delta t;\eta,r)=\underbrace{P(|c|\mid\Delta t,r)}_{\text{bounded Pois
 > previous site does not influence the insertion probability at the currently active
 > site."*
 
-In generator terms: **$f_i$ does not depend on $a$.** Symbol draws are i.i.d.
-Categorical($\eta$) at every step.
+In generator terms: **$\xi_i$ does not depend on $a$.** Symbol draws are i.i.d.
+Categorical($\xi$) at every step.
 
 **This is exactly the assumption ENGRAM must break, and the way it breaks *is* the
-signal.** If $f_i(t)$ varies in time, symbols at successive sites become *marginally*
+signal.** If $\xi_i(t)$ varies in time, symbols at successive sites become *marginally*
 dependent, because consecutive sites are written at nearby times and $f$ varies smoothly.
 **The dependence structure between adjacent positions is the temporal signal trajectory.**
 
@@ -694,7 +694,7 @@ $1-\sum_{m=0}^{N-|a|-1}\text{Pois}(m)$, total exactly 1.
 
 ## 1b.2 Step 2 — which ones
 
-$$P(c;\,|c|=j,\eta)=\prod_{m=|a|+1}^{|a|+j}\prod_{l=1}^{M} f_l^{\,\mathbf{1}(\gamma_l,\,s_m)}\quad\text{(Eq. 6)}$$
+$$P(c;\,|c|=j,\xi)=\prod_{m=|a|+1}^{|a|+j}\prod_{l=1}^{M} f_l^{\,\mathbf{1}(\gamma_l,\,s_m)}\quad\text{(Eq. 6)}$$
 
 The inner product over $l$ is **cosmetic** — the one-hot indicator kills all but one factor,
 so this is just $\prod_m f_{s_m}$. Written this way for implementation and because
@@ -703,7 +703,7 @@ it factorize.**
 
 ## 1b.3 Step 3 — the product
 
-$$P_{a,b}(\Delta t;\eta,r)=P(|c|;\Delta t,r)\times P(c;|c|,\eta)\quad\text{(Eq. 7)}$$
+$$P_{a,b}(\Delta t;\xi,\lambda)=P(|c|;\Delta t,\lambda)\times P(c;|c|,\xi)\quad\text{(Eq. 7)}$$
 
 and implicitly $P_{a,b}=0$ whenever $a\not\sqsubseteq b$.
 
@@ -873,7 +873,7 @@ unedited tape; not a division — it's where the CTMC is initialized.
    process began with **one** lineage at $t_\text{or}$; root ⇒ began with **two** at
    $t_\text{MRCA}$. SciPhy conditions on the origin — and then **fixes** it: Tables 3–4 list
    *"Origin or experiment duration: 25 [fixed]"* (HEK293T), *"11 [fixed]"* (gastruloid).
-4. **Fixing the origin is what makes $r$ identifiable in absolute units.** Rate and time enter
+4. **Fixing the origin is what makes $\lambda$ identifiable in absolute units.** Rate and time enter
    the likelihood almost entirely through their product; classical phylogenetics breaks this
    with fossil calibrations or serially sampled tips. Here you break it by *knowing the
    experiment ran 25 days*. That converts the clock rate into **edits per day** and is why the
@@ -901,10 +901,10 @@ Eq. 11 sums over every joint assignment of states to internal nodes: $|\Omega|^{
 with $|\Omega|=2{,}613{,}660$. Eqs. 8–9 shrink the per-node candidate set to $\le N+1$.
 
 Character of the step, worth noting up front:
-- **Purely combinatorial** — no $r$, no $\eta$, no branch lengths. Depends only on tip data
+- **Purely combinatorial** — no $\lambda$, no $\xi$, no branch lengths. Depends only on tip data
   and topology.
 - Therefore a **preprocessing pass**, once per (tape, topology).
-- ⇒ **MCMC moves on $r$, $\eta$, branch lengths leave all $A_i$ untouched; only topology moves
+- ⇒ **MCMC moves on $\lambda$, $\xi$, branch lengths leave all $A_i$ untouched; only topology moves
   force recomputation.** A meaningful caching boundary.
 
 ### Eq. 8 — the leaf sets
@@ -956,7 +956,7 @@ children, hence a possible state at $i$. Equality.
   the parent had them. Convergent independent writes give the same pattern.
 
 > **Convergence is common, not a corner case.** P(two independent lineages write the same
-> symbol at a site) $=\sum_i f_i^2 \ge 1/M$ (Cauchy–Schwarz, equality iff uniform $f$). Mouse
+> symbol at a site) $=\sum_i \xi_i^2 \ge 1/M$ (Cauchy–Schwarz, equality iff uniform $\xi$). Mouse
 > $M=8$ ⇒ **≥12.5% per site**, and higher since $f$ is measurably non-uniform (10-fold edit-score
 > spread). Homoplasy at the first shared site is routine.
 
@@ -1037,7 +1037,7 @@ than dropping cells, because it would look correct.
 ### ⚑ Implications for the extensions
 
 **Eqs. 8–9 are invariant under the ENGRAM extension.** They invoke only Definitions 1 and 3 and
-never touch $r$ or $\eta$. Time-varying $f(t)$ leaves the state sets, the lcp recursion, the
+never touch $\lambda$ or $\xi$. Time-varying $\xi(t)$ leaves the state sets, the lcp recursion, the
 $O(1)$ representation, and the $O(knN^2)$ bound entirely alone. **Third independent
 confirmation** that the signal-history extension changes exactly one function, $P_{a,b}$.
 
@@ -1048,7 +1048,7 @@ here rests on a *hard* combinatorial constraint; softening it destroys it.**
 
 | Extension | Compatible with the Eq. 8/9 reduction? |
 |---|---|
-| Time-varying $f(t)$ (ENGRAM) | **Yes** — untouched |
+| Time-varying $\xi(t)$ (ENGRAM) | **Yes** — untouched |
 | Time-varying $r(t)$ (non-clock recording) | **Yes** — untouched |
 | Per-lineage rate multipliers (**A8**) | **Yes** — untouched |
 | Missing-tape marginalization (**A6**) | Yes, with a wildcard representation |
@@ -1079,7 +1079,7 @@ Probability asks *"if $\theta$ were true, how often would I see each dataset?"*;
 ### Applied to SciPhy
 
 $D$ = observed tape states at the tips (cell × tape × site matrix).
-$\theta$ = $T$ (tree: topology **and** node times), $r$ (per-tape clock rate), $\eta$ (insert
+$\theta$ = $T$ (tree: topology **and** node times), $\lambda$ (per-tape clock rate), $\xi$ (insert
 probabilities).
 
 > **The tree is a parameter** — high-dimensional, discrete *and* continuous at once. This is
@@ -1087,36 +1087,36 @@ probabilities).
 
 Eq. 10 is itself an instance of the ambiguity:
 
-$$\underbrace{\text{Lik}(T,\eta\mid D)}_{\text{likelihood reading: fn of }T,\eta}=\underbrace{P(D\mid T,r,\eta,A_{2n})}_{\text{probability reading: fn of }D}$$
+$$\underbrace{\text{Lik}(T,\xi\mid D)}_{\text{likelihood reading: fn of }T,\xi}=\underbrace{P(D\mid T,\lambda,\xi,A_{2n})}_{\text{probability reading: fn of }D}$$
 
-The `|` on the left is borrowed notation — $T,\eta$ are not random variables being conditioned.
-Cleaner: $L(T,\eta\,;D)$.
+The `|` on the left is borrowed notation — $T,\xi$ are not random variables being conditioned.
+Cleaner: $L(T,\xi\,;D)$.
 
 ### Where it sits in the full model
 
-$$p(T,r,\eta,\lambda,\mu\mid D)\ \propto\ \underbrace{P(D\mid T,r,\eta)}_{\textbf{Eqs. 10–12}}\times\underbrace{p(T\mid\lambda,\mu,\rho)}_{\text{tree prior}}\times\underbrace{p(r)p(\eta)p(\lambda)p(\mu)}_{\text{Tables 2–4}}$$
+$$p(T,\lambda,\xi,b,\delta\mid D)\ \propto\ \underbrace{P(D\mid T,\lambda,\xi)}_{\textbf{Eqs. 10–12}}\times\underbrace{p(T\mid b,\delta,\rho)}_{\text{tree prior}}\times\underbrace{p(\lambda)p(\xi)p(b)p(\delta)}_{\text{Tables 2–4}}$$
 
 - **Editing model → the likelihood.** Says nothing about how likely a *tree shape* is.
 - **Birth–death-sampling → the prior on trees.** Its parameters are biologically meaningful
   (birth = division rate, death = death rate, $\rho$ = sampling proportion), so inferring
-  $\lambda,\mu$ **is** the phylodynamic result. In ordinary phylogenetics the tree prior is a
+  $b,\delta$ **is** the phylodynamic result. In ordinary phylogenetics the tree prior is a
   nuisance; here it is half the point.
 
 **Marginalized vs. inferred:** ancestral tape states $a_{n+1},\dots,a_{2n-1}$ are **summed out**
-(latent nuisance variables). Tree, $r$, $\eta$ are **inferred**. This distinction becomes
+(latent nuisance variables). Tree, $\lambda$, $\xi$ are **inferred**. This distinction becomes
 load-bearing in §1c.5.
 
 ## 1c.4 Eqs. 10–12 — Felsenstein pruning
 
 ### Eq. 10 — the statement
 
-$$\text{Lik}(T,\eta\mid D)=P(D\mid T,r,\eta,A_{2n}),\qquad A_{2n}=\{\varnothing\}$$
+$$\text{Lik}(T,\xi\mid D)=P(D\mid T,\lambda,\xi,A_{2n}),\qquad A_{2n}=\{\varnothing\}$$
 
 Everything conditional on the origin being unedited. **Imposed, not derived.**
 
 ### Eq. 11 — the honest, unusable form
 
-$$\text{Lik}=\sum_{a_{2n-1}\in A_{2n-1}}\!\!\cdots\!\!\sum_{a_{n+1}\in A_{n+1}}\ \prod_{i=1}^{2n-1}P_{a_{\pi_i},\,a_i}(\tau_i,\eta)$$
+$$\text{Lik}=\sum_{a_{2n-1}\in A_{2n-1}}\!\!\cdots\!\!\sum_{a_{n+1}\in A_{n+1}}\ \prod_{i=1}^{2n-1}P_{a_{\pi_i},\,a_i}(\tau_i,\xi)$$
 
 - **Sums** range over internal nodes $n{+}1..2n{-}1$ ($n-1$ of them). Tips fixed at observed
   states; node $2n$ fixed at $\varnothing$.
@@ -1218,7 +1218,7 @@ here.
   double precision well before the root. Needs per-node scaling factors or log-space arithmetic
   — inherited from BEAST 2's `GenericTreeLikelihood`.
 - **Caching.** *"the likelihoods for subtrees are saved at each internal node."* Combined with
-  §1c.2 ($A_i$ is topology-only), the caching boundary is clean: **moves on $r$, $\eta$, branch
+  §1c.2 ($A_i$ is topology-only), the caching boundary is clean: **moves on $\lambda$, $\xi$, branch
   lengths reuse $A_i$; topology moves invalidate both $A_i$ and $L_i$ above the change.**
   3.5× on a laptop, 8× overall with tape-level parallelism.
 
@@ -1233,15 +1233,15 @@ how much machinery you must build:
 
 | | Global signal trajectory | Lineage-specific signal |
 |---|---|---|
-| Model | one shared $f(t)$, a few knots | each branch has its own signal exposure |
+| Model | one shared $\xi(t)$, a few knots | each branch has its own signal exposure |
 | Latent dimension | $O(1)$ parameters | $O(n)$ latent variables |
-| Pruning suffices? | **Yes** — $f(t)$ is just a parameter; Eqs. 8–12 unchanged | **No** — needs per-branch latents + reconstruction pass |
+| Pruning suffices? | **Yes** — $\xi(t)$ is just a parameter; Eqs. 8–12 unchanged | **No** — needs per-branch latents + reconstruction pass |
 | Biological question | *"when did the embryo experience Wnt?"* | *"which lineages experienced Wnt?"* |
 
 The first drops straight in via the $H_m$ recursion (§1c.7). The second is what you probably want
 biologically, and is substantially harder.
 
-> **Structural analogue already solved in this literature: branch-specific $\eta$ is to SciPhy
+> **Structural analogue already solved in this literature: branch-specific $\xi$ is to SciPhy
 > what a relaxed clock is to standard phylogenetics** — branch-specific rates drawn from a shared
 > distribution, sampled by MCMC alongside the tree. SciPhy already cites the uncorrelated relaxed
 > clock (Drummond et al. 2006, ref. 23) and **random local clocks** (Drummond & Suchard, ref. 24).
@@ -1304,8 +1304,8 @@ Those are where the likelihood does not factorize at all. The signal-history par
 it stays in reach.
 
 *To verify:* (i) numerical check of the recursion against simulation; (ii) identifiability —
-can $f(t)$ actually be recovered, given only $N=6$ ordered positions per tape? (iii) does
-$r$ also need to vary, and does the factorization survive if it does?
+can $\xi(t)$ actually be recovered, given only $N=6$ ordered positions per tape? (iii) does
+$\lambda$ also need to vary, and does the factorization survive if it does?
 
 ---
 
@@ -1358,13 +1358,13 @@ bp) while the pegRNA cassette sits kilobases from the TAPE across vector backbon
 ### The shared-cause confound — and why it does *not* break the test
 
 Integration $i$'s chromatin openness $\theta_i$ raises pegRNA$_i$ abundance (lifting
-$f_i$ **globally**, on every tape) *and* raises tape $i$'s accessibility (lifting
+$\xi_i$ **globally**, on every tape) *and* raises tape $i$'s accessibility (lifting
 $r_i$). Since the cassette and TAPE are adjacent on one construct, this coupling should
 be strong. **But** under multiplicative independence,
 
-$$\mathbb{E}[\text{edits of symbol } i \text{ on tape } j] \;\propto\; f_i \times r_j$$
+$$\mathbb{E}[\text{edits of symbol } i \text{ on tape } j] \;\propto\; \xi_i \times \lambda_j$$
 
-so $\mathbb{E}[\text{symbol } i \text{ on tape } i] \propto f_i r_i$ is elevated
+so $\mathbb{E}[\text{symbol } i \text{ on tape } i] \propto \xi_i \lambda_i$ is elevated
 *exactly as independence predicts*. The shared cause inflates the **marginals**, not the
 interaction. A test for **diagonal enrichment conditional on both marginals**
 (quasi-independence / log-linear model with a diagonal indicator; row sums = per-tape
@@ -1388,7 +1388,7 @@ internal branches, a few-percent effect should be detectable.
 | Outcome | Consequence |
 |---|---|
 | **No cis-preference** (predicted) | Clean empirical license for SciPhy's shared-$f$-across-tapes assumption — currently asserted, never tested |
-| **Cis-preference exists** | $f$ becomes tape-indexed $f_i^{(z)}$ (parameter count × #tapes) and introduces **structured** diagonal enrichment any simulator must reproduce. Better to know now than to meet it as unexplained residual structure in posterior predictive checks |
+| **Cis-preference exists** | $\xi$ becomes tape-indexed $\xi_i^{(z)}$ (parameter count × #tapes) and introduces **structured** diagonal enrichment any simulator must reproduce. Better to know now than to meet it as unexplained residual structure in posterior predictive checks |
 
 *Action:* ask Sophie Seidel (author on both papers) whether this has been looked at
 before spending time on it.
@@ -1441,7 +1441,7 @@ chromatin effects yields a machine that works on exactly one dataset.
 
 **The problem:** $p(\theta\mid D)=p(D\mid\theta)p(\theta)/p(D)$ with
 $p(D)=\int p(D\mid\theta)p(\theta)d\theta$ — an integral over every topology × every node-time
-assignment × every $r,\eta,\lambda,\mu$. Hopeless.
+assignment × every $\lambda,\xi,b,\delta$. Hopeless.
 
 **The escape:** never compute $p(D)$. Build a Markov chain whose stationary distribution *is*
 the posterior; evaluate only ratios, in which $p(D)$ cancels.
@@ -1534,10 +1534,10 @@ probable** — the process is exchangeable in the tips. So the tree prior is ess
 **uninformative about topology**.
 
 It is highly informative about **timing** — the joint distribution of node ages given
-$\lambda,\mu,\rho$ and the origin. Three jobs, none of them "prefer certain shapes":
+$b,\delta,\rho$ and the origin. Three jobs, none of them "prefer certain shapes":
 
 1. **Regularizes node times** toward what a branching process would produce.
-2. **Makes $\lambda,\mu$ inferrable** — the phylodynamic payoff; the prior is a *scientific model*,
+2. **Makes $b,\delta$ inferrable** — the phylodynamic payoff; the prior is a *scientific model*,
    not a nuisance.
 3. **Makes the posterior proper.**
 
@@ -1570,7 +1570,7 @@ constraint almost no proposal would satisfy.
 
 ### Rate–time confounding, and what breaks it
 
-The likelihood sees $\tau_i$ **only** through $r\tau_i$. Scale every branch by $c$, divide $r$ by
+The likelihood sees $\tau_i$ **only** through $r\tau_i$. Scale every branch by $c$, divide $\lambda$ by
 $c$ ⇒ identical likelihood. Three things break it, and **your extension inherits all three**:
 
 1. **The origin is fixed** at the known experiment duration (25 days; 11 days) — not inferred, not
@@ -1578,12 +1578,12 @@ $c$ ⇒ identical likelihood. Three things break it, and **your extension inheri
 2. **The tree is ultrametric** ⇒ total origin-to-tip time is that same fixed number for every cell.
 3. Together ⇒ **you cannot rescale**; tree height is pinned at both ends.
 
-Hence $r$ is identified in genuine edits/tape/day, and the prior reads *"between one and ten edits
+Hence $\lambda$ is identified in genuine edits/tape/day, and the prior reads *"between one and ten edits
 per tape over 25 days."* Classical phylogenetics needs fossil calibrations or serially sampled tips
 for this; a designed experiment hands it over.
 
-*MCMC consequence:* $r$ and node heights are strongly **correlated** in the posterior (only the
-product is locally constrained). Remedy is an **up-down operator** scaling $r$ down while scaling
+*MCMC consequence:* $\lambda$ and node heights are strongly **correlated** in the posterior (only the
+product is locally constrained). Remedy is an **up-down operator** scaling $\lambda$ down while scaling
 heights up — moving *along* the ridge instead of across it. Without one, mixing degrades badly.
 
 ## 2a.4 What the chain moves, and why it struggles
@@ -1596,9 +1596,9 @@ heights up — moving *along* the ridge instead of across it. Without one, mixin
 | | Wilson–Balding | detach/reattach anywhere — largest move |
 | **Within a page** | Uniform node height | move one node between child-max and parent height |
 | | Scale / root-height scale | rescale subtree or whole tree |
-| **Parameters** | Scale | $r,\lambda,\mu$ |
-| | Delta-exchange / Dirichlet | $\eta$ — must stay on the simplex |
-| **Joint** | Up-down | $r$ vs. heights, along the confounding ridge |
+| **Parameters** | Scale | $r,b,\delta$ |
+| | Delta-exchange / Dirichlet | $\xi$ — must stay on the simplex |
+| **Joint** | Up-down | $\lambda$ vs. heights, along the confounding ridge |
 
 Matches the paper: *"tree operators modify the tree to explore all possible topologies that could
 have produced the data. As some of these changes are local, the likelihood for subtrees that are
@@ -1642,7 +1642,7 @@ pre-existing, heritable cell state underlying metastatic potential"* (bioRxiv
 | Clock | strict, LSD2 | **saturating** $E(t)=A(1-e^{-t/\tau})$, calibrated externally, held fixed | strict |
 | Date regularization | **external cell-count ceiling** | **external in-vitro calibration** | **birth–death prior, inferred** |
 | Uncertainty | edit-count branch support (bootstrap *"computationally infeasible at this scale"*) | tape bootstrap, Kishino–Hasegawa test, $\lambda$-frontier, model-free distance-ratio | **full posterior** |
-| Population params | none | per-clone $\lambda$ by OLS on in vitro frequencies | **$\lambda,\mu$ from tree shape** |
+| Population params | none | per-clone $\lambda$ by OLS on in vitro frequencies | **$b,\delta$ from tree shape** |
 
 > ⚑ **Park et al.'s ancestral reconstruction is literally SciPhy's $u_i=\mathrm{lcp}$.** They
 > independently derived the same combinatorial object (§1c.2) and then took its **maximum
@@ -1661,9 +1661,9 @@ pre-existing, heritable cell state underlying metastatic potential"* (bioRxiv
    posterior answers all uniformly.
 3. **Neither handles homoplasy properly.** Park argues prefix parsimony is *"insensitive to
    homoplasy at the later sites"* — correct, since spurious lcp extension to depth $k$ needs
-   matches at sites $1..k$, decaying like $(\sum f_i^2)^k$. **But site-1 homoplasy is untouched
+   matches at sites $1..k$, decaying like $(\sum \xi_i^2)^k$. **But site-1 homoplasy is untouched
    by that argument, and site-1 errors corrupt deep structure** (§1c.2 failure mode 1).
-4. **The signalling extension has no parsimony analogue.** Inferring $f(t)$ is a latent-variable
+4. **The signalling extension has no parsimony analogue.** Inferring $\xi(t)$ is a latent-variable
    problem; there is no parsimony criterion for it.
 
 ## The scale question — sharpened
@@ -1678,7 +1678,7 @@ problem.
 **2. ⚑ The complementary lever is recording capacity — and Park et al. just demonstrated it.**
 996 sites vs. 66. ~254 edits/cell by day 7, several hundred by harvest, ~150,000 unique
 insertion patterns, ~15 bits entropy, *"recording diversity grew rather than plateaued."* With
-NNNNGGA, $M\approx256$ ⇒ $\sum f_i^2\sim0.4\%$ — **near homoplasy-free**.
+NNNNGGA, $M\approx256$ ⇒ $\sum \xi_i^2\sim0.4\%$ — **near homoplasy-free**.  ⚠ **Wrong — measured $q=0.0170$, $1/q\approx58$; see the correction in §D.4b.**
 
 > **Better recorders don't just give better trees — they make Bayesian inference tractable by
 > removing the flatness.** Sharp posterior ⇒ MCMC has a gradient to climb instead of a plateau to
@@ -1691,9 +1691,9 @@ correctly accounts for analysing 1,000 of 1.2M cells.
 
 | Question | Cells needed |
 |---|---|
-| Population dynamics ($\lambda,\mu$, growth phases) | correct **random subsample** — $\rho$ handles it |
-| **Global signal trajectory $f(t)$** | same — **the tree is a nuisance parameter** |
-| Editing-model parameters ($r,\eta$, dropout) | same |
+| Population dynamics ($b,\delta$, growth phases) | correct **random subsample** — $\rho$ handles it |
+| **Global signal trajectory $\xi(t)$** | same — **the tree is a nuisance parameter** |
+| Editing-model parameters ($\lambda,\xi$, dropout) | same |
 | *Which* lineage founded this metastasis | **that specific cell** — no subsampling |
 | Fine-grained coupling between rare cell types | the rare cells, at minimum |
 
@@ -1705,7 +1705,7 @@ substantially dissolves.**
 **Program A — marginalize the tree, infer the parameters. Achievable, high value.**
 Simulate birth–death tree → editing → dropout → cell×tape×site matrix. *Learn* summaries via a
 permutation-invariant embedding over cells. Train NPE for
-$(\lambda,\mu,r,\eta,f(t)\text{-knots})$. The tree is never inferred — marginalized by
+$(b,\delta,r,\xi,\xi(t)\text{-knots})$. The tree is never inferred — marginalized by
 simulation. **Handles exactly the A-table rows where the exact likelihood fails: A9, A8, A2,
 A7.** Well-posed; startable now.
 
@@ -1725,7 +1725,7 @@ not Bayesian. ML tree search scales to $10^5$–$10^6$ tips routinely.
 > penalized objective, bootstrap for comparing adjacent solutions. **Swapping
 > `sequential_parsimony(T)` for `−log Lik(T)` from the pruning recursion is close to a drop-in.**
 > The likelihood is $O(knN^2)$ — cheap. You get the mechanistic model, correct homoplasy
-> treatment, jointly estimated $r$, at ~100× the scale.
+> treatment, jointly estimated $\lambda$, at ~100× the scale.
 >
 > The field currently jumps from parsimony straight to full Bayesian MCMC, skipping the rung that
 > would work today.
@@ -1762,7 +1762,7 @@ mean is a different estimator (Bayes estimator under squared-error loss; MAP is 
 They coincide only for symmetric unimodal posteriors.
 
 > **The useful framing: MAP = penalized maximum likelihood.** $\log p(\theta)$ *is* the penalty.
-> Gaussian prior ↔ L2; Laplace prior ↔ L1. Here the "penalty" is $\log p(T\mid\lambda,\mu,\rho)$ —
+> Gaussian prior ↔ L2; Laplace prior ↔ L1. Here the "penalty" is $\log p(T\mid b,\delta,\rho)$ —
 > the birth–death density on node times, which is what keeps node ages plausible. Pure ML has no
 > such term and drifts into the mouse paper's pathology.
 
@@ -1772,15 +1772,15 @@ They coincide only for symmetric unimodal posteriors.
 ≠ image of the MAP in height space. Optimize in the unconstrained space, add $\log|J|$ if you want
 the mode in original coordinates, and state which you report.
 
-**Gradients:** yes for **continuous** parameters (node heights, $r$, $\eta$, $\lambda$, $\mu$,
-$f(t)$ knots) — autodiff through pruning, then L-BFGS/Adam. **No** for topology — discrete,
+**Gradients:** yes for **continuous** parameters (node heights, $\lambda$, $\xi$, $b$, $\delta$,
+$\xi(t)$ knots) — autodiff through pruning, then L-BFGS/Adam. **No** for topology — discrete,
 searched combinatorially. Hybrid: discrete search outside, gradient ascent inside.
 
 ## D.2 Assessment of the direction
 
 **Why it's promising.** Rigorous + scalable + extensible-to-signalling are jointly served by
 MAP-under-a-mechanistic-likelihood and by nothing else on offer. Parsimony: scalable, not rigorous,
-**no parsimony criterion exists for $f(t)$**. MCMC: rigorous and extensible, not scalable. And the
+**no parsimony criterion exists for $\xi(t)$**. MCMC: rigorous and extensible, not scalable. And the
 no-matrix-exponential gradient advantage is real and unusual.
 
 **Caveat 1 — the plateau changes character, it doesn't vanish.** Where topologies are near-equally
@@ -1856,7 +1856,7 @@ Two DNA-Typewriter-specific features make this nearly true:
    must be checked. *(Specific to sequential recorders — this is the part that makes it cheap, and
    I'm not aware of anyone exploiting it.)*
 2. **Cross-tape incompatibility is rare when $M$ is large.** Arises from homoplasy at rate
-   $\approx\sum_i f_i^2$. Park: per-site Shannon entropy ~6 bits at early sites ⇒ effective alphabet
+   $\approx\sum_i \xi_i^2$. Park: per-site Shannon entropy ~6 bits at early sites ⇒ effective alphabet
    ~64 ⇒ low-single-digit-% collisions. Mouse ($M=8$): $\ge12.5\%$ — much worse.
 
 ```
@@ -1897,7 +1897,7 @@ From Session 0: $[\text{writer for symbol }i]\approx[\text{PE}]\times\frac{\text
 (Pol II/III transcripts abundant, Cas9-fusion protein scarce), so CRE activity moves the second
 factor only:
 
-$$r(t,\ell)\approx r_0 \qquad\qquad f_i(t,\ell)=\frac{\beta_i\,a_i(t,\ell)}{\sum_j\beta_j\,a_j(t,\ell)}$$
+$$\lambda(t,\ell)\approx \lambda_0 \qquad\qquad \xi_i(t,\ell)=\frac{\beta_i\,a_i(t,\ell)}{\sum_j\beta_j\,a_j(t,\ell)}$$
 
 $a_i$ = CRE activity (the target); $\beta_i$ = intrinsic per-symbol editing efficiency (Session 0's
 "edit score," 10-fold sequence bias) — **calibrate once from a constitutive experiment and fix**.
@@ -1908,7 +1908,7 @@ lineage." Two consequences:
 1. **$f$ lives on a simplex ⇒ only *relative* activity is recoverable.** Scaling all $a_i$ by a
    constant leaves $f$ unchanged; a uniform doubling of CRE activity is invisible.
    **⚠ A constitutively-driven reference symbol is a hard requirement**, not a nicety — then
-   $f_i/f_0\propto\beta_i a_i/\beta_0 a_0$ recovers $a_i$ up to a fixed constant.
+   $\xi_i/\xi_0\propto\beta_i a_i/\beta_0 a_0$ recovers $a_i$ up to a fixed constant.
 2. **Experimental design lever:** run *pegRNA*-limiting instead (low CRE output, abundant PE) and
    total rate scales with total pegRNA ⇒ absolute activity via the rate **and** relative activity
    via composition. Strictly more identifiable, at the cost of a slower, noisier recorder.
@@ -1980,11 +1980,11 @@ Treat the latent as something you **optimize or sample**, not integrate out insi
 Conditional on $u$, the tape product is restored. With a Brownian/OU prior, $u$ is a multivariate
 Gaussian with covariance from shared branch lengths, and its log-density is **linear-time** via
 Felsenstein's independent contrasts — the same pruning trick on a continuous trait. Fully
-differentiable ⇒ $u$ joins node heights, $r$, and spline knots in one gradient optimization.
+differentiable ⇒ $u$ joins node heights, $\lambda$, and spline knots in one gradient optimization.
 
 **Structurally identical to a relaxed clock** — latent per-branch value with a shared-distribution
 prior. SciPhy already cites the uncorrelated relaxed clock (ref 23) and random local clocks (ref
-24). Established machinery, applied to $\eta$ instead of $r$.
+24). Established machinery, applied to $\xi$ instead of $\lambda$.
 
 **Regularization / effective resolution.** $M\times2n$ latents vs. single-digit events per latent at
 Park scale ⇒ badly under-determined alone. The OU prior saves it; its **length-scale is estimable
@@ -2054,7 +2054,7 @@ No tree has both. One is homoplastic or erroneous.
    IS set containment.** Each tape's characters form a **trie**, already laminar. **A single tape can
    never be internally incompatible.** *Specific to sequential recorders; unordered recorders
    (GESTALT, Cas9 arrays) get no such guarantee.*
-2. ⇒ **Conflict is purely cross-tape**, from homoplasy at rate $\approx\sum_i f_i^2$ — low single
+2. ⇒ **Conflict is purely cross-tape**, from homoplasy at rate $\approx\sum_i \xi_i^2$ — low single
    digits for Park's alphabet, $\ge12.5\%$ for the mouse's.
 
 ### Why it reduces the search space
@@ -2160,7 +2160,7 @@ $$\underbrace{p(\theta\mid D)}_{\text{marginal}}=\sum_\tau p(\theta\mid D,\tau)p
 Error depends on **how much $p(\theta\mid D,\tau)$ varies with $\tau$.**
 
 **Why it's small for the parameters that matter.** Global parameters are functions of **coarse tree
-summaries**: $r$ from total edits over 45 days; $\eta$ from pooled symbol frequencies; $\lambda,\mu$
+summaries**: $\lambda$ from total edits over 45 days; $\xi$ from pooled symbol frequencies; $b,\delta$
 from the LTT curve; $g_i(t)$ from symbol composition binned by time. If $\theta \perp \tau \mid
 S(\tau)$ for a low-dimensional $S$ stable across the high-density region, conditioning ≈
 marginalizing. **The topology uncertainty that matters is uncertainty in $S(\tau)$, not in $\tau$.**
@@ -2173,8 +2173,8 @@ marginalizing. **The topology uncertainty that matters is uncertainty in $S(\tau
 
 | Parameter | Conditioning safe? | Why |
 |---|---|---|
-| $r,\eta,\beta$ | ✅ very | aggregate counts over the whole tree |
-| $\lambda,\mu$ | ✅ yes | function of the LTT curve |
+| $r,\xi,\beta$ | ✅ very | aggregate counts over the whole tree |
+| $b,\delta$ | ✅ yes | function of the LTT curve |
 | **Global signal $g_i(t)$** | ✅ yes | edits binned by time; binning is coarse |
 | Root height, LTT, ages of **well-supported** clades | ✅ yes | topology-robust quantities |
 | **Individual** node heights | ⚠️ conditional | "node 47" isn't the same node under another topology |
@@ -2208,7 +2208,7 @@ for the caveat is exactly option 2 below: repeat over a sample of plausible tree
 ### ⚑⚑ Why this is the right architecture
 
 **Conditional on topology, the remaining posterior is continuous, smooth, probably unimodal** — node
-heights (ratio transform), $r$, $\eta$, the OU field $u$, $\lambda$, $\mu$, all with autodiff
+heights (ratio transform), $\lambda$, $\xi$, the OU field $u$, $b$, $\delta$, all with autodiff
 gradients. ⇒ **HMC/NUTS, not random-walk Metropolis.** Efficiency gap is enormous: random walk needs
 ~$O(d)$ steps per effective sample, HMC ~$O(d^{1/4})$.
 
@@ -2227,7 +2227,7 @@ contributes least to it.
 
 - **Topology:** point estimate + per-branch support (UFBoot / tape bootstrap).
 - **Node dates:** credible intervals conditional on topology, or pooled via Rubin's rules.
-- **Signal, $r$, $\eta$, $\lambda$, $\mu$:** full posteriors.
+- **Signal, $\lambda$, $\xi$, $b$, $\delta$:** full posteriors.
 
 Strictly more informative than either paper — Park's dates come from a bootstrap conditional on a
 **fixed externally calibrated clock**, a considerably stronger conditioning than this.
@@ -2405,13 +2405,13 @@ burn-in. Tree priors: BDSKY (homogeneous), BDMM-Prime (multi-type).
 
 ## ⚠⚠ Two setup details that matter enormously
 
-> **They FIXED the insert probabilities $\eta$ to their true values.** *"We inferred the editing rate
+> **They FIXED the insert probabilities $\xi$ to their true values.** *"We inferred the editing rate
 > and fixed the scarring and insert probabilities to true values, because we reasoned that the
 > occurrence and relative frequency of each editing outcome can be quantified in real experiments
 > using sequencing data."*
 
-**Every performance number assumes $\eta$ is known.** Our entire ENGRAM extension is about inferring
-a *time- and lineage-varying* $\eta$. This study says **nothing** about whether that is feasible —
+**Every performance number assumes $\xi$ is known.** Our entire ENGRAM extension is about inferring
+a *time- and lineage-varying* $\xi$. This study says **nothing** about whether that is feasible —
 simultaneously the opportunity and a caution against reading its optimism across.
 
 Also: **$\rho$ fixed to truth** *"due to identifiability reasons"* ⇒ sampling proportion and
@@ -2569,7 +2569,7 @@ generative model as SciPhy (censored Poisson, citing Seidel et al. explicitly).
 | $q=\sum_i\xi_i^2$ | **collision probability** (two independent edits → same character) |
 | $\ell$ | lower bound on minimal internal branch length = **the resolution you demand** |
 
-$q$ is exactly the $\sum f_i^2$ of §1c.2. Two bounds: $B_\infty$ (assumes $q=0$),
+$q$ is exactly the $\sum \xi_i^2$ of §1c.2. Two bounds: $B_\infty$ (assumes $q=0$),
 $B_q$ (general). Regimes $q=1/64$ (high diversity) vs $q=1/4$ (low). $B_\infty$ *"significantly
 overestimates the accuracy under low rates when $q=1/4$"* ⇒ **homoplasy at the mouse's alphabet
 size is not a rounding error.**
@@ -2604,7 +2604,7 @@ over 12, matched at $q=1/12$ ⇒ statistically indistinguishable accuracy. **The
 carries no topological information beyond its second moment.**
 
 ⇒ **Good news: composition information and topology information are largely orthogonal.** Varying
-$f(t)$ for signal recording does not degrade tree reconstruction *provided $q$ stays comparable*.
+$\xi(t)$ for signal recording does not degrade tree reconstruction *provided $q$ stays comparable*.
 
 **⚑⚑ (c) But this implies a design tension nobody has stated.** Strong ENGRAM signal ⇒ one symbol
 dominates ⇒ $f$ peaked ⇒ **$q$ rises** ⇒ homoplasy rises ⇒ tree degrades.
@@ -2637,7 +2637,7 @@ effect of sampling on the branch length distribution."* **An open invitation.**
 ## H.2 Zwaans et al. 2025 (Phil Trans R Soc B 380:20230318) — GABI
 
 GESTALT → Bayesian in BEAST 2, extending **GAPML** (Feng et al. 2021, penalized ML) by adding a
-molecular clock rate $r$ for **absolute** time scaling.
+molecular clock rate $\lambda$ for **absolute** time scaling.
 
 ### ⚠ Correction 1: "dependent target sites" ≠ our coupling problem
 
@@ -2762,13 +2762,13 @@ RA-gastruloids (Shendure lab).
 
 | Tier | Signal structure | Computational demand |
 |---|---|---|
-| **1. Culture, defined program** | one global $f(t)$, shared by all lineages | **Easiest.** Pruning suffices; no latent field; tree is a nuisance |
+| **1. Culture, defined program** | one global $\xi(t)$, shared by all lineages | **Easiest.** Pruning suffices; no latent field; tree is a nuisance |
 | **2. Gastruloid** | lineage-specific exposure, **known answer** | Latent field, but shallow tree (~6 divisions) → few latents |
 | **3. Cancer** | lineage-specific, unknown, deep tree, dropout | **Everything in the A-table at once** |
 
 ### ⚠ Tier 1 as described tests only the TEMPORAL axis
 
-A well-mixed culture ⇒ **every lineage sees the same signal**. You recover $f(t)$ — the global case
+A well-mixed culture ⇒ **every lineage sees the same signal**. You recover $\xi(t)$ — the global case
 needing none of the lineage machinery. Necessary positive control; won't test whether you can
 identify *which lineages responded*.
 
@@ -2887,7 +2887,7 @@ inflammation is the signal — the immune compartment is part of the biology.
 2. **Timescale/saturation.** KP tumours take 12–30 weeks vs Park's 45 days. 4–6× longer ⇒ more
    capacity, longer tapes, or degraded late-stage resolution. Mulberry's framework gives the
    calculation *before* you start.
-3. **The $q$ problem.** Strong induction ⇒ one symbol dominates ⇒ $\sum f_i^2$ rises ⇒ tree degrades
+3. **The $q$ problem.** Strong induction ⇒ one symbol dominates ⇒ $\sum \xi_i^2$ rises ⇒ tree degrades
    exactly when the signal is most informative. **Keep a high-diversity constitutive background.**
 
 ## I.4 ⚑ What this means for the computational models
@@ -2906,7 +2906,7 @@ misspecification in the A-table. *"NF-κB peaked at day 12.3"* needs all of it.
 observed at the leaves**, latent only internally. Best-identified version of the problem (§E.3) —
 the reason to start there rather than with a purely latent signal.
 
-**3. The tiers are good milestones because each has ground truth:** tier 1 validates $f(t)$ with no
+**3. The tiers are good milestones because each has ground truth:** tier 1 validates $\xi(t)$ with no
 latent field; tier 2 validates lineage assignment on a shallow tree with a known answer; tier 3
 needs the full latent field, dropout model, and state-dependent rates.
 
@@ -2955,7 +2955,7 @@ for both tree depth and cell recovery — *if* the editing rate holds up.
 **Session 2b — the BEAST 2 package specifics (p. 12).** BEAST 2 integration:
 `SciPhySubstitutionModel`, `SciPhyTreeLikelihood` extending `GenericTreeLikelihood`,
 caching, tape-level parallelism. What the MCMC actually samples (tree topology, branch
-lengths, $r$, $\eta$, birth–death parameters) and which operators move it.
+lengths, $\lambda$, $\xi$, birth–death parameters) and which operators move it.
 
 **Session 3 — Validation and phylodynamics (pp. 13–15).** Well-calibrated simulation and
 coverage, CCD summary trees, PI / wRF tree distances, the benchmark against UPGMA /
@@ -2963,7 +2963,7 @@ ordering-aware UPGMA / TiDeTree, and the birth–death-sampling priors in Tables
 (including the piecewise-constant / Ornstein–Uhlenbeck skyline used for the gastruloid).
 
 **Later — the extension work proper.** (i) Numerically verify the $H_m$ recursion in
-§1c.7 against simulation. (ii) Identifiability of $f(t)$ from $N=6$ ordered positions.
+§1c.7 against simulation. (ii) Identifiability of $\xi(t)$ from $N=6$ ordered positions.
 (iii) Decide the SBI/likelihood boundary using the A1–A9 table.
 
 ---
@@ -2974,31 +2974,59 @@ Slow read of §2–3.1.1, adopting their notation. This is the foundational-theo
 flagged as thread #1. Kept in SciPhy register (§1a–1c). Numerics in this section were
 checked against Monte Carlo (matches to 3 dp) before being written down.
 
-## H.6.0 ⚠⚠ Notation collision with §1a — read before anything else
+## H.6.0 ⚠⚠ Notation — the house register, and the two source papers
 
-Their symbols **clash directly** with SciPhy's. Two are dangerous.
+**As of 2026-08-28 this repository uses one notation throughout: the HOUSE column.** The other two
+columns exist only for reading the papers, whose symbols clash with each other and with ours.
 
-| Concept | SciPhy (§1a.1) | Mulberry & Stadler |
-|---|---|---|
-| sites per tape | $N$ | $k$ |
-| tapes per cell | $k$ | $m$ |
-| alphabet size | $M$ | $j$ |
-| insert probs | $\eta=(f_1,\dots,f_M)$ | $\xi=(\xi_1,\dots,\xi_j)$ |
-| collision / homoplasy | $\sum_i f_i^2$ (buried in Eq. 9) | $q=\sum_i\xi_i^2$ **(named, headline param)** |
-| editing **rate** (per unit time) | $r$ | $\lambda$ |
-| elapsed time | $\Delta t$ | depth diff $d$; tips at depth 1 |
-| **expected edit count** over interval | $r\,\Delta t$ | $r$ |
-| edits realised | $\lvert c\rvert$ | $x$ |
+| Concept | **HOUSE** | SciPhy paper | Mulberry & Stadler |
+|---|---|---|---|
+| sites per tape | $N$ | $N$ | $k$ |
+| tapes per cell | $k$ | $k$ | $m$ |
+| alphabet size (design) | $M$ | $M$ | $j$ |
+| alphabet size (observed distinct) | $M_{\rm obs}$ | — | — |
+| insert probabilities | $\xi=(\xi_1,\dots,\xi_M)$ | $\eta=(f_1,\dots,f_M)$ | $\xi$ |
+| collision / homoplasy | $q=\sum_i\xi_i^2$ | $\sum_i f_i^2$ (buried in Eq. 9) | $q$ **(headline param)** |
+| **editing rate** (per unit time) | $\lambda$ | $r$ | $\lambda$ |
+| **birth–death pair** | $(b,\delta)$ | $(\lambda,\mu)$ | — |
+| elapsed time | $\Delta t$ | $\Delta t$ | depth diff $d$; tips at depth 1 |
+| expected edit count over an interval | $\lambda\,\Delta t$ | $r\,\Delta t$ | $r$ |
+| edits realised | $\lvert c\rvert$ | $\lvert c\rvert$ | $x$ |
 
-- ⚠ **$k$ is opposite**: their $k$ = my $N$ (sites); their $m$ = my $k$ (tapes).
-- ⚠ **$r$ is opposite in kind**: SciPhy $r$ is a *rate*; Mulberry $r$ is a *dimensionless
-  expected count*. Their $r$ = my $r\Delta t$; their $\lambda$ = my $r$. Table 1 flags this
-  by calling $\lambda$ the rate "**scaled by experimental duration**" — since depths live in
-  $[0,1]$, $\lambda d$ = "expected edits by depth $d$." **In my own notes, always write
-  $r$ as $\lambda d$; never let a bare $r$ stand.**
+Three traps when reading the sources:
 
-Their $q$ **is** my $\sum_i f_i^2$ from §1c.2 / line 944. Same object; they promote it to a
-first-class parameter and everything about $\xi$ enters the theory through it and nothing else.
+- ⚠ **Mulberry's $k$ and $m$ are the reverse of ours**: their $k$ = our $N$ (sites); their $m$ =
+  our $k$ (tapes).
+- ⚠ **Mulberry's $r$ is not a rate.** It is a *dimensionless expected count*: their $r$ = our
+  $\lambda\Delta t$; their $\lambda$ = our $\lambda$. Their Table 1 flags this by calling $\lambda$
+  the rate "**scaled by experimental duration**" — depths live in $[0,1]$, so $\lambda d$ =
+  "expected edits by depth $d$". **Never let a bare $r$ stand in these notes.**
+- ⚠ **$\delta$, not $d$, for the death rate**, because $d$ is already Mulberry's tree depth.
+
+Mulberry's $q$ **is** SciPhy's $\sum_i f_i^2$ from §1c.2 / line 944 — the same object, promoted to
+a first-class parameter. Everything about $\xi$ enters the theory through $q$ and nothing else.
+
+> ### ⚑ Register decision (2026-08-28) — $\xi$ for insert probabilities, $f$ freed for functions
+>
+> Insert probabilities are $\xi$, and $q=\sum_i\xi_i^2$. **$f$ is reserved for genuine function
+> symbols** — Mulberry's censored-Poisson pmf $f_k(x,\lambda d)$, and trajectory functions like
+> $g_i$, $a_i$. The reason is not cosmetic: the entire ENGRAM extension is the claim that the
+> insert probabilities *become functions of time and signal*, so it must be possible to write
+> $\xi_i(t)$ and $\xi_i(\text{signal})$ without the symbol doing double duty.
+>
+> **The sweep through §0–§I was completed 2026-08-28**: $f_i\to\xi_i$, $\eta\to\xi$,
+> $r\to\lambda$ (editing rate), $(\lambda,\mu)\to(b,\delta)$ (birth–death). Legacy $f_i$/$\eta$
+> now appear only inside the SciPhy column of the table above.
+>
+> ⚠ **$\xi$ is a probability, not a rate.** It is *which symbol* is written given that an edit
+> occurs; the rate at which edits occur is $\lambda$. The two are orthogonal, and §1a.3's
+> jump-chain decomposition is what establishes that: the chain draws Categorical($\xi$)
+> *independent* of the exponential holding time.
+>
+> Other live uses of these letters, all clearly scoped and deliberately left alone: $\lambda_a$ =
+> CTMC exit rate from state $a$ (§1a.3, and it equals $\lambda$ for every non-absorbing state);
+> $\mu$ = OU process mean (§G.2); Pagel's $\lambda$ (§G.3); and Park et al.'s own $\lambda$ in
+> §1629, which is their organ-parsimony weight and their per-clone growth rate.
 
 ## H.6.1 $f_k(x,r)$ — the censored Poisson (their §2)
 
@@ -3025,7 +3053,7 @@ the excess-attempt information is genuinely lost, not absent.
 
 1. Proper pmf on $\{0,\dots,k\}$, exactly (body + boundary telescope to 1).
 2. **Saturation in closed form:** $f_k(k,r)=\Pr(N\ge k)=P(k,r)=\texttt{gammainc}(k,r)$, the
-   regularised lower incomplete gamma (Poisson–Erlang duality: "$\ge k$ events by time $r$"
+   regularised lower incomplete gamma (Poisson–Erlang duality: "$\ge k$ events by time $\lambda$"
    $\iff$ "sum of $k$ i.i.d. $\text{Exp}(1)\le r$"). Compute this way, never by summation.
 3. **Monotonicity = the paper's whole tension:** $\partial_r f_k(k,r)=f(k-1,r)>0$ (saturation
    $\uparrow$), $f(0,r)=e^{-r}\downarrow$ (silence $\downarrow$). Every "optimal rate" result
@@ -3260,7 +3288,7 @@ The $(1-q)$ exponent uses the **shorter** length $i$ in both terms. ✓ consiste
 ### ⚑ Eq. (5) collapses — much cleaner than printed (verified)
 
 Let $S_i=\Pr(\text{len}\ge i)$, $M=\min(n_a,n_c)$ with $n_a,n_c\overset{iid}\sim f_{k'}(\cdot,r)$.
-The bracket is $f_i^2+2f_i\sum_{j>i}f_j=f_i(2S_i-f_i)=S_i^2-S_{i+1}^2=\Pr(M=i)$. Hence
+The bracket is $\xi_i^2+2\xi_i\sum_{j>i}\xi_j=\xi_i(2S_i-\xi_i)=S_i^2-S_{i+1}^2=\Pr(M=i)$. Hence
 
 $$\boxed{\;h_{k'}(x,r,q)\;=\;q^x\Big[\Pr(M=x)\;+\;(1-q)\,\Pr(M>x)\Big]\;}$$
 
@@ -3274,7 +3302,7 @@ Equivalently, and this is the real content:
 **Verified numerically** (paper form vs closed form vs Monte Carlo of the generative process,
 agreement to 4 dp across $k'\in\{4,6,9\}$, $r\in\{1,3,5,8\}$, $q\in\{1/64,1/16,1/4\}$):
 
-| $k'$ | $r$ | $q$ | $h(0)$ | $h(1)$ | $h(2)$ | $h(3)$ |
+| $k'$ | $\lambda$ | $q$ | $h(0)$ | $h(1)$ | $h(2)$ | $h(3)$ |
 |---|---|---|---|---|---|---|
 | 6 | 3 | 1/4 | 0.7743 | 0.1856 | 0.0349 | 0.0047 |
 | 6 | 3 | 1/16 | 0.9436 | 0.0539 | 0.0024 | 0.0001 |
@@ -3297,7 +3325,7 @@ Mean spurious prefix (uncensored limit) $=q/(1-q)$:
 **When $\lambda\ell\lesssim q/(1-q)$, homoplasy wins and reconstruction fails.** This is the
 mechanism behind §H.1's "$B_\infty$ significantly overestimates accuracy under low rates at
 $q=1/4$" — at low $\lambda$ the real signal shrinks toward the noise floor, which is *fixed* by $q$.
-Recall §1c.2 line 944: $q=\sum_i f_i^2\ge 1/j$ (Cauchy–Schwarz, equality iff uniform $\xi$), so
+Recall §1c.2 line 944: $q=\sum_i \xi_i^2\ge 1/j$ (Cauchy–Schwarz, equality iff uniform $\xi$), so
 the mouse's $j=8$ floor is $q\ge0.125$ ⇒ **≥0.14 spurious sites per comparison, unavoidable.**
 
 > ⚑ **For ENGRAM this is the sharp form of §H.1(c).** Fine time-resolution means small $\ell$;
@@ -4027,7 +4055,7 @@ thing to work out from Chen et al.
    check whether orthogonal tapes were tried.)
 2. **How peaked does $\xi$ get at full induction?** ⇒ $q$ directly, ⇒ feasibility via I.6.4.
 3. **Transfer function** promoter activity → pegRNA abundance → insertion frequency. This *is* the
-   $f_i(\text{signal})$ map the whole extension needs. Is it linear? Saturating?
+   $\xi_i(\text{signal})$ map the whole extension needs. Is it linear? Saturating?
 4. **Temporal integration window** — does a 2-hour burst register, or only sustained signal? Sets
    the achievable $\ell$, hence everything in H.6.
 5. **Is there already a constitutive reference channel?** (Tet-On, Wnt, NF-κB were the three demo
@@ -4092,9 +4120,9 @@ hypothetical — it is the actual parameter regime of the published demonstratio
 doing lineage there, so no error; but it means **nobody has yet run ENGRAM+Typewriter at a $q$
 where the lineage is recoverable.**
 
-## I.7.4 The $f_i(\text{signal})$ transfer function — measured, and it factorises
+## I.7.4 The $\xi_i(\text{signal})$ transfer function — measured, and it factorises
 
-$$f_i(\text{signal})\;\propto\;\underbrace{\beta_i}_{\text{barcode-intrinsic bias}}\times\underbrace{\sigma(\text{signal})}_{\text{sigmoid dose–response}}$$
+$$\xi_i(\text{signal})\;\propto\;\underbrace{\beta_i}_{\text{barcode-intrinsic bias}}\times\underbrace{\sigma(\text{signal})}_{\text{sigmoid dose–response}}$$
 
 - **Dose–response is sigmoid, not linear.** Fitted by nonlinear regression; EC50s: Dox
   **0.17 µg/ml**, TNF **2.5 ng/ml**, CHIR **2.2 µM**. WNT is *"almost switch-like across a
@@ -4294,7 +4322,7 @@ $$\text{compatibility fraction}=\frac{\#\{\text{compatible cross-tape pairs}\}}{
 ## ⚑ Reframing: this is a residual analysis
 
 We **already have the prediction**, from our own notes: Park uses NNNNGGA, $M\approx256$,
-$\sum_i f_i^2\approx\mathbf{0.4\%}$ — better than Mulberry's "high diversity" regime ($q=1/64$).
+$\sum_i \xi_i^2\approx\mathbf{0.4\%}$ — better than Mulberry's "high diversity" regime ($q=1/64$).
 Spurious sharing of a length-$L$ prefix costs $\approx q^L$, so **homoplasy alone predicts
 incompatibility in the low tenths of a percent.**
 
@@ -4303,6 +4331,85 @@ incompatibility in the low tenths of a percent.**
 > misassignment, copy-number artefacts (§0.2b `tape/copynumber.py`) or genuine model violation —
 > i.e. **rows A6/A7/A9 measured directly, on real data, for the first time.**
 > That is a more interesting result than "the perfect-phylogeny route is live", and it comes free.
+
+> ### ⚠⚠ CORRECTION (2026-08-28) — the measured $q$ is **4.3× larger** than this prediction
+>
+> Measured on the delivered edit tables (`analyses/2026-08_park-compatibility`, Step 0):
+>
+> | table | cells | $M_{\text{obs}}$ | edits | $q=\sum_i \xi_i^2$ | $1/q$ | missing |
+> |---|---|---|---|---|---|---|
+> | Initial  | 37,810 | 244 | 13.9 M | 0.01691 | 59.2 | 62.2% |
+> | Mouse1   | 12,232 | 197 | 5.81 M | 0.01740 | 57.5 | 51.2% |
+> | Mouse2   |  6,899 | 184 | 3.34 M | 0.01717 | 58.2 | 50.0% |
+> | Mouse3   |  2,904 | 167 | 1.32 M | 0.01726 | 57.9 | 53.2% |
+> | Subclone | 39,606 | 218 | 22.1 M | 0.01689 | 59.2 | 42.7% |
+>
+> **$q\approx0.0170$, not $0.004$.** The 0.4% figure assumed a *flat* distribution over all
+> $M=256$ symbols ($1/256=0.39\%$). Neither half holds: only 167–244 of the 256 are ever observed,
+> and the realised distribution is far from flat — the **effective alphabet is $1/q\approx58$,
+> not 256.** The single commonest symbol `ATATGGA` carries 4.4% on its own.
+>
+> Two consequences:
+>
+> 1. **The comparison to Mulberry inverts.** Their "high diversity" regime is $q=1/64=0.0156$.
+>    Park sits at $0.0170$ — *slightly worse* than that benchmark, not "better than" it, and not
+>    "near homoplasy-free" (the same error appears at §1629's comparison table, line ~1681).
+> 2. **The §D.4b null moves up by $\approx4.3\times$ at $L=1$.** Homoplasy alone no longer predicts
+>    "low tenths of a percent". Recompute the expected incompatibility at $q=0.0170$ *before*
+>    reading any gap as dropout/error. The residual framing survives intact — only the number
+>    being subtracted changes.
+>
+> Consistency across five independently sequenced tables (0.0169–0.0174) makes this a property of
+> the pegRNA pool, not of any one sample. Reproduce with
+> `analyses/2026-08_park-compatibility/src/01_symbol_composition.py`.
+
+> ### ⚠⚠ CORRECTION 2 (2026-08-28) — "$q^L$" is the wrong mechanism, and it understates homoplasy
+>
+> The paragraph above says spurious sharing of a length-$L$ prefix costs $\approx q^L$, so that
+> homoplasy vanishes for $L\ge2$. **That describes the wrong event.**
+>
+> $q^L$ is the probability that two lineages which diverged *before any edit on the tape*
+> independently fill it with the same $L$ symbols — all $L$ positions must collide. Real, correctly
+> computed, and rare.
+>
+> But a character $(z,p)$ is acquired on the edge where its **last** symbol $p_L$ is written, in a
+> lineage that already carries $p_1\dots p_{L-1}$. It gains a second origin when $p_L$ is written
+> again, independently, elsewhere within the clade that already shares $p_1\dots p_{L-1}$ — those
+> first $L-1$ symbols being shared *by descent*, and costing nothing. **One collision, not $L$.**
+>
+> ⇒ There is no $q^L$ collapse. Deep prefixes are not automatically clean, and "low tenths of a
+> percent" was never the right null.
+>
+> **The correct scaling.** Let $m$ be the number of independent write events at site $L$ within the
+> parent prefix's clade. Each draws from $\xi$, so the expected number of colliding pairs is
+>
+> $$\binom{m}{2}\,q$$
+>
+> — linear in $q$, quadratic in $m$. Setting it to 1 gives a **birthday threshold**
+>
+> $$m^{*}=\sqrt{2/q}\approx\sqrt{2/0.0170}\approx 11$$
+>
+> so roughly eleven independent writes at one site in one prefix clade already produce an expected
+> recurrence. The governing variable is $m$ — i.e. **clade size** — not prefix length.
+>
+> ⚑ **Measured (`analyses/2026-08_park-compatibility`, scripts 06–09).** $m$ is not observable, but
+> it is estimable from the distinct-symbol count $s$ by inverting $\mathbb{E}[s\mid m]=\sum_i(1-(1-\xi_i)^m)$
+> against the measured $\xi$, and better still by the Poissonised MLE
+> $\log L(m)=\sum_{i\in A}\log(1-e^{-m\xi_i})-m(1-W_A)$. Over **1,567,321 prefix nodes**:
+>
+> - **96.0% sit below $m^{*}$.** Median $s$ is 1–3 almost everywhere — the single-origin behaviour a
+>   perfect phylogeny predicts.
+> - Mean recurrences rise with clade size: 0.01 (clade 3) → 0.53 (21–50) → 5.75 (101–500) → 50.5 (>500).
+> - **Homoplasy is concentrated: the top 1% of nodes carry 65% of it, the top 10% carry 87%** — and
+>   this holds *within a single clone*, not only across the pooled arms.
+>
+> ⇒ By this section's own step-5 rule that is the **favourable** world: conflict concentrated on a
+> few characters is removable by deleting them, rather than spread thin enough to make the
+> maximal-compatible-set problem genuinely hard. The two corrections above both *raised* the
+> predicted homoplasy, but Park's clades turn out small enough that $m^{*}$ is rarely reached.
+> The metastasis mice are near homoplasy-free at their actual clade sizes; the subclone arm
+> (median clade 933 at the root of the trie) carries almost all of it, by design.
+
 
 ## Procedure
 
@@ -4349,7 +4456,7 @@ question.
 §D.4's follow-on (line ~2092) is the same afternoon's work once the skeleton exists, and is
 arguably the bigger prize: **assign each edit to the branch where it first appears, bin by time,
 plot symbol composition vs time. Park's pegRNAs are not CRE-driven ⇒ composition SHOULD be flat.**
-A clean negative control for the entire $f(t)$ estimator, on real data, before ever pointing it at
+A clean negative control for the entire $\xi(t)$ estimator, on real data, before ever pointing it at
 ENGRAM. **Do these together.**
 
 ## ⚠ Step 0, which precedes both
