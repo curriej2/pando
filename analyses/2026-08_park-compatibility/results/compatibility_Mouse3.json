@@ -1,0 +1,1735 @@
+{
+ "table": "Mouse3",
+ "min_carriers": 3,
+ "clones": [
+  {
+   "clone": 90,
+   "cells": 3,
+   "characters": 45,
+   "as_absent": {
+    "characters": 45,
+    "pairs": 939,
+    "cooccurring": 939,
+    "incompatible": 0,
+    "compatible": 939
+   },
+   "excluded": {
+    "characters": 45,
+    "pairs": 939,
+    "cooccurring": 939,
+    "incompatible": 0,
+    "compatible": 939
+   }
+  },
+  {
+   "clone": 136,
+   "cells": 4,
+   "characters": 59,
+   "as_absent": {
+    "characters": 59,
+    "pairs": 1681,
+    "cooccurring": 1681,
+    "incompatible": 686,
+    "compatible": 995
+   },
+   "excluded": {
+    "characters": 59,
+    "pairs": 1681,
+    "cooccurring": 1681,
+    "incompatible": 0,
+    "compatible": 1681
+   }
+  },
+  {
+   "clone": 55,
+   "cells": 5,
+   "characters": 60,
+   "as_absent": {
+    "characters": 60,
+    "pairs": 1681,
+    "cooccurring": 1681,
+    "incompatible": 326,
+    "compatible": 1355
+   },
+   "excluded": {
+    "characters": 60,
+    "pairs": 1681,
+    "cooccurring": 1681,
+    "incompatible": 0,
+    "compatible": 1681
+   }
+  },
+  {
+   "clone": 134,
+   "cells": 3,
+   "characters": 87,
+   "as_absent": {
+    "characters": 87,
+    "pairs": 3620,
+    "cooccurring": 3620,
+    "incompatible": 0,
+    "compatible": 3620
+   },
+   "excluded": {
+    "characters": 87,
+    "pairs": 3620,
+    "cooccurring": 3620,
+    "incompatible": 0,
+    "compatible": 3620
+   }
+  },
+  {
+   "clone": 70,
+   "cells": 3,
+   "characters": 90,
+   "as_absent": {
+    "characters": 90,
+    "pairs": 3902,
+    "cooccurring": 3902,
+    "incompatible": 0,
+    "compatible": 3902
+   },
+   "excluded": {
+    "characters": 90,
+    "pairs": 3902,
+    "cooccurring": 3902,
+    "incompatible": 0,
+    "compatible": 3902
+   }
+  },
+  {
+   "clone": 124,
+   "cells": 4,
+   "characters": 93,
+   "as_absent": {
+    "characters": 93,
+    "pairs": 4171,
+    "cooccurring": 4171,
+    "incompatible": 1030,
+    "compatible": 3141
+   },
+   "excluded": {
+    "characters": 93,
+    "pairs": 4171,
+    "cooccurring": 4171,
+    "incompatible": 0,
+    "compatible": 4171
+   }
+  },
+  {
+   "clone": 53,
+   "cells": 4,
+   "characters": 99,
+   "as_absent": {
+    "characters": 99,
+    "pairs": 4697,
+    "cooccurring": 4697,
+    "incompatible": 1212,
+    "compatible": 3485
+   },
+   "excluded": {
+    "characters": 99,
+    "pairs": 4697,
+    "cooccurring": 4697,
+    "incompatible": 0,
+    "compatible": 4697
+   }
+  },
+  {
+   "clone": 37,
+   "cells": 4,
+   "characters": 107,
+   "as_absent": {
+    "characters": 107,
+    "pairs": 5515,
+    "cooccurring": 5515,
+    "incompatible": 1659,
+    "compatible": 3856
+   },
+   "excluded": {
+    "characters": 107,
+    "pairs": 5515,
+    "cooccurring": 5515,
+    "incompatible": 23,
+    "compatible": 5492
+   }
+  },
+  {
+   "clone": 72,
+   "cells": 5,
+   "characters": 119,
+   "as_absent": {
+    "characters": 119,
+    "pairs": 6889,
+    "cooccurring": 6889,
+    "incompatible": 578,
+    "compatible": 6311
+   },
+   "excluded": {
+    "characters": 119,
+    "pairs": 6889,
+    "cooccurring": 6889,
+    "incompatible": 23,
+    "compatible": 6866
+   }
+  },
+  {
+   "clone": 12,
+   "cells": 3,
+   "characters": 126,
+   "as_absent": {
+    "characters": 126,
+    "pairs": 7682,
+    "cooccurring": 7682,
+    "incompatible": 0,
+    "compatible": 7682
+   },
+   "excluded": {
+    "characters": 126,
+    "pairs": 7682,
+    "cooccurring": 7682,
+    "incompatible": 0,
+    "compatible": 7682
+   }
+  },
+  {
+   "clone": 56,
+   "cells": 3,
+   "characters": 129,
+   "as_absent": {
+    "characters": 129,
+    "pairs": 8118,
+    "cooccurring": 8118,
+    "incompatible": 0,
+    "compatible": 8118
+   },
+   "excluded": {
+    "characters": 129,
+    "pairs": 8118,
+    "cooccurring": 8118,
+    "incompatible": 0,
+    "compatible": 8118
+   }
+  },
+  {
+   "clone": 26,
+   "cells": 4,
+   "characters": 137,
+   "as_absent": {
+    "characters": 137,
+    "pairs": 9105,
+    "cooccurring": 9105,
+    "incompatible": 2940,
+    "compatible": 6165
+   },
+   "excluded": {
+    "characters": 137,
+    "pairs": 9105,
+    "cooccurring": 9105,
+    "incompatible": 201,
+    "compatible": 8904
+   }
+  },
+  {
+   "clone": 32,
+   "cells": 4,
+   "characters": 171,
+   "as_absent": {
+    "characters": 171,
+    "pairs": 14305,
+    "cooccurring": 14305,
+    "incompatible": 6788,
+    "compatible": 7517
+   },
+   "excluded": {
+    "characters": 171,
+    "pairs": 14305,
+    "cooccurring": 14305,
+    "incompatible": 255,
+    "compatible": 14050
+   }
+  },
+  {
+   "clone": 129,
+   "cells": 3,
+   "characters": 193,
+   "as_absent": {
+    "characters": 193,
+    "pairs": 18269,
+    "cooccurring": 18269,
+    "incompatible": 0,
+    "compatible": 18269
+   },
+   "excluded": {
+    "characters": 193,
+    "pairs": 18269,
+    "cooccurring": 18269,
+    "incompatible": 0,
+    "compatible": 18269
+   }
+  },
+  {
+   "clone": 71,
+   "cells": 4,
+   "characters": 202,
+   "as_absent": {
+    "characters": 202,
+    "pairs": 19966,
+    "cooccurring": 19966,
+    "incompatible": 6984,
+    "compatible": 12982
+   },
+   "excluded": {
+    "characters": 202,
+    "pairs": 19966,
+    "cooccurring": 19966,
+    "incompatible": 0,
+    "compatible": 19966
+   }
+  },
+  {
+   "clone": 50,
+   "cells": 3,
+   "characters": 216,
+   "as_absent": {
+    "characters": 216,
+    "pairs": 22956,
+    "cooccurring": 22956,
+    "incompatible": 0,
+    "compatible": 22956
+   },
+   "excluded": {
+    "characters": 216,
+    "pairs": 22956,
+    "cooccurring": 22956,
+    "incompatible": 0,
+    "compatible": 22956
+   }
+  },
+  {
+   "clone": 35,
+   "cells": 3,
+   "characters": 248,
+   "as_absent": {
+    "characters": 248,
+    "pairs": 30248,
+    "cooccurring": 30248,
+    "incompatible": 0,
+    "compatible": 30248
+   },
+   "excluded": {
+    "characters": 248,
+    "pairs": 30248,
+    "cooccurring": 30248,
+    "incompatible": 0,
+    "compatible": 30248
+   }
+  },
+  {
+   "clone": 82,
+   "cells": 4,
+   "characters": 259,
+   "as_absent": {
+    "characters": 259,
+    "pairs": 33076,
+    "cooccurring": 33076,
+    "incompatible": 4788,
+    "compatible": 28288
+   },
+   "excluded": {
+    "characters": 259,
+    "pairs": 33076,
+    "cooccurring": 33076,
+    "incompatible": 19,
+    "compatible": 33057
+   }
+  },
+  {
+   "clone": 68,
+   "cells": 6,
+   "characters": 270,
+   "as_absent": {
+    "characters": 270,
+    "pairs": 35895,
+    "cooccurring": 35741,
+    "incompatible": 26399,
+    "compatible": 9496
+   },
+   "excluded": {
+    "characters": 270,
+    "pairs": 35895,
+    "cooccurring": 35741,
+    "incompatible": 27,
+    "compatible": 35868
+   }
+  },
+  {
+   "clone": 61,
+   "cells": 4,
+   "characters": 271,
+   "as_absent": {
+    "characters": 271,
+    "pairs": 36139,
+    "cooccurring": 36139,
+    "incompatible": 9228,
+    "compatible": 26911
+   },
+   "excluded": {
+    "characters": 271,
+    "pairs": 36139,
+    "cooccurring": 36139,
+    "incompatible": 26,
+    "compatible": 36113
+   }
+  },
+  {
+   "clone": 57,
+   "cells": 7,
+   "characters": 297,
+   "as_absent": {
+    "characters": 297,
+    "pairs": 43612,
+    "cooccurring": 43612,
+    "incompatible": 21410,
+    "compatible": 22202
+   },
+   "excluded": {
+    "characters": 297,
+    "pairs": 43612,
+    "cooccurring": 43612,
+    "incompatible": 66,
+    "compatible": 43546
+   }
+  },
+  {
+   "clone": 148,
+   "cells": 4,
+   "characters": 305,
+   "as_absent": {
+    "characters": 305,
+    "pairs": 45860,
+    "cooccurring": 45860,
+    "incompatible": 8936,
+    "compatible": 36924
+   },
+   "excluded": {
+    "characters": 305,
+    "pairs": 45860,
+    "cooccurring": 45860,
+    "incompatible": 51,
+    "compatible": 45809
+   }
+  },
+  {
+   "clone": 13,
+   "cells": 4,
+   "characters": 318,
+   "as_absent": {
+    "characters": 318,
+    "pairs": 49918,
+    "cooccurring": 49918,
+    "incompatible": 9684,
+    "compatible": 40234
+   },
+   "excluded": {
+    "characters": 318,
+    "pairs": 49918,
+    "cooccurring": 49918,
+    "incompatible": 4,
+    "compatible": 49914
+   }
+  },
+  {
+   "clone": 59,
+   "cells": 5,
+   "characters": 318,
+   "as_absent": {
+    "characters": 318,
+    "pairs": 49920,
+    "cooccurring": 49920,
+    "incompatible": 20101,
+    "compatible": 29819
+   },
+   "excluded": {
+    "characters": 318,
+    "pairs": 49920,
+    "cooccurring": 49920,
+    "incompatible": 331,
+    "compatible": 49589
+   }
+  },
+  {
+   "clone": 73,
+   "cells": 4,
+   "characters": 320,
+   "as_absent": {
+    "characters": 320,
+    "pairs": 50473,
+    "cooccurring": 50473,
+    "incompatible": 10394,
+    "compatible": 40079
+   },
+   "excluded": {
+    "characters": 320,
+    "pairs": 50473,
+    "cooccurring": 50473,
+    "incompatible": 0,
+    "compatible": 50473
+   }
+  },
+  {
+   "clone": 123,
+   "cells": 4,
+   "characters": 336,
+   "as_absent": {
+    "characters": 336,
+    "pairs": 55785,
+    "cooccurring": 55785,
+    "incompatible": 7399,
+    "compatible": 48386
+   },
+   "excluded": {
+    "characters": 336,
+    "pairs": 55785,
+    "cooccurring": 55785,
+    "incompatible": 397,
+    "compatible": 55388
+   }
+  },
+  {
+   "clone": 141,
+   "cells": 3,
+   "characters": 344,
+   "as_absent": {
+    "characters": 344,
+    "pairs": 58332,
+    "cooccurring": 58332,
+    "incompatible": 0,
+    "compatible": 58332
+   },
+   "excluded": {
+    "characters": 344,
+    "pairs": 58332,
+    "cooccurring": 58332,
+    "incompatible": 0,
+    "compatible": 58332
+   }
+  },
+  {
+   "clone": 38,
+   "cells": 4,
+   "characters": 346,
+   "as_absent": {
+    "characters": 346,
+    "pairs": 59198,
+    "cooccurring": 59198,
+    "incompatible": 10352,
+    "compatible": 48846
+   },
+   "excluded": {
+    "characters": 346,
+    "pairs": 59198,
+    "cooccurring": 59198,
+    "incompatible": 245,
+    "compatible": 58953
+   }
+  },
+  {
+   "clone": 47,
+   "cells": 9,
+   "characters": 355,
+   "as_absent": {
+    "characters": 355,
+    "pairs": 62398,
+    "cooccurring": 61589,
+    "incompatible": 22347,
+    "compatible": 40051
+   },
+   "excluded": {
+    "characters": 355,
+    "pairs": 62398,
+    "cooccurring": 61589,
+    "incompatible": 722,
+    "compatible": 61676
+   }
+  },
+  {
+   "clone": 46,
+   "cells": 5,
+   "characters": 393,
+   "as_absent": {
+    "characters": 393,
+    "pairs": 76433,
+    "cooccurring": 76433,
+    "incompatible": 25010,
+    "compatible": 51423
+   },
+   "excluded": {
+    "characters": 393,
+    "pairs": 76433,
+    "cooccurring": 76433,
+    "incompatible": 176,
+    "compatible": 76257
+   }
+  },
+  {
+   "clone": 23,
+   "cells": 8,
+   "characters": 404,
+   "as_absent": {
+    "characters": 404,
+    "pairs": 80556,
+    "cooccurring": 41262,
+    "incompatible": 15011,
+    "compatible": 65545
+   },
+   "excluded": {
+    "characters": 404,
+    "pairs": 80556,
+    "cooccurring": 41262,
+    "incompatible": 290,
+    "compatible": 80266
+   }
+  },
+  {
+   "clone": 78,
+   "cells": 5,
+   "characters": 424,
+   "as_absent": {
+    "characters": 424,
+    "pairs": 88929,
+    "cooccurring": 88929,
+    "incompatible": 18382,
+    "compatible": 70547
+   },
+   "excluded": {
+    "characters": 424,
+    "pairs": 88929,
+    "cooccurring": 88929,
+    "incompatible": 230,
+    "compatible": 88699
+   }
+  },
+  {
+   "clone": 112,
+   "cells": 7,
+   "characters": 436,
+   "as_absent": {
+    "characters": 436,
+    "pairs": 94150,
+    "cooccurring": 93700,
+    "incompatible": 39234,
+    "compatible": 54916
+   },
+   "excluded": {
+    "characters": 436,
+    "pairs": 94150,
+    "cooccurring": 93700,
+    "incompatible": 899,
+    "compatible": 93251
+   }
+  },
+  {
+   "clone": 127,
+   "cells": 6,
+   "characters": 452,
+   "as_absent": {
+    "characters": 452,
+    "pairs": 101190,
+    "cooccurring": 101112,
+    "incompatible": 47226,
+    "compatible": 53964
+   },
+   "excluded": {
+    "characters": 452,
+    "pairs": 101190,
+    "cooccurring": 101112,
+    "incompatible": 255,
+    "compatible": 100935
+   }
+  },
+  {
+   "clone": 24,
+   "cells": 6,
+   "characters": 456,
+   "as_absent": {
+    "characters": 456,
+    "pairs": 103028,
+    "cooccurring": 103028,
+    "incompatible": 21679,
+    "compatible": 81349
+   },
+   "excluded": {
+    "characters": 456,
+    "pairs": 103028,
+    "cooccurring": 103028,
+    "incompatible": 102,
+    "compatible": 102926
+   }
+  },
+  {
+   "clone": 135,
+   "cells": 5,
+   "characters": 463,
+   "as_absent": {
+    "characters": 463,
+    "pairs": 106172,
+    "cooccurring": 106172,
+    "incompatible": 27288,
+    "compatible": 78884
+   },
+   "excluded": {
+    "characters": 463,
+    "pairs": 106172,
+    "cooccurring": 106172,
+    "incompatible": 586,
+    "compatible": 105586
+   }
+  },
+  {
+   "clone": 106,
+   "cells": 5,
+   "characters": 468,
+   "as_absent": {
+    "characters": 468,
+    "pairs": 108496,
+    "cooccurring": 108496,
+    "incompatible": 8975,
+    "compatible": 99521
+   },
+   "excluded": {
+    "characters": 468,
+    "pairs": 108496,
+    "cooccurring": 108496,
+    "incompatible": 809,
+    "compatible": 107687
+   }
+  },
+  {
+   "clone": 117,
+   "cells": 9,
+   "characters": 469,
+   "as_absent": {
+    "characters": 469,
+    "pairs": 108996,
+    "cooccurring": 105905,
+    "incompatible": 47917,
+    "compatible": 61079
+   },
+   "excluded": {
+    "characters": 469,
+    "pairs": 108996,
+    "cooccurring": 105905,
+    "incompatible": 2262,
+    "compatible": 106734
+   }
+  },
+  {
+   "clone": 101,
+   "cells": 10,
+   "characters": 490,
+   "as_absent": {
+    "characters": 490,
+    "pairs": 118960,
+    "cooccurring": 118330,
+    "incompatible": 71531,
+    "compatible": 47429
+   },
+   "excluded": {
+    "characters": 490,
+    "pairs": 118960,
+    "cooccurring": 118330,
+    "incompatible": 2333,
+    "compatible": 116627
+   }
+  },
+  {
+   "clone": 100,
+   "cells": 4,
+   "characters": 497,
+   "as_absent": {
+    "characters": 497,
+    "pairs": 122301,
+    "cooccurring": 122301,
+    "incompatible": 2412,
+    "compatible": 119889
+   },
+   "excluded": {
+    "characters": 497,
+    "pairs": 122301,
+    "cooccurring": 122301,
+    "incompatible": 39,
+    "compatible": 122262
+   }
+  },
+  {
+   "clone": 64,
+   "cells": 6,
+   "characters": 501,
+   "as_absent": {
+    "characters": 501,
+    "pairs": 124384,
+    "cooccurring": 124370,
+    "incompatible": 28137,
+    "compatible": 96247
+   },
+   "excluded": {
+    "characters": 501,
+    "pairs": 124384,
+    "cooccurring": 124370,
+    "incompatible": 1580,
+    "compatible": 122804
+   }
+  },
+  {
+   "clone": 122,
+   "cells": 11,
+   "characters": 501,
+   "as_absent": {
+    "characters": 501,
+    "pairs": 124341,
+    "cooccurring": 118092,
+    "incompatible": 50870,
+    "compatible": 73471
+   },
+   "excluded": {
+    "characters": 501,
+    "pairs": 124341,
+    "cooccurring": 118092,
+    "incompatible": 3207,
+    "compatible": 121134
+   }
+  },
+  {
+   "clone": 14,
+   "cells": 7,
+   "characters": 503,
+   "as_absent": {
+    "characters": 503,
+    "pairs": 125272,
+    "cooccurring": 124944,
+    "incompatible": 53118,
+    "compatible": 72154
+   },
+   "excluded": {
+    "characters": 503,
+    "pairs": 125272,
+    "cooccurring": 124944,
+    "incompatible": 4613,
+    "compatible": 120659
+   }
+  },
+  {
+   "clone": 137,
+   "cells": 10,
+   "characters": 505,
+   "as_absent": {
+    "characters": 505,
+    "pairs": 126433,
+    "cooccurring": 119874,
+    "incompatible": 38439,
+    "compatible": 87994
+   },
+   "excluded": {
+    "characters": 505,
+    "pairs": 126433,
+    "cooccurring": 119874,
+    "incompatible": 5154,
+    "compatible": 121279
+   }
+  },
+  {
+   "clone": 94,
+   "cells": 8,
+   "characters": 515,
+   "as_absent": {
+    "characters": 515,
+    "pairs": 131432,
+    "cooccurring": 124436,
+    "incompatible": 60513,
+    "compatible": 70919
+   },
+   "excluded": {
+    "characters": 515,
+    "pairs": 131432,
+    "cooccurring": 124436,
+    "incompatible": 2027,
+    "compatible": 129405
+   }
+  },
+  {
+   "clone": 48,
+   "cells": 11,
+   "characters": 526,
+   "as_absent": {
+    "characters": 526,
+    "pairs": 137122,
+    "cooccurring": 132356,
+    "incompatible": 68585,
+    "compatible": 68537
+   },
+   "excluded": {
+    "characters": 526,
+    "pairs": 137122,
+    "cooccurring": 132356,
+    "incompatible": 4914,
+    "compatible": 132208
+   }
+  },
+  {
+   "clone": 62,
+   "cells": 12,
+   "characters": 538,
+   "as_absent": {
+    "characters": 538,
+    "pairs": 143441,
+    "cooccurring": 139308,
+    "incompatible": 96664,
+    "compatible": 46777
+   },
+   "excluded": {
+    "characters": 538,
+    "pairs": 143441,
+    "cooccurring": 139308,
+    "incompatible": 6563,
+    "compatible": 136878
+   }
+  },
+  {
+   "clone": 18,
+   "cells": 8,
+   "characters": 539,
+   "as_absent": {
+    "characters": 539,
+    "pairs": 144112,
+    "cooccurring": 143714,
+    "incompatible": 34582,
+    "compatible": 109530
+   },
+   "excluded": {
+    "characters": 539,
+    "pairs": 144112,
+    "cooccurring": 143714,
+    "incompatible": 2527,
+    "compatible": 141585
+   }
+  },
+  {
+   "clone": 42,
+   "cells": 7,
+   "characters": 541,
+   "as_absent": {
+    "characters": 541,
+    "pairs": 145109,
+    "cooccurring": 144649,
+    "incompatible": 61128,
+    "compatible": 83981
+   },
+   "excluded": {
+    "characters": 541,
+    "pairs": 145109,
+    "cooccurring": 144649,
+    "incompatible": 1062,
+    "compatible": 144047
+   }
+  },
+  {
+   "clone": 142,
+   "cells": 17,
+   "characters": 569,
+   "as_absent": {
+    "characters": 569,
+    "pairs": 160558,
+    "cooccurring": 153962,
+    "incompatible": 94691,
+    "compatible": 65867
+   },
+   "excluded": {
+    "characters": 569,
+    "pairs": 160558,
+    "cooccurring": 153962,
+    "incompatible": 9403,
+    "compatible": 151155
+   }
+  },
+  {
+   "clone": 15,
+   "cells": 11,
+   "characters": 573,
+   "as_absent": {
+    "characters": 573,
+    "pairs": 162678,
+    "cooccurring": 159812,
+    "incompatible": 91967,
+    "compatible": 70711
+   },
+   "excluded": {
+    "characters": 573,
+    "pairs": 162678,
+    "cooccurring": 159812,
+    "incompatible": 5353,
+    "compatible": 157325
+   }
+  },
+  {
+   "clone": 108,
+   "cells": 12,
+   "characters": 573,
+   "as_absent": {
+    "characters": 573,
+    "pairs": 162681,
+    "cooccurring": 152943,
+    "incompatible": 69599,
+    "compatible": 93082
+   },
+   "excluded": {
+    "characters": 573,
+    "pairs": 162681,
+    "cooccurring": 152943,
+    "incompatible": 5501,
+    "compatible": 157180
+   }
+  },
+  {
+   "clone": 65,
+   "cells": 24,
+   "characters": 578,
+   "as_absent": {
+    "characters": 578,
+    "pairs": 165711,
+    "cooccurring": 155281,
+    "incompatible": 91006,
+    "compatible": 74705
+   },
+   "excluded": {
+    "characters": 578,
+    "pairs": 165711,
+    "cooccurring": 155281,
+    "incompatible": 4854,
+    "compatible": 160857
+   }
+  },
+  {
+   "clone": 130,
+   "cells": 9,
+   "characters": 583,
+   "as_absent": {
+    "characters": 583,
+    "pairs": 168478,
+    "cooccurring": 168058,
+    "incompatible": 76420,
+    "compatible": 92058
+   },
+   "excluded": {
+    "characters": 583,
+    "pairs": 168478,
+    "cooccurring": 168058,
+    "incompatible": 7605,
+    "compatible": 160873
+   }
+  },
+  {
+   "clone": 63,
+   "cells": 7,
+   "characters": 587,
+   "as_absent": {
+    "characters": 587,
+    "pairs": 170865,
+    "cooccurring": 168018,
+    "incompatible": 49095,
+    "compatible": 121770
+   },
+   "excluded": {
+    "characters": 587,
+    "pairs": 170865,
+    "cooccurring": 168018,
+    "incompatible": 3168,
+    "compatible": 167697
+   }
+  },
+  {
+   "clone": 30,
+   "cells": 20,
+   "characters": 591,
+   "as_absent": {
+    "characters": 591,
+    "pairs": 173235,
+    "cooccurring": 170382,
+    "incompatible": 137141,
+    "compatible": 36094
+   },
+   "excluded": {
+    "characters": 591,
+    "pairs": 173235,
+    "cooccurring": 170382,
+    "incompatible": 2663,
+    "compatible": 170572
+   }
+  },
+  {
+   "clone": 60,
+   "cells": 5,
+   "characters": 599,
+   "as_absent": {
+    "characters": 599,
+    "pairs": 177930,
+    "cooccurring": 177930,
+    "incompatible": 4958,
+    "compatible": 172972
+   },
+   "excluded": {
+    "characters": 599,
+    "pairs": 177930,
+    "cooccurring": 177930,
+    "incompatible": 749,
+    "compatible": 177181
+   }
+  },
+  {
+   "clone": 132,
+   "cells": 20,
+   "characters": 600,
+   "as_absent": {
+    "characters": 600,
+    "pairs": 178550,
+    "cooccurring": 163739,
+    "incompatible": 110972,
+    "compatible": 67578
+   },
+   "excluded": {
+    "characters": 600,
+    "pairs": 178550,
+    "cooccurring": 163739,
+    "incompatible": 8051,
+    "compatible": 170499
+   }
+  },
+  {
+   "clone": 2,
+   "cells": 13,
+   "characters": 613,
+   "as_absent": {
+    "characters": 613,
+    "pairs": 186242,
+    "cooccurring": 176704,
+    "incompatible": 95234,
+    "compatible": 91008
+   },
+   "excluded": {
+    "characters": 613,
+    "pairs": 186242,
+    "cooccurring": 176704,
+    "incompatible": 4157,
+    "compatible": 182085
+   }
+  },
+  {
+   "clone": 128,
+   "cells": 12,
+   "characters": 622,
+   "as_absent": {
+    "characters": 622,
+    "pairs": 191754,
+    "cooccurring": 186661,
+    "incompatible": 116415,
+    "compatible": 75339
+   },
+   "excluded": {
+    "characters": 622,
+    "pairs": 191754,
+    "cooccurring": 186661,
+    "incompatible": 4307,
+    "compatible": 187447
+   }
+  },
+  {
+   "clone": 41,
+   "cells": 15,
+   "characters": 625,
+   "as_absent": {
+    "characters": 625,
+    "pairs": 193730,
+    "cooccurring": 182364,
+    "incompatible": 94501,
+    "compatible": 99229
+   },
+   "excluded": {
+    "characters": 625,
+    "pairs": 193730,
+    "cooccurring": 182364,
+    "incompatible": 11566,
+    "compatible": 182164
+   }
+  },
+  {
+   "clone": 6,
+   "cells": 10,
+   "characters": 631,
+   "as_absent": {
+    "characters": 631,
+    "pairs": 197431,
+    "cooccurring": 183068,
+    "incompatible": 78507,
+    "compatible": 118924
+   },
+   "excluded": {
+    "characters": 631,
+    "pairs": 197431,
+    "cooccurring": 183068,
+    "incompatible": 6560,
+    "compatible": 190871
+   }
+  },
+  {
+   "clone": 103,
+   "cells": 13,
+   "characters": 645,
+   "as_absent": {
+    "characters": 645,
+    "pairs": 206280,
+    "cooccurring": 181180,
+    "incompatible": 89106,
+    "compatible": 117174
+   },
+   "excluded": {
+    "characters": 645,
+    "pairs": 206280,
+    "cooccurring": 181180,
+    "incompatible": 5953,
+    "compatible": 200327
+   }
+  },
+  {
+   "clone": 39,
+   "cells": 18,
+   "characters": 668,
+   "as_absent": {
+    "characters": 668,
+    "pairs": 221309,
+    "cooccurring": 197836,
+    "incompatible": 113789,
+    "compatible": 107520
+   },
+   "excluded": {
+    "characters": 668,
+    "pairs": 221309,
+    "cooccurring": 197836,
+    "incompatible": 5104,
+    "compatible": 216205
+   }
+  },
+  {
+   "clone": 146,
+   "cells": 9,
+   "characters": 678,
+   "as_absent": {
+    "characters": 678,
+    "pairs": 227797,
+    "cooccurring": 131323,
+    "incompatible": 40328,
+    "compatible": 187469
+   },
+   "excluded": {
+    "characters": 678,
+    "pairs": 227797,
+    "cooccurring": 131323,
+    "incompatible": 1005,
+    "compatible": 226792
+   }
+  },
+  {
+   "clone": 52,
+   "cells": 15,
+   "characters": 687,
+   "as_absent": {
+    "characters": 687,
+    "pairs": 233801,
+    "cooccurring": 208314,
+    "incompatible": 67577,
+    "compatible": 166224
+   },
+   "excluded": {
+    "characters": 687,
+    "pairs": 233801,
+    "cooccurring": 208314,
+    "incompatible": 14767,
+    "compatible": 219034
+   }
+  },
+  {
+   "clone": 4,
+   "cells": 18,
+   "characters": 703,
+   "as_absent": {
+    "characters": 703,
+    "pairs": 245016,
+    "cooccurring": 214647,
+    "incompatible": 148693,
+    "compatible": 96323
+   },
+   "excluded": {
+    "characters": 703,
+    "pairs": 245016,
+    "cooccurring": 214647,
+    "incompatible": 20259,
+    "compatible": 224757
+   }
+  },
+  {
+   "clone": 16,
+   "cells": 21,
+   "characters": 719,
+   "as_absent": {
+    "characters": 719,
+    "pairs": 256463,
+    "cooccurring": 238762,
+    "incompatible": 178025,
+    "compatible": 78438
+   },
+   "excluded": {
+    "characters": 719,
+    "pairs": 256463,
+    "cooccurring": 238762,
+    "incompatible": 12005,
+    "compatible": 244458
+   }
+  },
+  {
+   "clone": 121,
+   "cells": 8,
+   "characters": 721,
+   "as_absent": {
+    "characters": 721,
+    "pairs": 257360,
+    "cooccurring": 130970,
+    "incompatible": 24843,
+    "compatible": 232517
+   },
+   "excluded": {
+    "characters": 721,
+    "pairs": 257360,
+    "cooccurring": 130970,
+    "incompatible": 123,
+    "compatible": 257237
+   }
+  },
+  {
+   "clone": 111,
+   "cells": 23,
+   "characters": 729,
+   "as_absent": {
+    "characters": 729,
+    "pairs": 263290,
+    "cooccurring": 223994,
+    "incompatible": 166801,
+    "compatible": 96489
+   },
+   "excluded": {
+    "characters": 729,
+    "pairs": 263290,
+    "cooccurring": 223994,
+    "incompatible": 13671,
+    "compatible": 249619
+   }
+  },
+  {
+   "clone": 104,
+   "cells": 21,
+   "characters": 731,
+   "as_absent": {
+    "characters": 731,
+    "pairs": 264924,
+    "cooccurring": 195825,
+    "incompatible": 123177,
+    "compatible": 141747
+   },
+   "excluded": {
+    "characters": 731,
+    "pairs": 264924,
+    "cooccurring": 195825,
+    "incompatible": 12685,
+    "compatible": 252239
+   }
+  },
+  {
+   "clone": 67,
+   "cells": 16,
+   "characters": 774,
+   "as_absent": {
+    "characters": 774,
+    "pairs": 297249,
+    "cooccurring": 286170,
+    "incompatible": 90114,
+    "compatible": 207135
+   },
+   "excluded": {
+    "characters": 774,
+    "pairs": 297249,
+    "cooccurring": 286170,
+    "incompatible": 5060,
+    "compatible": 292189
+   }
+  },
+  {
+   "clone": 28,
+   "cells": 23,
+   "characters": 807,
+   "as_absent": {
+    "characters": 807,
+    "pairs": 322820,
+    "cooccurring": 233856,
+    "incompatible": 152960,
+    "compatible": 169860
+   },
+   "excluded": {
+    "characters": 807,
+    "pairs": 322820,
+    "cooccurring": 233856,
+    "incompatible": 10660,
+    "compatible": 312160
+   }
+  },
+  {
+   "clone": 107,
+   "cells": 23,
+   "characters": 812,
+   "as_absent": {
+    "characters": 812,
+    "pairs": 327036,
+    "cooccurring": 296587,
+    "incompatible": 183331,
+    "compatible": 143705
+   },
+   "excluded": {
+    "characters": 812,
+    "pairs": 327036,
+    "cooccurring": 296587,
+    "incompatible": 21336,
+    "compatible": 305700
+   }
+  },
+  {
+   "clone": 84,
+   "cells": 23,
+   "characters": 823,
+   "as_absent": {
+    "characters": 823,
+    "pairs": 335786,
+    "cooccurring": 284601,
+    "incompatible": 171289,
+    "compatible": 164497
+   },
+   "excluded": {
+    "characters": 823,
+    "pairs": 335786,
+    "cooccurring": 284601,
+    "incompatible": 29722,
+    "compatible": 306064
+   }
+  },
+  {
+   "clone": 51,
+   "cells": 18,
+   "characters": 830,
+   "as_absent": {
+    "characters": 830,
+    "pairs": 341519,
+    "cooccurring": 268994,
+    "incompatible": 142061,
+    "compatible": 199458
+   },
+   "excluded": {
+    "characters": 830,
+    "pairs": 341519,
+    "cooccurring": 268994,
+    "incompatible": 17382,
+    "compatible": 324137
+   }
+  },
+  {
+   "clone": 93,
+   "cells": 23,
+   "characters": 843,
+   "as_absent": {
+    "characters": 843,
+    "pairs": 352278,
+    "cooccurring": 312230,
+    "incompatible": 202960,
+    "compatible": 149318
+   },
+   "excluded": {
+    "characters": 843,
+    "pairs": 352278,
+    "cooccurring": 312230,
+    "incompatible": 24690,
+    "compatible": 327588
+   }
+  },
+  {
+   "clone": 115,
+   "cells": 30,
+   "characters": 871,
+   "as_absent": {
+    "characters": 871,
+    "pairs": 375932,
+    "cooccurring": 305076,
+    "incompatible": 220047,
+    "compatible": 155885
+   },
+   "excluded": {
+    "characters": 871,
+    "pairs": 375932,
+    "cooccurring": 305076,
+    "incompatible": 37938,
+    "compatible": 337994
+   }
+  },
+  {
+   "clone": 80,
+   "cells": 14,
+   "characters": 956,
+   "as_absent": {
+    "characters": 956,
+    "pairs": 452950,
+    "cooccurring": 230953,
+    "incompatible": 78157,
+    "compatible": 374793
+   },
+   "excluded": {
+    "characters": 956,
+    "pairs": 452950,
+    "cooccurring": 230953,
+    "incompatible": 4378,
+    "compatible": 448572
+   }
+  },
+  {
+   "clone": 58,
+   "cells": 71,
+   "characters": 1123,
+   "as_absent": {
+    "characters": 1123,
+    "pairs": 624727,
+    "cooccurring": 458265,
+    "incompatible": 352603,
+    "compatible": 272124
+   },
+   "excluded": {
+    "characters": 1123,
+    "pairs": 624727,
+    "cooccurring": 458265,
+    "incompatible": 64147,
+    "compatible": 560580
+   }
+  },
+  {
+   "clone": 89,
+   "cells": 31,
+   "characters": 1191,
+   "as_absent": {
+    "characters": 1191,
+    "pairs": 703459,
+    "cooccurring": 474841,
+    "incompatible": 255762,
+    "compatible": 447697
+   },
+   "excluded": {
+    "characters": 1191,
+    "pairs": 703459,
+    "cooccurring": 474841,
+    "incompatible": 37316,
+    "compatible": 666143
+   }
+  },
+  {
+   "clone": 126,
+   "cells": 44,
+   "characters": 1217,
+   "as_absent": {
+    "characters": 1217,
+    "pairs": 734527,
+    "cooccurring": 496222,
+    "incompatible": 282970,
+    "compatible": 451557
+   },
+   "excluded": {
+    "characters": 1217,
+    "pairs": 734527,
+    "cooccurring": 496222,
+    "incompatible": 50740,
+    "compatible": 683787
+   }
+  },
+  {
+   "clone": 139,
+   "cells": 36,
+   "characters": 1280,
+   "as_absent": {
+    "characters": 1280,
+    "pairs": 812712,
+    "cooccurring": 495397,
+    "incompatible": 323079,
+    "compatible": 489633
+   },
+   "excluded": {
+    "characters": 1280,
+    "pairs": 812712,
+    "cooccurring": 495397,
+    "incompatible": 73372,
+    "compatible": 739340
+   }
+  },
+  {
+   "clone": 27,
+   "cells": 71,
+   "characters": 1306,
+   "as_absent": {
+    "characters": 1306,
+    "pairs": 844760,
+    "cooccurring": 578726,
+    "incompatible": 431541,
+    "compatible": 413219
+   },
+   "excluded": {
+    "characters": 1306,
+    "pairs": 844760,
+    "cooccurring": 578726,
+    "incompatible": 72851,
+    "compatible": 771909
+   }
+  },
+  {
+   "clone": 22,
+   "cells": 71,
+   "characters": 1392,
+   "as_absent": {
+    "characters": 1392,
+    "pairs": 960453,
+    "cooccurring": 662311,
+    "incompatible": 482472,
+    "compatible": 477981
+   },
+   "excluded": {
+    "characters": 1392,
+    "pairs": 960453,
+    "cooccurring": 662311,
+    "incompatible": 70777,
+    "compatible": 889676
+   }
+  },
+  {
+   "clone": 10,
+   "cells": 38,
+   "characters": 1532,
+   "as_absent": {
+    "characters": 1532,
+    "pairs": 1163881,
+    "cooccurring": 460852,
+    "incompatible": 310999,
+    "compatible": 852882
+   },
+   "excluded": {
+    "characters": 1532,
+    "pairs": 1163881,
+    "cooccurring": 460852,
+    "incompatible": 30951,
+    "compatible": 1132930
+   }
+  },
+  {
+   "clone": 45,
+   "cells": 62,
+   "characters": 1682,
+   "as_absent": {
+    "characters": 1682,
+    "pairs": 1403296,
+    "cooccurring": 663457,
+    "incompatible": 351612,
+    "compatible": 1051684
+   },
+   "excluded": {
+    "characters": 1682,
+    "pairs": 1403296,
+    "cooccurring": 663457,
+    "incompatible": 69766,
+    "compatible": 1333530
+   }
+  },
+  {
+   "clone": 102,
+   "cells": 104,
+   "characters": 2019,
+   "as_absent": {
+    "characters": 2019,
+    "pairs": 2022546,
+    "cooccurring": 811337,
+    "incompatible": 604836,
+    "compatible": 1417710
+   },
+   "excluded": {
+    "characters": 2019,
+    "pairs": 2022546,
+    "cooccurring": 811337,
+    "incompatible": 97297,
+    "compatible": 1925249
+   }
+  },
+  {
+   "clone": 110,
+   "cells": 210,
+   "characters": 2136,
+   "as_absent": {
+    "characters": 2136,
+    "pairs": 2260314,
+    "cooccurring": 991837,
+    "incompatible": 751359,
+    "compatible": 1508955
+   },
+   "excluded": {
+    "characters": 2136,
+    "pairs": 2260314,
+    "cooccurring": 991837,
+    "incompatible": 204957,
+    "compatible": 2055357
+   }
+  },
+  {
+   "clone": 17,
+   "cells": 180,
+   "characters": 2343,
+   "as_absent": {
+    "characters": 2343,
+    "pairs": 2721078,
+    "cooccurring": 1052641,
+    "incompatible": 748622,
+    "compatible": 1972456
+   },
+   "excluded": {
+    "characters": 2343,
+    "pairs": 2721078,
+    "cooccurring": 1052641,
+    "incompatible": 161351,
+    "compatible": 2559727
+   }
+  },
+  {
+   "clone": 145,
+   "cells": 177,
+   "characters": 2372,
+   "as_absent": {
+    "characters": 2372,
+    "pairs": 2790209,
+    "cooccurring": 1027513,
+    "incompatible": 782793,
+    "compatible": 2007416
+   },
+   "excluded": {
+    "characters": 2372,
+    "pairs": 2790209,
+    "cooccurring": 1027513,
+    "incompatible": 175887,
+    "compatible": 2614322
+   }
+  }
+ ]
+}

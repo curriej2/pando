@@ -49,14 +49,20 @@ MARKS = [(74, "clone\n~74 cells"), (313, "subclone\nmin 313"), (10506, "subclone
 xi_all = json.loads((RES / "xi_vectors.json").read_text())
 
 
-def moments(xi, m):
-    """E[s|m] and sd[s|m] for m iid draws from xi. m may be an array."""
+def moments(xi, m, want_sd=True):
+    """E[s|m] and sd[s|m] for m iid draws from xi. m may be an array.
+
+    want_sd=False skips the O(M^2) occupancy-covariance term. Needed for the
+    untrimmed vector, which now carries ~10^4 values (every value seen >=2x), where
+    the pair array would be terabytes. Only the mean is used for that curve."""
     xi = np.asarray(xi)
     m = np.atleast_1d(np.asarray(m, dtype=float))
     # a[k,i] = (1 - xi_i)^m_k
     a = np.power(1.0 - xi[None, :], m[:, None])
     p = 1.0 - a
     exp_s = p.sum(axis=1)
+    if not want_sd:
+        return exp_s, np.zeros_like(exp_s)
 
     pair = 1.0 - xi[None, :, None] - xi[None, None, :]          # 1 - xi_i - xi_j
     B = np.power(np.clip(pair, 0.0, None), m[:, None, None])
@@ -80,15 +86,16 @@ def invert(m_grid, exp_s, target):
 m_grid = np.unique(np.round(np.logspace(0, 6, 4000)).astype(int)).astype(float)
 
 def trim(d):
-    xi = np.array(list(d["xi"].values()))
-    keep = np.round(xi * d["n_edits"]) >= MIN_COUNT
-    return xi[keep] / xi[keep].sum(), xi
+    """script 04 now emits both: xi = kept alphabet, xi_untrimmed = every value seen >=2x"""
+    xi_real = np.array(list(d["xi"].values())); xi_real = xi_real / xi_real.sum()
+    xi_full = np.array(list(d["xi_untrimmed"].values())); xi_full = xi_full / xi_full.sum()
+    return xi_real, xi_full
 
 curves = {}
 for tbl, d in xi_all.items():
     xi_real, xi_full = trim(d)
     e, sd = moments(xi_real, m_grid)
-    e_full, _ = moments(xi_full, m_grid)
+    e_full, _ = moments(xi_full, m_grid, want_sd=False)
     curves[tbl] = dict(xi=xi_real, exp_s=e, sd=sd, exp_s_full=e_full,
                        M_real=len(xi_real), M_obs=d["M_obs"],
                        q=float((xi_real**2).sum()),

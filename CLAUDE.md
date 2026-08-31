@@ -46,7 +46,7 @@ notes · §H literature (§H.6 = full Mulberry & Stadler close read) · §I expe
 
 | directory | question | status |
 |---|---|---|
-| `2026-08_park-compatibility` | Does Park's cross-tape character compatibility support the perfect-phylogeny route (§D.4b)? | $\xi$/$q$ measured, dropout decomposed, homoplasy quantified per prefix node. **Character-set construction + compatibility check next.** |
+| `2026-08_park-compatibility` | Does Park's cross-tape character compatibility support the perfect-phylogeny route (§D.4b)? | Characters built; compatibility run on Mouse3 (94.66% excluded / 63.56% as-absent, **spread +31 pts ⇒ dropout binds, row A6**); conflict is **diffuse**, not concentrated. ⚠ **$C$ not yet measured — §D.4d shows the missing-excluded route to it is invalid.** Mouse1/2/Initial running. |
 
 ## Already settled — do not re-derive unless asked
 
@@ -66,6 +66,9 @@ notes · §H literature (§H.6 = full Mulberry & Stadler close read) · §I expe
 - A single tape's dynamic range is $\approx N$-fold ($N=5$–6 for Typewriter — small).
 - ENGRAM's published editing rate is **~7× below** Mulberry-optimal.
 - On a shared tape, the induced signal symbol must stay **below ~30%** of insertions (ceiling ~40–45%).
+- **⚠ Two conventions answer different questions (§D.4d).** Missing-excluded compatibility is
+  *pair-specific* and cannot be assembled into a skeleton; only missing-as-absent can. So the
+  spread is the gap between the ideal and the achievable, not an error bar.
 - **Measured on Park (2026-08-28), correcting earlier estimates:**
   - $q\approx\mathbf{0.0170}$, *not* the 0.004 the notes long assumed — effective alphabet
     $1/q\approx\mathbf{57}$. Slightly **worse** than Mulberry's $q=1/64$ "high diversity" regime.
@@ -179,15 +182,71 @@ Five `*_EditTable_filtered.csv` (cell × 166 tapes × 6 sites, wide) + `clonalbc
 (clone assignment). 99,451 cells. Missing = the literal string `None`.
 *(A lab copy of what appears to be the same experiment sits in `/data1/choij10/jihye/Cancer_Lineage/`
 — `Mouse1–4`, `Subclones`. Not being used.)*
-⚠ **Clone structure does not match §1629's "~75 clones × ~74 cells".** The delivered `ClonalBC`
-column has **3,294 barcodes, median 7 cells, max 27,537**, five clones holding half the cells.
-Clone-barcode dropout is uneven: 1.7% (Subclone), 5.9% (Initial), **44.9% (Mouse1)**. Resolve
-before quoting per-clone results against the paper.
+✅ **Clone structure resolved against the paper 2026-08-31 (§D.4c).** The "~75 clones × ~74 cells"
+in the old notes was a *misreading*: it is Metient's **migration** subset — Mouse 1 only, clones with
+≥10 cells that appear in ≥2 organs (93 → 76 → 75 after the collision screen; 5,551 cells). We
+reproduce their 93 and 76 exactly, so our ClonalBC handling **is** their pipeline. Tree
+reconstruction has no such threshold: one clone at a time, cells = clonal-barcode table ∩ group edit
+table. ⚠ **Their cell filter (≥100 recovered tapes for Initial/Subclone, ≥20 for the mice) is NOT
+applied in the delivered tables** — apply it ourselves; it drops 2.1% of cells. Pooled `ClonalBC`
+has 3,294 barcodes, median 7 cells, max 27,537, five clones holding half the cells.
 
 Step 0 (§D.4b) and the $m$/homoplasy quantification **done** — see `analyses/2026-08_park-compatibility`.
 
 ---
 
+### ⚠ Right-size the request — big asks queue behind small ones
+
+`submit.sh`'s defaults (128 G, 12 h) are a **ceiling, not a recommendation**. Oversized requests sit
+in `PD` behind jobs that would have run immediately, and on a busy day that is the difference between
+results tonight and results tomorrow. Two rules:
+
+**1. Estimate before submitting.** Ask what actually drives peak memory, not what the input weighs.
+For the compatibility check it is the **single largest clone**, because clones are processed one at a
+time — not the table size. Measured 2026-08-31 (`sstat -j <id>.batch -o MaxRSS`):
+
+| table | characters | largest clone | **peak RSS** | requested |
+|---|---|---|---|---|
+| Mouse3 | 55,875 | 2,372 chars / 210 cells | **2.1 G** | 64 G |
+| Mouse1 | 157,356 | 14,640 chars / 1,607 cells | **3.4 G** | 128 G |
+| Mouse2 | 75,733 | 15,533 chars / 3,387 cells | **4.2 G** | 128 G |
+| Initial | **1,006,226** | 3,963 chars / 127 cells | **1.9 G** | 256 G |
+
+⇒ Initial has **18× more characters than Mouse2 and uses less than half the memory**, because its
+biggest clone is small. Sizing on table size would have been exactly wrong. Every one of these
+requests was 30–134× oversized.
+
+⚠⚠ **A mid-run `MaxRSS` is worthless when the job processes work in size order.** The table above
+was read ~4 minutes into runs that sort clones by *ascending* size, so it measured the cheapest
+clones and nothing else. The rule of thumb derived from it was wrong: **Mouse2 then died
+`OUT_OF_MEMORY` at 128 G**, and Mouse1 climbed from 3.4 G to >20 G once it reached its large clones.
+Only a **completed** job's `MaxRSS` (`sacct -j <id> -o MaxRSS`) is a size estimate; a partial reading
+tells you nothing except a lower bound.
+
+Bound script 14 analytically instead: peak is driven by `nnz(MM^T)` for the single largest clone,
+`≤ Σ_cells k(k−1)/2` with k = characters containing that cell, at ~16 bytes per non-zero.
+
+**2. If a job will not start, resubmit smaller rather than waiting.** Check why first:
+
+```bash
+squeue -u $USER -t PD -o "%.10i %.16j %.40R"      # reason: Priority / Resources / QOSMaxJob…
+sinfo -p lesliec,cpu -o "%.12P %.6a %.15F %.10m"  # nodes A/I/O/T -- is anything idle?
+sacct -j <id> -o JobID,MaxRSS,Elapsed,State       # what a past run of this actually used
+```
+
+- `Resources` or a long `Priority` wait with nothing idle ⇒ **cancel and resubmit at a fraction of
+  the memory and walltime.** A 16 G / 2 h job backfills into gaps a 256 G / 24 h job cannot.
+- Drop `-p lesliec,cpu` to just `cpu` if the four `lesliec` nodes are full — `cpu` has 239 nodes.
+- For a first run on unfamiliar input, submit the **smallest input** with a small request, read
+  `MaxRSS` off it, then size the rest from measurement.
+- Slurm kills a job that exceeds its `--mem` (`OUT_OF_MEMORY`), so under-asking is cheap to detect
+  and costs one resubmit; over-asking costs queue time silently.
+
+- **⚠ Run every analysis as a Slurm batch job — `scripts/submit.sh <script.py> [args]`.**
+  Anything long-running in the VS Code tunnel takes the tunnel *and* the Claude Code session
+  down with it when it dies, losing both the computation and the transcript. This happened on
+  2026-08-31 during the §D.4b step-4 run. Defaults: `-A lesliec -p lesliec,cpu -c 4 --mem 128G
+  -t 12:00:00`, logs to `logs/`; override with `--mem/--time/--cpus`.
 - Do not run long sessions on a login node.
 - Data stays on the cluster. Never copy patient-derived or controlled-access data into notes,
   commit messages, figures, or anything that leaves the cluster.

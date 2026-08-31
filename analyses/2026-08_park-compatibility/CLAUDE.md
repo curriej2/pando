@@ -14,7 +14,13 @@ gitignored, never copy out). Justin's own copy of the Park, Chang et al. 2026 ta
   **This is the clone assignment**, needed for §D.4b Procedure step 1 (work within a clone).
 
 **State.** Step 0 done. $\xi$, $q$, dropout decomposition and the $m$-identifiability check all done.
-Character-set construction is the next step; compatibility check not started.
+Clone structure resolved against the paper (§D.4c) — our ClonalBC handling reproduces theirs exactly.
+**Character-set construction is the next step**; compatibility check not started.
+
+**Analysis unit (settled §D.4c).** Per `ClonalBC` clone, cells = clonal-barcode table ∩ group edit
+table, **with the paper's tape filter applied (≥100 recovered tapes for Initial/Subclone, ≥20 for
+Mouse1–3) — it is NOT applied in the delivered CSVs.** Clone-size floor is ours to choose, for
+statistical power, not inherited from the paper.
 
 ## Conventions here
 - Scripts in `src/`, figures in `figures/`, small tables in `results/`.

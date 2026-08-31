@@ -1634,7 +1634,7 @@ pre-existing, heritable cell state underlying metastatic potential"* (bioRxiv
 
 | | **Mouse embryo** (Yang/Seidel) | **Metastasis** (Park/Choi) | **SciPhy** |
 |---|---|---|---|
-| Tips | 1.34M | ~74 cells/clone × 75 clones; subclones 313–10,506 | ≲1,000 |
+| Tips | 1.34M | per-clone trees, all clones; **⚠ the "75 clones × ~74 cells" is the *migration* subset, see §D.4c**; subclone colonies 313–10,506 (8 of them) | ≲1,000 |
 | Recorder | 11 tapes × 6 = 66 sites | **166 tapes × 6 = 996 sites** | 13×5 = 65 (HEK293T) |
 | Tree search | NJ on typewriter distance + nearest-anchor placement | NJ start → **NNI hill climb** + guided SPR | **MCMC over topology + times** |
 | Criterion | distance | **sequential (prefix) parsimony** (explicit Camin–Sokal generalization) + $\lambda\cdot$Fitch(organ) | **posterior under the mechanistic CTMC** |
@@ -1732,7 +1732,7 @@ not Bayesian. ML tree search scales to $10^5$–$10^6$ tips routinely.
 
 ## Recommended sequence
 
-1. **Immediate — run SciPhy as-is on Park et al.'s per-clone trees.** ~74 cells/clone, 75 clones,
+1. **Immediate — run SciPhy as-is on Park et al.'s per-clone trees.** ⚠ *not* 74×75 — see §D.4c;
    $k=166$, $N=6$, $M\approx256$, near-zero homoplasy, tapes far from saturating. Squarely in
    range, embarrassingly parallel across clones. Replaces *"day 21/34 with a bootstrap CI
    conditional on a fixed external clock"* with genuine posterior dissemination dates + jointly
@@ -2672,7 +2672,7 @@ because editing is sequential and irreversible** — the prefix structure caps t
 > **Sequential recorders are computationally better behaved, not just more informative.** Fourth
 > advantage over GESTALT, alongside no DSBs, order information, and constant hazard.
 
-**Also:** pooling replicates by multiplying likelihoods gave **26% narrower HPDs**. Park's 75 clones
+**Also:** pooling replicates by multiplying likelihoods gave **26% narrower HPDs**. Park's clones (⚠ not 75 — see §D.4c)
 share editing parameters ⇒ same trick applies, 75 independent replicates of one editing process.
 
 **Their other limitations:** hundreds of sequences max, days-to-weeks runtime; call explicitly for
@@ -4413,7 +4413,7 @@ incompatibility in the low tenths of a percent.**
 
 ## Procedure
 
-1. **Work within a clone.** Park has ~75 clones; cells in different clones share no ancestry, so
+1. **Work within a clone.** ⚠ *Not* "~75 clones" — see §D.4c. Cells in different clones share no ancestry, so
    cross-clone pairs are trivially disjoint and would inflate the fraction. Report per clone.
 2. **Filter characters.** Keep those with clade size $\ge3$ cells (singletons are uninformative and
    noise-dominated). Record how many characters survive — that is itself a data-quality readout.
@@ -4465,3 +4465,136 @@ Neither computation can start without a **per-cell × per-tape ordered-genotype 
 with the missingness encoding understood. Getting that, and reproducing one published summary
 number from it (e.g. ~254 edits/cell by day 7, or ~150,000 unique insertion patterns), is the
 actual first task — and a better first contact with the data than either analysis.
+
+
+---
+
+# D.4c — Park's clone structure, resolved against the paper (2026-08-31)
+
+*Read `refs/metastasis_lineage_recording.pdf` (Park, Chang et al. 2026, bioRxiv 2026.08.10.744013)
+Methods: "Single-cell sequencing data pre-processing", "Lineage-tree reconstruction", "Migration
+inference using Metient".*
+
+## ⚠⚠ CORRECTION — "~75 clones × ~74 cells" is the migration subset, not the analysis scope
+
+These notes carried "Park has ~75 clones, ~74 cells each" in four places (§1629 table, §1629
+recommendation, §H.2, §D.4b step 1) and used it to frame the whole per-clone protocol. **It is a
+misreading.** The paper's own derivation:
+
+> "The analysis was restricted to **Mouse 1**, the only animal with multi-organ dissemination; Mice
+> 2 and 3 each carry a single focal liver metastasis and are not migration problems. Of the **93
+> Mouse 1 clones with at least ten recovered cells, 76 were also present in at least two organs.**
+> One of these (CGACCAGGAG) lost every cell of its second organ during the cross-clone collision
+> screen … the remaining **75 clones (5,551 cells)** were analysed."
+
+$5{,}551/75 = 74.0$ — that is where "~74 cells/clone" came from. It is the input set to **Metient
+migration inference**, gated on multi-organ representation, from **one mouse**. It is not the
+phylogenetic scope, and multi-organ gating is irrelevant to a compatibility check.
+
+**The tree-reconstruction scope is different and has no clone-size threshold:** *"trees were
+reconstructed one clone at a time, from the intersection of the clone's cells in the corrected
+clonal-barcode table with the group edit table."*
+
+## ✅ Reproduced exactly
+
+Intersecting our `clonalbc_percell_hamming1_corrected.csv` with `Mouse1_EditTable_filtered.csv`:
+**296 clones; 93 with ≥10 cells; 76 of those in ≥2 samples.** The paper's 93 and 76, to the clone.
+(Their 75 is after the cross-clone collision screen, which we have not replicated.) ⇒ our ClonalBC
+handling *is* their pipeline.
+
+## What the paper pins down that we did not have
+
+- **ClonalBC assignment**, confirmed identical to the delivered file: exactly 10 nt; within a cell,
+  drop ClonalBCs under 50% of that cell's top UMI count; assign the single highest-UMI barcode;
+  collapse at Hamming distance 1 by greedy abundance-ranked clustering, **single level, no chaining**.
+- ⚑ **Cell-inclusion rule for lineage reconstruction: ≥100 recovered TargetBCs for Initial and
+  Subclone, ≥20 for Mouse 1–3.** ⚠ **The delivered `*_EditTable_filtered.csv` do NOT have this
+  applied** — minimum recovered tapes is 0–1. Applying it drops 2.1% of cells (Initial 4.7%,
+  Subclone 0.8%, mice ~0.1%). Apply it ourselves from here on.
+- **This is why per-arm tape dropout differs**: the mice are admitted at ≥20 of 166 tapes, the other
+  arms at ≥100. Part of the dropout asymmetry is a QC threshold, not biology.
+- **Cross-clone collision screen** (worth replicating): a cell is pruned when its sequential match to
+  its own clone's consensus falls below 0.50 while another clone of the same mouse leads it by ≥0.20,
+  on ≥5 co-observed tapes.
+- **Subclone colonies:** 8 monoclonal colonies, 313–10,506 cells, trees by Cassiopeia greedy solver.
+  (Our `Subclone` table carries 21 ClonalBCs, 13 with ≥20 cells — the colonies were pooled from ten
+  wells, so ClonalBC ≠ colony here.)
+- **Tissue key (Mouse 1):** LL primary lung · LLL lower-left lung · LN mediastinal/regional lymph
+  node · TH thoracic mass · IP intraperitoneal lymph node · R right lung. (Mice 2–3: LV liver.)
+
+## ⚑ Their homoplasy statement agrees with our corrected mechanism
+
+The paper describes homoplasy as arising *"when two lineages independently reach a deep site and
+draw from the same insertion spectrum"* — **one collision at the reached site**, exactly the
+mechanism of §D.4b CORRECTION 2, not $q^L$. The $q^L$ error was ours, not theirs. Their claim is
+that prefix parsimony is *insensitive* to it; our measurement (96% of nodes below $m^*$, homoplasy
+concentrated in the top 1%) is consistent with that being broadly true for their clade sizes.
+
+## ⇒ Analysis unit for the compatibility check
+
+Follow the tree-reconstruction scope, not the migration subset: **per ClonalBC clone, cells =
+(corrected clonal-barcode table) ∩ (group edit table), with the ≥100/≥20 tape filter applied.**
+Then impose whatever clone-size floor the compatibility statistics need — a floor for *power*,
+chosen by us, not inherited from the paper.
+
+
+---
+
+# D.4d — ⚠⚠ Missing-excluded compatibility does NOT license skeleton construction
+
+*A gap in §D.4b's own procedure, found 2026-08-31 when the measured $C$ came back impossible.*
+
+## The error
+
+§D.4b step 4 says compute the compatibility fraction both ways and report the spread. The payoff
+section says build the laminar family from the maximal compatible set and count its internal nodes
+to get $C$. **Those two instructions do not connect**, and following both gives nonsense.
+
+Computing $C$ from the conflict-free characters of the **missing-excluded** run on Park Mouse3 gave
+
+$$C/(n-1) = 2.107$$
+
+— more clades than internal-node slots, which is arithmetically impossible for a laminar family. A
+laminarity check on the same clades failed on 37,737 pairs.
+
+## Why
+
+Under missing-excluded, a pair is tested on $D_1\cap D_2$ — the cells determined for *both*
+characters. **That subset is different for every pair.** Compatibility therefore means "laminar on
+this pair's own cell subset", and those local agreements do not compose into a single laminar family
+over all cells, which is what a tree requires.
+
+Verified on real pairs (clone 2, characters 0 and 5):
+
+| | $\lvert S_1\rvert$ | $\lvert S_2\rvert$ | $\lvert S_1\cap S_2\rvert$ | $\lvert S_1\setminus S_2\rvert$ | $\lvert S_2\setminus S_1\rvert$ |
+|---|---|---|---|---|---|
+| raw sets | 8 | 7 | 5 | **3** | **2** |
+| on $D_1\cap D_2$ (5 cells) | — | — | 5 | **0** | **0** |
+
+Every witness that would make them incompatible sits on a cell where one of the two tapes was
+undetermined. Restricted to co-determined cells they are identical; as raw sets they partially
+overlap. The pair is *correctly* called compatible, and its clades are *correctly* non-laminar.
+
+## ⇒ The two conventions answer different questions
+
+| convention | Park Mouse3 | what it means | skeleton constructible? |
+|---|---|---|---|
+| missing-as-absent | **63.56%** | agreement using only what we can see | **yes** — compatibility ⇒ laminarity |
+| missing-excluded | **94.66%** | agreement we *would* see given complete data | **no** — laminar only pairwise, on pair-specific subsets |
+
+The 31-point spread is therefore **not** a sensitivity band around one number. It is the gap between
+the achievable skeleton and the ideal one, and **only the pessimistic end is constructible**.
+
+⇒ **$C$ must be computed against the missing-as-absent conflict graph.** The missing-excluded
+fraction remains the right estimate of latent agreement — and the right measurement of row **A6** —
+but it cannot be turned into a tree.
+
+⇒ This sharpens the A6 reading: dropout is not merely the binding constraint on the *measurement*,
+it is a hard ceiling on how much of the tree any compatible skeleton can fix.
+
+## A third variant worth trying
+
+Restrict each clone to a **common well-determined cell subset** (cells with, say, ≥80% of tapes
+readable). On that subset the two conventions coincide and a skeleton *is* constructible. It trades
+cells for validity; with Park's median clone size of 4 it may not leave much, but it is the
+principled middle and is untested.

@@ -1,0 +1,47 @@
+[
+  {
+    "table": "Mouse1",
+    "cells_kept": 6737,
+    "clones": 295,
+    "characters_ge2": 252148,
+    "characters_ge3": 157356,
+    "dropped_no_barcode": 5489,
+    "dropped_low_tape": 6
+  },
+  {
+    "table": "Mouse2",
+    "cells_kept": 5382,
+    "clones": 216,
+    "characters_ge2": 123677,
+    "characters_ge3": 75733,
+    "dropped_no_barcode": 1511,
+    "dropped_low_tape": 6
+  },
+  {
+    "table": "Mouse3",
+    "cells_kept": 1928,
+    "clones": 149,
+    "characters_ge2": 84604,
+    "characters_ge3": 55875,
+    "dropped_no_barcode": 970,
+    "dropped_low_tape": 6
+  },
+  {
+    "table": "Initial",
+    "cells_kept": 33952,
+    "clones": 2946,
+    "characters_ge2": 1973309,
+    "characters_ge3": 1006226,
+    "dropped_no_barcode": 2239,
+    "dropped_low_tape": 1619
+  },
+  {
+    "table": "Subclone",
+    "cells_kept": 38653,
+    "clones": 15,
+    "characters_ge2": 821482,
+    "characters_ge3": 505881,
+    "dropped_no_barcode": 670,
+    "dropped_low_tape": 283
+  }
+]

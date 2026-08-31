@@ -56,3 +56,4 @@ env/
 # ---- derived per-node tables carry clone barcodes from unpublished data ----
 analyses/*/results/*.tsv.gz
 analyses/*/results/*.tsv
+logs/
