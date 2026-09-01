@@ -560,3 +560,258 @@ true grouping.** This affects any per-clone analysis, including Park's own and o
 - $q$ pooled over all **tapes** (per-tape breakdown not yet done — a per-tape $\xi$ would test
   the rest of row A3, and bears on the *cis*-preference question at §1312).
 - Clone structure not yet joined in — all numbers above are per *table*, not per clone.
+
+---
+
+## Fig 3 redesign — characterising dropout (2026-09-01)
+
+The old Fig 3 described *our handling* of `None`. The redesign measures the assay: is dropout
+random, is it correlated within cells, is it correlated with edit depth? Informative dropout biases
+any imputation or likelihood correction, so this is a prerequisite for the observation model that
+row **A6** calls for.
+
+`src/23_dropout_matrix.py` caches the (cell × tape) recovery / depth / termination matrices once
+(`results/dropout_matrix_{arm}.npz`, gitignored); scripts 24–27 read that cache.
+
+### Panel a — dropout is not a coin flip on entries
+
+Null: every (cell, tape) instance recovered independently with one common $p$, so
+$R_c=\sum_t Y_{ct}\sim\mathrm{Bin}(k,p)$, $k=166$, $\mathrm{Var}(R_c)=kp(1-p)$. The variance
+inflation factor is the ratio of observed to null variance; giving each cell its own propensity
+$\pi_c$ (mean $p$, variance $\sigma^2$) and applying the law of total variance gives
+$\mathrm{Var}(R_c)=kp(1-p)+k(k-1)\sigma^2$, hence $\mathrm{VIF}=1+(k-1)\rho$ with
+$\rho=\sigma^2/[p(1-p)]$ = the correlation between two dropout indicators **in the same cell**.
+
+| arm | $\bar p$ | sd$(R_c)$ | null sd | VIF | $\rho_{\rm cell}$ | $\rho_{\rm tape}$ |
+|---|---|---|---|---|---|---|
+| Mouse1 | 0.606 | 29.9 | 6.30 | **22.6** | 0.131 | 0.250 |
+| Mouse2 | 0.601 | 32.3 | 6.31 | 26.2 | 0.153 | 0.262 |
+| Mouse3 | 0.559 | 35.5 | 6.40 | 30.8 | 0.180 | 0.202 |
+| Initial | 0.749 | 19.0 | 5.58 | 11.5 | 0.064 | 0.231 |
+| Subclone | 0.779 | 13.1 | 5.35 | 6.0 | 0.030 | 0.258 |
+
+For Mouse1, $\sigma=0.177$: cells' recovery propensities scatter by ±18 points around 61%, where
+the null allows none. Equivalently $P(\text{tape }t'\text{ missing})=39.4\%$ rises to **47.3%**
+given another tape is missing in the same cell.
+
+⚑ **$R_c$ is bimodal, not merely overdispersed** — a mode near 120 plus a flat shelf from the QC cut
+at 20 up to ~100 holding **38%** of Mouse1 cells (Mouse2 37%, Mouse3 46%).
+
+### The shelf is the whole per-cell effect, and it is a QC artefact
+
+Re-measured at a common ≥100-tape cut, $\rho_{\rm cell}$ collapses in every arm and the mice become
+the *most* homogeneous:
+
+| | raw | at ≥100 |
+|---|---|---|
+| Mouse1 / 2 / 3 | 0.131 / 0.153 / 0.180 | **0.016 / 0.012 / 0.014** |
+| Initial / Subclone | 0.064 / 0.030 | 0.021 / 0.024 |
+
+Initial and Subclone were admitted at ≥100 tapes, the mice at ≥20 — so the other arms' QC deleted
+exactly this population. This sharpens §D.4c's "part of the dropout asymmetry is a QC threshold"
+to: **all of it is.** (Applying the filter ourselves drops 4.66% / 0.76% / 0.11% of cells,
+reproducing §D.4c's 2.1% overall exactly.)
+
+### The shelf and clonal-barcode loss are one phenomenon — informative selection
+
+$P(\text{no ClonalBC}\mid R_c)$ is monotone in the mice and flat elsewhere:
+
+| | 20–40 | 60–80 | 100–120 | 140+ |
+|---|---|---|---|---|
+| Mouse1 | **64%** | 52% | 44% | **17%** |
+| Mouse3 | 52% | 47% | 29% | — |
+| Initial | 3% | 3% | 8% | 3% |
+
+A cell enters tree reconstruction only if it has a `ClonalBC`, so the analysis population is selected
+on capture quality *twice* — the 44.9% of Mouse1 cells discarded for lacking a barcode are the
+low-recovery cells. Censoring at the level of which cells exist, before per-entry dropout.
+
+### ⚑⚑ The tape axis is large, reproducible, and estimable
+
+Per-tape recovery rates span **0.006–0.962** in Mouse1 (deciles 0.195, 0.828), and
+$\rho_{\rm tape}>\rho_{\rm cell}$ in every arm. Correlation of the 166 rates:
+
+- between replicate libraries of the same population: **0.997** (Initial_1/2), **0.999** (Subclone_1/2)
+- across arms — different animals, different preps: **0.76–0.96**
+
+⇒ *which* tapes are badly recovered is a fixed property, not noise. A per-tape recovery probability
+$\beta_t$ is measurable to three decimals and transfers across experiments, so it can enter the tip
+emission $P(\mathrm{obs}\mid\mathrm{true})$ as a known constant (§1c.2 — the line where A6 enters).
+
+### ⚑⚑ Dropout is informative on the tape axis, not the cell axis
+
+Recovery vs mean depth given recovered (`src/26_dropout_depth.py`), Spearman over the 166 tapes,
+and over cells:
+
+| arm | per tape, raw | per tape, controlled† | worst decile → best decile | per cell, controlled‡ |
+|---|---|---|---|---|
+| Mouse1 | +0.344 | +0.281 | 2.92 → 4.95 sites (**+2.03**) | +0.046 |
+| Mouse2 | +0.121 | +0.180 | 3.86 → 4.83 (+0.97) | −0.008 |
+| Mouse3 | +0.326 | +0.02 ‡‡ | 3.55 → 5.06 (+1.51) | +0.077 |
+| Initial | +0.324 | **+0.306** | 2.52 → 3.12 (+0.60) | +0.109 |
+| Subclone | +0.139 | +0.147 | 3.86 → 4.45 (+0.58) | −0.155 |
+
+† scored only on cells with $R_c\ge140$, so every tape is measured in a comparable cell population.
+‡ mean depth over a fixed reference set of the 30 easiest tapes, identical for every cell.
+‡‡ unpowered — Mouse3 has 30 such cells, Mouse2 76, Mouse1 296; Initial has 5,133 and is the one to
+trust, where the control moves $\rho$ by 0.02.
+
+**The tapes we mostly cannot see are the tapes that recorded least** — 2 sites of 6 in Mouse1, a
+third of the recorder's dynamic range. Consistent with a shared per-locus latent (a closed
+integration site is both poorly recovered and poorly edited): row **A9**'s mechanism, measured.
+
+Two confounds excluded by design: the amplicon-length story (more editing → longer amplicon → worse
+recovery) predicts the **opposite sign**; the coverage story (poorly captured cells lose terminal
+sites, masquerading as unedited) predicts depth rising with $R_c$ within a tape, and it does not
+(Mouse1: 4.892 → 4.986 across $R_c$ 20→140).
+
+⚠ **Ceiling caveat.** The mouse arms sit at 4.8–5.1 of 6 sites filled (37–43% of tapes full), so
+depth has little room to vary and their ≈0 per-cell coupling is partly attenuation. Initial, the
+arm with dynamic range left (depth ~3), gives +0.109.
+
+⚠ **Correction to a test proposed and then dropped.** An earlier draft argued that 0.02% internal
+`None` proves trailing `None` is biology rather than dropout. That only excludes *random* site loss:
+**terminal 3′-biased truncation produces no internal gaps at all**, and is exactly what the per-tape
+depth deficit would look like. The flat per-cell depth profile is what actually excludes it.
+
+⇒ **The two axes behave oppositely, in the favourable arrangement.** The informative axis (tape) is
+the one that can be measured once and fixed; the axis that cannot be measured per cell is not
+informative about editing, so it can be marginalised — which is what Felsenstein pruning already
+does. This is the core argument of the redesigned figure.
+
+**Still to measure:** whether dropout is lineage-correlated (do related cells lose the same tapes?
+row **A9** proper). Mulberry & Stadler name this as their reason for punting on dropout (§1c.2) and
+it is unmeasured in the literature. Attenuated here because shelf cells largely lack barcodes;
+likely wants the simulator's null and its own figure.
+
+### Panel b — the tape axis, and why the $\rho$'s are the comparable statistic
+
+Panel a summed rows of the (cell × tape) matrix; panel b sums columns:
+$\hat\beta_t=R_t/n$. Same null, roles swapped: $R_t\sim\mathrm{Bin}(n,p)$ so
+$\mathrm{Var}(\hat\beta_t)=p(1-p)/n$ — for Mouse1 an sd of **0.0044**, i.e. the null puts all 166
+tapes within ±1.3 points of 60.6%. Observed sd across tapes is **0.244**, 55× wider; rates run
+**0.006 to 0.962** (deciles 0.195, 0.828).
+
+⚠ **Do not compare the two margins' VIFs.** $\mathrm{VIF}=1+(m-1)\rho$ and $m$ is the number of
+items summed — 166 tapes per cell, but 12,232 cells per tape — so $\mathrm{VIF_{tape}}=3{,}052$ vs
+$\mathrm{VIF_{cell}}=22.6$ reflects the shape of the experiment, not the strength of the effect.
+Only the $\rho$'s compare: **$\rho_{\rm tape}=0.250$ vs $\rho_{\rm cell}=0.131$ — the tape is the
+larger axis.**
+
+$\rho$ is a genuine correlation between two 0/1 entries sharing a unit. With $\pi_c$ the cell's
+propensity (mean $p$, variance $\sigma^2$): $\mathrm{Var}(Y_{ct})=p(1-p)$ (a mixture of Bernoullis
+is still Bernoulli marginally, so heterogeneity is invisible in one entry), while
+$E[Y_{ct}Y_{ct'}]=E[\pi^2]=p^2+\sigma^2$ gives $\mathrm{Cov}=\sigma^2$ and hence
+$\mathrm{corr}=\sigma^2/[p(1-p)]=\rho$. **Between-unit variance and within-unit covariance are the
+same number.** Three readings of the magnitude:
+
+1. $\rho=R^2$ of a one-way ANOVA of the indicator on that factor — 25% of the variance in "was this
+   entry recovered?" is explained by which tape it is, 13% by which cell.
+2. $P(\text{miss}\mid\text{miss in the same unit})=(1-p)+\rho p$: from 39.4% to **47.3%** (same
+   cell) or **54.5%** (same tape).
+3. $\sigma=\sqrt{\rho p(1-p)}$ = 0.177 (cells), 0.244 (tapes), in probability units.
+
+**The spread is real by an analytic argument, not just by replication.**
+$\mathrm{Var}_t(\hat\beta_t)=\mathrm{Var}(\beta_t)+E[\beta_t(1-\beta_t)]/n$, and the noise term is
+**0.033% of the observed variance**, giving $\sigma_\beta=0.2441$ from 0.2441. On Initial the
+naive spread (0.2081) and the covariance-based $\sigma_\beta$ from two independent libraries
+(0.2081) agree to four digits — the check, not the argument.
+
+Reliability measured anyway (`results/fig3b_tape_axis.json`), reported in text rather than plotted
+since it was a foregone conclusion: Initial_1 vs Initial_2 $r=\mathbf{0.9968}$ against 0.9998
+predicted from counting noise alone. Regressing out the global library-depth difference
+($p$ 0.759 vs 0.741, slope 1.003) leaves a residual sd of 0.0168, of which counting noise supplies
+0.0045 — so **1.6 points of library-specific wobble per tape against a 21-point real spread, i.e.
+99.4% of the between-tape variance is a property of the tape.** Cross-arm $r$ vs Mouse1: Mouse3
+0.959, Mouse2 0.875, Initial 0.846, Subclone 0.760 — largely transferable, not perfectly.
+
+⇒ $\hat\beta_t$ has a signal-to-noise of 55 and enters the tip emission
+$P(\mathrm{obs}\mid\mathrm{true})$ as a **known constant** — no prior, no extra parameter, no cost
+to the pruning recursion. Estimate it per arm (replicates say one library suffices; cross-arm
+correlations say do not import it from another animal). Mild circularity to state: $\beta_t$ comes
+from the same data, but from the missingness marginal only and never from the tree — a plug-in
+step, not double-counting.
+
+⚠ **Plot caveat.** The four grey curves are each sorted on their own rates, so rank 40 is a
+different tape in each arm: they show the *shape* is universal, not that the same tapes are bad
+everywhere. That claim rests on the cross-arm correlations. Plotting the grey arms in Mouse1's
+ordering was tried and is unreadable.
+
+**Palette note (panel b).** Five arms now plot as five colours. Categorical slots 1,3,4,5,7 of the
+`dataviz` reference palette — blue / aqua / yellow / magenta / violet, assigned Mouse1→Mouse3,
+Pre-TX, Subclone, so Mouse 1 stays blue across panels. Orange (slot 2) is skipped: it is reserved
+for the coin-flip null, and it fails the normal-vision floor against magenta ($\Delta E$ 12.9) and
+yellow (13.7); red (slot 8) fails it worse (7.1). With orange unavailable to the series, **panel b's
+null band is drawn neutral** — there it is reference furniture, not a competing series — so orange
+never carries two meanings in the figure. Validated on the adjacent pairlist (the documented one for
+line charts): CVD $\Delta E$ 9.1, normal-vision 19.6, lightness and chroma pass; aqua/yellow/magenta
+fall below 3:1 on the light surface, so the relief rule applies and is met by the legend labels plus
+the per-arm tables here.
+
+⚠ The shipped `validate_palette.js` will not run on the cluster (node v10.24 cannot parse its ESM or
+`??=`). Ported faithfully to Python — same thresholds, same Machado–Oliveira–Fernandes 2009
+severity-1.0 matrices, same OKLab $\Delta E\times100$ — in the session scratchpad; re-port if needed.
+
+⚠ The null band in panel b is **Mouse 1's** ($p=0.606$); each arm has its own $p$. The claim is the
+band's *width* (±1.3 points, sd 0.0044–0.0053 across arms), not its position, and the annotation
+says so.
+
+### Panel c — the shelf is a QC choice, not a difference between arms
+
+All five arms on panel a's axis, with the two admission thresholds the paper actually used marked:
+**≥20** recovered tapes for Mouse1–3, **≥100** for Initial and Subclone. The mice carry a broad
+plateau across 20–100 tapes; Pre-TX and Subclone are empty there, and their emptiness begins exactly
+at their own cut.
+
+| share of cells with 20–100 tapes | $\rho_{\rm cell}$ raw | at a common ≥100 cut |
+|---|---|---|
+| Mouse 1 **38%** · Mouse 2 37% · Mouse 3 46% | 0.131 / 0.153 / 0.180 | **0.016 / 0.012 / 0.014** |
+| Pre-TX 4% · Subclone 1% | 0.064 / 0.030 | 0.021 / 0.024 |
+
+**Diagnostic run first, and it could have overturned the claim.** If the shelf concentrated in
+particular harvest sites it would be a dissection/prep batch effect. Using the same variance
+machinery — $\rho_{\rm sample}$ = fraction of $\mathrm{Var}(1[20\le R_c<100])$ explained by sample
+identity — gives **0.015 / 0.013 / 0.050** for Mice 1–3, pooled **0.022** over 12 harvest samples,
+against $\rho_{\rm cell}$ of 0.13–0.18. Harvest site explains about a seventh of what cell identity
+does, so the shelf is a per-cell property. (Mouse3's 0.050 is the largest and is driven by M3_LV,
+$n=287$, 12.9% shelf against its littermates' 46–53%.)
+
+⚠ **What this does not say.** The mouse analysis population *is* admitted at ≥20, so
+$\rho_{\rm cell}=0.13$–0.18 is the real number any inference on those data must handle. The ≥100
+comparison establishes what *kind* of thing it is — a data-quality population with no biological
+content, hence marginalisable — as against the tape axis, which is informative and must be modelled.
+
+### Panels d and e — dropout is informative on the tape axis, not the cell axis
+
+Plotted on a **shared $y$-axis** (mean edit depth of recovered tapes, in sites of 6), because the
+contrast is the argument and it disappears if they are scaled independently. Mouse 1.
+
+**(d) per tape.** $\rho=+0.344$ raw, $+0.281$ scored only on high-capture cells ($R_c\ge140$), so
+the confound that low-recovery tapes are seen mostly in good cells explains little. Decile means run
+**2.92 → 4.95 sites**.
+
+**⚑ The decile trend shows the coupling is a THRESHOLD, not a gradient** — a fact the correlation
+coefficient hid. Depth climbs steeply to $\hat\beta_t\approx0.3$ and is flat above it:
+
+| | tapes | mean depth | $\rho$ within |
+|---|---|---|---|
+| $\hat\beta_t < 0.3$ | 25 (15%) | **3.58** | — |
+| $\hat\beta_t \ge 0.3$ | 141 (85%) | **4.86** | **+0.119** |
+
+⇒ **the informative part of dropout is confined to a removable minority of tapes.** Drop the worst
+15% and the coupling largely goes with them — structurally the same result as the homoplasy
+concentration finding, and the same remedy. It also fits row **A9**'s mechanism better than a graded
+effect would: a *subset* of integration sites is closed or silenced, and those loci are
+simultaneously unreadable and unedited.
+
+**(e) per cell.** $\rho=+0.046$, binned depth **4.88 → 4.98 sites** across $R_c$ 20→145 — flat.
+Scored on a fixed reference set of the 30 easiest tapes, identical for every cell, without which a
+low-$R_c$ cell would be graded on its easy tapes only.
+
+⚠ **Ceiling caveat** (on the panel): Mouse 1 tapes average 4.9 of 6 sites, so depth has little room
+to vary and (e)'s flatness is partly attenuation. Pre-TX, at ~3 of 6, is the arm with dynamic range,
+and it gives $\rho=+0.109$ — still small beside (d).
+
+⇒ **The axis that is informative is the one you can measure and, if need be, delete; the axis you
+cannot measure per cell carries no information about editing and can be marginalised.** That is the
+figure's conclusion and the argument for the likelihood route.

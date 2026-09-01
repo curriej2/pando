@@ -214,3 +214,43 @@ yet**, and the homoplasy null it would provide is still the single biggest gap i
 **Next:** redesign Fig 3 around dropout's magnitude and structure; then build the simulator
 (birth–death tree, measured $\lambda$/$\xi$, $N=6$, $k=166$, **dropout as a switchable layer** so
 homoplasy-only / dropout-only / both can be separated) for Fig 4.
+
+## 2026-09-01 (cont.) — Fig 3 rebuilt around dropout structure
+
+Fig 3 redesigned from "how we handle `None`" to a measurement of the assay. Panel a (the old
+decomposition) dropped at Justin's call — nobody disputes that trailing `None` is biology.
+`src/23` caches the (cell × tape) recovery/depth matrices once; 24–31 read the cache.
+
+**a — dropout is not a coin flip.** $R_c\sim\mathrm{Bin}(166,p)$ gives sd 6.30 tapes; observed 29.9.
+**VIF 22.6**, $\rho_{\rm cell}=0.131$. $R_c$ is **bimodal**: a mode near 120 plus a shelf from the
+QC cut at 20 up to ~100 holding 38% of Mouse1 cells.
+
+**b — the tape axis is bigger, and knowable.** Per-tape rates span 0.006–0.962, sd 0.244 against a
+null sd of 0.0044 (55×). **$\rho_{\rm tape}=0.250 > \rho_{\rm cell}=0.131$.** ⚠ The VIFs (3,052 vs
+22.6) are *not* comparable — $\mathrm{VIF}=1+(m-1)\rho$ and $m$ is 166 vs 12,232. Counting noise is
+0.033% of the between-tape variance, so the spread is real analytically; replicate libraries agree
+at $r=0.9968$ (confirmatory, so not plotted).
+
+**⚑ $\rho$ verified three ways** (`src/29`): variance identity 0.13084/0.24948, brute-force Pearson
+over 3 M sampled entry pairs 0.13064/0.24727, ANOVA between/total 0.130/0.249. Spearman ≡ Pearson
+exactly (ranking a 0/1 variable is affine). $P(\text{miss}\mid\text{miss})$ measured 0.4729/0.5445
+against $(1-p)+\rho p$ = 0.4733/0.5452.
+
+**c — the shelf is a QC choice.** Cut all five arms at ≥100 and $\rho_{\rm cell}$ collapses to
+0.012–0.024 everywhere, mice most homogeneous. Batch ruled out first: $\rho_{\rm sample}=0.022$
+pooled over 12 harvest samples, a seventh of $\rho_{\rm cell}$.
+
+**d/e — informative on the tape axis only.** Per tape $\rho=+0.34$ (+0.28 controlled), decile means
+2.92 → 4.95 sites. Per cell $\rho=+0.05$, 4.88 → 4.98 — flat. **⚑ The tape coupling is a threshold,
+not a gradient:** 25 tapes below $\hat\beta_t=0.3$ average 3.58 sites, the other 141 average 4.86
+with $\rho=+0.12$ among them ⇒ **the informative part of dropout sits in a removable 15%.**
+
+⚑ Also measured: $P(\text{no ClonalBC}\mid R_c)$ falls 64%→17% in Mouse1 and is flat in Pre-TX, so
+the shelf and barcode loss are one phenomenon — the analysis population is selected on capture twice.
+
+**Palette.** Five arms now coloured from the `dataviz` reference palette, slots 1,3,4,5,7; orange
+reserved for the null. The shipped JS validator cannot run (cluster node v10.24), so it was ported
+to Python with identical thresholds and CVD matrices.
+
+**Next:** assemble a–e into the 2×3 grid; decide whether the A9 lineage test (do related cells lose
+the same tapes?) is a sixth panel or its own figure with the simulator's null.
