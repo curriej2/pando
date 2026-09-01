@@ -479,6 +479,78 @@ can actually be built from.** Only the pessimistic end is constructible.
 ⚠ Mouse3 is the *most favourable* table: compatibility falls monotonically with clone size (99.81%
 at 3–4 cells → 93.52% at 21–300), and its largest clone is 210 cells against Subclone's 10,997.
 
+### Compatibility, second table: Initial
+
+| table | clones | cells | characters | as-absent | excluded | spread |
+|---|---|---|---|---|---|---|
+| Mouse3 | 91 | 1,856 | 55,875 | 63.56% | 94.66% | **+31.09 pts** |
+| Initial | 1,780 | 17,521 | 534,328 | 80.60% | 91.91% | **+11.31 pts** |
+
+Initial's clones are tiny (median 6 cells, max 127), which is why its as-absent number is much
+higher and its spread much smaller — fewer cells means fewer chances for a dropped-out cell to fake
+a witness. The spread scaling with clone size, established within Mouse3, holds across tables.
+
+**Mouse1 and Mouse2 never completed** — five OOM failures between them (128 G, 96 G, 48 G, 32 G),
+all on their single largest clone. See the strategic note below: this is now moot, because the
+pairwise matrix is not what a skeleton needs.
+
+---
+
+## ⚑⚑ STRATEGIC REASSESSMENT (2026-09-01) — read this before continuing
+
+**The skeleton is a step sideways, not forward.** Three reasons, in order of seriousness:
+
+**1. The output is arbitrary.** Three reasonable algorithms on identical Mouse3 data gave
+$C = 689$, $783$, $1{,}003$ — a **45% spread**. Which skeleton you get depends on tie-breaking
+order. Using one as a hard constraint injects a coin flip that *looks* like structure, which is the
+opposite of honest uncertainty. (Partial salvage: treat randomised restarts as a sampler and use
+per-clade survival frequency as a support measure. Heuristic, not calibrated.)
+
+**2. The premise barely holds for this dataset.**
+
+| | |
+|---|---|
+| clones >1,000 cells | **9 of 2,547 (0.35%)** |
+| of those, in Subclone (an *in vitro* validation arm) | **7** |
+| in the actual metastasis experiment | **2** |
+
+SciPhy's practical limit is ~1,000 tips, so **382 of 384 mouse clones are already within reach of
+likelihood inference**. Median clone size is 4 cells. The search-space reduction the skeleton exists
+to provide is needed for two clones of scientific interest.
+
+**3. The mismatch is structural.** The skeleton is a hard combinatorial device on soft, incomplete
+data, and every difficulty traced to that: the missing-as-absent/excluded fork (§D.4d), false
+clades, the restarts. Felsenstein pruning has none of them — it sums over unobserved states, so a
+cell's ~120 observed tapes determine its position while its missing tape contributes a marginal.
+**That is exactly "use other tapes probabilistically to mitigate dropout", and it is not a method to
+invent — it is SciPhy's existing likelihood.**
+
+⇒ **The diagnostics are the deliverable.** $q$, the homoplasy quantification, the dropout spread —
+these justify the likelihood route and do not need the skeleton to be a production tool. The
+skeleton's residual role is soft decomposition or initialisation for the ~9 large clones, never a
+constraint.
+
+### Ground-truth test (subclone colonies) — the method passed, better than expected
+
+Pooled 11 ClonalBC groups (200 cells each), built characters blind to labels, built the skeleton,
+scored clades against colony identity. After implementing Park's cross-clone collision screen
+(3.77% of cells pruned) the median clade purity was **1.000**, with 94% of clades within five cells
+of pure.
+
+⚑ The large apparent "false clades" turned out to be **correct**: `ClonalBC` over-splits colonies,
+because a founder with multiple barcode integrations yields several groups. Group-consensus
+similarity is bimodal — off-diagonal median **0.048**, but **2.18–2.54** for four specific pairs:
+
+- `{ATCCATACGA, CGGATAGTGG, CTATGGTAAG}` = one colony split three ways
+- `{GCCTTATCAC, TAAACTAAGC}` = one colony split two ways
+
+Collapsing those gives **exactly 8 colonies — the paper's number**, recovered from tape content
+alone. The skeleton was rejoining split colonies; the ground-truth labels were wrong. A depth-5
+clade spanning three groups cannot be homoplasy ($q^5\approx1.4\times10^{-9}$).
+
+⇒ **Reusable QC finding: `ClonalBC` over-splits colonies, and tape-consensus similarity recovers the
+true grouping.** This affects any per-clone analysis, including Park's own and our compatibility runs.
+
 ## Caveats
 
 - $\hat m$ is capped at the clade size (correct: $m\le n_{\rm next}$) and floored at $s$. The cap

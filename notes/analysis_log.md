@@ -174,3 +174,43 @@ $MM^\top$ bound missed the real driver entirely.
 
 **Next session:** save both conventions' degrees, recompute $C$ on missing-as-absent, finish Mouse1 /
 Mouse2 / Initial, and decide whether the well-determined-subset variant (§D.4d) is worth trying.
+
+## 2026-09-01 — compatibility finished on two tables; strategic pivot; figure programme begun
+
+**Compatibility measured.** Mouse3 (91 clones): as-absent **63.56%**, excluded **94.66%**, spread
+**+31.09 pts**. Initial (1,780 clones): **80.60%** / **91.91%**, spread **+11.31 pts**. Initial's
+clones are tiny (median 6), which is why its spread is smaller — the spread-scales-with-clone-size
+relationship holds across tables, not just within Mouse3. Mouse1/Mouse2 never completed (5 OOMs at
+128/96/48/32 G, each on its single largest clone).
+
+**$C$ measured** on Mouse3 against the missing-as-absent graph (the only constructible one, §D.4d):
+$C_{\rm greedy}=1{,}003/1{,}765 = 0.568$ via conflict graph + min-degree greedy, $783$ via near-linear
+insertion with 500 restarts, $689$ without restarts.
+
+**Near-linear skeleton built** (`17_skeleton_linear.py`): deduplicate clades, then insert
+largest-first maintaining `owner[cell]`, where the whole test is "all cells of $S$ share one owner".
+**0.1 s and 153 MB against script 14's 9 min and 24 GB** — the cost we fought all session was an
+artifact of computing the full pairwise matrix, which a skeleton never needs.
+
+**Ground-truth test passed, and inverted a conclusion.** Pooled subclone colonies, skeleton built
+blind to barcodes. After implementing Park's collision screen (3.77% of cells pruned), median clade
+purity **1.000**. The large apparent false clades were *correct*: `ClonalBC` over-splits colonies,
+and collapsing the four high-similarity group pairs gives **exactly 8 colonies — the paper's number**.
+Group-consensus similarity is bimodal (off-diagonal 0.048 vs 2.18–2.54).
+
+**⚑⚑ STRATEGIC PIVOT.** The skeleton is a step sideways. (i) Its output is arbitrary — 45% spread
+across three reasonable heuristics on identical data. (ii) Only **9 of 2,547 clones exceed 1,000
+cells**, 7 of them in Subclone, so 382 of 384 mouse clones are already within likelihood range;
+median clone size is 4. (iii) It is a hard combinatorial device on soft data, and Felsenstein pruning
+handles dropout natively — a cell's ~120 observed tapes place it while the missing tape marginalises.
+⇒ **The diagnostics are the deliverable**; the skeleton's residual role is soft decomposition for the
+~9 large clones.
+
+**Figure programme begun** (PI presentations, motivating the likelihood route). Fig 1 (recorder/$q$)
+and Fig 2 (homoplasy, `simple` + `mle` versions) done. Fig 3 needs redesign — its panel b argues
+against a strawman and is unreadable. **Figs 4–6 all depend on one simulator that does not exist
+yet**, and the homoplasy null it would provide is still the single biggest gap in the argument.
+
+**Next:** redesign Fig 3 around dropout's magnitude and structure; then build the simulator
+(birth–death tree, measured $\lambda$/$\xi$, $N=6$, $k=166$, **dropout as a switchable layer** so
+homoplasy-only / dropout-only / both can be separated) for Fig 4.

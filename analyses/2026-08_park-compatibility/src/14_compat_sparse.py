@@ -89,28 +89,49 @@ def clone_matrices(z, D, ci, n):
     return M, Nt, mask_of, tape, np.asarray(M.sum(axis=1)).ravel()
 
 
-def analyse(M, Nt, mask_of, tape, sizes, excluded):
+def analyse(M, Nt, mask_of, tape, sizes, excluded, budget=4e7, edges=None):
+    """Blocked so peak memory is independent of clone size.
+
+    M @ M.T is near-dense for a large clone (15,533^2 ~ 2.4e8 non-zeros for Mouse2's
+    biggest), and materialising it whole is what OOM-killed the large clones even
+    after the compact-mask fix. Processing BLOCK rows at a time caps the live
+    product at BLOCK x C instead of C x C; `budget` is the target entry count, so
+    memory is tunable and no longer scales with the square of the clone.
+    """
     C = M.shape[0]
     _, cnt = np.unique(tape, return_counts=True)
     total = (C * C - int((cnt.astype(np.int64) ** 2).sum())) // 2
-    A = (M @ M.T).tocoo()
-    keep = (A.row < A.col) & (tape[A.row] != tape[A.col]) & (A.data > 0)
-    r, c, n11 = A.row[keep], A.col[keep], A.data[keep]
-    del A, keep
-    if excluded:
-        # |S_i & D_j| via the COMPACT mask matrix: C x (<=996), not C x C
-        P = np.asarray((M @ Nt.T).todense())
-        n10 = P[r, mask_of[c]] - n11
-        n01 = P[c, mask_of[r]] - n11
-        del P
-    else:
-        n10 = sizes[r] - n11
-        n01 = sizes[c] - n11
-    inc = (n10 > 0) & (n01 > 0)
-    deg = np.bincount(np.concatenate([r[inc], c[inc]]), minlength=C)
-    return dict(characters=C, pairs=int(total), cooccurring=int(r.size),
-                incompatible=int(inc.sum()),
-                compatible=int(total - int(inc.sum()))), deg
+    P = np.asarray((M @ Nt.T).todense()) if excluded else None
+    block = max(256, min(C, int(budget // max(C, 1))))
+    deg = np.zeros(C, np.int64)
+    inc_tot = co_tot = 0
+    for s in range(0, C, block):
+        e = min(s + block, C)
+        A = (M[s:e] @ M.T).tocoo()
+        r = A.row.astype(np.int64) + s          # global row index
+        c = A.col.astype(np.int64)
+        n11 = A.data
+        del A
+        keep = (r < c) & (tape[r] != tape[c]) & (n11 > 0)
+        r, c, n11 = r[keep], c[keep], n11[keep]
+        del keep
+        co_tot += r.size
+        if excluded:
+            n10 = P[r, mask_of[c]] - n11
+            n01 = P[c, mask_of[r]] - n11
+        else:
+            n10 = sizes[r] - n11
+            n01 = sizes[c] - n11
+        inc = (n10 > 0) & (n01 > 0)
+        inc_tot += int(inc.sum())
+        if inc.any():
+            deg += np.bincount(np.concatenate([r[inc], c[inc]]), minlength=C)
+            if edges is not None:
+                edges.append(np.stack([r[inc], c[inc]]).astype(np.int32))
+        del r, c, n11, n10, n01, inc
+    return dict(characters=C, pairs=int(total), cooccurring=int(co_tot),
+                incompatible=int(inc_tot),
+                compatible=int(total - inc_tot)), deg
 
 
 if __name__ == "__main__":
@@ -139,7 +160,7 @@ if __name__ == "__main__":
             assert ok
     print("  sparse engine verified\n")
 
-    res, degs, t0 = [], {}, time.time()
+    res, degs_exc, degs_abs, edge_store, t0 = [], {}, {}, {}, time.time()
     for ci in order:
         if time.time() - t0 > budget:
             print(f"  [budget reached: {len(res)}/{len(order)} clones]"); break
@@ -147,9 +168,12 @@ if __name__ == "__main__":
         if mats is None: continue
         row = dict(clone=int(ci), cells=int(sizes_cl[ci]), characters=int(nchar[ci]))
         for exc, tag in ((False, "as_absent"), (True, "excluded")):
-            st, dg = analyse(*mats, exc)
+            ed = [] if not exc else None          # as-absent edges: the constructible graph
+            st, dg = analyse(*mats, exc, edges=ed)
             row[tag] = st
-            if exc: degs[ci] = dg
+            (degs_exc if exc else degs_abs)[ci] = dg
+            if ed and sum(e.shape[1] for e in ed) <= 60_000_000:
+                edge_store[ci] = np.concatenate(ed, axis=1)
         res.append(row)
         if len(res) % 25 == 0 or nchar[ci] > 5000:
             print(f"    [{len(res):>5}/{len(order)}] clone {ci} "
@@ -159,11 +183,17 @@ if __name__ == "__main__":
         json.dumps(dict(table=tbl, min_carriers=MIN_CARRIERS, clones=res), indent=1))
     # persist the conflict-graph degrees: the degree DISTRIBUTION is the D.4b step-5
     # deliverable, and recomputing it means rerunning the whole table.
-    if degs:
-        np.savez_compressed(RES / f"conflict_degrees_{tbl}.npz",
-            clone=np.concatenate([np.full(d.size, ci, np.int32) for ci, d in degs.items()]),
-            char=np.concatenate([np.arange(d.size, dtype=np.int32) for d in degs.values()]),
-            degree=np.concatenate([d.astype(np.int32) for d in degs.values()]))
+    for tag, dd in (("excluded", degs_exc), ("as_absent", degs_abs)):
+        if dd:
+            np.savez_compressed(RES / f"conflict_degrees_{tag}_{tbl}.npz",
+                clone=np.concatenate([np.full(d.size, ci, np.int32) for ci, d in dd.items()]),
+                char=np.concatenate([np.arange(d.size, dtype=np.int32) for d in dd.values()]),
+                degree=np.concatenate([d.astype(np.int32) for d in dd.values()]))
+    if edge_store:
+        np.savez_compressed(RES / f"conflict_edges_as_absent_{tbl}.npz",
+            clone=np.concatenate([np.full(e.shape[1], ci, np.int32) for ci, e in edge_store.items()]),
+            a=np.concatenate([e[0] for e in edge_store.values()]),
+            b=np.concatenate([e[1] for e in edge_store.values()]))
 
     def agg(k):
         P = sum(r[k]["pairs"] for r in res); I = sum(r[k]["incompatible"] for r in res)
@@ -174,7 +204,7 @@ if __name__ == "__main__":
         P, I, f = agg(k)
         print(f"  {lab:>18}: {P:>15,} pairs | {I:>13,} incompatible | compatibility {f:6.2f}%")
     print(f"  {'spread':>18}: {agg('excluded')[2]-agg('as_absent')[2]:+.2f} points")
-    alld = np.concatenate([d[d > 0] for d in degs.values() if (d > 0).any()]) if degs else np.array([])
+    alld = np.concatenate([d[d > 0] for d in degs_exc.values() if (d > 0).any()]) if degs_exc else np.array([])
     if alld.size:
         a = np.sort(alld)[::-1]; cum = np.cumsum(a)/a.sum()
         nch = sum(r["characters"] for r in res)

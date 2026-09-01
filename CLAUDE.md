@@ -46,7 +46,7 @@ notes · §H literature (§H.6 = full Mulberry & Stadler close read) · §I expe
 
 | directory | question | status |
 |---|---|---|
-| `2026-08_park-compatibility` | Does Park's cross-tape character compatibility support the perfect-phylogeny route (§D.4b)? | Characters built; compatibility run on Mouse3 (94.66% excluded / 63.56% as-absent, **spread +31 pts ⇒ dropout binds, row A6**); conflict is **diffuse**, not concentrated. ⚠ **$C$ not yet measured — §D.4d shows the missing-excluded route to it is invalid.** Mouse1/2/Initial running. |
+| `2026-08_park-compatibility` | Does Park's cross-tape character compatibility support the perfect-phylogeny route (§D.4b)? | **Diagnostics complete.** Mouse3 94.66%/63.56% (spread +31 pts), Initial 91.91%/80.60% (+11 pts) ⇒ **dropout binds, row A6**. $C=0.57$ on Mouse3. Subclone ground truth **passed**. ⚑ **Strategic pivot: skeleton is a step sideways — only 9 of 2,547 clones exceed 1,000 cells, so likelihood inference is already in range. Now building a figure programme motivating the ML route.** |
 
 ## Already settled — do not re-derive unless asked
 
@@ -81,6 +81,11 @@ notes · §H literature (§H.6 = full Mulberry & Stadler close read) · §I expe
 
 ## Live threads (priority order)
 
+0. **⭐ Figure programme for PI presentations** (`analyses/2026-08_park-compatibility`, figs 1–2 done,
+   fig 3 needs redesign). **Figs 4–6 are blocked on a simulator that does not exist**: birth–death
+   tree at Park clone sizes, sequential editing at measured $\lambda$/$\xi$, $N=6$, $k=166$, with
+   **dropout as a switchable layer**. That simulator also supplies the **homoplasy null** — still the
+   single biggest gap in the "dropout not homoplasy" argument.
 1. **Park et al. data** — matrix loaded, $\xi$/$q$ measured, homoplasy quantified (§D.4b Step 0 and
    the $m$ estimation, both done). **Next: build the cross-tape character sets per clone and run the
    compatibility check + the flat-composition negative control.**

@@ -1,0 +1,23 @@
+{
+ "cells": 2117,
+ "groups": {
+  "AGAGTTACGC": 196,
+  "ATCCATACGA": 195,
+  "CCAAGAATAA": 196,
+  "ACACACCATC": 180,
+  "GCCTTATCAC": 200,
+  "GAGCTAATAA": 194,
+  "CGGATAGTGG": 195,
+  "ACCGCATAAC": 182,
+  "TAAACTAAGC": 200,
+  "CTATGGTAAG": 195,
+  "AGTGAACCAA": 184
+ },
+ "C": 893,
+ "frac": 0.4220226843100189,
+ "tally": {
+  "STRADDLE": 388,
+  "WITHIN": 505
+ },
+ "false_clade_rate": 0.43449048152295633
+}
