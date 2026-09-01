@@ -13,7 +13,8 @@ gitignored, never copy out). Justin's own copy of the Park, Chang et al. 2026 ta
 - `clonalbc_percell_hamming1_corrected.csv` — 167,736 rows, `CellID,Sample,ClonalBC_raw,ClonalBC`.
   **This is the clone assignment**, needed for §D.4b Procedure step 1 (work within a clone).
 
-**State (2026-09-01).** Diagnostics complete. Compatibility measured on Mouse3 and Initial;
+**State (2026-09-01, end of session).** Diagnostics complete; **Fig 3 rebuilt and done (a–e)**.
+Dropout now characterised on both margins — see README "Fig 3 redesign". Compatibility measured on Mouse3 and Initial;
 Mouse1/Mouse2 never finished (5 OOMs, all on their single largest clone) and are now **moot** —
 see the strategic reassessment in README.md. $C$ measured on Mouse3 (0.42–0.57 depending on
 heuristic). Subclone ground-truth test passed.
@@ -34,23 +35,42 @@ statistical power, not inherited from the paper.
 |---|---|---|
 | 1 recorder / $q$ | ✅ done, 2 panels | `20_fig1_recorder.py` |
 | 2 homoplasy | ✅ done, **two versions** — `simple` (present) and `mle` (reserve) | `21_fig2_homoplasy.py <simple\|mle>` |
-| 3 dropout | ⚠ **needs redesign** — see below | `22_fig3_dropout.py` |
-| 4 compatibility spread + homoplasy null | ⭐ next; **needs the simulator** | — |
-| 5 method comparison under simulation | planned; needs simulator | — |
-| 6 calibration / honest uncertainty | planned; needs simulator | — |
-| 7 runtime–accuracy frontier | planned | — |
+| 3 dropout | ✅ **done, 5 panels a–e**, each a standalone PNG | `27` a · `28` b · `30` c · `31` d+e |
+| 3f/4 dropout & lineage (row **A9**) | ⭐ **next — its own figure**; plan it first | — |
+| 5 compatibility spread + homoplasy null | needs the simulator | — |
+| 6 method comparison under simulation | planned; needs simulator | — |
+| 7 calibration / honest uncertainty | planned; needs simulator | — |
+| 8 runtime–accuracy frontier | planned | — |
 
-**Fig 3 critique (2026-09-01, from Justin).** Panel b (determined fraction vs depth, naive vs
-corrected) is *uninterpretable* — ten overlapping lines with no arm distinction — and worse, it
-argues against a **strawman**: nobody proposes discarding information from unedited sites. Panel c
-(per-arm dropout) is largely evident from panel a. Panel a alone is worth keeping; the decomposition
-is genuinely informative (Pre-TX is 37% edits / 37% unedited / 25% absent).
-⇒ Redesign so the figure shows dropout's **magnitude and structure** — is it random, per-cell,
-per-tape? does it correlate with edit depth? — rather than our handling of it. Its consequence
-belongs in Fig 4.
+**No composed grid.** Justin does not want a–e assembled into one multi-panel figure; the panels are
+presented individually. So `27/28/30/31` each own their PNG and there is no assembly script —
+do not build one.
+
+**Fig 3 as built (2026-09-01).** The old figure described *our handling* of `None`; the redesign
+measures the assay. The original decomposition panel was dropped outright — nobody disputes that
+trailing `None` is biology, and if challenged the answer is the flat per-cell depth profile (panel e),
+not the internal-gap rate, which only excludes *random* site loss and not terminal truncation.
+
+| panel | claim | headline |
+|---|---|---|
+| a | dropout is not a coin flip on entries | VIF 22.6, $\rho_{\rm cell}=0.131$; $R_c$ bimodal |
+| b | which tape it is matters more than which cell | $\rho_{\rm tape}=0.250$; rates 0.006–0.962 |
+| c | the shelf is a QC choice, not an arm difference | $\rho_{\rm cell}$ 0.13–0.18 → 0.012–0.024 at a common ≥100 cut |
+| d | a tape we cannot see recorded less | $\rho=+0.34$; deciles 2.92 → 4.95 sites |
+| e | …but a cell we see badly recorded as much | $\rho=+0.05$; 4.88 → 4.98 sites |
+
+d and e **must keep their shared $y$-axis** — the contrast is the argument and it dies if they are
+scaled independently.
 
 **Figure conventions.** Light theme, palette from the `dataviz` skill (surface `#fcfcfb`, ink
-`#0b0b0b`/`#52514e`, grid `#e1e0d9`, series blue `#2a78d6`, orange `#eb6834`, aqua `#1baf7a`).
+`#0b0b0b`/`#52514e`, grid `#e1e0d9`). **Orange `#eb6834` means "the null" figure-wide** and is not
+available as a series colour. Five-arm series use categorical slots 1,3,4,5,7 —
+Mouse1 `#2a78d6` · Mouse2 `#1baf7a` · Mouse3 `#eda100` · Pre-TX `#e87ba4` · Subclone `#4a3aa7`
+(validated: CVD $\Delta E$ 9.1, normal-vision 19.6 on the adjacent pairlist). Where a panel needs
+both five arms and a null, the **null is drawn neutral** (`#cfcec6`/`#8f8e86`), because orange fails
+the normal-vision floor against magenta and yellow.
+⚠ The skill's `validate_palette.js` will not run on the cluster (node v10.24: no ESM, no `??=`).
+Port it to Python — same thresholds, same Machado–Oliveira–Fernandes matrices — rather than eyeballing.
 Minimal annotating text — Justin's explicit preference. Panels should **teach the quantity**
 (show the formula / the read-off), not just report it. Always render and inspect the PNG for label
 collisions before calling a figure done.

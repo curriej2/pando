@@ -254,3 +254,8 @@ to Python with identical thresholds and CVD matrices.
 
 **Next:** assemble a–e into the 2×3 grid; decide whether the A9 lineage test (do related cells lose
 the same tapes?) is a sixth panel or its own figure with the simulator's null.
+
+**Session close.** Fig 3 delivered as **five standalone panels (a–e)**, not a composed grid —
+Justin's call, recorded in the analysis `CLAUDE.md` so no assembly script gets built later.
+`22_fig3_dropout.py` is kept as the record of the superseded design. **Next session: plan the A9
+lineage figure before building it.**

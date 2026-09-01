@@ -3,7 +3,12 @@
 **Question.** Does Park's cross-tape character compatibility support the perfect-phylogeny route
 (§D.4), and how big is the gap between the homoplasy prediction and the measurement?
 
-**Answer.** *(open — Step 0 only)*
+**Answer.** Partly, and the diagnostics matter more than the answer. Compatibility is 94.66%
+(missing-excluded) / 63.56% (missing-as-absent) on Mouse3, and only the pessimistic end is
+constructible (§D.4d) — **dropout is the binding constraint, row A6**. The skeleton was then set
+aside as a step sideways (see the strategic reassessment below); the diagnostics are the deliverable
+and they motivate the likelihood route. Dropout is now characterised in its own right — see
+"Fig 3 redesign".
 
 ## What was run
 
@@ -20,6 +25,23 @@
 - `src/08_poisson_mle.py` — **the set-dependent MLE, with the full derivation in its header**;
   MC validation + per-node estimates. `results/m_mle_*.tsv.gz`, `results/mle_validation.json`.
 - `src/09_mle_vs_moment.py` — estimator comparison and the (corrected) model check.
+- `src/10_build_characters.py` — character sets per clone, with the determination mask $D$.
+- `src/11,12_junk_*.py` — the two tests that promoted junk values to real symbols.
+- `src/13_compatibility.py` — reference cross-tab engine; `src/14_compat_sparse.py` — production
+  engine (two sparse products); `src/15_memory_bound.py` — the analytic sizing bound.
+- `src/16_skeleton_C.py`, `src/17_skeleton_linear.py` — skeleton construction; `18,19` — the subclone
+  ground-truth test and group relatedness.
+- `src/20,21_fig{1,2}_*.py` — figures 1 and 2. `src/22_fig3_dropout.py` — **superseded**, kept as the
+  record of the old Fig 3.
+- `src/23_dropout_matrix.py` — caches the (cell × tape) recovery / depth / termination matrices;
+  every Fig-3 script reads this so the CSVs are parsed once.
+- `src/24_dropout_margins.py` — both margins, VIF and $\rho$, unfiltered and QC-filtered.
+- `src/25_dropout_margins_followup.py` — the shelf, the common ≥100 cut, barcode loss vs $R_c$,
+  per-tape rate reproducibility across libraries and arms.
+- `src/26_dropout_depth.py` — depth coupling on both margins, each with its confound controlled.
+- `src/29_rho_check.py` — $\rho$ verified three independent ways; Spearman shown ≡ Pearson for binary.
+- `src/27,28,30,31` — Fig 3 panels a, b, c, and d+e. **No assembly script by design** — the panels
+  are presented individually.
 
 ## Findings
 
