@@ -1278,3 +1278,59 @@ negative in every arm: Subclone −0.70, Mouse 3 −0.44, Mouse 2 −0.37, Mouse
 dropout sits in a removable 15% of tapes", and direct evidence bearing on whether $\beta_z$ is a
 technical constant. ⚠ Treat as suggestive: subtracting the per-tape null removes the baseline but
 not the residual marginal dependence of the achievable range, and recovery rate *is* the marginal.
+
+### ⚑⚑ The pooled $\hat\rho$ was hiding the signal, not creating it (`src/38_pool_robustness.py`)
+
+$\hat\rho=\sum_C \mathrm{num}_C/\sum_C \mathrm{den}_C$ is a **ratio of sums**, so each clone enters
+weighted by its pair count $n_C(n_C-1)$. Share of the pooled weight held by the single largest clone:
+
+| arm | clones | largest clone | its share of the weight |
+|---|---|---|---|
+| Mouse 2 | 216 | 3,387 cells | **98.9%** |
+| Mouse 1 | 295 | 1,607 | **84.0%** |
+| Subclone | 15 | 10,996 | 47.6% (top 3: 83.9%) |
+| Mouse 3 | 149 | 210 | 28.8% |
+| Pre-TX | 2,946 | 127 | **1.6%** |
+
+So "Mouse 2's $\rho$" was essentially *one clone's* $\rho$, and "5/5 arms replicate" overstated the
+independence of the replication. Decomposing per clone:
+
+| arm | pooled | drop largest clone | **equal weight per clone** | clones ≥5 cells, % positive |
+|---|---|---|---|---|
+| Mouse 2 | +0.009 | **+0.326** | **+0.246** | 78, 99% |
+| Mouse 1 | +0.166 | +0.226 | **+0.222** | 137, 100% |
+| Mouse 3 | +0.163 | +0.148 | **+0.237** | 67, 100% |
+| Pre-TX | +0.161 | +0.163 | **+0.214** | 1,685, 100% |
+| Subclone | +0.263 | +0.342 | **+0.353** | 13, 100% |
+
+⚑ **Mouse 2's anomaly is fully explained** — its dominant clone has near-zero excess and carries
+98.9% of the weight. Drop it and Mouse 2 is an ordinary arm. Equal-weighted, the five arms collapse
+to a strikingly stable **+0.21 to +0.35**, where pooled they ranged 0.009–0.263.
+
+⇒ Two consequences. The replication claim is far stronger than "5/5 arms": it is **~1,980 individual
+clones, essentially all positive**. And **large clones are the wrong unit** — a clone spanning much
+of the tree dilutes within-clone concordance, since a loss partway down does not make the whole clone
+concordant. That is the same conclusion the depth sweep reached from the other direction. **Use the
+equal-clone-weighted estimator from here on.**
+
+### Panels a and b (`src/39_fig4ab.py`)
+
+**`fig4a_heritable.png` — related cells lose the same tapes.** $x$ = the feature's marginal
+frequency, $y$ = excess over the permutation null, equal weight per clone. Each arm contributes a
+control *curve* (the five `depth≥L` features, $L=2\ldots6$, marginals sweeping 0.97→0.35) and one
+filled diamond for missingness, with a dashed connector to the control point at the nearest
+frequency. The curve is necessary because $\rho\le\sigma^2/[p(1-p)]$ bounds what is achievable at
+extreme marginals — visible in the plot as every arm's control collapsing near $p=0.97$.
+
+Read-off: **every diamond sits far above the null and inside its arm's control band** —
+Mouse 1 40%, Mouse 3 39%, Mouse 2 31%, Subclone 82%, **Pre-TX 126%** of the matched control.
+
+**`fig4b_perclone.png` — …in essentially every clone, not one big one.** One point per clone of ≥5
+cells, sized by cell count, colour = missingness and grey = control, medians barred, and **each arm's
+largest clone ringed**. The rings make the pooling result visible: Mouse 2's 3,387-cell clone sits
+*on the null line* while its 77 smaller clones sit well above it.
+
+⚠ Caveat carried on the panel: the control here is `depth≥6`, whose marginal matches missingness in
+the mice (0.35–0.40 vs 0.36–0.40) but **not in Pre-TX** (0.05 vs 0.23). Pre-TX's 126% uses the
+nearest available control (`depth≥4`) in panel a; its per-clone comparison in panel b is against
+`depth≥6` and so is not frequency-matched.
