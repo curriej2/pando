@@ -353,3 +353,53 @@ construction.
 session and never read, shows $\rho_{\rm within}$ *rising* when per-cell capture is removed
 (0.134→0.168, 0.140→0.185, 0.150→0.161) — the heritable signal is partly masked by capture, not
 produced by it, even in Pre-TX where capture is strongly clone-clustered.
+
+## 2026-09-02 (cont.) — per-tape nulls, and the pooled estimator turns out to be the problem
+
+**Per-tape permutation nulls** (`src/37`, B = 5,000 / 2,000). Each tape gets its own null
+distribution, z-score and permutation p-value, with BH-FDR and `depth>=6` as a known-heritable
+control. ✅ **Null calibration passes cleanly**: zero significantly-*negative* tapes across five arms
+and two feature families — ten chances for a bad null to manufacture anti-concordance, none taken.
+
+⚠⚠ **But significance saturates and must not be the headline.** 77–100% of tapes significant, median
+$z$ from +8 to +422, because $\rho$ pools over millions of within-clone pairs. The p-value answers
+"is there *any* detectable excess", not "is it large". The per-tape null is also right-skewed
+(median skew +0.14 to +1.58), so $z$ is an **ordering statistic only**. **Effect size is the
+quantity.**
+
+**⚑⚑ What the per-tape nulls did buy.** Dropout heritability is **2–2.5× more concentrated across
+tapes than edit-depth heritability measured identically** (top decile 43–58% vs 16–24%, in 3 of 5
+arms). Edit depth accumulates along lineages on every tape alike; dropout heritability piles into a
+minority of loci — what discrete losses at particular integration sites predict and a diffuse
+technical effect does not. Also links to Fig 3: Spearman(recovery, per-tape excess) is negative in
+every arm (−0.11 to −0.70) — poorly recovered tapes are the heritably lost ones.
+
+**⚑⚑ The pooled $\hat\rho$ was hiding the signal** (`src/38`, prompted by Justin asking what summing
+over clones does). $\hat\rho$ is a ratio of sums, so clones enter weighted by $n_C(n_C-1)$: the
+largest clone holds **98.9% of Mouse2's weight**, 84.0% of Mouse1's, 1.6% of Pre-TX's.
+
+| arm | pooled | drop largest | **equal weight per clone** | clones ≥5 cells, % positive |
+|---|---|---|---|---|
+| Mouse2 | +0.009 | +0.326 | **+0.246** | 78, 99% |
+| Mouse1 | +0.166 | +0.226 | **+0.222** | 137, 100% |
+| Mouse3 | +0.163 | +0.148 | **+0.237** | 67, 100% |
+| Pre-TX | +0.161 | +0.163 | **+0.214** | 1,685, 100% |
+| Subclone | +0.263 | +0.342 | **+0.353** | 13, 100% |
+
+⇒ **Mouse2 was never a weak arm** — its dominant clone has near-zero excess and swamped the pooled
+estimate. Equal-weighted the five arms collapse to **+0.21 to +0.35**. The replication claim becomes
+**~1,980 individual clones, essentially all positive**, not "5/5 arms". ⇒ **Use equal-clone weighting
+from here on.**
+
+**Panels a and b built** (`src/39`): `fig4a_heritable.png` (excess vs marginal frequency against the
+`depth≥L` control curve the $\sigma^2\le p(1-p)$ bound makes necessary; missingness at 31–126% of the
+matched control) and `fig4b_perclone.png` (per-clone distributions, each arm's largest clone ringed —
+Mouse2's 3,387-cell clone sits *on the null line* while its 77 smaller clones sit above it).
+
+**⭐ Direction for next session (Justin's call).** Panels **c and d may carry the figure alone**. The
+effect as hypothesised is a *tree* property, not a clonal one, so the most visible and defensible
+demonstration is that **it appears WITHIN large clones** — at subclade resolution inside a single
+clone, where a clone-level effect cannot reach. The decisive case is already identified: Mouse2's
+3,387-cell clone shows near-zero *clone-level* excess yet holds 98.9% of the arm's weight; if the
+structure is real it should be there internally. Same for Subclone's 10,996-cell clone. Dissect
+these next.

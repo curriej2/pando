@@ -85,12 +85,16 @@ Dollo character needing one absorbing state in the pruning, not a reason to reac
 
 0. **⭐ Figure programme for PI presentations** (`analyses/2026-08_park-compatibility`, **figs 1–3
    done**; fig 3 is five standalone panels a–e, deliberately *not* composed into a grid).
-   **A9 lineage test MEASURED (2026-09-02) — the figure panels are still to plan.** Related cells do
-   lose the same tapes: excess within-clone agreement in all five arms at 30–130% of a
-   marginal-matched heritable character, and a **monotone rising gradient over subclade depth in 5/5
-   arms**, which is the Dollo signature and not a batch one. ⚠ Its honest null turned out to be a
-   permutation, *not* the simulator — that correction unblocked the work. **The remaining figs are
-   still blocked on the simulator**: birth–death
+   **A9 lineage test MEASURED (2026-09-02); Fig 4 panels a/b built.** Related cells lose the same
+   tapes — **~1,980 individual clones, essentially all positive**, at 31–126% of a marginal-matched
+   heritable control; a **monotone gradient over subclade depth in 5/5 arms**; and a **discrete**
+   loss rather than a graded rate. ⚠ Its honest null turned out to be a permutation, *not* the
+   simulator — that correction unblocked the work. ⚠ Pooled $\rho$ weights clones by $n_C(n_C-1)$ and
+   **hid** the signal; use equal-clone weighting.
+   **⭐ NEXT: show the effect WITHIN a single large clone** — the claim is tree structure, not a
+   clonal effect, and Mouse2's 3,387-cell clone (near-zero clone-level excess, 98.9% of that arm's
+   weight) is the decisive case. Panels c/d may carry the figure alone.
+   **The remaining figs are still blocked on the simulator**: birth–death
    tree at Park clone sizes, sequential editing at measured $\lambda$/$\xi$, $N=6$, $k=166$, with
    **dropout as a switchable layer**. That simulator also supplies the **homoplasy null** — still the
    single biggest gap in the "dropout not homoplasy" argument.

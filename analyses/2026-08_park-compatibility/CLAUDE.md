@@ -13,10 +13,25 @@ gitignored, never copy out). Justin's own copy of the Park, Chang et al. 2026 ta
 - `clonalbc_percell_hamming1_corrected.csv` — 167,736 rows, `CellID,Sample,ClonalBC_raw,ClonalBC`.
   **This is the clone assignment**, needed for §D.4b Procedure step 1 (work within a clone).
 
-**State (2026-09-02, end of session).** **Fig 3 done (a–e)**; **row A9 measured** — tape loss is
-heritable in all five arms and heritable *below* the clone (monotone gradient over subclade depth,
-5/5 arms), so it is a Dollo character on the tree, not a per-clone nuisance. See README "Row A9".
-**Next: dig further, then plan the Fig 4 panels.** Dropout characterised on both margins — see
+**State (2026-09-02, end of session 2).** **Fig 3 done (a–e)**; **row A9 measured** — tape loss is
+heritable, heritable *below* the clone (monotone subclade-depth gradient, 5/5 arms), and discrete
+rather than a graded rate. Fig 4 panels a/b built. See README "Row A9" and the full $\rho$ derivation
+recorded under "Methods, in full".
+
+**⭐ NEXT, and it is the crux.** The effect is claimed to be a **tree** property, not a clonal one,
+so the sharpest test is that it appears **WITHIN a single large clone** at subclade resolution —
+where a clone-level or batch effect cannot reach. Start with **Mouse2's 3,387-cell clone**: it has
+near-zero *clone-level* excess yet holds 98.9% of that arm's pooled weight, so if tree structure is
+real it must be visible inside it. Then Subclone's 10,996-cell clone. Panels **c and d may carry the
+figure alone**; a and b become supporting.
+
+**⚠ Two estimator rules, learned the hard way.**
+1. **Equal-clone weighting, not pooled.** $\hat\rho$ is a ratio of sums, so clones enter weighted by
+   $n_C(n_C-1)$ — one clone held 98.9% of Mouse2 and 84.0% of Mouse1, and pooling *hid* the signal
+   (Mouse2 +0.009 pooled vs +0.246 equal-weighted).
+2. **Significance saturates; report effect size.** With millions of within-clone pairs, 77–100% of
+   tapes reach FDR 5% and median $z$ runs +8 to +422. $z$ is an ordering statistic only — the
+   per-tape null is right-skewed. Dropout characterised on both margins — see
 README "Fig 3 redesign". Compatibility measured on Mouse3 and Initial;
 Mouse1/Mouse2 never finished (5 OOMs, all on their single largest clone) and are now **moot** —
 see the strategic reassessment in README.md. $C$ measured on Mouse3 (0.42–0.57 depending on
@@ -39,7 +54,7 @@ statistical power, not inherited from the paper.
 | 1 recorder / $q$ | ✅ done, 2 panels | `20_fig1_recorder.py` |
 | 2 homoplasy | ✅ done, **two versions** — `simple` (present) and `mle` (reserve) | `21_fig2_homoplasy.py <simple\|mle>` |
 | 3 dropout | ✅ **done, 5 panels a–e**, each a standalone PNG | `27` a · `28` b · `30` c · `31` d+e |
-| 4 dropout & lineage (row **A9**) | ⚑ **diagnostics DONE — panels still to plan** | `32` `33` `34` `35` |
+| 4 dropout & lineage (row **A9**) | ⚑ panels **a, b built**; **c/d are the ones that matter** | `32`–`39` |
 | 5 compatibility spread + homoplasy null | needs the simulator | — |
 | 6 method comparison under simulation | planned; needs simulator | — |
 | 7 calibration / honest uncertainty | planned; needs simulator | — |
