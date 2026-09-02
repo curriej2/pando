@@ -1049,3 +1049,232 @@ locus loss rather than per-observation failure, then $\beta_z$ is not purely a t
 treating it as a fixed emission probability would model as noise something that is a tree-structured
 state. The cross-library reproducibility ($r=0.997$) does not settle this, because all arms descend
 from one engineered line, so an ancestral loss is shared by construction. **Open.**
+
+---
+
+## Methods, in full: the within-clone correlation $\hat\rho_{\rm within}$
+
+*Written out completely (2026-09-02) so it can be re-read before presenting. Nothing here is new
+analysis; it is the derivation behind every number in the A9 section above.*
+
+### 1. The data
+
+One binary number per cell–tape pair,
+
+$$Y_{cz} = 1 \ \text{if tape } z \text{ is entirely unrecovered in cell } c,\qquad 0 \text{ otherwise},$$
+
+i.e. a 6,737 × 166 matrix for Mouse 1. (Flipping the 0/1 convention on both members of a pair leaves
+every correlation below unchanged; only consistency matters.)
+
+### 2. Why a model is needed at all
+
+We want to know whether two cells of a clone agree **more than expected**, so "expected" must
+already contain the two nuisances Fig 3 measured: some cells are badly captured ($\rho_{\rm
+cell}=0.13$), some tapes are badly recovered ($\rho_{\rm tape}=0.25$). Otherwise sisters look
+concordant merely for sharing a bad tape.
+
+⚑ **And each $(c,z)$ pair is observed exactly once.** There is no repeat measurement from which to
+estimate $E[Y_{cz}]$ locally. A model is the only device that can borrow strength from the whole row
+and the whole column to produce an expectation for a single unrepeated observation. That is the sole
+reason $\alpha$ and $\beta$ exist.
+
+### 3. Why not just use the observed fractions?
+
+Let $a_c$ = fraction of tapes missing in cell $c$, $b_z$ = fraction of cells missing tape $z$,
+$\bar p$ = overall. A combining rule must (i) reproduce the observed margins and (ii) return a
+number in $[0,1]$.
+
+**Multiplicative**, $\hat p_{cz}=a_cb_z/\bar p$, satisfies (i) —
+$\sum_z a_cb_z/\bar p=(a_c/\bar p)\,K\bar p=Ka_c$ ✓ — but **fails (ii) on our real data**: Mouse 1
+has $\bar p=0.394$, a real cell with 20/166 tapes recovered has $a_c=0.88$, and a real tape recovered
+in 0.6% of cells has $b_z=0.994$, giving $\hat p = 0.88\times0.994/0.394 = \mathbf{2.22}$. Then
+$v=\hat p(1-\hat p)$ is negative and the whole construction collapses.
+
+**Additive on the probability scale**, $\hat p = a_c+b_z-\bar p$, also matches the margins and also
+fails: $0.88+0.994-0.394=1.48$.
+
+Both linear rules break precisely at the badly recovered cells and tapes — which is where heritable
+loss would live.
+
+### 4. The model: $\alpha$, $\beta$, and $\hat p$
+
+Add on the **log-odds** scale, which cannot leave $(0,1)$ and saturates correctly:
+
+$$\mathrm{logit}(p)=\log\frac{p}{1-p},\qquad \mathrm{logit}^{-1}(x)=\frac{1}{1+e^{-x}},\qquad
+\hat p_{cz}=\mathrm{logit}^{-1}(\alpha_c+\beta_z).$$
+
+* $\alpha_c$ — cell $c$'s propensity to be missing, in log-odds. Large = poorly captured cell.
+* $\beta_z$ — tape $z$'s propensity to be missing, in log-odds. Large = badly recovered tape.
+
+Worked: $\alpha_c=0.4,\ \beta_z=0 \Rightarrow \hat p=0.599$; same cell on a good tape
+$\beta_z=-2 \Rightarrow \hat p=0.168$. The additive-log-odds form means a bad cell multiplies the
+*odds* of missingness by the same factor on every tape — exactly what a capture failure does.
+
+⚠ **Notation.** Earlier drafts used $\sigma$ for both the logistic function and a variance. Here
+$\mathrm{logit}^{-1}$ is the link; $\sigma^2$ only ever means a variance.
+
+### 5. How $\alpha,\beta$ are fitted — and why Newton is forced, not chosen
+
+The maximum-likelihood score equations for this model, with row and column indicators as covariates,
+are $\sum (Y-\hat p)\times(\text{covariate})=0$, i.e.
+
+$$\sum_z\big(Y_{cz}-\hat p_{cz}\big)=0\ \ \forall c,\qquad \sum_c\big(Y_{cz}-\hat p_{cz}\big)=0\ \ \forall z .$$
+
+**The ML fit reproduces every observed row and column total** — precisely the property wanted from
+the fractions in §3. The difference is that $\mathrm{logit}^{-1}$ is nonlinear, so the $\alpha,\beta$
+achieving those totals are *not* the fractions themselves and must be solved for: alternate
+one-dimensional Newton steps on $\alpha$ given $\beta$ and vice versa. Adding a constant to all
+$\alpha$ and subtracting from all $\beta$ changes nothing, so fix $\sum_c\alpha_c=0$.
+
+⇒ **The fractions are what the fit matches; $\alpha,\beta$ are whatever numbers land on them.**
+(Standard object: the Rasch model of item-response theory — "person ability + item difficulty" on the
+logit scale; the margin-matching is the logistic analogue of iterative proportional fitting.)
+
+⚑ **This is the crux of the test.** Because the fit reproduces every row and column total, any
+purely per-cell or purely per-tape structure is gone. Whatever survives in the residuals is *by
+construction* an interaction — a particular cell missing a particular tape beyond what its own
+quality and that tape's quality imply.
+
+### 6. $r$ and $v$ are not extra concepts
+
+$r_{cz}=Y_{cz}-\hat p_{cz}$ is just "$Y$ minus its expectation", which the definition of correlation
+already requires; $\hat p_{cz}$ *is* the model's $E[Y_{cz}]$. And $Y_{cz}$ is a coin flip with
+probability $\hat p_{cz}$, so its variance is $v_{cz}=\hat p_{cz}(1-\hat p_{cz})$ — the yardstick we
+divide by. Written with neither symbol:
+
+$$\hat\rho_{\rm within}=\frac{\sum_C\sum_{c\neq c'\in C}\big(Y_{cz}-\hat p_{cz}\big)\big(Y_{c'z}-\hat p_{c'z}\big)}
+{\sum_C\sum_{c\neq c'\in C}\sqrt{\hat p_{cz}(1-\hat p_{cz})}\ \sqrt{\hat p_{c'z}(1-\hat p_{c'z})}}$$
+
+**The modelling choice is *which* expectation to centre on**, and it is the whole design:
+
+| centre on | question answered | Mouse 2 |
+|---|---|---|
+| grand mean $\bar p$ | do sisters agree? | +0.41 — dominated by "some tapes are bad" |
+| tape marginal $\beta_z$ | …beyond tape quality? | +0.03 |
+| $\alpha_c+\beta_z$ | …beyond cell **and** tape quality? (**partial correlation**) | +0.04 |
+
+### 7. Collapsing the pair sums
+
+For any list $x_1\ldots x_m$, $\big(\sum_i x_i\big)^2=\sum_i x_i^2+\sum_{i\neq j}x_ix_j$, hence
+$\sum_{i\neq j}x_ix_j=\big(\sum_i x_i\big)^2-\sum_i x_i^2$. Applying it to the numerator with $x=r$
+and the denominator with $x=\sqrt v$ (so $(\sqrt v)^2=v$):
+
+$$\hat\rho_{\rm within}=\frac{\sum_C\Big[\big(\sum_{c\in C}r_{cz}\big)^2-\sum_{c\in C}r_{cz}^2\Big]}
+{\sum_C\Big[\big(\sum_{c\in C}\sqrt{v_{cz}}\big)^2-\sum_{c\in C}v_{cz}\Big]}$$
+
+Four running totals per (clone, tape); every pair accounted for; $O(nk)$ for all 166 tapes. Ordered
+pairs throughout, so the factor 2 cancels.
+
+**Worked example — one clone of three cells, one tape.** $\hat p=(0.6,0.6,0.3)$, so
+$v=(0.24,0.24,0.21)$, $\sqrt v=(0.490,0.490,0.458)$, and denominator
+$(1.438)^2-0.69=1.378$ either way.
+
+*All three missing*, $Y=(1,1,1)$, $r=(0.4,0.4,0.7)$: numerator $(1.5)^2-0.81=1.44$; brute force
+$2[0.16+0.28+0.28]=1.44$ ✓; $\hat\rho=+1.05$.
+*Mixed*, $Y=(1,0,1)$, $r=(0.4,-0.6,0.7)$: numerator $(0.5)^2-1.01=-0.76$; $\hat\rho=-0.55$.
+
+Agreement positive, disagreement negative, weighted by how surprising it was. A single extreme clone
+can exceed 1 — this is a ratio-of-moments estimator with a fitted mean; the $\rho\le1$ bound applies
+to the pooled quantity.
+
+### 8. Why the marginal frequency must be matched
+
+With $\pi_C$ the clone's own propensity (mean $p$, variance $\sigma^2$), $\pi^2\le\pi$ gives
+$\sigma^2=E[\pi^2]-p^2\le p-p^2=p(1-p)$, so $\rho=\sigma^2/[p(1-p)]\le1$. The useful consequence is
+at the extremes: a feature present in 97% of cells has $p(1-p)=0.029$ — almost no room for clones to
+differ — against 0.24 at $p=0.4$. Visible in our own data: the `depth≥2` control, marginal 0.97,
+gives the smallest excess in **every** arm (Mouse 1 +0.219 vs +0.319 for `depth≥6`; Mouse 3 +0.084 vs
++0.536). ⇒ controls must be compared at matched marginal, which is why panel a is a curve.
+
+### 9. Why the permutation null is subtracted rather than assumed zero
+
+$$\text{excess}(f)=\hat\rho_{\rm within}(f)-E_\pi\big[\hat\rho_{\rm within}(f)\big]$$
+
+with $\pi$ shuffling cells **within harvest sample**, preserving each clone's size and its sample
+composition. One expects $E_\pi\approx0$, and in three arms it is — but not in all:
+
+| arm | worst between-sample per-tape $r$ | permutation null |
+|---|---|---|
+| Subclone | 0.999 | **−0.0000** |
+| Pre-TX | 0.997 | **−0.0000** |
+| Mouse 1 | 0.900 | +0.0021 |
+| Mouse 3 | 0.867 | +0.0216 |
+| Mouse 2 | 0.815 | +0.0303 |
+
+⚑ **Perfectly monotone in how much the samples disagree about tape quality.** The fit has no
+per-sample term, so where samples differ in their $\beta_z$ profile the residuals are not mean-zero
+within a sample; squared over group sums of thousands of cells, that offset appears even for random
+groups. The permutation carries the identical offset by construction, so subtracting it makes the
+estimator robust to a misspecification we can *measure*. Assuming zero would have inflated Mouse 2 by
+**4.3×** (+0.0395 vs +0.0092) and Mouse 3 by 13%.
+
+⇒ The null value is a **diagnostic**, not a formality, and should be reported alongside the excess.
+
+### Per-tape permutation nulls: p-values, z-scores, and what they are worth (`src/37_pertape_null.py`)
+
+$\hat\rho_{\rm within}$ is computed per tape, and the per-tape values are wildly heterogeneous, so
+the pooled number hides the structure a Dollo mechanism predicts. Script 37 keeps the whole
+per-feature vector on every permutation draw (B = 5,000 Mouse1; 2,000 elsewhere), giving each tape
+
+$$z = \frac{\rho_{\rm obs}-\overline{\rho_{\rm perm}}}{\mathrm{sd}(\rho_{\rm perm})},\qquad
+p = \frac{1+\#\{b:\rho_{\rm perm}^{(b)}\ge\rho_{\rm obs}\}}{B+1}$$
+
+one-sided upper (nothing predicts sisters agreeing *less* than strangers), with BH-FDR across the
+166 tapes. `depth>=6` is run identically as a known-heritable positive control.
+
+**✅ The null calibration check passes cleanly.** Tapes significantly *negative*: **0 out of 166, in
+all five arms, for both feature families** — ten independent opportunities for a misspecified null to
+produce spurious anti-concordance, and it produced none.
+
+| arm | missing: sig. at FDR 5% | median $z$ | control: sig. | control median $z$ | null skew |
+|---|---|---|---|---|---|
+| Pre-TX | 166/166 | +100.0 | 165/166 | +54.1 | +0.14 |
+| Subclone | 166/166 | +422.2 | 165/166 | +2063.5 | +1.49 |
+| Mouse 1 | 165/166 | +47.8 | 160/166 | +95.8 | +1.58 |
+| Mouse 3 | 154/166 | +12.9 | 158/166 | +43.9 | +0.75 |
+| Mouse 2 | 128/166 | +7.8 | 147/166 | +19.3 | +0.32 |
+
+⚠⚠ **Significance is saturated and must not be the headline.** $\rho$ pools over millions of
+within-clone pairs — Mouse 1's largest clone alone contributes $1607\times1606\approx2.6$M ordered
+pairs — so the permutation sd is minute and the test detects arbitrarily small departures. The
+p-value answers *"is there any detectable excess"* (yes, on 77–100% of tapes) and not *"is it
+large"*. **Effect size is the informative quantity.** Relatedly, the per-tape null is right-skewed
+(median skew +0.14 to +1.58), so $z$ is an **ordering statistic**, not something to convert to a
+Gaussian p-value.
+
+⇒ The reading is **pervasive but unequal**: with hundreds of clones per arm, even a low per-locus
+loss rate means nearly every tape is lost in *some* lineage and so shows a detectable excess, while a
+minority of loci carry most of the magnitude.
+
+### ⚑⚑ What the per-tape nulls actually buy: dropout heritability is *more concentrated* than edit heritability
+
+With per-tape nulls the excess $\rho_{\rm obs}-\overline{\rho_{\rm perm}}$ is comparable across
+tapes, and the concentration can be compared against the control measured identically:
+
+| arm | missing: median excess | max | **top 10% of tapes hold** | top 25% | control top 10% |
+|---|---|---|---|---|---|
+| Mouse 1 | +0.049 | +2.08 | **58%** | 77% | 23% |
+| Mouse 3 | +0.058 | +1.00 | **43%** | 71% | 18% |
+| Subclone | +0.034 | +1.18 | **44%** | 81% | 24% |
+| Mouse 2 | +0.002 | +0.10 | 57% | 82% | 59% |
+| Pre-TX | +0.146 | +0.59 | 20% | 41% | 16% |
+
+**In three of five arms dropout heritability is 2–2.5× more concentrated than edit-depth
+heritability measured the same way.** That contrast is the point: edit depth accumulates along
+lineages on *every* tape alike, so its heritability is spread evenly (control top decile 16–24%);
+dropout heritability piles into a minority of loci (top decile 43–58%). Discrete loss events at
+*particular* integration sites predict exactly that asymmetry, and a diffuse technical effect does
+not. Reported as a **comparison** rather than an absolute, which is what makes it defensible.
+
+Mouse 1's spread is 100-fold across tapes: deciles +0.011, +0.019, +0.049 (median), +0.103, +0.258,
+95th +0.534, 99th +1.364, max +2.078.
+
+⚠ Pre-TX is again the exception — diffuse (20% vs 16% control), as it was in the raw per-tape
+distribution. Real arm difference, not yet explained.
+
+**Link back to Fig 3, now null-controlled.** Spearman(tape recovery rate, per-tape excess) is
+negative in every arm: Subclone −0.70, Mouse 3 −0.44, Mouse 2 −0.37, Mouse 1 −0.33, Pre-TX −0.11.
+**Poorly recovered tapes are the heritably lost ones** — the mechanism behind Fig 3's "informative
+dropout sits in a removable 15% of tapes", and direct evidence bearing on whether $\beta_z$ is a
+technical constant. ⚠ Treat as suggestive: subtracting the per-tape null removes the baseline but
+not the residual marginal dependence of the achievable range, and recovery rate *is* the marginal.
