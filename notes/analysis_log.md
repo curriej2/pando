@@ -259,3 +259,57 @@ the same tapes?) is a sixth panel or its own figure with the simulator's null.
 Justin's call, recorded in the analysis `CLAUDE.md` so no assembly script gets built later.
 `22_fig3_dropout.py` is kept as the record of the superseded design. **Next session: plan the A9
 lineage figure before building it.**
+
+## 2026-09-02 — row A9 measured: tape loss is heritable, and heritable below the clone
+
+**The question** (Mulberry & Stadler's stated reason for punting on dropout, §1c.2): are DNA tapes
+"simultaneously lost for groups of related cells"? Unmeasured in the literature.
+
+**Statistic.** $r_{cf}=Y_{cf}-\hat p_{cf}$ with $\hat p=\sigma(\alpha_c+\beta_z)$ — the *surprise*,
+so a clone of uniformly poor cells leaves no residual and only **tape-specific** structure survives.
+Intraclass correlation of those residuals within a group, computed without enumerating pairs via
+$\sum_{c\neq c'}r_cr_{c'}=(\sum r)^2-\sum r^2$: $O(nk)$ for all 166 tapes, at clone and sample level
+so between-clone comes free. **T0 is a calibration curve**, not a number — the same statistic on
+"tape reached site $L$", whose marginals overlap the missingness marginals.
+
+**T1, clone level** (excess over a within-sample permutation null): Subclone **+0.263**, Mouse1
+**+0.166**, Mouse3 **+0.163**, Initial **+0.161**, Mouse2 +0.009 — **heritable in every arm**, at
+30–130% of a marginal-matched heritable character. ⚠ Mouse2's small value is a *power artefact*: one
+clone holds 3,387 of its 5,382 cells, so the permuted group is nearly the real clone.
+
+**T2, below the clone** — subclades defined by the depth-$d$ prefix of an anchor tape, missingness
+measured on all *other* tapes. The within-clone null is **analytic** ($m(m-1)/n(n-1)$ times the
+clone's own pair sum) and was **verified against explicit permutations: mean ratio 1.0000**.
+⚑⚑ **Monotone rising in 5/5 arms** (Initial +0.063→+0.155, Mouse3 +0.019→+0.059, Mouse1
++0.007→+0.020, Subclone-screened +0.007→+0.012, Mouse2 +0.0004→+0.0038). A flat batch effect predicts
+zero at every depth. ⇒ closer relatives agree more about which tapes they lost.
+
+⚑ **The depth test bounded the Subclone colony≡well confound** rather than arguing about it: Subclone
+has the largest clone-level signal but the flattest gradient (sub-clone structure ~5% of its
+clone-level number), while Initial's sub-clone excess nearly equals its clone-level one.
+
+⚑ **Unexpected, and recorded:** the collision screen barely moves the clone-level test but **halves**
+the subclade one. A misassigned cell carries a foreign prefix *and* foreign dropout, so it
+*manufactures* subclade agreement instead of diluting it — the screen matters more for the fine test,
+and in the opposite direction.
+
+**T3, capture quality itself** ($\rho_{\rm clone}$ on $R_c$, the birth–death sampling question):
+Initial **+0.153**, Mouse1 **+0.090**, Subclone +0.038, Mouse3 +0.032, Mouse2 +0.004, against
+between-clone values ≤+0.021. Related cells share overall capture. ⚠ Not yet callable as biological
+— needs a control for co-encapsulation / sub-lane structure.
+
+**⚠ Two corrections to earlier claims in this project.**
+1. Last session I said this figure's honest null is the simulator. **Wrong** — permutation nulls are
+   sufficient for detection; the simulator is only needed to quantify the *consequence*. That
+   unblocked the whole analysis.
+2. $\rho_{\rm between}$ is contaminated as a comparator: with no per-sample term in the fit, the
+   sample-level mean residual is not zero and gets squared over group sums of thousands of cells.
+   The permutation null carries the same offset and is the sound contrast.
+
+**⇒ Modelling consequence.** Heritability *below* the clone is what makes this a Dollo character on
+the tree rather than a per-clone nuisance, and the remedy is a per-tape irreversible loss process —
+**one absorbing state in the pruning recursion, a constant factor**. On this evidence **A9 does not
+force SBI**, contrary to the §1c.3 table; only the uniform-sampling half (clustered *cell* loss) does.
+
+**Housekeeping.** A `--verify` run submitted with `--depths 2` overwrote the full Mouse2 depth JSON;
+re-run, numbers never lost. **Next: dig further, then plan the Fig 4 panels.**

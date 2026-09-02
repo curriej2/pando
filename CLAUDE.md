@@ -46,7 +46,9 @@ notes · §H literature (§H.6 = full Mulberry & Stadler close read) · §I expe
 
 | directory | question | status |
 |---|---|---|
-| `2026-08_park-compatibility` | Does Park's cross-tape character compatibility support the perfect-phylogeny route (§D.4b)? | **Diagnostics complete.** Mouse3 94.66%/63.56% (spread +31 pts), Initial 91.91%/80.60% (+11 pts) ⇒ **dropout binds, row A6**. $C=0.57$ on Mouse3. Subclone ground truth **passed**. ⚑ **Strategic pivot: skeleton is a step sideways — only 9 of 2,547 clones exceed 1,000 cells, so likelihood inference is already in range. Figure programme under way: figs 1–3 done.** ⚑ **Dropout characterised (fig 3): two axes — the tape axis is larger ($\rho_{\rm tape}=0.25$ vs $\rho_{\rm cell}=0.13$), reproducible ($r=0.997$ between libraries) and informative about edit depth, but only through a removable 15% of tapes; the cell axis is a pure QC artefact and carries no editing information, so it can be marginalised.** |
+| `2026-08_park-compatibility` | Does Park's cross-tape character compatibility support the perfect-phylogeny route (§D.4b)? | **Diagnostics complete.** Mouse3 94.66%/63.56% (spread +31 pts), Initial 91.91%/80.60% (+11 pts) ⇒ **dropout binds, row A6**. $C=0.57$ on Mouse3. Subclone ground truth **passed**. ⚑ **Strategic pivot: skeleton is a step sideways — only 9 of 2,547 clones exceed 1,000 cells, so likelihood inference is already in range. Figure programme under way: figs 1–3 done.** ⚑ **Dropout characterised (fig 3): two axes — the tape axis is larger ($\rho_{\rm tape}=0.25$ vs $\rho_{\rm cell}=0.13$), reproducible ($r=0.997$ between libraries) and informative about edit depth, but only through a removable 15% of tapes; the cell axis is a pure QC artefact and carries no editing information, so it can be marginalised.**
+⚑ **Row A9 measured (2026-09-02): tape loss IS heritable, and heritable below the clone — so it is a
+Dollo character needing one absorbing state in the pruning, not a reason to reach for SBI.** |
 
 ## Already settled — do not re-derive unless asked
 
@@ -83,10 +85,12 @@ notes · §H literature (§H.6 = full Mulberry & Stadler close read) · §I expe
 
 0. **⭐ Figure programme for PI presentations** (`analyses/2026-08_park-compatibility`, **figs 1–3
    done**; fig 3 is five standalone panels a–e, deliberately *not* composed into a grid).
-   **Next: plan a figure for the A9 lineage test** — do related cells lose the same tapes? Mulberry &
-   Stadler name this as their reason for punting on dropout (§1c.2) and it is unmeasured in the
-   literature. Attenuated here because shelf cells largely lack clone barcodes, and its honest null
-   is the simulator. **The remaining figs are blocked on that simulator**: birth–death
+   **A9 lineage test MEASURED (2026-09-02) — the figure panels are still to plan.** Related cells do
+   lose the same tapes: excess within-clone agreement in all five arms at 30–130% of a
+   marginal-matched heritable character, and a **monotone rising gradient over subclade depth in 5/5
+   arms**, which is the Dollo signature and not a batch one. ⚠ Its honest null turned out to be a
+   permutation, *not* the simulator — that correction unblocked the work. **The remaining figs are
+   still blocked on the simulator**: birth–death
    tree at Park clone sizes, sequential editing at measured $\lambda$/$\xi$, $N=6$, $k=166$, with
    **dropout as a switchable layer**. That simulator also supplies the **homoplasy null** — still the
    single biggest gap in the "dropout not homoplasy" argument.

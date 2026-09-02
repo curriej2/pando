@@ -42,6 +42,14 @@ and they motivate the likelihood route. Dropout is now characterised in its own 
 - `src/29_rho_check.py` — $\rho$ verified three independent ways; Spearman shown ≡ Pearson for binary.
 - `src/27,28,30,31` — Fig 3 panels a, b, c, and d+e. **No assembly script by design** — the panels
   are presented individually.
+- `src/32_lineage_feasibility.py` — power/feasibility for the A9 test: usable cells per arm, clone
+  size bands, informative absence characters, and the clone/sample purity that sets the batch confound.
+- `src/33_collision_screen.py` — Park's cross-clone collision screen, vectorised, cached as per-cell
+  flags. Needed because the Fig-3 cache carries no symbols.
+- `src/34_lineage_rho.py` — **T0/T1**: the intraclass-correlation machinery, three centrings, the
+  edit-feature calibration curve, $\rho_{\rm clone}$ on $R_c$, and the within-sample permutation null.
+- `src/35_lineage_depth.py` — **T2**: the relatedness gradient below the clone, with the analytic
+  within-clone null and its permutation verification.
 
 ## Findings
 
@@ -837,3 +845,142 @@ and it gives $\rho=+0.109$ — still small beside (d).
 ⇒ **The axis that is informative is the one you can measure and, if need be, delete; the axis you
 cannot measure per cell carries no information about editing and can be marginalised.** That is the
 figure's conclusion and the argument for the likelihood route.
+
+---
+
+## Row A9 — is tape loss heritable? (2026-09-02)
+
+**Question.** Mulberry & Stadler punt on dropout because it may be non-random: *"if DNA Tapes are
+simultaneously lost for groups of related cells"* (§1c.2). Nobody has measured it. Do related cells
+lose the **same** tapes?
+
+**Why the answer changes the model.** Fig 3's emission $P(\mathrm{obs}\mid\mathrm{true})$ built from
+$\alpha_c,\beta_z$ is valid only if missingness is conditionally independent across tips given the
+tree. If loss is heritable: (i) the tip factorisation that pruning relies on fails in the
+*observation* layer, and computes a wrong number with nothing to flag it; (ii) we are discarding a
+Dollo character — and in a chromosomally unstable cancer, copy-number loss at an integration site is
+the obvious mechanism; (iii) clustered *cell* loss breaks the birth–death uniform-sampling prior.
+The remedies differ: (i)/(ii) want a per-tape irreversible loss process — **one absorbing state in
+the pruning recursion, a constant factor, not an explosion**; only (iii) is a genuine SBI argument.
+
+### The statistic
+
+For cell $c$ and feature $f$, $r_{cf}=Y_{cf}-\hat p_{cf}$ is the **surprise** — outcome minus what
+the cell and the feature alone predict, with $\hat p=\sigma(\alpha_c+\beta_z)$ so that a clone of
+uniformly poor cells leaves no residual and only **tape-specific** structure survives. Products of
+two cells' surprises, averaged over pairs sharing a group and normalised by
+$v=\hat p(1-\hat p)$, give an intraclass correlation. Pairs are never enumerated:
+
+$$\sum_{c \neq c' \in g} r_c r_{c'} = \Big(\sum_{c\in g} r_c\Big)^2 - \sum_{c\in g} r_c^2$$
+
+so two running totals per (group, feature) deliver every pair — $O(nk)$ for all 166 tapes. Computed
+at clone and sample level, so between-clone comes free (same-sample pairs minus same-clone pairs).
+
+**T0 is a calibration curve, not a number.** $\rho$ depends on a feature's marginal frequency, so the
+control is the *same statistic on features known to be heritable* — "has tape $z$ reached site $L$",
+$L=2\ldots6$, whose marginals sweep 0.97 down to 0.35 and so overlap the missingness marginals.
+Missingness is read against that curve; the within-sample permutation supplies the zero line.
+
+⚠ **$\rho_{\rm between}$ is NOT the comparator.** The two-way fit has no per-sample term, so the mean
+residual within a harvest sample is not exactly zero; squared over group sums of thousands of cells
+that offset dominates and inflates the between term. The **permutation null** carries the same
+offset by construction and is the sound contrast. Retained in the output for the record only.
+
+### T1 — clone level (`src/34_lineage_rho.py`)
+
+Excess = observed $\rho_{\rm within}$ minus the within-sample permutation null (200 draws).
+
+| arm | missing marg | excess | matched T0 | T0 marg | T0 excess | ratio |
+|---|---|---|---|---|---|---|
+| Mouse 1 | 0.363 | **+0.1662** | depth≥6 | 0.377 | +0.3191 | 0.52 |
+| Mouse 3 | 0.400 | **+0.1634** | depth≥6 | 0.400 | +0.5363 | 0.30 |
+| Pre-TX | 0.232 | **+0.1608** | depth≥4 | 0.346 | +0.1208 | **1.33** |
+| Subclone | 0.218 | **+0.2630** | depth≥6 | 0.272 | +0.2842 | 0.93 |
+| Mouse 2 | 0.371 | +0.0092 | depth≥6 | 0.350 | +0.0290 | 0.32 |
+
+**Heritable in every arm**, at 30–130% of a known-heritable character of matched frequency. In
+Pre-TX missingness is *more* clone-clustered than the edit features.
+
+⚠ **Mouse 2's small value is a power artefact, not biology.** One clone holds 3,387 of its 5,382
+cells, so a permuted group of that size drawn from the same samples is nearly the real clone and the
+test has no leverage there — its null sits at +0.030 where the other arms' sit at ~0.002. Mouse 2 is
+the floor, not the signal.
+
+Most of the *raw* within-clone agreement is tape marginals, not lineage: Mouse 2 $\rho_{\rm within}$
+falls 0.406 (grand mean) → 0.032 (tape-centred) → 0.040 (two-way).
+
+### T3 — is capture quality itself clone-clustered?
+
+$\rho_{\rm clone}$ on $R_c$, the birth–death uniform-sampling question, kept as a finding in its own
+right rather than only as a nuisance to condition away:
+
+| arm | within clone | between clones, same sample |
+|---|---|---|
+| Pre-TX | **+0.1534** | +0.0047 |
+| Mouse 1 | **+0.0899** | +0.0059 |
+| Subclone | +0.0383 (screened +0.0446) | −0.0192 |
+| Mouse 3 | +0.0323 | +0.0212 |
+| Mouse 2 | +0.0036 | −0.0024 |
+
+Related cells do vary together in overall capture, strongly in Pre-TX and Mouse 1 — the uniform
+sampling assumption failing directly. ⚠ Not yet callable as biological: clone-mates could share a
+capture level through co-encapsulation or sub-lane structure the `Sample` label does not resolve.
+**Needs a control before it goes in a figure.**
+
+### T2 — finer than clonal: the relatedness gradient (`src/35_lineage_depth.py`)
+
+Clone is coarse (Subclone's median clone is 997 cells) and, in Subclone, colony ≡ culture batch. Both
+problems resolve by looking below the clone. A subclade = cells sharing the depth-$d$ prefix of one
+**anchor** tape; missingness is measured on every tape **except** the anchor (cross-tape only, per
+§D.4 fact 1), averaged over ~160 anchors.
+
+**The null is analytic.** Under random assignment of a clone's cells to subgroups of the observed
+sizes, every unordered pair is equally likely to land together, so
+
+$$E\Big[\sum_{c\neq c'\in g} r_c r_{c'}\Big] = \frac{m(m-1)}{n(n-1)}\sum_{c\neq c'\in C} r_c r_{c'}$$
+
+— the permutation mean is a size-weighted rescaling of the clone's own pair sum, no simulation.
+**Verified** against explicit within-clone permutations (8 anchors × 40 draws): ratios 0.9992–1.0006,
+**mean 1.0000**, each within its permutation sd.
+
+Excess = agreement *beyond* the clone. A flat batch effect predicts zero at every depth.
+
+| arm | d1 | d2 | d3 | d4 | rise | d4 ÷ T0 |
+|---|---|---|---|---|---|---|
+| Pre-TX | +0.0628 | +0.0973 | +0.1320 | **+0.1547** | 2.5× | 0.58 |
+| Mouse 3 | +0.0192 | +0.0369 | +0.0511 | **+0.0587** | 3.1× | 0.37 |
+| Mouse 1 | +0.0072 | +0.0105 | +0.0161 | **+0.0195** | 2.7× | 0.39 |
+| Subclone (screened) | +0.0070 | +0.0079 | +0.0091 | **+0.0122** | 1.7× | 0.63 |
+| Mouse 2 | +0.0004 | +0.0011 | +0.0026 | **+0.0038** | 9.5× | 0.47 |
+
+⚑⚑ **Monotone in five of five arms** (six of six with Subclone unscreened). Closer relatives agree
+more about which tapes they have lost, every time — the Dollo prediction, not the batch prediction.
+
+⚑ **The depth test did the job it was added for.** Subclone has the *largest* clone-level signal
+(+0.263) and the *flattest* gradient, with sub-clone structure only ~5% of its clone-level number;
+Pre-TX's sub-clone excess (+0.155) nearly equals its clone-level one (+0.161). So Subclone's headline
+is substantially colony-≡-well batch, while Pre-TX's and the mice's is genuinely tree-structured. The
+colony confound is now bounded rather than argued about. (Clone-level and sub-clone excesses use
+different nulls and cell subsets, so the ratio is indicative, not exact.)
+
+### ⚑ An unexpected result about the collision screen
+
+At clone level the screen barely matters and moves things the predicted way (Subclone +0.263 →
++0.273; misassigned cells dilute). **At subclade level it halves the signal** (+0.0189 → +0.0122 at
+d4). In hindsight this is right: a misassigned cell carries a foreign edit prefix *and* foreign
+dropout, so it forms a spurious subgroup that is internally coherent — it *manufactures* subclade
+agreement rather than diluting it. ⇒ **the screen matters more for the fine test than the coarse one,
+and in the opposite direction.** Use screened numbers for the depth sweep, unscreened for clone level.
+Mouse 2 flags 11/5,382 cells (0.20%); Subclone 1,304/38,652 (3.37%), against `src/18`'s 3.77% on
+pooled 200-cell groups.
+
+### Where this leaves the model
+
+Tape loss is heritable, and heritable **below** the clone — the property that makes it a Dollo
+character on the tree rather than a per-clone nuisance. That points at the tractable remedy: a
+per-tape irreversible loss process, one absorbing state integrated along branches in the pruning
+recursion. **A9 does not, on this evidence, force SBI** — contrary to the §1c.3 table. The
+uniform-sampling half of A9 (clustered *cell* loss) is untouched by that fix and remains the genuine
+SBI argument.
+
+**Not yet done:** figure panels; a control for the Pre-TX capture-ICC; depth sweep beyond d=4.

@@ -13,8 +13,11 @@ gitignored, never copy out). Justin's own copy of the Park, Chang et al. 2026 ta
 - `clonalbc_percell_hamming1_corrected.csv` — 167,736 rows, `CellID,Sample,ClonalBC_raw,ClonalBC`.
   **This is the clone assignment**, needed for §D.4b Procedure step 1 (work within a clone).
 
-**State (2026-09-01, end of session).** Diagnostics complete; **Fig 3 rebuilt and done (a–e)**.
-Dropout now characterised on both margins — see README "Fig 3 redesign". Compatibility measured on Mouse3 and Initial;
+**State (2026-09-02, end of session).** **Fig 3 done (a–e)**; **row A9 measured** — tape loss is
+heritable in all five arms and heritable *below* the clone (monotone gradient over subclade depth,
+5/5 arms), so it is a Dollo character on the tree, not a per-clone nuisance. See README "Row A9".
+**Next: dig further, then plan the Fig 4 panels.** Dropout characterised on both margins — see
+README "Fig 3 redesign". Compatibility measured on Mouse3 and Initial;
 Mouse1/Mouse2 never finished (5 OOMs, all on their single largest clone) and are now **moot** —
 see the strategic reassessment in README.md. $C$ measured on Mouse3 (0.42–0.57 depending on
 heuristic). Subclone ground-truth test passed.
@@ -36,7 +39,7 @@ statistical power, not inherited from the paper.
 | 1 recorder / $q$ | ✅ done, 2 panels | `20_fig1_recorder.py` |
 | 2 homoplasy | ✅ done, **two versions** — `simple` (present) and `mle` (reserve) | `21_fig2_homoplasy.py <simple\|mle>` |
 | 3 dropout | ✅ **done, 5 panels a–e**, each a standalone PNG | `27` a · `28` b · `30` c · `31` d+e |
-| 3f/4 dropout & lineage (row **A9**) | ⭐ **next — its own figure**; plan it first | — |
+| 4 dropout & lineage (row **A9**) | ⚑ **diagnostics DONE — panels still to plan** | `32` `33` `34` `35` |
 | 5 compatibility spread + homoplasy null | needs the simulator | — |
 | 6 method comparison under simulation | planned; needs simulator | — |
 | 7 calibration / honest uncertainty | planned; needs simulator | — |
