@@ -984,3 +984,68 @@ uniform-sampling half of A9 (clustered *cell* loss) is untouched by that fix and
 SBI argument.
 
 **Not yet done:** figure panels; a control for the Pre-TX capture-ICC; depth sweep beyond d=4.
+
+### Dollo or a heritable propensity? (`src/36_dollo_test.py`, 2026-09-03)
+
+The depth gradient shows concordance follows the topology, but **two mechanisms predict a gradient**
+and they need different models: a single irreversible **loss** in an ancestor (⇒ one absorbing state
+per tape in the pruning, a constant factor) versus a heritable **propensity** — a lineage with a
+lower recovery rate at that locus (⇒ a per-lineage rate multiplier, a latent field over the tree, a
+real SBI case). The discriminator is the distribution of
+
+$$a = \frac{\text{cells of subclade } S \text{ missing tape } z}{|S|},\qquad z \neq \text{anchor},$$
+
+over subclades whose **own clone still carries the tape** (so the absence is a loss *below* the
+clone, not one inherited from it).
+
+⚠⚠ **The first version of this test used the wrong null and overstated the result.** Comparing $a$
+against Bernoulli draws from $\hat p=\sigma(\alpha_c+\beta_z)$ assumes the additive-logit fit is
+correct; **any** cell×tape interaction, lineage-related or not, makes $a$ U-shaped against it — and
+the enrichment we saw at $a\approx0$ was itself evidence the fit is too smooth. The honest
+comparator shuffles **whole cell rows within a clone**, preserving each cell's entire missingness
+profile and each tape's marginal while destroying only the alignment between cells and subclades.
+The permutation null is far higher than the Bernoulli one (Mouse1, depth 3, 10–20 cells: 20,065 vs
+12,057), so much of the first-pass signal was cell×tape structure. **All numbers below are against
+the permutation null.**
+
+**Complete absence in a subclade whose clone still carries the tape**, observed ÷ permuted:
+
+| arm | 10–20 cells | 20–50 | 50–200 | 200+ | well-recovered tapes ($\beta\ge0.5$) |
+|---|---|---|---|---|---|
+| Mouse 1 | 1.7–2.2× | 2.5–3.7× | 3.2–5.5× | 3.5–10.6× | 4.5–25× |
+| Mouse 3 | 1.8–2.3× | 2.2–2.5× | **6.3–11.8×** | — | 3.5–9.8× |
+| Mouse 2 | 1.4–1.8× | 1.6–3.2× | 2.0–5.0× | 1.5–4.8× | 2.4–7.1× |
+| Pre-TX | 1.9–2.3× | 2.0–3.0× | 2.9–3.8× | — | 3.0–8.5× |
+| Subclone | **0.9–1.6×** | 1.1–1.8× | 1.1–1.9× | 2.0–2.2× | 0.8–2.2× |
+
+⚑ **Subclone is the weak arm here** — at shallow depths and small subclades it sits *at or below* the
+null. Consistent with the depth sweep: its large clone-level signal is substantially colony-≡-well
+batch, and genuine sub-clone loss is modest.
+
+**⚑⚑ The shape is the real evidence, and it is consistent in 5/5 arms.** Mass does not shift smoothly
+toward higher $a$; it moves out of "nearly all missing" and into "**exactly** all missing":
+
+| arm | $a\in[0.85,0.90)$ | $[0.90,0.95)$ | $[0.95,1.00]$ | middle $[0.25,0.85)$ |
+|---|---|---|---|---|
+| Mouse 1 | 0.70× | 0.76× | **1.46×** | 0.96× |
+| Mouse 2 | 0.70× | 0.80× | **1.34×** | 0.92× |
+| Mouse 3 | 0.78× | 0.91× | **1.36×** | 1.01× |
+| Pre-TX | 0.91× | 1.00× | **1.50×** | 0.99× |
+| Subclone | 0.70× | 0.90× | **1.50×** | 0.96× |
+
+A graded propensity broadens the middle and fills the near-complete bins; a discrete irreversible
+loss empties them into the complete bin. **The sharper the criterion, the larger the excess** —
+$a\ge0.95$ gives 1.3–1.5×, $a=1$ exactly gives 2–4× in the same cells — which is itself the
+signature of a discrete state rather than a rate.
+
+⇒ **Reading: dropout is a MIXTURE** — a technical component well described by $\alpha_c\beta_z$, plus
+a heritable discrete loss. The modelling consequence is the cheap one: a per-tape irreversible loss
+process alongside the editing process, one absorbing state in the pruning. Effect sizes over the
+honest null are modest (1.2–1.5× on shape, 1.4–4× on counts), so this is a real but not overwhelming
+component — it should be *modelled*, not treated as the dominant term.
+
+⚠ **A consequence for Fig 3b that needs following up.** If part of per-tape missingness is heritable
+locus loss rather than per-observation failure, then $\beta_z$ is not purely a technical constant —
+treating it as a fixed emission probability would model as noise something that is a tree-structured
+state. The cross-library reproducibility ($r=0.997$) does not settle this, because all arms descend
+from one engineered line, so an ancestral loss is shared by construction. **Open.**

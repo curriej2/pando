@@ -313,3 +313,43 @@ force SBI**, contrary to the §1c.3 table; only the uniform-sampling half (clust
 
 **Housekeeping.** A `--verify` run submitted with `--depths 2` overwrote the full Mouse2 depth JSON;
 re-run, numbers never lost. **Next: dig further, then plan the Fig 4 panels.**
+
+## 2026-09-03 — Dollo vs propensity, and a null that had to be replaced
+
+The depth gradient established that dropout concordance follows the topology, but **two mechanisms
+predict a gradient**: a single irreversible loss (⇒ one absorbing state per tape, cheap) or a
+heritable per-lineage *rate* at that locus (⇒ a latent field over the tree, a real SBI case).
+`src/36_dollo_test.py` discriminates them from the distribution of $a$ = fraction of a subclade
+missing a tape, restricted to subclades whose **own clone still carries it**.
+
+**⚠⚠ Correction made mid-analysis.** The first pass compared $a$ to Bernoulli draws from
+$\sigma(\alpha_c+\beta_z)$ and produced enormous enrichments (thousands-fold). That null assumes the
+additive-logit fit is right; **any** cell×tape interaction makes $a$ U-shaped against it, and the
+enrichment at $a\approx0$ was itself evidence the fit is too smooth. Replaced with a **within-clone
+permutation of whole cell rows** — preserves each cell's full profile and each tape's marginal,
+destroys only cell↔subclade alignment. The permutation null runs ~1.7× the Bernoulli one, so much of
+the first-pass signal was cell×tape structure, not lineage.
+
+**Against the honest null.** Complete absence below the clone: **1.4–12×** in Mouse1/2/3 and
+Pre-TX (4–25× on tapes recovered in ≥50% of cells), but **0.9–2.2× in Subclone**, at or below the
+null at shallow depths — consistent with its clone-level signal being largely colony-≡-well batch.
+
+**⚑⚑ The shape is the evidence, 5/5 arms.** Mass moves *out of* "nearly all missing" and *into*
+"exactly all missing": $[0.85,0.90)$ 0.70–0.91×, $[0.90,0.95)$ 0.76–1.00×, $[0.95,1]$ **1.34–1.50×**,
+middle 0.92–1.01×. A graded propensity fills the near-complete bins; a discrete irreversible loss
+empties them into the complete bin. And the sharper the criterion the larger the excess ($a=1$
+exactly gives 2–4× where $a\ge0.95$ gives 1.3–1.5×) — a discrete state, not a rate.
+
+⇒ **Dropout is a mixture**: a technical component described by $\alpha_c\beta_z$, plus a heritable
+discrete loss. Cheap remedy confirmed — a per-tape irreversible loss process, one absorbing state.
+Effect sizes are modest over the honest null, so it should be modelled, not treated as dominant.
+
+⚠ **Open, and it bears on Fig 3b:** if part of per-tape missingness is heritable locus loss rather
+than per-observation failure, $\beta_z$ is not a purely technical constant. Cross-library $r=0.997$
+does not settle it — all arms descend from one engineered line, so an ancestral loss is shared by
+construction.
+
+**Also this session:** the three-centring decomposition for Mouse1/Mouse3/Pre-TX, generated last
+session and never read, shows $\rho_{\rm within}$ *rising* when per-cell capture is removed
+(0.134→0.168, 0.140→0.185, 0.150→0.161) — the heritable signal is partly masked by capture, not
+produced by it, even in Pre-TX where capture is strongly clone-clustered.
