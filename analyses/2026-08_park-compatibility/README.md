@@ -1512,3 +1512,41 @@ selected on having few present cells, so it is biased downward. What is honest i
 sweep**, and it shows $\varepsilon$ is not load-bearing: across a 10× range (0.005→0.05) the share of
 soft events the hard test keeps moves only 73.5→77.7% (Mouse 1), 68.5→74.0% (Mouse 2), 46.9→53.6%
 (Mouse 3).
+
+### ⭐ The `MAX_D = 6` test — run (2026-09-03)
+
+`src/44_prefix_codes6.py` rebuilds prefix codes to the full six sites
+(`prefix_codes6_{arm}.npz`, a new filename so depth-4 results stay reproducible; cell filter and row
+order kept bit-identical and asserted against the depth-4 cache). `src/43_soft_events.py --maxd 6`
+then reruns the soft catalogue at depths 1–6 and stratifies $\hat\pi$ **by the depth of the clade**.
+
+The logic: if "partial" events ($\hat\pi<0.90$) are really complete losses on clades we scored too
+coarsely, then **$\hat\pi$ must rise and the partial fraction must fall as clades get finer.** If
+they persist at maximum resolution, the graded component is real.
+
+**Result — both are true, in different proportions:**
+
+| arm | median $\hat\pi$ d1 → d6 | $\hat\pi\ge0.99$ d1 → d6 | **$\hat\pi<0.90$ d1 → d6** |
+|---|---|---|---|
+| Mouse 3 | 0.969 → **1.000** | 43.8% → **70.5%** | 12.7% → **5.3%** |
+| Mouse 2 | 0.969 → **1.000** | 46.1% → 56.6% | 37.5% → **26.0%** |
+| Mouse 1 | 0.984 → **1.000** | 44.9% → 52.0% | 22.9% → 19.8% |
+
+⇒ **Clade resolution explains a substantial part of the "partial" fraction but not all of it.**
+Finer clades give more complete losses in every arm — Mouse 3 falls to 5.3% partial, essentially all
+artefact. But Mouse 1 (19.8%) and Mouse 2 (26.0%) still carry a partial component at **maximum
+recorder resolution**, so a genuine graded element survives.
+
+⚠ Depth is not free: determined (cell, tape) pairs fall from 76–78% at depth 1 to 21–24% at depth 6
+(Pre-TX to 3.9%), so deep clades are scarcer and smaller. The monotone trend is read within that.
+
+**⇒ Modelling reading.** A per-tape absorbing state covers the majority — complete losses are ~50–70%
+of events at full resolution and rise with resolution — but a ~20–26% graded residue in the mice is
+not an artefact of coarse clades and would want a lineage-varying rate. So the answer to "absorbing
+state or latent field" is **mostly the former, with a real minority of the latter**, and that
+minority is now bounded rather than assumed.
+
+**Pre-TX and Subclone `--maxd 6` runs were still in flight when this was written**
+(`logs/43_soft_events_{Initial,Subclone}-1135651[89].out`); outputs land as
+`results/soft_events_{arm}_d6.json`. Subclone is the one that matters most — its depth-4 partial
+fraction was 57.2%, and if that collapses at depth 6 the whole inversion was clade resolution.

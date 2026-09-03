@@ -63,25 +63,33 @@ import numpy as np
 ROOT = Path(__file__).resolve().parents[1]
 RES = ROOT / "results"
 THR = {"Initial": 100, "Subclone": 100, "Mouse1": 20, "Mouse2": 20, "Mouse3": 20}
-DEPTHS, MIN_CLADE = [1, 2, 3, 4], 4
+MIN_CLADE = 4
 EPS_SWEEP = [0.005, 0.01, 0.02, 0.05]
 
 arm = sys.argv[1]
 NPERM = int(sys.argv[sys.argv.index("--nperm") + 1]) if "--nperm" in sys.argv else 5
 LAM0 = float(sys.argv[sys.argv.index("--lam") + 1]) if "--lam" in sys.argv else 10.0
+# --maxd 6 uses the full-depth prefix cache, so a loss can be localised to the
+# finest clade the recorder resolves.  That is the test for whether "partial"
+# events are graded silencing or just a complete loss on a clade we scored too
+# coarsely: at maximum resolution the second kind must resolve into complete ones.
+MAXD = int(sys.argv[sys.argv.index("--maxd") + 1]) if "--maxd" in sys.argv else 4
+DEPTHS = list(range(1, MAXD + 1))
 rng = np.random.default_rng(20260903)
 
 z0 = np.load(RES / f"dropout_matrix_{arm}.npz", allow_pickle=False)
 Y, clone = z0["recovered"], z0["clone"]
 s = (Y.sum(1) >= THR[arm]) & (clone >= 0)
 Y, clone = Y[s], clone[s]
-codes = np.load(RES / f"prefix_codes_{arm}.npz", allow_pickle=False)["codes"]
+cache = RES / (f"prefix_codes6_{arm}.npz" if MAXD > 4 else f"prefix_codes_{arm}.npz")
+codes = np.load(cache, allow_pickle=False)["codes"]
 assert codes.shape[0] == Y.shape[0]
 n, K = Y.shape
 _, g_clone = np.unique(clone, return_inverse=True)
 Gc = g_clone.max() + 1
 miss = ~Y
-print(f"{arm}: {n:,} cells, {K} tapes, {Gc:,} clones", flush=True)
+print(f"{arm}: {n:,} cells, {K} tapes, {Gc:,} clones, depths 1-{MAXD} "
+      f"({cache.name})", flush=True)
 
 
 def fit_twoway(M, iters=40):
@@ -122,7 +130,7 @@ anchors = np.arange(K)
 
 def scan(mi, a1, a2, pp):
     """Return (lam_soft, lam_hard[eps], pi_hat, exp_rate, size) over all candidates."""
-    LS, LH, PI, ER, SZ = [], {e: [] for e in EPS_SWEEP}, [], [], []
+    LS, LH, PI, ER, SZ, DP = [], {e: [] for e in EPS_SWEEP}, [], [], [], []
     for d in DEPTHS:
         for a_ in anchors:
             cd = codes[:, a_, d - 1]
@@ -153,14 +161,15 @@ def scan(mi, a1, a2, pp):
             if gg.size:
                 LS.append(ls[gg, zz]); PI.append(pi[gg, zz])
                 ER.append(er[gg, zz]); SZ.append(mm[gg, 0])
+                DP.append(np.full(gg.size, d, dtype=float))
                 for e_ in EPS_SWEEP:
                     LH[e_].append(k[gg, zz] * np.log(1 - e_) +
                                   (mm[gg, 0] - k[gg, zz]) * np.log(e_) - (A + B)[gg, zz])
     cat = lambda L: np.concatenate(L) if L else np.zeros(0)
-    return cat(LS), {e: cat(v) for e, v in LH.items()}, cat(PI), cat(ER), cat(SZ)
+    return cat(LS), {e: cat(v) for e, v in LH.items()}, cat(PI), cat(ER), cat(SZ), cat(DP)
 
 
-ls, lh, pi, er, sz = scan(MISS, ARR1, ARR2, P)
+ls, lh, pi, er, sz, dp = scan(MISS, ARR1, ARR2, P)
 print(f"  soft candidates at Lambda >= {LAM0}: {ls.size:,}", flush=True)
 
 order = np.argsort(g_clone, kind="stable")
@@ -171,7 +180,7 @@ for b in range(NPERM):
     for a_, b_ in zip(bnds[:-1], bnds[1:]):
         pm[a_:b_] = rng.permutation(pm[a_:b_])
     inv = np.empty_like(pm); inv[order] = pm
-    nls, _, _, _, _ = scan(MISS[inv], ARR1[inv], ARR2[inv], P[inv])
+    nls, *_ = scan(MISS[inv], ARR1[inv], ARR2[inv], P[inv])
     null_ls.append(nls)
     print(f"    perm {b+1}/{NPERM}: {nls.size:,} soft candidates", flush=True)
 
@@ -186,8 +195,9 @@ print(f"  FDR curve: " + "  ".join(f"{t:.0f}n:{100*f:.0f}%" for t, f in zip(grid
 print(f"  => soft threshold {LAM:.1f} nats at FDR {100*FDR:.1f}%", flush=True)
 
 sel = ls >= LAM
-out = {"arm": arm, "lambda_soft_threshold": LAM, "fdr": FDR, "n_perm": NPERM,
-       "n_soft_candidates": int(sel.sum()), "eps_sweep": {}}
+out = {"arm": arm, "max_depth": MAXD, "lambda_soft_threshold": LAM, "fdr": FDR,
+       "n_perm": NPERM, "n_soft_candidates": int(sel.sum()), "eps_sweep": {},
+       "by_depth": {}}
 for e_ in EPS_SWEEP:
     hard_pass = (lh[e_] >= LAM0) & sel
     out["eps_sweep"][str(e_)] = {
@@ -207,10 +217,29 @@ if sel.sum():
           f"(expected {np.median(er[sel]):.3f}), clade size median {np.median(sz[sel]):.0f}")
     print(f"  pi_hat >= 0.99: {100*out['frac_pi_ge_099']:.1f}%  |  "
           f"pi_hat < 0.90 (PARTIAL): {100*out['frac_pi_lt_090']:.1f}%")
-    print("  eps sensitivity -- share of soft events the HARD test also keeps:")
+    print("\n  pi_hat by the DEPTH of the clade -- if 'partial' events are just clades")
+    print("  scored too coarsely, pi_hat must rise with depth:")
+    print("   depth   events   median pi   >=0.99    <0.90   median size")
+    for d_ in DEPTHS:
+        m_ = sel & (dp == d_)
+        if m_.sum() < 20:
+            continue
+        p_d = pi[m_]
+        out["by_depth"][str(d_)] = {
+            "n": int(m_.sum()), "median_pi": float(np.median(p_d)),
+            "frac_ge_099": float((p_d >= 0.99).mean()),
+            "frac_lt_090": float((p_d < 0.90).mean()),
+            "median_size": float(np.median(sz[m_])),
+            "median_expected": float(np.median(er[m_]))}
+        r_ = out["by_depth"][str(d_)]
+        print(f"   {d_:>5} {r_['n']:>8,} {r_['median_pi']:>11.3f} "
+              f"{100*r_['frac_ge_099']:>8.1f}% {100*r_['frac_lt_090']:>7.1f}% "
+              f"{r_['median_size']:>13.0f}", flush=True)
+    print("\n  eps sensitivity -- share of soft events the HARD test also keeps:")
     for e_ in EPS_SWEEP:
         d = out["eps_sweep"][str(e_)]
         print(f"    eps={e_:<6} {d['n_hard_within_soft']:>8,}  "
               f"({100*d['frac_of_soft']:.1f}% of soft)", flush=True)
-(RES / f"soft_events_{arm}.json").write_text(json.dumps(out, indent=1))
-print(f"\nwrote results/soft_events_{arm}.json")
+tag = "" if MAXD == 4 else f"_d{MAXD}"
+(RES / f"soft_events_{arm}{tag}.json").write_text(json.dumps(out, indent=1))
+print(f"\nwrote results/soft_events_{arm}{tag}.json")
