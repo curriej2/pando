@@ -1,0 +1,62 @@
+{
+ "arm": "Initial",
+ "lambda_soft_threshold": 10.0,
+ "fdr": 5.9147098834802153e-05,
+ "n_perm": 3,
+ "n_soft_candidates": 67628,
+ "eps_sweep": {
+  "0.005": {
+   "n_hard_within_soft": 53698,
+   "frac_of_soft": 0.7940202283078015,
+   "median_pi_hard": 1.0
+  },
+  "0.01": {
+   "n_hard_within_soft": 55076,
+   "frac_of_soft": 0.8143964038563909,
+   "median_pi_hard": 1.0
+  },
+  "0.02": {
+   "n_hard_within_soft": 56070,
+   "frac_of_soft": 0.8290944579168392,
+   "median_pi_hard": 1.0
+  },
+  "0.05": {
+   "n_hard_within_soft": 55509,
+   "frac_of_soft": 0.8207990773052581,
+   "median_pi_hard": 1.0
+  }
+ },
+ "pi_quantiles": {
+  "0.1": 0.875,
+  "0.25": 0.9411764705882353,
+  "0.5": 1.0,
+  "0.75": 1.0,
+  "0.9": 1.0
+ },
+ "pi_hist": [
+  0,
+  0,
+  0,
+  0,
+  0,
+  0,
+  0,
+  0,
+  8,
+  27,
+  53,
+  321,
+  265,
+  484,
+  490,
+  1253,
+  2440,
+  3974,
+  9692,
+  48621
+ ],
+ "frac_pi_ge_099": 0.673315786360679,
+ "frac_pi_lt_090": 0.1377388064115455,
+ "median_expected_rate": 0.25440141203102795,
+ "median_clade_size": 11.0
+}

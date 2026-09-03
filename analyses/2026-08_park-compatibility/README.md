@@ -1484,11 +1484,28 @@ calibration check.
 | Mouse 1 | 10.0 | 3.4% | 37,160 | 0.989 (0.409) | 48.5% | 20.3% | 76.3% |
 | Mouse 2 | 10.0 | 3.1% | 22,646 | 1.000 (0.258) | 51.8% | 31.7% | 69.8% |
 | Mouse 3 | 16.3 | 5.0% | 6,476 | 0.993 (0.512) | 53.6% | 7.9% | 48.3% |
+| Pre-TX | 10.0 | 0.0% | 67,628 | 1.000 (0.254) | 67.3% | 13.8% | 81.4% |
+| Subclone | 10.0 | 0.7% | 516,549 | **0.857** (0.115) | 26.4% | **57.2%** | 54.2% |
 
-⇒ **The hard test is strict but not badly so.** The typical event is complete ($\hat\pi$ median
-0.99–1.00 against 0.26–0.51 expected); about half exceed 0.99; **genuinely partial events
-($\hat\pi<0.90$) are 8–32%.** So a per-tape absorbing state covers most of it, with a real minority
-that would want a lineage-varying rate instead.
+⇒ **The hard test is strict but not badly so.** In four arms the typical event is complete
+($\hat\pi$ median 0.989–1.000 against 0.25–0.51 expected), about half exceed 0.99, and
+$\hat\pi<0.90$ accounts for 8–32%. So a per-tape absorbing state covers most of it, with a real
+minority that would want a lineage-varying rate instead.
+
+⚠ **Subclone inverts this (57.2% "partial") and it is probably an artefact of clade resolution, not
+biology.** Two different things are pooled under $\hat\pi<0.90$: genuine graded silencing, and **a
+complete loss on a smaller clade than the one tested**. Prefix-defined clades stop at depth 4, so in
+an arm whose clones run 200–11,000 cells they are coarse relative to the true tree, and a complete
+loss on a sub-subclade reads as a partial loss on the clade we happened to score. Subclone has by far
+the largest clones and by far the lowest expected rate (0.115), so both effects push the same way.
+⇒ **8–32% is an upper bound on genuine partial silencing in the mice; 57% overstates it in
+Subclone.**
+
+⭐ **Cheap decisive test, not yet run.** Rebuild the prefix cache with `MAX_D = 6` instead of 4
+(`35_lineage_depth.py` sets it; the tapes have six sites so the depth exists) and re-run. If the
+"partial" events are complete losses on finer clades they will **resolve into complete events at
+depth 5–6**; if they stay partial at maximum resolution the graded component is real. That
+distinguishes *absorbing state* from *lineage-varying rate* event by event — the modelling question.
 
 ⚠ **Correction: "fitting $\varepsilon$" was the wrong idea.** Any estimate from called events is
 selected on having few present cells, so it is biased downward. What is honest is a **sensitivity
