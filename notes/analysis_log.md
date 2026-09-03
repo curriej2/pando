@@ -500,3 +500,16 @@ the shell was left in `analyses/2026-08_park-compatibility/` — a bare `notes/a
 not exist there, and a bare `CLAUDE.md` resolves to the *analysis* file, so a `str.replace` keyed on
 root-file text silently no-opped. **`cd` to the repo root before touching notes, and assert on every
 replacement.**
+
+**⚠⚠ MAX_D=6, final two arms — and they correct the reading above.** Pre-TX 15.1%→6.8% partial;
+Subclone **85.2%→37.7%**, median $\hat\pi$ 0.507→0.947. The residual partial fraction at depth 6 is
+**monotone in maximum clone size**: Mouse3 (210 cells) 5.3%, Pre-TX (127) 6.8%, Mouse1 (1,607) 19.8%,
+Mouse2 (3,387) 26.0%, Subclone (10,996) 37.7%.
+
+⇒ That is the recorder running out of resolution before the tree does — six sites resolve at most six
+levels, which suffices only for small clones. Subclone is still steeply falling at the limit, with
+clades a median of 12 cells inside clones of up to 10,996. **So the earlier "~20–26% genuine graded
+residue" was wrong; extrapolating to arms where six levels suffice puts it at ~5–7%.**
+⇒ **A per-tape absorbing state is the right and largely sufficient extension**; the
+lineage-varying-rate case is weaker than the depth-4 numbers implied. Inference from a cross-arm
+trend, not a direct measurement — a simulator with known ground truth would settle it.

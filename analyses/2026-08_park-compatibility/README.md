@@ -1546,7 +1546,34 @@ not an artefact of coarse clades and would want a lineage-varying rate. So the a
 state or latent field" is **mostly the former, with a real minority of the latter**, and that
 minority is now bounded rather than assumed.
 
-**Pre-TX and Subclone `--maxd 6` runs were still in flight when this was written**
-(`logs/43_soft_events_{Initial,Subclone}-1135651[89].out`); outputs land as
-`results/soft_events_{arm}_d6.json`. Subclone is the one that matters most — its depth-4 partial
-fraction was 57.2%, and if that collapses at depth 6 the whole inversion was clade resolution.
+**All five arms, $\hat\pi$ stratified by clade depth:**
+
+| arm | max clone | $\hat\pi\ge0.99$ d1 → d6 | **$\hat\pi<0.90$ d1 → d6** | median $\hat\pi$ at d6 | median clade at d6 |
+|---|---|---|---|---|---|
+| Mouse 3 | 210 | 43.8% → 70.5% | 12.7% → **5.3%** | 1.000 | 58 |
+| Pre-TX | 127 | 59.7% → 85.7% | 15.1% → **6.8%** | 1.000 | 7 |
+| Mouse 1 | 1,607 | 44.9% → 52.0% | 22.9% → **19.8%** | 1.000 | 20 |
+| Mouse 2 | 3,387 | 46.1% → 56.6% | 37.5% → **26.0%** | 1.000 | 18 |
+| Subclone | 10,996 | **5.0% → 44.7%** | **85.2% → 37.7%** | 0.947 | 12 |
+
+⚠⚠ **CORRECTION to the reading written before the last two arms landed.** I concluded there that a
+"~20–26% graded residue is not an artefact of coarse clades". The completed set says otherwise:
+**the residual partial fraction at depth 6 is monotone in maximum clone size** — Mouse 3 (210 cells)
+5.3%, Pre-TX (127) 6.8%, Mouse 1 (1,607) 19.8%, Mouse 2 (3,387) 26.0%, Subclone (10,996) 37.7%.
+
+That is the signature of the *recorder running out of resolution before the tree does*. Six sites
+resolve at most six levels; in arms whose clones are small, six levels suffice and the partial
+fraction converges to **5–7%**. In arms with thousand-cell clones the trees are far deeper than six
+levels, so clades stay coarse and partial events persist. Subclone makes it plainest: $\hat\pi$ runs
+0.507 → 0.947 and the partial fraction falls 85.2% → 37.7%, **still steeply falling at the resolution
+limit**, with clades still a median of 12 cells inside clones of up to 10,996.
+
+⇒ **Revised reading: the graded appearance is very largely clade coarseness, not a graded mechanism.**
+Extrapolating to the arms where six levels *are* enough, the genuine partial component looks like
+**~5–7%, not 20–26%.** For the model that strengthens the earlier conclusion rather than qualifying
+it: **a per-tape irreversible absorbing state is the right and largely sufficient extension**, and
+the case for a lineage-varying rate is weaker than the depth-4 numbers implied.
+
+⚠ This is an inference from a trend across arms, not a direct measurement — the recorder cannot be
+pushed past six levels. A simulator with known ground truth could settle it, which is another use for
+the one Figs 5–7 need.

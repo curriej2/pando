@@ -102,10 +102,12 @@ Dollo character needing one absorbing state in the pruning, not a reason to reac
    clones run 200–11,000 cells).
    **`MAX_D=6` test RUN (2026-09-03): partly artefact, partly real.** At full recorder resolution
    median $\hat\pi$ reaches 1.000 in all three mice and the partial fraction falls (Mouse3
-   12.7%→5.3%, Mouse2 37.5%→26.0%, Mouse1 22.9%→19.8%) — so coarse clades explain much of it, but
-   **~20–26% graded survives in Mouse1/2 at maximum resolution.** ⇒ absorbing state for the majority,
-   lineage-varying rate for a bounded minority. ⚠ Pre-TX and Subclone `--maxd 6` were still running;
-   check `results/soft_events_{arm}_d6.json`. **Subclone is decisive** (depth-4 partial was 57.2%).
+   12.7%→5.3%, Pre-TX 15.1%→6.8%, Mouse1 22.9%→19.8%, Mouse2 37.5%→26.0%, Subclone 85.2%→37.7%).
+   ⚑ **The residual partial fraction is monotone in max clone size** (210→5.3% … 10,996→37.7%) — the
+   recorder runs out of resolution before the tree does, and where six levels suffice it converges to
+   **5–7%**. ⇒ **the graded appearance is very largely clade coarseness**, so a per-tape absorbing
+   state is the right and largely sufficient extension; the lineage-varying-rate case is weaker than
+   the depth-4 numbers implied.
    **⭐ NEXT: panels c (a worked example inside one large clone) and d (the catalogue).**
    **The remaining figs are still blocked on the simulator**: birth–death
    tree at Park clone sizes, sequential editing at measured $\lambda$/$\xi$, $N=6$, $k=166$, with
