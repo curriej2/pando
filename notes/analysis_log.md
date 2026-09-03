@@ -454,3 +454,18 @@ not load-bearing (10× range moves the hard/soft overlap by <7 points).
 
 **Next:** Pre-TX and Subclone soft runs still in flight; then panels c (one worked example inside a
 large clone) and d (the catalogue).
+
+**Soft variant, final two arms.** Pre-TX 67,628 events, $\hat\pi$ median 1.000 (expected 0.254),
+67.3% ≥0.99, 13.8% partial. **Subclone 516,549 events, $\hat\pi$ median 0.857, only 26.4% ≥0.99 and
+57.2% partial** — inverting the other four arms.
+
+⚠ **Subclone's inversion is most likely clade resolution, not biology.** $\hat\pi<0.90$ pools genuine
+graded silencing with **a complete loss on a smaller clade than the one tested**; prefix clades stop
+at depth 4, and Subclone's clones run 200–11,000 cells, so they are coarse relative to the true tree
+(and its expected rate, 0.115, is the lowest of any arm). ⇒ **8–32% is an upper bound on genuine
+partial silencing in the mice.**
+
+⭐ **Cheap decisive test, not run:** rebuild the prefix cache at `MAX_D = 6` (tapes have six sites)
+and re-run. If partial events resolve into complete events at depth 5–6, the graded component is an
+artefact; if they persist at maximum resolution it is real — absorbing state vs lineage-varying rate,
+decided event by event.
