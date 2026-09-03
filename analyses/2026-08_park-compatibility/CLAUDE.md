@@ -58,7 +58,7 @@ statistical power, not inherited from the paper.
 | 1 recorder / $q$ | ✅ done, 2 panels | `20_fig1_recorder.py` |
 | 2 homoplasy | ✅ done, **two versions** — `simple` (present) and `mle` (reserve) | `21_fig2_homoplasy.py <simple\|mle>` |
 | 3 dropout | ✅ **done, 5 panels a–e**, each a standalone PNG | `27` a · `28` b · `30` c · `31` d+e |
-| 4 dropout & lineage (row **A9**) | ⚑ a/b built; **event catalogue done — c/d next** | `32`–`43` |
+| 4 dropout & lineage (row **A9**) | ⚑ a/b built; catalogue + `MAX_D=6` test done — **c/d next** | `32`–`44` |
 | 5 compatibility spread + homoplasy null | needs the simulator | — |
 | 6 method comparison under simulation | planned; needs simulator | — |
 | 7 calibration / honest uncertainty | planned; needs simulator | — |

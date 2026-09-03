@@ -469,3 +469,34 @@ partial silencing in the mice.**
 and re-run. If partial events resolve into complete events at depth 5–6, the graded component is an
 artefact; if they persist at maximum resolution it is real — absorbing state vs lineage-varying rate,
 decided event by event.
+
+## 2026-09-03 (cont.) — the MAX_D = 6 test: partly artefact, partly real
+
+Rebuilt prefix codes to the full six sites (`src/44`, new filename, alignment with the depth-4 cache
+asserted) and reran the soft catalogue at depths 1–6 (`src/43 --maxd 6`), stratifying $\hat\pi$ by
+clade depth. If "partial" events are complete losses scored on too-coarse clades, $\hat\pi$ must rise
+with depth.
+
+**It does, and not all the way.** Median $\hat\pi$ reaches **1.000 at depth 6 in all three mice**, and
+the partial fraction falls: Mouse3 **12.7% → 5.3%**, Mouse2 37.5% → 26.0%, Mouse1 22.9% → 19.8%.
+
+⇒ **Clade resolution explains much of the partial fraction but not all.** Mouse3 is essentially all
+artefact; Mouse1/Mouse2 keep ~20–26% partial at **maximum recorder resolution**, so a genuine graded
+component survives. ⇒ absorbing state for the majority, lineage-varying rate for a bounded minority.
+
+⚠ Determination cost: (cell,tape) pairs determined fall 76–78% at depth 1 to 21–24% at depth 6
+(Pre-TX 3.9%), so deep clades are scarcer and smaller — the trend is read within that.
+
+**Still in flight at time of writing:** Pre-TX and Subclone `--maxd 6`
+(`logs/43_soft_events_{Initial,Subclone}-1135651[89].out` → `results/soft_events_{arm}_d6.json`).
+**Subclone is the decisive one** — its depth-4 partial fraction was 57.2%, and if that collapses at
+depth 6 the inversion was clade resolution throughout.
+
+**Sizing note:** the depth-4 soft runs took 35 s – 11 min against 6–16 h requests. Right-sized the
+depth-6 reruns to 2 h.
+
+⚠ **Process note.** Two commits this session lost their `notes/` and root-`CLAUDE.md` edits because
+the shell was left in `analyses/2026-08_park-compatibility/` — a bare `notes/analysis_log.md` does
+not exist there, and a bare `CLAUDE.md` resolves to the *analysis* file, so a `str.replace` keyed on
+root-file text silently no-opped. **`cd` to the repo root before touching notes, and assert on every
+replacement.**

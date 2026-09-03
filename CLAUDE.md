@@ -100,9 +100,13 @@ Dollo character needing one absorbing state in the pruning, not a reason to reac
    $\hat\pi$ median 0.99–1.00 in 4/5 arms, so most losses are complete; 8–32% partial (an upper
    bound — Subclone's 57% is clade-resolution artefact, since prefix clades stop at depth 4 while its
    clones run 200–11,000 cells).
-   **⭐ NEXT: (i) rebuild the prefix cache at `MAX_D=6` and see whether "partial" events resolve into
-   complete ones — that decides absorbing-state vs lineage-varying-rate event by event; (ii) panels c
-   (a worked example inside one large clone) and d (the catalogue).**
+   **`MAX_D=6` test RUN (2026-09-03): partly artefact, partly real.** At full recorder resolution
+   median $\hat\pi$ reaches 1.000 in all three mice and the partial fraction falls (Mouse3
+   12.7%→5.3%, Mouse2 37.5%→26.0%, Mouse1 22.9%→19.8%) — so coarse clades explain much of it, but
+   **~20–26% graded survives in Mouse1/2 at maximum resolution.** ⇒ absorbing state for the majority,
+   lineage-varying rate for a bounded minority. ⚠ Pre-TX and Subclone `--maxd 6` were still running;
+   check `results/soft_events_{arm}_d6.json`. **Subclone is decisive** (depth-4 partial was 57.2%).
+   **⭐ NEXT: panels c (a worked example inside one large clone) and d (the catalogue).**
    **The remaining figs are still blocked on the simulator**: birth–death
    tree at Park clone sizes, sequential editing at measured $\lambda$/$\xi$, $N=6$, $k=166$, with
    **dropout as a switchable layer**. That simulator also supplies the **homoplasy null** — still the
