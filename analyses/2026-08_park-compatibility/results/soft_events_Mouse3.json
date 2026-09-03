@@ -1,0 +1,62 @@
+{
+ "arm": "Mouse3",
+ "lambda_soft_threshold": 16.26,
+ "fdr": 0.04953675108091415,
+ "n_perm": 5,
+ "n_soft_candidates": 6476,
+ "eps_sweep": {
+  "0.005": {
+   "n_hard_within_soft": 5537,
+   "frac_of_soft": 0.46915776986951363,
+   "median_pi_hard": 1.0
+  },
+  "0.01": {
+   "n_hard_within_soft": 5697,
+   "frac_of_soft": 0.48271479410269447,
+   "median_pi_hard": 1.0
+  },
+  "0.02": {
+   "n_hard_within_soft": 6124,
+   "frac_of_soft": 0.5188951025249957,
+   "median_pi_hard": 0.9935064935064936
+  },
+  "0.05": {
+   "n_hard_within_soft": 6320,
+   "frac_of_soft": 0.5355024572106423,
+   "median_pi_hard": 0.9931506849315068
+  }
+ },
+ "pi_quantiles": {
+  "0.1": 0.9090909090909091,
+  "0.25": 0.96,
+  "0.5": 0.9928824721377913,
+  "0.75": 1.0,
+  "0.9": 1.0
+ },
+ "pi_hist": [
+  0,
+  0,
+  0,
+  0,
+  0,
+  0,
+  0,
+  0,
+  0,
+  0,
+  0,
+  0,
+  0,
+  0,
+  1,
+  87,
+  105,
+  317,
+  804,
+  5162
+ ],
+ "frac_pi_ge_099": 0.5359789993823347,
+ "frac_pi_lt_090": 0.07875231624459543,
+ "median_expected_rate": 0.5124496010641931,
+ "median_clade_size": 39.0
+}

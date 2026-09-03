@@ -1,0 +1,62 @@
+{
+ "arm": "Mouse1",
+ "lambda_soft_threshold": 10.0,
+ "fdr": 0.03446178686759957,
+ "n_perm": 5,
+ "n_soft_candidates": 37160,
+ "eps_sweep": {
+  "0.005": {
+   "n_hard_within_soft": 27325,
+   "frac_of_soft": 0.7353336921420882,
+   "median_pi_hard": 1.0
+  },
+  "0.01": {
+   "n_hard_within_soft": 28367,
+   "frac_of_soft": 0.7633745963401507,
+   "median_pi_hard": 1.0
+  },
+  "0.02": {
+   "n_hard_within_soft": 29090,
+   "frac_of_soft": 0.7828310010764262,
+   "median_pi_hard": 1.0
+  },
+  "0.05": {
+   "n_hard_within_soft": 28889,
+   "frac_of_soft": 0.7774219590958019,
+   "median_pi_hard": 1.0
+  }
+ },
+ "pi_quantiles": {
+  "0.1": 0.7662061342912407,
+  "0.25": 0.9333333333333333,
+  "0.5": 0.9885057471264368,
+  "0.75": 1.0,
+  "0.9": 1.0
+ },
+ "pi_hist": [
+  0,
+  0,
+  0,
+  34,
+  33,
+  93,
+  118,
+  212,
+  324,
+  326,
+  385,
+  747,
+  328,
+  267,
+  523,
+  805,
+  1324,
+  2042,
+  3430,
+  26169
+ ],
+ "frac_pi_ge_099": 0.48455328310010765,
+ "frac_pi_lt_090": 0.20347147470398277,
+ "median_expected_rate": 0.4088221059134931,
+ "median_clade_size": 26.0
+}

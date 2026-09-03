@@ -1334,3 +1334,164 @@ largest clone ringed**. The rings make the pooling result visible: Mouse 2's 3,3
 the mice (0.35–0.40 vs 0.36–0.40) but **not in Pre-TX** (0.05 vs 0.23). Pre-TX's 126% uses the
 nearest available control (`depth≥4`) in panel a; its per-clone comparison in panel b is against
 `depth≥6` and so is not frequency-matched.
+
+---
+
+## Panels c/d groundwork: an event catalogue (2026-09-03)
+
+### ✅ Construct and readout verified from the paper — the mechanism is not speculative
+
+`refs/metastasis_lineage_recording.pdf`, Methods p39–42:
+
+- The recorder is **one piggyBac cassette, `PB-U6-pegRNA-NNNNGGA-EF1a-mRFP-TAPE-TargetBC`** — so
+  **pegRNA and tape are co-integrated in Park too**, as in the Typewriter and mouse-embryo
+  lineage configurations. Prime editor separate (`LSL-PEmax-P2A-mClover3`, Cre-activatable).
+- **The readout is RNA.** Cells sorted mRFP⁺, 10x 3′ v4, *"Feature cDNA Primer 3 replaced the
+  standard cDNA primers so that the Read 2N primer was included and **TAPE cDNA co-amplified**"*,
+  split by amplicon size into transcriptome / TAPE+TargetBC / ClonalBC libraries.
+
+⇒ **A tape is recovered only if its integration is transcribed.** So epigenetic silencing of an
+integration (i) removes the tape from the readout and (ii) removes the co-integrated pegRNA's symbol
+from the cell's writing pool — both heritable. The mouse Typewriter paper already attributes low
+per-tape recovery to *"epigenetic silencing of a subset of circTAPE-encoding integrations"*, and
+chromatin-dependence of prime editing is measured (Li et al. 2024, *Cell* 187:2411). What is new
+here is that it is **lineage-resolved**.
+
+Three consequences:
+- **Fig 3b is re-explained.** Per-tape recovery (0.006–0.96, $r=0.997$ across libraries) is the
+  **integration site's expression level**, not primer efficiency — which is why it transfers across
+  arms (one founder line, same insertion sites).
+- **Fig 3d is re-explained.** Poorly recovered tapes having ~2 fewer filled sites is one chromatin
+  state suppressing transcription *and* editing at the same locus — row A9's shared latent cause.
+- **No selection confound**: mRFP comes from all 166 integrations, so silencing one leaves the cell
+  mRFP-high and in the data.
+
+⚑ 166 integrations each drawing `NNNN` from 256 predicts $256(1-e^{-166/256})=122$ distinct symbols;
+measured alphabet is 97–129. So the tape↔symbol map is **1:1 by construction**, ~1.4 integrations per
+symbol. Why the pairing is unknown: the library was cloned in two independent degenerate steps
+(`NNNN` then `N10`), randomly paired, and **no read spans both** — the pegRNA is a separate U6
+transcript at the far 5′ end. Recovering it needs long-range sequencing of the intact integration,
+which Park did not do (the mouse paper did, for 10 of 11).
+
+### The statistic: a log-likelihood ratio for a Dollo loss
+
+For clade $S$ ($m$ cells, $k$ missing tape $z$), against the fitted per-cell $\tilde p_{cz}$:
+
+$$\Lambda(S,z) = \sum_{\text{missing}} \log\frac{1-\varepsilon}{\tilde p_{cz}} + \sum_{\text{present}} \log\frac{\varepsilon}{1-\tilde p_{cz}}$$
+
+Two properties, both wanted: **capture-independence is built in** (a missing cell earns
+$-\log\tilde p$, so a well-captured cell missing a reliable tape dominates: +2.98 nats at
+$\tilde p=0.05$ vs +0.09 at 0.90), and **it demands all-or-none** (a present cell costs up to
+$-4.55$). ⚑ The penalty is *larger* for a good cell ($-4.55$ at $\tilde p=0.05$) than a bad one
+($-2.30$ at 0.90): a well-captured cell would have shown the tape if it were there. $\Lambda$ is in
+nats and is the log-likelihood a per-tape absorbing state would gain.
+
+Clades: cells sharing the depth-$d$ prefix of an **anchor** tape *and* a clone, scored on every tape
+$z\neq a$ (cross-tape), deduplicated by cell set, and collapsed so overlapping passing clades for one
+(clone, tape) give **one** row. ⚠ Only clades some anchor resolves are visible, so the catalogue is a
+**lower bound**.
+
+### ⚠⚠ CORRECTION — the first version had no third margin and was useless
+
+Scored against $\mathrm{logit}^{-1}(\alpha_c+\beta_z)$ alone, a tape lost **clone-wide** makes every
+subset of that clone look spectacular — in real *and* permuted data alike. Those candidates flooded
+both counts and **the FDR sat at 64–73% at every threshold**. Fixed by adding a per-(clone, tape)
+offset fitted to the clone's own margin,
+
+$$\sum_{c\in C}\mathrm{logit}^{-1}(\alpha_c+\beta_z+\gamma_{C,z}) = k_{C,z}$$
+
+so $\Lambda$ measures only **within-clone** deviation. $\gamma$ fixes *how many* cells of the clone
+lack the tape; it says nothing about *which* — and that is exactly what $\Lambda$ tests. A clone-wide
+loss now gives $\tilde p\to1$ and $\Lambda\approx0$. **FDR fell from ~65% to ≈0%.**
+
+### Results — all five arms, FDR ≈ 0
+
+| arm | events | tapes | clones | median clade | inside rate vs expected | $\Lambda$ total | $R_c$ all / event |
+|---|---|---|---|---|---|---|---|
+| Subclone | 8,220 | 166 | 11 | 9 | 1.00 vs 0.11 | 258,295 | 131 / 131 |
+| Pre-TX | 1,783 | 161 | 266 | 9 | 1.00 vs 0.25 | 23,794 | 128 / 131 |
+| Mouse 2 | 388 | 126 | 12 | 14 | 1.00 vs 0.22 | 15,637 | 116 / 117 |
+| Mouse 1 | 320 | 128 | 35 | 16 | 1.00 vs 0.34 | 7,097 | 114 / 116 |
+| Mouse 3 | 73 | 51 | 9 | 23 | 1.00 vs 0.41 | 1,567 | 113 / 118 |
+
+**Inside rate is 1.00 in every arm**, and **event cells are never worse captured** — the
+capture-independence result, clean.
+
+### ⚑⚑ Detection power is the whole story (`src/41_event_strat.py`)
+
+Share of a clone-size band's missing entries inside a called event:
+
+| clone size | Mouse 1 | Mouse 2 | Mouse 3 | Pre-TX | Subclone |
+|---|---|---|---|---|---|
+| 5–10 | 0.00% | 0.00% | 0.00% | 0.00% | — |
+| 10–20 | 0.00% | 0.00% | 0.00% | 0.00% | 0.00% |
+| 20–50 | 0.30% | 0.19% | 0.24% | 1.22% | 0.00% |
+| 50–200 | 2.73% | 3.47% | 4.12% | 7.54% | — |
+| 200+ | **8.56%** | **9.23%** | **6.52%** | — | **19.12%** |
+
+**Not one event in any clone under 20 cells, in any arm** — $\gamma_{C,z}$ is fitted from that
+clone's own cells and absorbs everything when there are few. So pooled percentages are dilution
+artefacts. **Where detection is possible, 6.5–19% of missing entries sit inside a confident
+inherited loss.**
+
+⚠ **"Fraction of missingness explained" was the wrong phrase and is retired.** Because $\gamma$
+matches each clone×tape total exactly, $\sum_{c\in C}(\text{miss}-\tilde p)=0$ within every
+clone-tape cell — the excess inside an event is balanced by a deficit elsewhere in the same clone.
+The quantity measures **concentration**, not an additive share. Report instead: missing entries
+inside called blocks (3.64% of all missing in Mouse 1; 14,770 of 14,897 slots, i.e. 99.1%, confirming
+completeness) and $\Lambda$ in nats.
+
+### The clone-wide layer (`src/42_clonewide.py`)
+
+Same statistic one level up: clade = the whole clone, scored against the **two**-margin fit
+($\gamma$ is what we now want to measure rather than absorb); null permutes cells **across clones
+within sample**.
+
+| arm | losses | tapes | clones | inside vs expected | **% of all missing** | $\Lambda$ | FDR |
+|---|---|---|---|---|---|---|---|
+| Subclone | 155 | 71 | 12 | 0.94 vs 0.34 | **32.90%** | 263,004 | 0.1% |
+| Mouse 2 | 410 | 130 | 69 | 1.00 vs 0.28 | **21.68%** | 25,427 | 4.4% |
+| Mouse 1 | 725 | 154 | 118 | 0.97 vs 0.30 | **14.34%** | 40,712 | 0.0% |
+| Mouse 3 | 398 | 133 | 61 | 1.00 vs 0.32 | **13.20%** | 13,715 | 0.9% |
+| Pre-TX | 4,763 | 161 | 1,188 | 0.94 vs 0.17 | **7.10%** | 114,923 | 0.0% |
+
+⚑ **The two layers are one phenomenon at two epochs.** Founder-39 was monoclonal and sorted on high
+mRFP, so all 166 integrations were active at cloning; ClonalBC transduction was day −11 and the
+bottleneck to ~8,000 clones day 3. So **clone-wide losses are silencing events before the bottleneck;
+sub-clone events are after it.** Same mechanism, different time.
+
+⚠ **The layers do NOT add to shares of a total.** Each fit matches its own margins, so every layer
+sums to zero against the layer beneath. Report each against the one below — $\Lambda$ in nats and
+entries inside called blocks — never as a partition.
+
+### Soft variant: complete losses, or graded shifts too? (`src/43_soft_events.py`)
+
+The hard test pins $H_1$ at $P(\text{missing})=1-\varepsilon$ with **no free parameter**, so a real
+0.30→0.80 shift in a 20-cell clade earns only +2.11 nats against +23.88 for 0.30→1.00. The soft
+variant fits the clade's own rate, $\hat\pi = k/m$ (the MLE: maximising
+$k\log\pi+(m-k)\log(1-\pi)$ gives $k/\pi=(m-k)/(1-\pi)$, i.e. the observed fraction missing). Same
+examples: **+10.68** and **+24.08**. $\Lambda_{\rm soft}\ge\Lambda_{\rm hard}$ always, since
+$H_1^{\rm hard}$ is the point $\pi=1-\varepsilon$ of $H_1^{\rm soft}$.
+
+⚠ **Correction: Wilks does not apply.** $H_0$ (per-cell $\tilde p$, no free parameters) is nested in
+$H_1^{\rm soft}$ only if every $\tilde p$ in the clade is equal, which it is not. The models are
+non-nested, $\Lambda_{\rm soft}$ can be negative, and there is no $\chi^2_1$ reference — the
+permutation is the only calibration. One-sided ($\hat\pi>$ expected); the opposite direction is a
+calibration check.
+
+| arm | soft threshold | FDR | soft events | $\hat\pi$ median (expected) | $\hat\pi\ge0.99$ | $\hat\pi<0.90$ **partial** | hard keeps |
+|---|---|---|---|---|---|---|---|
+| Mouse 1 | 10.0 | 3.4% | 37,160 | 0.989 (0.409) | 48.5% | 20.3% | 76.3% |
+| Mouse 2 | 10.0 | 3.1% | 22,646 | 1.000 (0.258) | 51.8% | 31.7% | 69.8% |
+| Mouse 3 | 16.3 | 5.0% | 6,476 | 0.993 (0.512) | 53.6% | 7.9% | 48.3% |
+
+⇒ **The hard test is strict but not badly so.** The typical event is complete ($\hat\pi$ median
+0.99–1.00 against 0.26–0.51 expected); about half exceed 0.99; **genuinely partial events
+($\hat\pi<0.90$) are 8–32%.** So a per-tape absorbing state covers most of it, with a real minority
+that would want a lineage-varying rate instead.
+
+⚠ **Correction: "fitting $\varepsilon$" was the wrong idea.** Any estimate from called events is
+selected on having few present cells, so it is biased downward. What is honest is a **sensitivity
+sweep**, and it shows $\varepsilon$ is not load-bearing: across a 10× range (0.005→0.05) the share of
+soft events the hard test keeps moves only 73.5→77.7% (Mouse 1), 68.5→74.0% (Mouse 2), 46.9→53.6%
+(Mouse 3).

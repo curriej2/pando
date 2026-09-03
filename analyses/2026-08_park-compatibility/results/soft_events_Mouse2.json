@@ -1,0 +1,62 @@
+{
+ "arm": "Mouse2",
+ "lambda_soft_threshold": 10.0,
+ "fdr": 0.030945862403956546,
+ "n_perm": 5,
+ "n_soft_candidates": 22646,
+ "eps_sweep": {
+  "0.005": {
+   "n_hard_within_soft": 15514,
+   "frac_of_soft": 0.6850657952839354,
+   "median_pi_hard": 1.0
+  },
+  "0.01": {
+   "n_hard_within_soft": 15797,
+   "frac_of_soft": 0.6975624834407842,
+   "median_pi_hard": 1.0
+  },
+  "0.02": {
+   "n_hard_within_soft": 16252,
+   "frac_of_soft": 0.7176543318908416,
+   "median_pi_hard": 1.0
+  },
+  "0.05": {
+   "n_hard_within_soft": 16769,
+   "frac_of_soft": 0.7404839706791486,
+   "median_pi_hard": 1.0
+  }
+ },
+ "pi_quantiles": {
+  "0.1": 0.6166443252904379,
+  "0.25": 0.825,
+  "0.5": 1.0,
+  "0.75": 1.0,
+  "0.9": 1.0
+ },
+ "pi_hist": [
+  0,
+  0,
+  3,
+  31,
+  130,
+  177,
+  171,
+  180,
+  203,
+  220,
+  358,
+  546,
+  1235,
+  783,
+  505,
+  600,
+  1102,
+  928,
+  1709,
+  13765
+ ],
+ "frac_pi_ge_099": 0.5178839530159851,
+ "frac_pi_lt_090": 0.3167005210633224,
+ "median_expected_rate": 0.2580478055710127,
+ "median_clade_size": 25.0
+}

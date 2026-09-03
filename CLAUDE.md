@@ -91,9 +91,14 @@ Dollo character needing one absorbing state in the pruning, not a reason to reac
    loss rather than a graded rate. ⚠ Its honest null turned out to be a permutation, *not* the
    simulator — that correction unblocked the work. ⚠ Pooled $\rho$ weights clones by $n_C(n_C-1)$ and
    **hid** the signal; use equal-clone weighting.
-   **⭐ NEXT: show the effect WITHIN a single large clone** — the claim is tree structure, not a
-   clonal effect, and Mouse2's 3,387-cell clone (near-zero clone-level excess, 98.9% of that arm's
-   weight) is the decisive case. Panels c/d may carry the figure alone.
+   **Event catalogue built (2026-09-03), FDR ≈ 0 in 5/5 arms.** ✅ Mechanism verified from the
+   paper: the tape is read from **cDNA**, and pegRNA+tape are **co-integrated**, so silencing an
+   integration removes both the readout and that symbol from the writing pool — re-explaining Fig 3b
+   ($\beta_z$ = the integration's expression level) and Fig 3d. **Zero events in clones <20 cells**
+   (power, not biology); where detectable, **6.5–19%** of missing entries sit in a called loss, plus
+   a **clone-wide layer of 7–33%** — the same mechanism before vs after the day-3 bottleneck.
+   $\hat\pi$ median 0.99–1.00, so most losses are complete; 8–32% are partial.
+   **⭐ NEXT: panels c (a worked example inside one large clone) and d (the catalogue).**
    **The remaining figs are still blocked on the simulator**: birth–death
    tree at Park clone sizes, sequential editing at measured $\lambda$/$\xi$, $N=6$, $k=166$, with
    **dropout as a switchable layer**. That simulator also supplies the **homoplasy null** — still the

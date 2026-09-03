@@ -403,3 +403,54 @@ clone, where a clone-level effect cannot reach. The decisive case is already ide
 3,387-cell clone shows near-zero *clone-level* excess yet holds 98.9% of the arm's weight; if the
 structure is real it should be there internally. Same for Subclone's 10,996-cell clone. Dissect
 these next.
+
+## 2026-09-03 — the event catalogue, and the mechanism verified from the paper
+
+**✅ Construct and readout checked** (`refs/metastasis_lineage_recording.pdf`, Methods p39–42).
+Park's recorder is one cassette, `PB-U6-pegRNA-NNNNGGA-EF1a-mRFP-TAPE-TargetBC` — **pegRNA and tape
+co-integrated**, as in the other lineage configurations — and the tape is read from **cDNA** (10x 3′
+v4, *"TAPE cDNA co-amplified"*). ⇒ **a tape is recovered only if its integration is transcribed**, so
+silencing removes the tape from the readout *and* the co-integrated pegRNA's symbol from the writing
+pool, both heritably. The mouse paper already blames low per-tape recovery on *"epigenetic silencing
+of a subset of circTAPE-encoding integrations"*; what is new is that it is lineage-resolved.
+⇒ **Re-explains Fig 3b** ($\beta_z$ is the integration's expression level, not primer efficiency) and
+**Fig 3d** (one chromatin state suppressing transcription and editing at the same locus).
+
+**The statistic** (`src/40`): a log-likelihood ratio for a Dollo loss on a clade's stem,
+$\Lambda=\sum_{\rm miss}\log\frac{1-\varepsilon}{\tilde p}+\sum_{\rm pres}\log\frac{\varepsilon}{1-\tilde p}$.
+Capture-independence is built in (a good cell missing a reliable tape earns +2.98 nats, a bad cell
++0.09) and all-or-none is enforced (a present cell costs up to −4.55, and *more* for a good cell).
+
+**⚠⚠ The first version was useless and the fix is instructive.** Without a per-(clone,tape) margin, a
+**clone-wide** loss made every subset of that clone look spectacular in real and permuted data alike;
+the FDR sat at **64–73% at every threshold**. Adding $\gamma_{C,z}$ fitted to the clone's own margin
+— which fixes *how many* cells lack the tape but not *which* — dropped the FDR to **≈0%**.
+
+**Results, 5/5 arms at FDR ≈ 0:** 73–8,220 events per arm, **inside missing rate 1.00 everywhere**
+against 0.11–0.41 expected, and **event cells never worse captured** ($R_c$ 113–131 vs 114–131).
+
+**⚑⚑ Detection power is the whole story.** Stratified by clone size (`src/41`): **zero events in any
+clone under 20 cells, in any arm** — $\gamma$ is fitted from that clone's cells and absorbs
+everything. Share of a band's missing entries inside a called event climbs monotonically to
+**6.5–19% in clones ≥200 cells**. Pooled percentages were dilution artefacts.
+
+**Clone-wide layer** (`src/42`): **7.1–32.9% of all missing entries**, 155–4,763 (clone,tape) losses
+per arm, inside rate 0.94–1.00 vs 0.17–0.34 expected. ⚑ Founder-39 was monoclonal and mRFP-sorted, so
+all 166 integrations were active at cloning; ClonalBC came day −11 and the bottleneck day 3 ⇒
+**clone-wide = silencing before the bottleneck, sub-clone = after. One mechanism, two epochs.**
+
+**Soft variant** (`src/43`), fitting the clade's own rate $\hat\pi=k/m$ instead of pinning it at
+$1-\varepsilon$: $\hat\pi$ median **0.989–1.000** against 0.26–0.51 expected, **~half exceed 0.99**,
+and genuinely partial events ($\hat\pi<0.90$) are **8–32%**. ⇒ the hard test is strict but not badly
+so; an absorbing state covers most of it, with a real minority wanting a lineage-varying rate.
+
+**⚠ Three corrections recorded.** (1) "Fraction of missingness explained" is retired — $\gamma$
+matches clone×tape totals, so excess inside an event is balanced by deficit elsewhere; the quantity
+measures *concentration*, not an additive share, and the layers never partition a total. (2) Wilks
+does not apply to $\Lambda_{\rm soft}$: $H_0$ is non-nested in $H_1^{\rm soft}$, so permutation is
+the only calibration. (3) "Fitting $\varepsilon$" was wrong — any estimate from called events is
+selected on having few present cells; a **sensitivity sweep** is honest, and shows $\varepsilon$ is
+not load-bearing (10× range moves the hard/soft overlap by <7 points).
+
+**Next:** Pre-TX and Subclone soft runs still in flight; then panels c (one worked example inside a
+large clone) and d (the catalogue).

@@ -25,7 +25,11 @@ near-zero *clone-level* excess yet holds 98.9% of that arm's pooled weight, so i
 real it must be visible inside it. Then Subclone's 10,996-cell clone. Panels **c and d may carry the
 figure alone**; a and b become supporting.
 
-**⚠ Two estimator rules, learned the hard way.**
+**⚠ Estimator rules, learned the hard way.**
+0. **Every layer needs its own margin.** $\Lambda$ scored against $\alpha_c+\beta_z$ alone gave
+   FDR 64–73% at *every* threshold, because clone-wide losses look spectacular in permuted data too.
+   Adding a per-(clone,tape) $\gamma$ dropped it to ≈0%. Whatever layer you are testing, fit the
+   layer above it.
 1. **Equal-clone weighting, not pooled.** $\hat\rho$ is a ratio of sums, so clones enter weighted by
    $n_C(n_C-1)$ — one clone held 98.9% of Mouse2 and 84.0% of Mouse1, and pooling *hid* the signal
    (Mouse2 +0.009 pooled vs +0.246 equal-weighted).
@@ -54,7 +58,7 @@ statistical power, not inherited from the paper.
 | 1 recorder / $q$ | ✅ done, 2 panels | `20_fig1_recorder.py` |
 | 2 homoplasy | ✅ done, **two versions** — `simple` (present) and `mle` (reserve) | `21_fig2_homoplasy.py <simple\|mle>` |
 | 3 dropout | ✅ **done, 5 panels a–e**, each a standalone PNG | `27` a · `28` b · `30` c · `31` d+e |
-| 4 dropout & lineage (row **A9**) | ⚑ panels **a, b built**; **c/d are the ones that matter** | `32`–`39` |
+| 4 dropout & lineage (row **A9**) | ⚑ a/b built; **event catalogue done — c/d next** | `32`–`43` |
 | 5 compatibility spread + homoplasy null | needs the simulator | — |
 | 6 method comparison under simulation | planned; needs simulator | — |
 | 7 calibration / honest uncertainty | planned; needs simulator | — |
