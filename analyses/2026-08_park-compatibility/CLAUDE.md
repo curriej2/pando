@@ -109,9 +109,19 @@ collisions before calling a figure done.
 
 ---
 
-# B = 1,000 permutations → proper p and q values — **LAUNCHED 2026-09-03**
+# B = 1,000 permutations → proper p and q values — **COMPLETE 2026-09-04**
 
-**State.** Implemented and submitted across everything: 5 arms × {`42` clone-wide, `40` hard
+**Result.** All 15 configurations pooled to exactly 1,000 permutations; every merge passed its
+completeness assertion. **$p=1/1001$ in all twenty runs.** ⭐ Lead with the **null maximum**: the
+most extreme of 1,000 random labellings gave **111** candidates in Subclone against **279,973**
+real (118–2,522× across arms). Null is right-skewed 6–100×. Every hard-catalogue event clears
+$q\le1.9\times10^{-4}$. Cell × tape entries inside called blocks: 2,916–266,688 per arm.
+⚠ Disclose the one marginal result — clone-wide Mouse 2, FDR 4.36%, max $q$ 0.044.
+⚠⚠ **The thresholds did NOT move** (Mouse 3 soft 16.3→16.2; all others already on the 10-nat floor):
+the $B=3$ null was unbiased in the mean and only missed the tail. Full tables in README
+"B = 1,000 — results".
+
+**Launch state (2026-09-03).** Implemented and submitted across everything: 5 arms × {`42` clone-wide, `40` hard
 sub-clone, `43` soft at depth 4, `43` soft at depth 6} = 15 permutation configurations + 5 direct
 clone-wide runs. 300 array tasks, all `RUNNING` from the moment of submission; a dependent
 `perm_collect` job pools the parts and re-runs each observed scan once with `--nullfile`.

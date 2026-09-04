@@ -663,3 +663,40 @@ postdates it) → the validation ladder → only then the sub-clone version.
 **In flight at time of writing:** 80 array tasks, the depth-4 and depth-6 soft scans on Pre-TX and
 Subclone (`perm43d{4,6}_{Initial,Subclone}`); `perm_collect` (11389784) pends on them and will pool
 the parts and re-run each observed scan once with `--nullfile`.
+
+### 2026-09-04 — B = 1,000 landed, all 15 configurations
+
+`perm_collect` pooled 300 parts into 15 nulls of exactly 1,000 permutations, re-ran every observed
+scan, 17 min, all completeness assertions passed. **$p=1/1001$ in all twenty runs** (hard, soft d4,
+soft d6, clone-wide × five arms) at both the threshold and the scan floor.
+
+**⭐ Quote the null maximum, not the p-value.** The most extreme of 1,000 random labellings produced
+**111** candidates in Subclone where the real labelling produced **279,973** — 2,522×. Across arms
+the ratio to the null *max* is 118× (Mouse 2) to 2,522× (Subclone). This answers Justin's own
+framing ("where does the real labelling sit among the 1,000?") directly, makes the null explicit,
+and is immune to "$1/1001$ is just the resolution floor".
+
+⚠ The null is **right-skewed by 6–100×** (max/mean) — the same skew script `37` found for the
+per-tape nulls. $B=3$ could never have seen that tail, and it is why the max rather than the mean is
+the honest summary.
+
+**Every hard-catalogue event clears $q\le1.9\times10^{-4}$**; the catalogue is significant as a
+whole, with no weak tail. **Cell × tape entries inside called blocks**: Subclone 266,688 (19.09% of
+all missing), Mouse 2 21,277 (6.43%), Pre-TX 22,256 (1.70%), Mouse 1 14,770 (3.64%), Mouse 3 2,916
+(2.28%) — pooled shares are dilution artefacts (script `41`: nothing called below 20 cells).
+
+⚠ **One genuinely marginal result to disclose rather than bury:** the clone-wide layer on Mouse 2,
+FDR 4.36%, max $q$ **0.044**. Everything else is orders of magnitude clear.
+
+#### ⚠⚠ CORRECTION to yesterday's prediction
+
+I wrote that Mouse 3's soft threshold of 16.3 nats "came from three permutations and should fall
+toward 10 once the null is properly estimated". **It did not** — 16.2 at depth 4, 15.5 at depth 6,
+and every other configuration stayed exactly at the 10-nat floor where it already was.
+
+⇒ **The three-permutation null was already unbiased in the mean; what it could not see was the
+tail.** $B=1{,}000$ bought resolution on $p$ ($<0.17\to<0.001$) and the *shape* of the null, not any
+new events and not one moved threshold. Stated plainly because the honest accounting matters: ~250
+core-hours bought calibration and rhetoric.
+⇒ It also sharpens the `--lam 4` case — the threshold now demonstrably sits **on** the scan floor in
+14 of 15 configurations, so the floor is the only place more events can come from.

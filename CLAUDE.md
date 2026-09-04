@@ -112,7 +112,20 @@ the **symbol-depletion test** of row A9's untested *trans* limb. |
    **5–7%**. ⇒ **the graded appearance is very largely clade coarseness**, so a per-tape absorbing
    state is the right and largely sufficient extension; the lineage-varying-rate case is weaker than
    the depth-4 numbers implied.
-   **✅ B = 1,000 LAUNCHED 2026-09-03** across all 15 configurations (5 arms × {`40` hard, `43` soft
+   **✅ B = 1,000 COMPLETE 2026-09-04, all 15 configurations.** $p=1/1001$ in all twenty runs.
+   ⭐ **Quote the null MAX, not the p:** the most extreme of 1,000 random labellings gave **111**
+   candidates in Subclone against **279,973** real (118–2,522× across arms); the null is right-skewed
+   6–100×, which $B=3$ could not have seen. Every hard-catalogue event clears $q\le1.9\times10^{-4}$.
+   **Cell × tape entries inside called blocks** (lead with this, not event counts): Subclone 266,688
+   / Mouse2 21,277 / Pre-TX 22,256 / Mouse1 14,770 / Mouse3 2,916. ⚠ One marginal result to disclose:
+   clone-wide Mouse2, FDR 4.36%, max $q$ 0.044.
+   ⚠⚠ **CORRECTION: I predicted the thresholds would fall and they did not** — Mouse3 soft 16.3→16.2
+   (d4) / 15.5 (d6), everything else stayed on the 10-nat floor. The $B=3$ null was unbiased in the
+   *mean*; what it missed was the *tail*. $B=1{,}000$ bought resolution on $p$ and the null's shape,
+   **not one new event and not one moved threshold** — and it sharpens the `--lam 4` case, since the
+   threshold now sits *on* the floor in 14 of 15 configurations.
+
+   *(launch record)* **B = 1,000 launched 2026-09-03** across all 15 configurations (5 arms × {`40` hard, `43` soft
    d4, `43` soft d6}) at 20 array tasks each, plus 5 direct `42` runs; `47_submit_B1000.sh` →
    `46_perm_merge.py` → `48_collect_B1000.sh`. Parts store **count vectors on a fixed grid**, never
    candidate lists, and permutation $b$ is seeded from $(\text{SEED},b)$ so slices are addable in any

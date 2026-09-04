@@ -1888,3 +1888,86 @@ number — a **$q$-value**, the FDR of the rejection region containing that even
 give is a per-event **$p$**. They answer different questions ("what fraction of calls at this
 threshold are null?" vs "how exceptional is this one combo?"), and for a catalogue the $q$ is the
 more useful of the two.
+
+### B = 1,000 — results, all 15 configurations (2026-09-04)
+
+`perm_collect` (11389784) pooled 300 parts into 15 nulls of exactly 1,000 permutations each and
+re-ran every observed scan against them. 17 min. Every merge passed the completeness/disjointness
+assertion.
+
+**$p = 0.000999 = 1/1001$ in all twenty runs** — hard, soft (both depths), and clone-wide, in every
+arm, at both the chosen threshold and the 10-nat scan floor. Not one of 1,000 permuted labellings
+produced as many candidates as the real one, anywhere.
+
+**⭐ The number to say out loud is the null *maximum*, not the p-value.** "Where does the real
+labelling sit among the 1,000 random ones?" has a much better answer than "$p<0.001$":
+
+| arm | observed | null mean | **null MAX over 1,000** | obs / null max |
+|---|---|---|---|---|
+| Subclone | 279,973 | 43.2 | **111** | **2,522×** |
+| Pre-TX | 55,076 | 10.5 | 104 | 530× |
+| Mouse 3 | 8,538 | 0.17 | 17 | 502× |
+| Mouse 1 | 28,367 | 2.15 | 60 | 473× |
+| Mouse 2 | 15,801 | 2.17 | 134 | 118× |
+
+⇒ **the most extreme of a thousand random labellings reached 111 candidates where the real one
+reached 279,973.** That makes the null explicit, which a p-value hides, and it is immune to the
+objection that $1/1001$ is just the floor of what $B$ can resolve.
+
+⚠ Note the null is **strongly right-skewed** — max/mean runs 6× (Pre-TX) to 100× (Mouse 3). That is
+the same skew flagged for the per-tape nulls in script `37`, and it is why $B=3$ could never have
+characterised this tail. It is also why the *max* is the honest summary: quoting the mean alone
+understates what a lucky permutation can do.
+
+**Every event in the hard catalogue clears $q\le1.9\times10^{-4}$** (max $q$ over kept events:
+Mouse 3 $2.0\times10^{-5}$, Mouse 1 $7.6\times10^{-5}$, Mouse 2 $1.4\times10^{-4}$, Subclone
+$1.5\times10^{-4}$, Pre-TX $1.9\times10^{-4}$). So the catalogue is significant *as a whole*, not
+just at its top — there is no weak tail to defend.
+
+**Cell × tape entries inside called blocks** — the quantity to lead with rather than event counts:
+
+| arm | events | **cell × tape entries** | of all missing | cells touched |
+|---|---|---|---|---|
+| Subclone | 8,220 | **266,688** | 19.09% | 37,785 |
+| Pre-TX | 1,783 | 22,256 | 1.70% | 8,233 |
+| Mouse 2 | 388 | 21,277 | 6.43% | 4,013 |
+| Mouse 1 | 320 | 14,770 | 3.64% | 3,842 |
+| Mouse 3 | 73 | 2,916 | 2.28% | 701 |
+
+⚠ Read these with script `41`'s stratification: the pooled share is a **dilution artefact**, since no
+event is called in any clone under 20 cells. Where detection is possible it is 6.5–19%.
+
+**Full table, all fifteen configurations:**
+
+| config | arm | threshold | FDR | soft/hard events | null mean | null max |
+|---|---|---|---|---|---|---|
+| `40` hard | Mouse 1 / 2 / 3 / Pre-TX / Subclone | 10.0 all | 0.00–0.02% | 320 / 388 / 73 / 1,783 / 8,220 | 0.17–43.2 | 17–134 |
+| `43` soft d4 | Mouse 1 / 2 / Pre-TX / Subclone | 10.0 | 0.02–3.3% | 37,160 / 22,646 / 67,628 / 516,549 | 15–3,931 | 153–4,860 |
+| `43` soft d4 | Mouse 3 | 16.2 | 4.8% | 6,500 | 313 | 1,123 |
+| `43` soft d6 | Mouse 1 / 2 / Pre-TX / Subclone | 10.0 | 0.02–3.0% | 48,794 / 37,083 / 69,185 / 876,479 | 16–4,422 | 154–5,462 |
+| `43` soft d6 | Mouse 3 | 15.5 | 5.0% | 9,097 | 452 | 1,603 |
+| `42` clone-wide | all five | 10.0 | 0.01–4.4% | 725 / 410 / 398 / 4,763 / 155 | 0.11–17.9 | — |
+
+Soft-event counts rise at depth 6 in every arm (Mouse 2 22,646 → 37,083; Subclone 516,549 →
+876,479), consistent with finer clades resolving losses the coarse ones smeared.
+
+⚠ **The clone-wide layer on Mouse 2 is the one genuinely marginal result**: FDR 4.36%, null mean
+17.9, max $q$ **0.044**. Every other configuration sits orders of magnitude clear. Say so rather
+than letting it ride on the shared "$p<0.001$".
+
+#### ⚠⚠ Correction: I predicted the thresholds would fall, and they did not
+
+Written yesterday: *"Mouse 3's soft threshold of 16.3 nats came from **three** permutations and
+should fall toward 10 once the null is properly estimated."* **Wrong.** At $B=1{,}000$ it is
+**16.2** at depth 4 and 15.5 at depth 6. Every other configuration stayed at exactly the 10-nat
+scan floor, where it already was.
+
+⇒ **The three-permutation null was already unbiased in the mean; what it could not see was the
+tail.** $B=1{,}000$ bought (i) resolution on $p$, from $<0.17$ to $<0.001$, and (ii) the *shape* of
+the null — the 6–100× right skew above, which is new information and changes how the result should
+be quoted. It did **not** move a single detection threshold. That is worth saying plainly: the
+extra 250 core-hours bought rhetoric and calibration, not any new events.
+
+⇒ **And it sharpens the case for the `--lam 4` follow-up.** If more events are wanted, the floor is
+now demonstrably the only place they can come from — the threshold is already sitting on it in
+14 of 15 configurations.
