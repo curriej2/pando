@@ -48,7 +48,11 @@ notes · §H literature (§H.6 = full Mulberry & Stadler close read) · §I expe
 |---|---|---|
 | `2026-08_park-compatibility` | Does Park's cross-tape character compatibility support the perfect-phylogeny route (§D.4b)? | **Diagnostics complete.** Mouse3 94.66%/63.56% (spread +31 pts), Initial 91.91%/80.60% (+11 pts) ⇒ **dropout binds, row A6**. $C=0.57$ on Mouse3. Subclone ground truth **passed**. ⚑ **Strategic pivot: skeleton is a step sideways — only 9 of 2,547 clones exceed 1,000 cells, so likelihood inference is already in range. Figure programme under way: figs 1–3 done.** ⚑ **Dropout characterised (fig 3): two axes — the tape axis is larger ($\rho_{\rm tape}=0.25$ vs $\rho_{\rm cell}=0.13$), reproducible ($r=0.997$ between libraries) and informative about edit depth, but only through a removable 15% of tapes; the cell axis is a pure QC artefact and carries no editing information, so it can be marginalised.**
 ⚑ **Row A9 measured (2026-09-02): tape loss IS heritable, and heritable below the clone — so it is a
-Dollo character needing one absorbing state in the pruning, not a reason to reach for SBI.** |
+Dollo character needing one absorbing state in the pruning, not a reason to reach for SBI.**
+⚑ **B = 1,000 permutations launched 2026-09-03** over all three layers × five arms; clone-wide layer
+already back at $p=1/1001$ in 5/5 arms. ⚠ Two orthogonal follow-ups are specified but not run: a
+`--lam 4` re-run with a size-stratified null (the floor, not $B$, is what hides weaker events), and
+the **symbol-depletion test** of row A9's untested *trans* limb. |
 
 ## Already settled — do not re-derive unless asked
 
@@ -108,12 +112,21 @@ Dollo character needing one absorbing state in the pruning, not a reason to reac
    **5–7%**. ⇒ **the graded appearance is very largely clade coarseness**, so a per-tape absorbing
    state is the right and largely sufficient extension; the lineage-varying-rate case is weaker than
    the depth-4 numbers implied.
-   **⭐ NEXT: (i) B = 1,000 permutations for proper p and q values — full spec, measured per-scan
-   costs and the parallelisation design are in `analyses/2026-08_park-compatibility/CLAUDE.md`
-   under "NEXT TASK"; `42` needs one 2-min job, `40`/`43` need ~20-way splitting (Subclone soft is
-   ~52 h serial). ⚠ The permutation shuffles **the label being tested, blocked by the label above**
-   — subclade membership within clone for the sub-clone tests, clone membership within sample for the
-   clone-level ones. (ii) panels c (a worked example inside one large clone) and d (the catalogue).**
+   **✅ B = 1,000 LAUNCHED 2026-09-03** across all 15 configurations (5 arms × {`40` hard, `43` soft
+   d4, `43` soft d6}) at 20 array tasks each, plus 5 direct `42` runs; `47_submit_B1000.sh` →
+   `46_perm_merge.py` → `48_collect_B1000.sh`. Parts store **count vectors on a fixed grid**, never
+   candidate lists, and permutation $b$ is seeded from $(\text{SEED},b)$ so slices are addable in any
+   order. **The five `42` clone-wide runs are in: $p=1/1001$ in every arm** — not one of 1,000
+   permutations came close — with loss counts unchanged from $B=200$.
+   ⚠⚠ **$B$ is NOT the detection floor.** Three knobs: $B$ (resolution of $p$), the FDR *threshold*
+   (falls where a 3-permutation null pushed it up — Mouse3 soft 16.3 nats should drop toward 10), and
+   the scan **floor** `--lam`, hard-fixed at 10 nats, beneath which nothing is ever collected and
+   which this run's grid cannot see. ⇒ **follow-up: `--lam 4`, which subsumes the floor-10 run**,
+   plus a **null stratified by clade size** and per-combo exceedance counters (both only worth it at
+   the lower floor — see the analysis README; per-combo p at floor 10 censors every real event at
+   $1/1001$, and $p\ge1/\binom{n_C}{m}$ regardless of $B$).
+   **⭐ NEXT: (i) read the collector's FDR curves, then launch the `--lam 4` run.
+   (ii) panels c (a worked example inside one large clone) and d (the catalogue).**
    **The remaining figs are still blocked on the simulator**: birth–death
    tree at Park clone sizes, sequential editing at measured $\lambda$/$\xi$, $N=6$, $k=166$, with
    **dropout as a switchable layer**. That simulator also supplies the **homoplasy null** — still the

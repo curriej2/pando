@@ -13,10 +13,13 @@ gitignored, never copy out). Justin's own copy of the Park, Chang et al. 2026 ta
 - `clonalbc_percell_hamming1_corrected.csv` — 167,736 rows, `CellID,Sample,ClonalBC_raw,ClonalBC`.
   **This is the clone assignment**, needed for §D.4b Procedure step 1 (work within a clone).
 
-**State (2026-09-02, end of session 2).** **Fig 3 done (a–e)**; **row A9 measured** — tape loss is
+**State (2026-09-03, end of session 4).** **Fig 3 done (a–e)**; **row A9 measured** — tape loss is
 heritable, heritable *below* the clone (monotone subclade-depth gradient, 5/5 arms), and discrete
-rather than a graded rate. Fig 4 panels a/b built. See README "Row A9" and the full $\rho$ derivation
-recorded under "Methods, in full".
+rather than a graded rate. Fig 4 panels a/b built. Event catalogue, clone-wide layer, soft variant
+and the `MAX_D=6` test all done. **$B=1{,}000$ permutations launched across all 15 configurations**;
+clone-wide layer already back at $p=1/1001$ in 5/5 arms, the rest pending the `perm_collect` job.
+See README "Row A9", "Panels c/d groundwork", "B = 1,000 permutations — launched" and the full
+$\rho$ derivation under "Methods, in full".
 
 **⭐ NEXT, and it is the crux.** The effect is claimed to be a **tree** property, not a clonal one,
 so the sharpest test is that it appears **WITHIN a single large clone** at subclade resolution —

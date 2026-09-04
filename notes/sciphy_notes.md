@@ -404,6 +404,18 @@ Populate as we work through the methods. Each row is a candidate extension point
 | A8 | Rate variation is **per-tape** (*cis*) only | PE copy number / silencing is a ***trans*** effect scaling **all** tapes in a cell at once (embryo #6: no PEmax ⇒ no editing despite 5 TAPEs) | Needs a **per-lineage** rate multiplier orthogonal to $r_z$; also the natural place to put ENGRAM's time-varying rate |
 | A9 | Dropout (if added) independent of rate | pegRNA and TAPE are **co-integrated** ⇒ silencing removes the symbol from the pool *and* the tape from the readout — shared latent cause | Correlated missingness; a strong SBI argument since the joint is trivial to simulate, intractable to write down |
 
+⚠ **A9's second limb has never been measured.** Row A9 asserts *both* that the tape leaves the
+readout and that the symbol leaves the writing pool. Only the first has been observed (Park,
+2026-09-02/03: tape loss is heritable, discrete, and heritable below the clone). The second — the
+**trans** consequence, symbol $s(z)$ vanishing from *other* tapes in the same cells — is a
+prediction of the co-integration story that no dataset has yet been asked. It is also the only
+**orthogonal** check on the whole silencing interpretation, since everything measured so far is
+missingness, which is what technical dropout looks like too. ⚠ It is a hypothesis, not a deduction:
+the pegRNA is Pol III (U6) and the tape/mRFP Pol II (EF1α), and locus heterochromatin taking both is
+likely but not forced. Design, blockers and the validation ladder: §"Open empirical question: is
+there a *cis*-preference", "Testability — Park", and
+`analyses/2026-08_park-compatibility/README.md` §"Two directions from the B = 1,000 run".
+
 ---
 
 # Session 1a — The editing model (pp. 10, Definitions 1–3, Eqs. 1–2)
@@ -1330,6 +1342,14 @@ paper. *(Not checked: the ENGRAM paper, mouse supplementary tables.)*
   integrations and showed them to collectively encode all 8 insertions present at ≥0.5%
   at each of the six sites."* Pairing known for 10/11. Data public: GEO **GSE341627**,
   `github.com/seidels/dtt-mouse-analysis`.
+- **⭐ Park cancer-metastasis data — testable *only* by recovering the pairing first, and there is a
+  route.** 166 integrations, cassette `PB-U6-pegRNA-NNNNGGA-EF1a-mRFP-TAPE-TargetBC`. `TargetBC` is
+  a 10-nt tape label and `NNNN` a 4-nt symbol; **nothing in the delivered tables links them**, and we
+  have no sequencing of intact integrations. So the diagonal is undefined here as in Typewriter —
+  *unless* it is recovered indirectly. **The route: silencing.** Because the two are co-integrated,
+  the cells that lost tape $z$ should be depleted of symbol $s(z)$ at *other* tapes; asking **which**
+  symbol is depleted names $s(z)$ without any sequencing. The map becomes the output and its internal
+  structure becomes the test — see below.
 
 ### Prior: expect essentially zero, on four grounds
 
@@ -1382,6 +1402,39 @@ Two things that *do* bite:
 
 Power: ~55 edits/cell × 1.34M cells; even collapsed to independent events on ~10⁶
 internal branches, a few-percent effect should be detectable.
+
+### ⭐ Recovering the tape→symbol map from silencing (Park route, specified 2026-09-03)
+
+Turns the missing annotation into a measurement, and answers row **A9**'s untested limb at the same
+time. Verified 2026-09-03 on the Park tables:
+
+- **All 166 `TargetBC`s are identical across all five arms** (Pre-TX, Mouse 1–3, Subclone) — one
+  engineered line, one set of integrations. A recovered map therefore has **five independent
+  replicates**, and tape $z$ must name the same symbol in each. Chance agreement among ~100 symbols
+  is 1%; five-way concordance is essentially unfakeable. **This is the test, not the per-event p.**
+- **166 draws from $4^4=256$ predicts $256\bigl(1-(1-1/256)^{166}\bigr)=122$ distinct symbols**;
+  observed are 100–106 design-conforming symbols carrying essentially all edits (103 Pre-TX, 100
+  Mouse 1, 106 Subclone). So the recovered map should be near-injective *at a predicted collision
+  rate* — and collisions are a prediction, not a nuisance: a symbol carried by two integrations
+  should show a **partial** drop when one is silenced, and should carry $\approx2\times$ the base $\xi$.
+- **$\mathrm{corr}(\beta_z,\xi_{s(z)})>0$** — tape recovery rate and symbol frequency are two
+  readouts of one locus's expression. ⚠ $\xi$ was checked for copy-number quantisation and is
+  **smooth over a 570× range** (0.00008–0.0456), so per-integration expression varies enormously.
+  That kills quantisation as a shortcut but gives the correlation a wide dynamic range to live in.
+
+⚠ **Power comes first, and it is the same discipline this section already demands under
+*phylogenetic non-independence*.** The tape is append-only: symbols written before a silencing stay
+in place, so only insertions laid down *after* it can be depleted, and Park's tapes are ~4.5–5 of 6
+saturated — exactly the regime where most content is ancestral. Measure the fraction of (tape, site)
+slots **polymorphic within a clone**, and within a called clade, before anything else. That is
+literally "count each edit once at the branch where it first appears", and it is the power
+calculation for the whole idea.
+
+Screen the **clone-wide** layer before the sub-clone one: Pre-TX alone has 4,763 clone-wide losses
+over 1,188 clones (~30 losing clones per tape), and a clone-wide loss predates the clone founder, so
+a larger share of that clone's editing postdates it. A global alternative to 166 separate tests:
+build $D[z,s]$ = depletion of $s$ in cells lacking $z$ and solve it as an **assignment problem**,
+scored against permuted $D$ — one statistic, all 166 assignments at once.
 
 ### Why it matters for the modeling
 

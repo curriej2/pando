@@ -527,6 +527,9 @@ A +1 sd fluctuation in a 20-cell clade buys 0.45 nats; the 10-nat threshold need
 **Next task specified: B = 1,000 permutations for proper p and q values.** Full spec — including the
 correct statement of the permutation, measured per-scan costs, and the parallelisation design — is in
 `analyses/2026-08_park-compatibility/CLAUDE.md` under "NEXT TASK".
+*(Pointer updated 2026-09-03: that heading is now "B = 1,000 permutations → proper p and q values —
+LAUNCHED 2026-09-03". The spec itself was followed; the one departure is the monotonisation
+direction — see session 4 below.)*
 
 ⚠ **The permutation, stated correctly** (Justin asked, and the natural phrasing is wrong): we do not
 shuffle *clone* labels for the sub-clone test. The rule is **permute the label being tested, blocked
@@ -537,3 +540,126 @@ are invisible to the event catalogue and needed script `42` instead. The full sc
 permutation, which is what makes $B=1{,}000$ expensive: measured per-scan costs give ~2 min for `42`
 but ~11 h (`40`) and ~52 h (`43`, Subclone) serially, so `40`/`43` need ~20-way splitting over
 permutation parts with a merge step.
+
+---
+
+## 2026-09-03, session 4 — B = 1,000 launched across everything; two new directions
+
+**Implemented and submitted.** `40`/`43` gained `--permpart i/N`; `46_perm_merge.py`,
+`47_submit_B1000.sh` and `48_collect_B1000.sh` are new. 15 permutation configurations (5 arms ×
+{`40` hard sub-clone, `43` soft depth-4, `43` soft depth-6}) at 20 array tasks each, plus 5 direct
+`42` runs. Design and the count-vector argument are in the analysis README under "B = 1,000
+permutations — launched".
+
+Three choices worth carrying forward:
+
+- **Store counts, not candidates.** A part writes only `#{candidates ≥ t}` on a fixed 600-point
+  grid. Subclone's soft scan yields ~876,000 candidates *per permutation*; 1,000 such lists would be
+  ~7 GB and discarded. 600 integers is everything the FDR curve, the $q$'s and the global $p$ need.
+- **Seed permutation $b$ from $(\text{SEED},b)$**, not from a stream advanced $b$ times. Slice
+  boundaries then cannot change what any permutation *is*; parts merge in any order and a duplicate
+  is detectable by index. `46` asserts the pooled set is complete and disjoint and names what is
+  missing — a silently absent part would shrink the null and inflate every $q$'s denominator.
+- **Keep the whole $(B\times G)$ count matrix**, not a mean: $q$ needs the mean null count, the
+  global $p$ needs the distribution.
+
+⚠ **Correction to the spec written last session.** It said the $q$ curve is monotonised "by a running
+minimum from the top". It is the other way: an event at $\Lambda$ can be reported by any rejection
+region $\{\Lambda'\ge t\}$ containing it, i.e. any $t\le\Lambda$, so $q=\min_{t\le\Lambda}q_{\rm raw}(t)$
+— a running minimum **up** the grid, which is BH's direction and is automatically non-increasing in
+$\Lambda$. Downward would invert that *and* drag the $q_{\rm raw}=1$ convention (assigned wherever the
+observed count is zero, i.e. above the largest observed $\Lambda$) across the whole informative range.
+
+**First results — the five `42` clone-wide runs, complete.** $p = 0.000999 = 1/1001$ in every arm at
+both the chosen threshold and the 10-nat scan floor: **not one of 1,000 permutations came close.**
+Loss counts unchanged from $B=200$ (Mouse 1 725, Mouse 2 410, Mouse 3 398). $B$ bought resolution on
+$p$, not a different answer — which is the honest thing to report.
+
+### ⚠⚠ Being a good lab citizen — a real error, caught by Justin
+
+Submitted with the project's habitual `-p lesliec,cpu`, the 300 one-core 8 G tasks landed **194 CPUs
+on `lesliec`, 76% of the lab's four private nodes**, one user holding them, while the general `cpu`
+partition had ~9,700 CPUs idle. Worse than the raw share: those four nodes are the lab's **only** GPU
+nodes, so pure-CPU work parked there can block a labmate's A100 job on CPUs with the GPUs free.
+Cancelled and resubmitted `-p cpu`: `lesliec` back to 233/256 idle, this work 309 of 14,264 on `cpu`
+(2.2%), every task `RUNNING` immediately — **no queue time lost by behaving well.** Recorded as a
+standing rule in the root `CLAUDE.md`: the `lesliec,cpu` pairing is for jobs that are few, fat, or
+GPU-bound; a wide array of small tasks goes to `cpu` alone.
+
+### ⚠⚠ $B$ is not the detection floor — three knobs were being conflated
+
+| knob | controls | what $B=1{,}000$ does |
+|---|---|---|
+| $B$ | resolution of $p$ | fixes it, $0.17\to0.001$ |
+| FDR **threshold** | which candidates are *called* | lowers it where a 3-permutation null had pushed it up |
+| scan **floor** `--lam` | which candidates are *collected at all* | **nothing — hard-fixed at 10 nats** |
+
+The floor is a cutoff inside `scan()`; this run's grid starts at exactly 10 and can never see
+beneath it. Mouse 3's soft threshold of 16.3 nats came from **three** permutations and should fall
+toward 10 — but weaker events need a re-run at `--lam 4`, which *subsumes* the floor-10 run. Script
+`45` already shows the terrain: 4.6× enrichment at $\ge4$ nats on Mouse 3. Deliberately not done by
+restarting the live jobs — read this run's FDR curve at the floor first, then size it.
+
+### ⚠⚠ Per-combo permutation p-values — asked, and they are the wrong tool at this floor
+
+Justin proposed scoring each (clade, tape) combo against its own 1,000 permuted values. Well-defined
+(prefix codes are never permuted, so a clade *slot* persists with its size fixed) and cheap, given an
+exceedance **counter** per combo (~22 MB) rather than $B$ values per combo (~44 GB for Mouse 3 alone).
+**But at the 10-nat floor it is strictly weaker than the pooled count.** Both spend $B=1{,}000$;
+pooling buys $B\times N_{\rm combos}\approx10^{9}$ null draws (tail resolution $\sim10^{-7}$) against
+1,000 ($10^{-3}$). Measured: **eight** permutations of Mouse 3's hard scan produced **zero** null
+candidates above 10 nats across every combo, so every real event censors at $1/1001$ — the statistic
+saturates exactly where the signal is strongest. Pooling's price is assuming $\Lambda$'s null is
+exchangeable *between* combos, and the repair for that is stratification, not per-combo scoring.
+
+⚠ **A second floor on $p$ that no $B$ can lift.** An $m$-cell clade in an $n_C$-cell clone has only
+$\binom{n_C}{m}$ realisable permuted compositions, so $p\ge1/\binom{n_C}{m}$: a 4-cell clade in a
+6-cell clone **cannot reach $p<0.05$ at any $B$** (15 compositions). ⇒ a structural mechanism for
+script `41`'s "not one event in any clone under 20 cells", beyond $\gamma_{C,z}$ absorbing
+everything. Worth saying aloud — it makes the power limit information-theoretic rather than a
+choice of threshold.
+
+⇒ **Folded into the `--lam 4` follow-up:** lower floor + **null stratified by clade size** (the real
+repair for "weaker but real": a 500-cell clade has a far heavier $\Lambda$ tail than a 5-cell one and
+one global FDR fits neither; per-stratum count vectors cost ~6× storage, i.e. nothing) + per-combo
+counters, which stop being censored at $\Lambda\ge4$.
+
+⚠ Terminology: the run already yields a per-event **$q$** (the FDR of the rejection region containing
+it). It does not yield a per-event **$p$**. Different questions; $q$ is the more useful for a catalogue.
+
+### ⭐ New direction — does the co-integrated symbol vanish when a tape is silenced?
+
+Justin's idea, and it is the sharpest test available: every result so far infers silencing from
+**missingness**, which is what technical dropout also looks like. pegRNA and TAPE share one cassette
+and pegRNAs act in ***trans*** (§0), so silencing integration $z$ should remove symbol $s(z)$ from
+**every other tape** in those cells — a channel transcript capture cannot reach. It measures what §0
+currently asserts under "nasty coupling" and what row **A9** is built on.
+
+⚠ Not a deduction: pegRNA is Pol III (U6), tape/mRFP Pol II (EF1α). Locus heterochromatin should take
+both, but nothing forces it — which is exactly why it is worth measuring.
+
+⚠ **The map $z\mapsto s(z)$ is unknown** (`TargetBC` 10-nt vs `NNNN` 4-nt, never linked) — the same
+gap §"Open empirical question: is there a *cis*-preference" records for the Typewriter data.
+**⇒ Recover the map instead of assuming it, and let its structure be the evidence.** Measured today:
+all **166 TargetBCs are identical across all five arms**, so a recovered map has five independent
+replicates; 166 draws from $4^4=256$ predicts **122** distinct symbols against **100–106** observed,
+so near-injectivity at a *predicted* collision rate is checkable, and collisions predict partial
+rather than complete drops. Also measured: $\xi$ is **smooth over a 570× range** (0.00008–0.0456),
+not quantised by copy number — no cheap shortcut, but a large dynamic range for
+$\mathrm{corr}(\beta_z,\xi_{s(z)})>0$ to live in.
+
+**⚠ Step 0 is a power calculation and precedes the examples.** The tape is append-only, so symbols
+written before the silencing stay; only post-loss insertions can show depletion. Tapes here are
+~4.5–5 of 6 saturated — precisely the regime where most content is ancestral. Measure the fraction of
+(tape, site) slots **polymorphic within a clone**, and within a called clade. That number decides
+whether any of this works. It is also the same discipline §"cis-preference" already demands under
+*phylogenetic non-independence*: count each edit once at the branch where it first appears, never
+once per cell.
+
+Then: 3–5 hand-inspected examples → screen the **clone-wide** layer first (strongest: 4,763 losses
+over 1,188 Pre-TX clones, and the loss predates the clone founder so more of the clone's editing
+postdates it) → the validation ladder → only then the sub-clone version.
+
+**In flight at time of writing:** 80 array tasks, the depth-4 and depth-6 soft scans on Pre-TX and
+Subclone (`perm43d{4,6}_{Initial,Subclone}`); `perm_collect` (11389784) pends on them and will pool
+the parts and re-run each observed scan once with `--nullfile`.
