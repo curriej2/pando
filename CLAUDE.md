@@ -176,6 +176,14 @@ sbatch -A lesliec -p lesliec,cpu -c 16 --mem 128G -t 2-00:00:00 job.sh
 sbatch -A lesliec -p lesliec,gpu --gres=gpu:1 -c 8 --mem 64G -t 1-00:00:00 job.sh
 ```
 
+**⚠⚠ Do not list `lesliec` for work that needs neither a GPU nor a ~1 TB node.** Measured
+2026-09-03: 300 one-core 8 G array tasks submitted `-p lesliec,cpu` landed **194 CPUs on `lesliec`,
+76% of the lab's four private nodes**, held by one user — while `cpu` had ~9,700 CPUs idle. The four
+`lesliec` nodes are the lab's *only* GPU nodes, so pure-CPU work parked there can block a labmate's
+A100 job on CPUs with the GPUs free. Resubmitting the same array `-p cpu` returned `lesliec` to
+233/256 idle and cost nothing in queue time. **The `-p lesliec,cpu` pairing in the examples above is
+for jobs that are few, fat, or GPU-bound; a wide array of small tasks goes to `cpu` alone.**
+
 ⚠ For GPU jobs keep the GRES **untyped** (`--gres=gpu:1`). `lesliec` is A100-only; the general
 `gpu` partition is mixed. Typing it (`--gres=gpu:a100:1`) forfeits the general partition's
 H100/L40S/H200 nodes and defeats the point of listing both.

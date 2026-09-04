@@ -1665,6 +1665,15 @@ also drag the $q_{\rm raw}=1$ convention — which the code assigns wherever the
 zero, i.e. at every threshold above the largest observed $\Lambda$ — back down over the entire
 informative range.
 
+**⚠ Partition: `cpu` only, not the project default `-p lesliec,cpu`.** Listed against both, 300
+one-core tasks put **194 CPUs on `lesliec` — 76% of the lab's four private nodes, held by one
+user**. Those four nodes are also the lab's *only* GPU nodes, so pure-CPU work parked there can
+block a labmate's A100 job on CPUs while the GPUs sit idle. The general partition has 239 nodes and
+~9,700 idle CPUs, 30× what this needs. Resubmitted `-p cpu`: `lesliec` went back to 233 of 256 CPUs
+idle, and this work now occupies 309 of 14,264 CPUs on `cpu` (2.2%). **Rule for the future: a job
+that needs neither a GPU nor a ~1 TB node has no business on `lesliec`**, and a wide array is
+exactly where the default job-pair listing does the most damage.
+
 **Sizing.** 1 core, 8 G, 20 array tasks per configuration. Peak RSS across every `40`/`43` run to
 date is 935 MB, so 8 G is ~8× headroom; the inner loop is `bincount`/`exp`, not BLAS, so extra cores
 buy nothing and a 1-core 8 G task backfills into gaps a fat one cannot. Walltimes 6 h (16 h for
