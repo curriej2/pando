@@ -88,17 +88,31 @@ DEPTHS = list(range(1, MAXD + 1))
 SEED = int(sys.argv[sys.argv.index("--seed") + 1]) if "--seed" in sys.argv else 20260903
 PART = sys.argv[sys.argv.index("--permpart") + 1] if "--permpart" in sys.argv else None
 NULLF = sys.argv[sys.argv.index("--nullfile") + 1] if "--nullfile" in sys.argv else None
-tag = "" if MAXD == 4 else f"_d{MAXD}"
+TARGET = float(sys.argv[sys.argv.index("--target") + 1]) if "--target" in sys.argv else 0.05
+tag = ("" if MAXD == 4 else f"_d{MAXD}") + (f"_lam{LAM0:g}" if LAM0 != 10.0 else "")
 
 # fixed threshold grid -- see 40_event_catalogue.py for why it cannot depend on
 # the data.  Identical definition, so the two catalogues are directly comparable.
 GRID = np.unique(np.round(np.geomspace(LAM0, 1.0e7, 600), 4))
 
 
-def counts_ge(v):
-    """#{v >= t} for every t in GRID."""
-    sv = np.sort(v)
-    return (sv.size - np.searchsorted(sv, GRID, side="left")).astype(np.int64)
+# clade-size strata -- see 40_event_catalogue.py for why these are required and
+# not a refinement: a fixed Lambda floor is a clade-size filter in disguise,
+# since a fully-missing m-cell clade at expected rate p caps at ~m*log(1/p) nats.
+SIZE_EDGES = np.array([4, 6, 10, 20, 50, 200, 10 ** 9])
+NB = len(SIZE_EDGES) - 1
+SIZE_LABEL = ["4-5", "6-9", "10-19", "20-49", "50-199", "200+"]
+
+
+def strat_of(sizes):
+    return np.clip(np.searchsorted(SIZE_EDGES, sizes, side="right") - 1, 0, NB - 1)
+
+
+def hist_add(acc, vals, sizes):
+    """Accumulate #{Lambda in bin} per size stratum, streaming."""
+    bi = np.clip(np.searchsorted(GRID, vals, side="right") - 1, 0, GRID.size - 1)
+    acc += np.bincount(strat_of(sizes) * GRID.size + bi,
+                       minlength=NB * GRID.size).reshape(NB, GRID.size)
 
 z0 = np.load(RES / f"dropout_matrix_{arm}.npz", allow_pickle=False)
 Y, clone = z0["recovered"], z0["clone"]
@@ -151,8 +165,14 @@ ARR2 = (1 - MISS) * np.log1p(-P)             # -> B
 anchors = np.arange(K)
 
 
-def scan(mi, a1, a2, pp):
-    """Return (lam_soft, lam_hard[eps], pi_hat, exp_rate, size) over all candidates."""
+def scan(mi, a1, a2, pp, counts_only=False):
+    """Return (lam_soft, lam_hard[eps], pi_hat, exp_rate, size, depth, counts).
+
+    ⚠ counts_only streams: it accumulates the stratified histogram and keeps NO
+    per-candidate arrays.  At a 4-nat floor Pre-TX yields millions of candidates
+    per scan and the permutation parts would otherwise hold nine float arrays of
+    that length, 1,000 times over."""
+    acc = np.zeros((NB, GRID.size), dtype=np.int64)
     LS, LH, PI, ER, SZ, DP = [], {e: [] for e in EPS_SWEEP}, [], [], [], []
     for d in DEPTHS:
         for a_ in anchors:
@@ -182,6 +202,8 @@ def scan(mi, a1, a2, pp):
             keep &= pi > er                              # one-sided: excess only
             gg, zz = np.nonzero(keep & (ls >= LAM0))
             if gg.size:
+                hist_add(acc, ls[gg, zz], mm[gg, 0])
+            if gg.size and not counts_only:
                 LS.append(ls[gg, zz]); PI.append(pi[gg, zz])
                 ER.append(er[gg, zz]); SZ.append(mm[gg, 0])
                 DP.append(np.full(gg.size, d, dtype=float))
@@ -189,7 +211,9 @@ def scan(mi, a1, a2, pp):
                     LH[e_].append(k[gg, zz] * np.log(1 - e_) +
                                   (mm[gg, 0] - k[gg, zz]) * np.log(e_) - (A + B)[gg, zz])
     cat = lambda L: np.concatenate(L) if L else np.zeros(0)
-    return cat(LS), {e: cat(v) for e, v in LH.items()}, cat(PI), cat(ER), cat(SZ), cat(DP)
+    ge = np.cumsum(acc[:, ::-1], axis=1)[:, ::-1]        # #{Lambda >= t} per stratum
+    return (cat(LS), {e: cat(v) for e, v in LH.items()}, cat(PI), cat(ER),
+            cat(SZ), cat(DP), ge)
 
 
 order = np.argsort(g_clone, kind="stable")
@@ -216,60 +240,88 @@ if PART is not None:
     rows, t0 = [], time.time()
     for j, b in enumerate(idx):
         inv = perm_inv(b)
-        nls, *_ = scan(MISS[inv], ARR1[inv], ARR2[inv], P[inv])
-        rows.append(counts_ge(nls))
-        print(f"    perm {b}: {nls.size:,} soft candidates "
+        *_, cn = scan(MISS[inv], ARR1[inv], ARR2[inv], P[inv], counts_only=True)
+        rows.append(cn)
+        print(f"    perm {b}: {cn[:,0].sum():,} soft candidates "
               f"[{j+1}/{len(idx)}, {time.time()-t0:.0f}s]", flush=True)
     outd = RES / "permparts"
     outd.mkdir(exist_ok=True)
     fn = outd / f"permcounts_43_{arm}{tag}_p{ip:03d}.npz"
     np.savez_compressed(fn, grid=GRID, counts=np.array(rows, dtype=np.int64),
+                        size_edges=SIZE_EDGES,
                         perm_index=np.array(idx, dtype=np.int64),
                         meta=np.array([NPERM, npart, ip, SEED, LAM0, MAXD], dtype=float))
     print(f"wrote {fn.relative_to(ROOT)}  ({len(idx)} permutations, "
           f"{time.time()-t0:.0f}s)")
     sys.exit(0)
 
-ls, lh, pi, er, sz, dp = scan(MISS, ARR1, ARR2, P)
-print(f"  soft candidates at Lambda >= {LAM0}: {ls.size:,}", flush=True)
+ls, lh, pi, er, sz, dp, obs_c = scan(MISS, ARR1, ARR2, P)
+obs_c = obs_c.astype(float)
 grid = GRID
-on = counts_ge(ls).astype(float)
+print(f"  soft candidates at Lambda >= {LAM0}: {ls.size:,}  (by stratum " +
+      " ".join(f"{SIZE_LABEL[i]}:{obs_c[i,0]:,.0f}" for i in range(NB)) + ")", flush=True)
 
 if NULLF is not None:
     zn = np.load(NULLF, allow_pickle=False)
     assert np.array_equal(zn["grid"], GRID), "null file was built on a different grid"
-    null_counts = zn["counts"].astype(float)
+    assert np.array_equal(zn["size_edges"], SIZE_EDGES), "null file used different strata"
+    null_counts = zn["counts"].astype(float)             # (B, NB, G)
     print(f"  null: {null_counts.shape[0]:,} pooled permutations from "
           f"{Path(NULLF).name}", flush=True)
 else:
     rows = []
     for b in range(NPERM):
         inv = perm_inv(b)
-        nls, *_ = scan(MISS[inv], ARR1[inv], ARR2[inv], P[inv])
-        rows.append(counts_ge(nls))
-        print(f"    perm {b+1}/{NPERM}: {nls.size:,} soft candidates", flush=True)
+        *_, cn = scan(MISS[inv], ARR1[inv], ARR2[inv], P[inv], counts_only=True)
+        rows.append(cn)
+        print(f"    perm {b+1}/{NPERM}: {cn[:,0].sum():,.0f} soft candidates", flush=True)
     null_counts = np.array(rows, dtype=float)
 B = int(null_counts.shape[0])
-nn = null_counts.mean(0)
+assert null_counts.shape[1:] == (NB, grid.size), null_counts.shape
+nul_c = null_counts.mean(0)
 
-# BH-style monotonisation: running minimum UP the grid (see 40 for why not down)
-fdr_raw = np.where(on > 0, nn / np.maximum(on, 1.0), 1.0)
-fdrc = np.minimum(np.minimum.accumulate(fdr_raw), 1.0)
-ok = np.flatnonzero(fdrc <= 0.05)
-j0 = int(ok[0]) if ok.size else len(grid) - 1
+
+def qcurve(obs, nul):
+    """BH-style monotonisation: running minimum UP the grid (see 40 for why)."""
+    raw = np.where(obs > 0, nul / np.maximum(obs, 1.0), 1.0)
+    return np.minimum(np.minimum.accumulate(raw), 1.0)
+
+
+QS = np.array([qcurve(obs_c[i], nul_c[i]) for i in range(NB)])
+js = np.full(NB, -1, dtype=int)
+for i in range(NB):
+    okc = np.flatnonzero(QS[i] <= TARGET)
+    if okc.size:
+        js[i] = int(okc[0])
+LAMv = np.array([grid[js[i]] if js[i] >= 0 else np.inf for i in range(NB)])
+print(f"\n  per-stratum soft threshold at FDR <= {100*TARGET:g}%:")
+print(f"   {'clade':>8} {'candidates':>12} {'threshold':>10} {'FDR%':>8} {'null mean':>10}")
+for i in range(NB):
+    t_ = f"{LAMv[i]:.1f}" if js[i] >= 0 else "NONE"
+    f_ = f"{100*QS[i,js[i]]:.4f}" if js[i] >= 0 else "--"
+    n_ = nul_c[i, js[i]] if js[i] >= 0 else nul_c[i, 0]
+    print(f"   {SIZE_LABEL[i]:>8} {obs_c[i,0]:>12,.0f} {t_:>10} {f_:>8} {n_:>10.2f}")
+
+on, nn = obs_c.sum(0), nul_c.sum(0)
+fdrc = qcurve(on, nn)
+okg = np.flatnonzero(fdrc <= TARGET)
+j0 = int(okg[0]) if okg.size else len(grid) - 1
 LAM = float(grid[j0]); FDR = float(fdrc[j0])
-p_at = lambda j: (1 + int((null_counts[:, j] >= on[j]).sum())) / (B + 1)
-p_thresh, p_floor = p_at(j0), p_at(0)
-show = np.searchsorted(grid, [10, 15, 20, 30, 50, 75, 100, 200, 500, 1000])
-show = np.unique(np.clip(show, 0, len(grid) - 1))
-print(f"  FDR curve: " + "  ".join(f"{grid[i]:.0f}n:{100*fdrc[i]:.0f}%" for i in show))
-print(f"  => soft threshold {LAM:.1f} nats at FDR {100*FDR:.1f}% "
-      f"({int(on[j0]):,} candidates, {nn[j0]:,.1f} expected null)")
-print(f"  global permutation p (B={B:,}): {p_thresh:.4g} at the threshold, "
-      f"{p_floor:.4g} at the scan floor {LAM0:.0f} nats "
-      f"(obs {on[0]:,.0f} vs null mean {nn[0]:,.1f})", flush=True)
+use = [i for i in range(NB) if js[i] >= 0]
+Cobs = float(sum(obs_c[i, js[i]] for i in use))
+Cnull = (sum(null_counts[:, i, js[i]] for i in use) if use else np.zeros(B))
+p_thresh = (1 + int((Cnull >= Cobs).sum())) / (B + 1)
+p_floor = (1 + int((null_counts[:, :, 0].sum(1) >= on[0]).sum())) / (B + 1)
+show = np.unique(np.clip(np.searchsorted(
+    grid, [LAM0, 6, 10, 15, 20, 30, 50, 100, 300]), 0, len(grid) - 1))
+print(f"\n  pooled FDR curve: " + "  ".join(
+    f"{grid[i]:.0f}n:{100*fdrc[i]:.3g}%" for i in show))
+print(f"  => pooled soft threshold {LAM:.1f} nats at FDR {100*FDR:.3g}%")
+print(f"  global permutation p (B={B:,}): {p_thresh:.4g} at the stratum thresholds "
+      f"({Cobs:,.0f} obs vs null max {Cnull.max():,.0f}), {p_floor:.4g} at the "
+      f"{LAM0:g}-nat floor", flush=True)
 
-sel = ls >= LAM
+sel = ls >= LAMv[strat_of(sz)]           # each clade against its own size stratum
 out = {"arm": arm, "max_depth": MAXD, "lambda_soft_threshold": LAM, "fdr": FDR,
        "n_perm": B, "seed": SEED,
        "null_source": (Path(NULLF).name if NULLF else "inline"),
@@ -277,9 +329,16 @@ out = {"arm": arm, "max_depth": MAXD, "lambda_soft_threshold": LAM, "fdr": FDR,
        "p_global_at_threshold": p_thresh, "p_global_at_scan_floor": p_floor,
        "p_floor_resolution": 1.0 / (B + 1),
        "null_mean_at_threshold": float(nn[j0]),
-       "null_max_at_threshold": float(null_counts[:, j0].max()),
+       "null_max_at_threshold": float(null_counts.sum(1)[:, j0].max()),
        "null_mean_at_scan_floor": float(nn[0]),
-       "null_max_at_scan_floor": float(null_counts[:, 0].max()),
+       "null_max_at_scan_floor": float(null_counts.sum(1)[:, 0].max()),
+       "target_fdr": TARGET, "size_labels": SIZE_LABEL,
+       "size_edges": SIZE_EDGES.tolist(),
+       "per_stratum": {SIZE_LABEL[i]: {
+           "candidates": float(obs_c[i, 0]),
+           "threshold": (float(LAMv[i]) if js[i] >= 0 else None),
+           "fdr": (float(QS[i, js[i]]) if js[i] >= 0 else None)} for i in range(NB)},
+       "n_selected_at_stratum_thresholds": int(sel.sum()),
        "fdr_curve": {"lambda": grid.tolist(), "observed": on.tolist(),
                      "null": nn.tolist(), "fdr": fdrc.tolist()}}
 for e_ in EPS_SWEEP:

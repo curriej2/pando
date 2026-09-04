@@ -122,17 +122,35 @@ LAM0 = float(sys.argv[sys.argv.index("--lam") + 1]) if "--lam" in sys.argv else 
 SEED = int(sys.argv[sys.argv.index("--seed") + 1]) if "--seed" in sys.argv else 20260903
 PART = sys.argv[sys.argv.index("--permpart") + 1] if "--permpart" in sys.argv else None
 NULLF = sys.argv[sys.argv.index("--nullfile") + 1] if "--nullfile" in sys.argv else None
-tag = "_screen" if SCREEN else ""
+TARGET = float(sys.argv[sys.argv.index("--target") + 1]) if "--target" in sys.argv else 0.05
+# ⚠ tag outputs by the scan floor so a lower-floor run does NOT overwrite the
+# floor-10 catalogue that the README tables report.
+tag = ("_screen" if SCREEN else "") + (f"_lam{LAM0:g}" if LAM0 != 10.0 else "")
 
 # The fixed grid.  It must NOT depend on the data: count vectors from different
 # array tasks are only addable if every task scored the same thresholds.
 GRID = np.unique(np.round(np.geomspace(LAM0, 1.0e7, 600), 4))
 
 
-def counts_ge(v):
-    """#{v >= t} for every t in GRID."""
-    sv = np.sort(v)
-    return (sv.size - np.searchsorted(sv, GRID, side="left")).astype(np.int64)
+# ---------------------------------------------------------------------------
+#  CLADE-SIZE STRATA  (added 2026-09-04, and they are not a refinement)
+# ---------------------------------------------------------------------------
+# A fixed Lambda floor is A CLADE-SIZE FILTER IN DISGUISE.  A fully-missing
+# clade of m cells at expected rate p scores about m*log((1-eps)/p) nats, so a
+# 9-cell Pre-TX clade CANNOT exceed ~12.4 nats however complete the loss, while
+# Subclone's large clades reach 1,326.  One global threshold therefore judges
+# a 5-cell clade and a 500-cell clade by the same number, which is why Pre-TX
+# collapses from 1,783 events to 110 between 10 and 20 nats and drops from 2nd
+# place to 4th.  Every count vector below is kept PER STRATUM, and the threshold
+# is chosen per stratum, so each clade is judged against the null for clades of
+# its own size.
+SIZE_EDGES = np.array([4, 6, 10, 20, 50, 200, 10 ** 9])
+NB = len(SIZE_EDGES) - 1
+SIZE_LABEL = ["4-5", "6-9", "10-19", "20-49", "50-199", "200+"]
+
+
+def strat_of(sizes):
+    return np.clip(np.searchsorted(SIZE_EDGES, sizes, side="right") - 1, 0, NB - 1)
 
 z0 = np.load(RES / f"dropout_matrix_{arm}.npz", allow_pickle=False)
 Y, clone = z0["recovered"], z0["clone"]
@@ -216,13 +234,25 @@ anchors = np.unique(np.linspace(0, K - 1, min(NANCH, K)).astype(int))
 tape_ix = np.arange(K)
 
 
-def scan(Wm, missm, collect):
-    """Sweep anchors x depths; return (hits, all candidate Lambda values).
+def scan(Wm, missm, collect_thr=None):
+    """Sweep anchors x depths. Returns (hits, counts) with counts (NB, |GRID|).
 
-    The Lambda values of EVERY candidate are kept, for observed and permuted runs
-    alike, so the FDR can be read as a function of threshold in one pass instead
-    of being guessed: FDR(t) = mean #null candidates >= t / #observed >= t."""
-    hits, lams = [], []
+    ⚠ STREAMING, and it has to be.  Earlier versions concatenated every
+    candidate's Lambda.  At a floor of 2 nats Pre-TX yields millions of
+    candidates per scan, and 1,000 permutations of that is unmaterialisable --
+    and the observed run was worse, since it built one dict plus a cell array
+    per candidate.  Here each (depth, anchor) block's survivors are histogrammed
+    into the fixed grid and discarded, so memory is O(NB x |GRID|) whatever the
+    floor.  Cost is unchanged: the prefilter L >= LAM0 is the same comparison
+    the old code already did, and only the survivors are binned.
+
+    collect_thr: None -> counts only (both permutation parts and the observed
+    counting pass).  Otherwise a per-stratum threshold VECTOR, and a candidate
+    is collected iff it clears the threshold OF ITS OWN SIZE STRATUM.  That two
+    pass structure is what lets the threshold be chosen from the whole curve
+    before any hit is ever materialised."""
+    acc = np.zeros((NB, GRID.size), dtype=np.int64)
+    hits = []
     for d in DEPTHS:
         for a_ in anchors:
             cd = codes[:, a_, d - 1]
@@ -240,22 +270,32 @@ def scan(Wm, missm, collect):
             L[:, a_] = -np.inf                      # never score the anchor itself
             L[ns < MIN_CLADE] = -np.inf
             gg, zz = np.nonzero(L >= LAM0)
-            lams.append(L[gg, zz])
-            if not collect or gg.size == 0:
+            if gg.size == 0:
                 continue
-            Mk = np.empty((G, K))
-            Pk = np.empty((G, K))
-            for k in range(K):
-                Mk[:, k] = np.bincount(sub, weights=missm[idx, k].astype(float), minlength=G)
-                Pk[:, k] = np.bincount(sub, weights=P[idx, k], minlength=G)
+            vals = L[gg, zz]
+            st = strat_of(ns[gg])
+            bi = np.clip(np.searchsorted(GRID, vals, side="right") - 1, 0, GRID.size - 1)
+            acc += np.bincount(st * GRID.size + bi,
+                               minlength=NB * GRID.size).reshape(NB, GRID.size)
+            if collect_thr is None:
+                continue
+            take = np.flatnonzero(vals >= collect_thr[st])
+            if take.size == 0:
+                continue
+            # cells of a clade in O(1): one stable sort of the block, then slice
+            o = np.argsort(sub, kind="stable")
+            cb = np.concatenate([[0], np.cumsum(np.bincount(sub, minlength=G))])
             owner = np.zeros(G, dtype=np.int64); owner[sub] = g_clone[idx]
-            for g_, z_ in zip(gg, zz):
-                cells = idx[sub == g_]
+            for t_ in take:
+                g_, z_ = int(gg[t_]), int(zz[t_])
+                cells = idx[o[cb[g_]:cb[g_ + 1]]]
                 hits.append(dict(clone=int(owner[g_]), anchor=int(a_), depth=int(d),
-                                 tape=int(z_), size=int(ns[g_]), lam=float(L[g_, z_]),
-                                 n_missing=int(Mk[g_, z_]), expected=float(Pk[g_, z_]),
-                                 cells=cells))
-    return hits, (np.concatenate(lams) if lams else np.zeros(0))
+                                 tape=z_, size=int(ns[g_]), lam=float(vals[t_]),
+                                 strat=int(st[t_]),
+                                 n_missing=int(missm[cells, z_].sum()),
+                                 expected=float(P[cells, z_].sum()), cells=cells))
+    # #{Lambda >= t} = reverse cumulative sum of the bin counts
+    return hits, np.cumsum(acc[:, ::-1], axis=1)[:, ::-1]
 
 
 order = np.argsort(g_clone, kind="stable")
@@ -287,71 +327,103 @@ if PART is not None:
     rows, t0 = [], time.time()
     for j, b in enumerate(idx):
         inv = perm_inv(b)
-        _, nl = scan(W[inv], miss[inv], False)
-        rows.append(counts_ge(nl))
-        print(f"    perm {b}: {nl.size:,} candidates "
+        _, cn = scan(W[inv], miss[inv], None)
+        rows.append(cn)
+        print(f"    perm {b}: {cn[:, 0].sum():,} candidates "
               f"[{j+1}/{len(idx)}, {time.time()-t0:.0f}s]", flush=True)
     outd = RES / "permparts"
     outd.mkdir(exist_ok=True)
     fn = outd / f"permcounts_40_{arm}{tag}_p{ip:03d}.npz"
     np.savez_compressed(fn, grid=GRID, counts=np.array(rows, dtype=np.int64),
+                        size_edges=SIZE_EDGES,
                         perm_index=np.array(idx, dtype=np.int64),
                         meta=np.array([NPERM, npart, ip, SEED, LAM0], dtype=float))
     print(f"wrote {fn.relative_to(ROOT)}  ({len(idx)} permutations, "
           f"{time.time()-t0:.0f}s)")
     sys.exit(0)
 
-hits, obs_lam = scan(W, miss, True)
-n_cand = obs_lam.size
-print(f"  candidates at Lambda >= {LAM0}: {n_cand:,}", flush=True)
+# ---- PASS 1: count only, so the threshold is chosen before any hit exists
+_, obs_c = scan(W, miss, None)
+obs_c = obs_c.astype(float)                                  # (NB, G)
 grid = GRID
-obs_n = counts_ge(obs_lam).astype(float)
+n_cand = int(obs_c[:, 0].sum())
+print(f"  candidates at Lambda >= {LAM0}: {n_cand:,}  (by stratum " +
+      " ".join(f"{SIZE_LABEL[i]}:{obs_c[i,0]:,.0f}" for i in range(NB)) + ")", flush=True)
 
-# ---- the null, either pooled from parts or run here
 if NULLF is not None:
     zn = np.load(NULLF, allow_pickle=False)
     assert np.array_equal(zn["grid"], GRID), "null file was built on a different grid"
-    null_counts = zn["counts"].astype(float)                 # (B, G)
+    assert np.array_equal(zn["size_edges"], SIZE_EDGES), "null file used different strata"
+    null_counts = zn["counts"].astype(float)                 # (B, NB, G)
     print(f"  null: {null_counts.shape[0]:,} pooled permutations from "
           f"{Path(NULLF).name}", flush=True)
 else:
     rows = []
     for b in range(NPERM):
         inv = perm_inv(b)
-        _, nl = scan(W[inv], miss[inv], False)
-        rows.append(counts_ge(nl))
-        print(f"    perm {b+1}/{NPERM}: {nl.size:,} candidates", flush=True)
+        _, cn = scan(W[inv], miss[inv], None)
+        rows.append(cn)
+        print(f"    perm {b+1}/{NPERM}: {cn[:,0].sum():,.0f} candidates", flush=True)
     null_counts = np.array(rows, dtype=float)
 B = int(null_counts.shape[0])
-nul_n = null_counts.mean(0)
+assert null_counts.shape[1:] == (NB, grid.size), null_counts.shape
+nul_c = null_counts.mean(0)                                  # (NB, G)
 
-# BH-style monotonisation.  An event at Lambda may be reported at ANY threshold
-# t <= Lambda, so its q is the smallest FDR over those rejection regions: a
-# running minimum UP the grid.  ⚠ Not down from the top -- at high thresholds
-# where nothing is observed the ratio takes the convention 1.0, and a downward
-# running minimum would drag that 1.0 across the whole curve.
-fdr_raw = np.where(obs_n > 0, nul_n / np.maximum(obs_n, 1.0), 1.0)
-fdr_curve = np.minimum(np.minimum.accumulate(fdr_raw), 1.0)
-ok = np.flatnonzero(fdr_curve <= 0.05)
-j0 = int(ok[0]) if ok.size else len(grid) - 1
-LAM = float(grid[j0])
-fdr = float(fdr_curve[j0])
-# global permutation p-value: how often does a permuted scan produce as many
-# candidates above the threshold as the real one?
-p_at = lambda j: (1 + int((null_counts[:, j] >= obs_n[j]).sum())) / (B + 1)
-p_thresh, p_floor = p_at(j0), p_at(0)
-show = np.searchsorted(grid, [10, 15, 20, 30, 50, 75, 100, 200, 500, 1000])
-show = np.unique(np.clip(show, 0, len(grid) - 1))
-print(f"\n  FDR curve: " + "  ".join(
-    f"{grid[i]:.0f}n:{100*fdr_curve[i]:.0f}%" for i in show))
-print(f"  => threshold {LAM:.1f} nats at FDR {100*fdr:.1f}% "
-      f"({int((obs_lam>=LAM).sum()):,} candidates, {nul_n[j0]:,.1f} expected null)")
-print(f"  global permutation p (B={B:,}): {p_thresh:.4g} at the threshold, "
-      f"{p_floor:.4g} at the scan floor {LAM0:.0f} nats "
-      f"(obs {obs_n[0]:,.0f} vs null mean {nul_n[0]:,.1f})", flush=True)
 
-# ---- deduplicate / enforce one row per loss event, at the chosen threshold
-hits = [h for h in hits if h["lam"] >= LAM]
+def qcurve(obs, nul):
+    """BH-style monotonisation.  An event at Lambda may be reported at ANY
+    threshold t <= Lambda, so its q is the smallest FDR over those rejection
+    regions: a running minimum UP the grid.  ⚠ Not down from the top -- above
+    the largest observed Lambda the ratio takes the convention 1.0, and a
+    downward running minimum would drag that across the whole curve."""
+    raw = np.where(obs > 0, nul / np.maximum(obs, 1.0), 1.0)
+    return np.minimum(np.minimum.accumulate(raw), 1.0)
+
+
+# ---- a threshold PER STRATUM: each clade judged against clades of its own size
+QS = np.array([qcurve(obs_c[i], nul_c[i]) for i in range(NB)])       # (NB, G)
+js = np.full(NB, -1, dtype=int)
+for i in range(NB):
+    okc = np.flatnonzero(QS[i] <= TARGET)
+    if okc.size:
+        js[i] = int(okc[0])
+LAMv = np.array([grid[js[i]] if js[i] >= 0 else np.inf for i in range(NB)])
+print(f"\n  per-stratum threshold at FDR <= {100*TARGET:g}%:")
+print(f"   {'clade':>8} {'candidates':>12} {'threshold':>10} {'FDR%':>8} {'null mean':>10}")
+for i in range(NB):
+    if js[i] < 0:
+        print(f"   {SIZE_LABEL[i]:>8} {obs_c[i,0]:>12,.0f} {'NONE':>10} {'--':>8} "
+              f"{nul_c[i,0]:>10.1f}   <- stratum never reaches the target")
+    else:
+        print(f"   {SIZE_LABEL[i]:>8} {obs_c[i,0]:>12,.0f} {LAMv[i]:>10.1f} "
+              f"{100*QS[i,js[i]]:>8.4f} {nul_c[i,js[i]]:>10.2f}")
+
+# pooled (unstratified) curve, kept for continuity with the floor-10 results
+obs_n, nul_n = obs_c.sum(0), nul_c.sum(0)
+fdr_curve = qcurve(obs_n, nul_n)
+okg = np.flatnonzero(fdr_curve <= TARGET)
+j0 = int(okg[0]) if okg.size else len(grid) - 1
+LAM = float(grid[j0]); fdr = float(fdr_curve[j0])
+
+# global permutation p at the chosen per-stratum thresholds, and at the floor
+use = [i for i in range(NB) if js[i] >= 0]
+Cobs = float(sum(obs_c[i, js[i]] for i in use))
+Cnull = (sum(null_counts[:, i, js[i]] for i in use) if use else np.zeros(B))
+p_thresh = (1 + int((Cnull >= Cobs).sum())) / (B + 1)
+p_floor = (1 + int((null_counts[:, :, 0].sum(1) >= obs_c[:, 0].sum()).sum())) / (B + 1)
+show = np.unique(np.clip(np.searchsorted(
+    grid, [LAM0, 4, 6, 10, 15, 20, 30, 50, 100, 300]), 0, len(grid) - 1))
+print(f"\n  pooled FDR curve: " + "  ".join(
+    f"{grid[i]:.0f}n:{100*fdr_curve[i]:.3g}%" for i in show))
+print(f"  => pooled threshold {LAM:.1f} nats at FDR {100*fdr:.3g}%")
+print(f"  global permutation p (B={B:,}): {p_thresh:.4g} at the stratum thresholds "
+      f"({Cobs:,.0f} obs vs null max {Cnull.max():,.0f}), {p_floor:.4g} at the "
+      f"{LAM0:g}-nat floor (obs {obs_c[:,0].sum():,.0f} vs null max "
+      f"{null_counts[:,:,0].sum(1).max():,.0f})", flush=True)
+
+# ---- PASS 2: now collect only what clears its own stratum's threshold
+hits, _ = scan(W, miss, LAMv)
+print(f"  pass 2: {len(hits):,} candidates above their stratum threshold", flush=True)
 hits.sort(key=lambda h: -h["lam"])
 kept, by_key = [], {}
 for h in hits:
@@ -367,9 +439,10 @@ print(f"  after overlap/nesting collapse: {len(kept):,} events", flush=True)
 tot_missing = int(miss.sum())
 explained = sum(h["n_missing"] - h["expected"] for h in kept)
 ev_cells = np.unique(np.concatenate([h["cells"] for h in kept])) if kept else np.array([], int)
-qj = np.searchsorted(grid, np.array([h["lam"] for h in kept], float), side="right") - 1
-for h, j_ in zip(kept, np.clip(qj, 0, len(grid) - 1)):
-    h["q"] = float(fdr_curve[j_])
+qj = np.clip(np.searchsorted(grid, np.array([h["lam"] for h in kept], float),
+                             side="right") - 1, 0, len(grid) - 1)
+for h, j_ in zip(kept, qj):
+    h["q"] = float(QS[h["strat"], j_])           # judged within its own size stratum
 out = {"arm": arm, "screen": SCREEN, "eps": EPS, "lambda_scan_floor": LAM0,
        "n_cells": int(n), "n_clones": int(Gc), "n_candidates": int(n_cand),
        "n_events": len(kept), "fdr": fdr, "lambda_chosen": LAM, "n_perm": B,
@@ -377,10 +450,25 @@ out = {"arm": arm, "screen": SCREEN, "eps": EPS, "lambda_scan_floor": LAM0,
        "p_global_at_threshold": p_thresh, "p_global_at_scan_floor": p_floor,
        "p_floor_resolution": 1.0 / (B + 1),
        "null_mean_at_threshold": float(nul_n[j0]),
-       "null_max_at_threshold": float(null_counts[:, j0].max()),
+       "null_max_at_threshold": float(null_counts.sum(1)[:, j0].max()),
        "null_mean_at_scan_floor": float(nul_n[0]),
-       "null_max_at_scan_floor": float(null_counts[:, 0].max()),
+       "null_max_at_scan_floor": float(null_counts.sum(1)[:, 0].max()),
+       "p_stratum_thresholds": {SIZE_LABEL[i]: (float(LAMv[i]) if js[i] >= 0 else None)
+                                for i in range(NB)},
+       "n_candidates_at_stratum_thresholds": Cobs,
+       "null_max_at_stratum_thresholds": float(Cnull.max()),
        "max_q_of_kept_events": float(max((h["q"] for h in kept), default=1.0)),
+       "target_fdr": TARGET,
+       "size_edges": SIZE_EDGES.tolist(), "size_labels": SIZE_LABEL,
+       "per_stratum": {SIZE_LABEL[i]: {
+           "candidates": float(obs_c[i, 0]),
+           "threshold": (float(LAMv[i]) if js[i] >= 0 else None),
+           "fdr": (float(QS[i, js[i]]) if js[i] >= 0 else None),
+           "null_mean_at_threshold": (float(nul_c[i, js[i]]) if js[i] >= 0 else None),
+           "null_mean_at_floor": float(nul_c[i, 0])} for i in range(NB)},
+       "strat_fdr_curves": {SIZE_LABEL[i]: QS[i].tolist() for i in range(NB)},
+       "strat_observed": {SIZE_LABEL[i]: obs_c[i].tolist() for i in range(NB)},
+       "strat_null_mean": {SIZE_LABEL[i]: nul_c[i].tolist() for i in range(NB)},
        "fdr_curve": {"lambda": grid.tolist(), "observed": obs_n.tolist(),
                      "null": nul_n.tolist(), "fdr": fdr_curve.tolist()},
        "distinct_tapes": int(len({h["tape"] for h in kept})),
@@ -416,10 +504,10 @@ if kept:
 (RES / f"event_catalogue_{arm}{tag}.json").write_text(json.dumps(out, indent=1))
 with gzip.open(RES / f"events_{arm}{tag}.tsv.gz", "wt") as fh:
     fh.write("clone\tclone_bc\tanchor_tape\tdepth\ttape\tclade_cells\tn_missing\t"
-             "expected\tinside_rate\tlambda_nats\tq_value\tmedian_Rc\n")
+             "expected\tinside_rate\tlambda_nats\tq_value\tsize_stratum\tmedian_Rc\n")
     for h in kept:
         fh.write(f"{h['clone']}\t{cl_names[h['clone']]}\t{h['anchor']}\t{h['depth']}\t"
                  f"{h['tape']}\t{h['size']}\t{h['n_missing']}\t{h['expected']:.3f}\t"
                  f"{h['n_missing']/h['size']:.4f}\t{h['lam']:.3f}\t{h['q']:.3g}\t"
-                 f"{np.median(Rc[h['cells']]):.0f}\n")
+                 f"{SIZE_LABEL[h['strat']]}\t{np.median(Rc[h['cells']]):.0f}\n")
 print(f"\nwrote results/event_catalogue_{arm}{tag}.json and events_{arm}{tag}.tsv.gz")

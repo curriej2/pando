@@ -52,14 +52,20 @@ parts = sorted((RES / "permparts").glob(stem + "*.npz"))
 assert parts, f"no parts matching results/permparts/{stem}*.npz"
 
 grid = None
+edges = None
 counts, index, metas = [], [], []
 for f in parts:
     z = np.load(f, allow_pickle=False)
     if grid is None:
         grid = z["grid"]
+        edges = z["size_edges"] if "size_edges" in z.files else None
     assert np.array_equal(z["grid"], grid), f"{f.name}: grid differs from {parts[0].name}"
+    if edges is not None:
+        assert np.array_equal(z["size_edges"], edges), f"{f.name}: different size strata"
     assert z["counts"].shape[0] == z["perm_index"].size, f"{f.name}: ragged"
-    assert z["counts"].shape[1] == grid.size, f"{f.name}: wrong grid width"
+    # counts are (b, G) for an unstratified part, (b, NB, G) for a stratified one
+    assert z["counts"].shape[-1] == grid.size, f"{f.name}: wrong grid width"
+    assert z["counts"].ndim == counts[0].ndim if counts else True, f"{f.name}: mixed shapes"
     counts.append(z["counts"])
     index.append(z["perm_index"])
     metas.append(z["meta"])
@@ -85,20 +91,26 @@ o = np.argsort(index)                      # canonical order, so the file is sta
 counts, index = counts[o], index[o]
 
 out = RES / f"permnull_{script}_{arm}{TAG}.npz"
+extra = {} if edges is None else {"size_edges": edges}
 np.savez_compressed(out, grid=grid, counts=counts.astype(np.int64),
                     perm_index=index.astype(np.int64),
-                    meta=np.array([B, len(parts), float(list(seeds)[0])], dtype=float))
+                    meta=np.array([B, len(parts), float(list(seeds)[0])], dtype=float),
+                    **extra)
 
-tot = counts[:, 0].astype(float)           # candidates above the scan floor
+# total candidates above the scan floor, summing over strata when present
+flat = counts.sum(1) if counts.ndim == 3 else counts
+tot = flat[:, 0].astype(float)
 summ = {"script": script, "arm": arm, "tag": TAG, "B": B, "n_parts": len(parts),
         "seed": float(list(seeds)[0]), "lambda_scan_floor": float(grid[0]),
         "grid_points": int(grid.size),
         "null_total_candidates": {"mean": float(tot.mean()), "sd": float(tot.std(ddof=1)),
                                   "min": float(tot.min()), "max": float(tot.max()),
                                   "median": float(np.median(tot))},
+        "stratified": bool(counts.ndim == 3),
+        "n_strata": int(counts.shape[1]) if counts.ndim == 3 else 1,
         "null_mean_curve": {"lambda": grid.tolist(),
-                            "mean": counts.mean(0).tolist(),
-                            "max": counts.max(0).tolist()}}
+                            "mean": flat.mean(0).tolist(),
+                            "max": flat.max(0).tolist()}}
 (RES / f"permnull_{script}_{arm}{TAG}.json").write_text(json.dumps(summ, indent=1))
 print(f"{script} {arm}{TAG}: pooled {len(parts)} parts -> B={B} permutations, "
       f"{grid.size} thresholds")

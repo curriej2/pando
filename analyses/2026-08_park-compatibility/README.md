@@ -2051,3 +2051,86 @@ deliberately when setting the floor-4 threshold rather than defaulting to 0.05.
 **⇒ Claims that survive any threshold choice**, and which should therefore carry the talk: the null
 comparison (118–2,522× beyond the most extreme of 1,000 permutations), $q\le1.9\times10^{-4}$ for
 every event in the hard catalogue, and $\hat\pi$ median 1.000 against an expected 0.11–0.41.
+
+### The low-floor, size-stratified run — launched 2026-09-04 (`src/49_submit_lowfloor.sh`)
+
+Answering "should we proceed with `--lam 4`": **yes, but the sizing exposed two things that changed
+the design.**
+
+#### ⚑⚑ Finding 1 — a fixed $\Lambda$ floor is a CLADE-SIZE FILTER in disguise
+
+Extrapolating the candidate curve below the floor gave Pre-TX a log-log slope of **−4.4** against
+−0.95 to −1.9 for every other arm. That is not noise, it is a cap. A fully-missing clade of $m$
+cells at expected rate $p$ scores about $m\log\bigl((1-\varepsilon)/p\bigr)$ nats:
+
+| arm | max clone | median clade | **cap for a median clade** | max $\Lambda$ seen |
+|---|---|---|---|---|
+| Pre-TX | 75 | 9 | **12.4 nats** | 35 |
+| Mouse 1 | 1,131 | 16 | 17.1 | 150 |
+| Subclone | 4,967 | 9 | 19.6 | **1,326** |
+| Mouse 3 | 151 | 23 | 20.1 | 45 |
+| Mouse 2 | 2,588 | 14 | 21.2 | 634 |
+
+⇒ **a 9-cell Pre-TX clade cannot exceed ~12.4 nats however complete the loss.** A single 10-nat
+threshold therefore excludes small clades *by construction, regardless of how real the loss is* —
+which is exactly why Pre-TX collapses 1,783 → 110 events between 10 and 20 nats and falls from
+second place to fourth. **So clade-size stratification is not a refinement; without it a lower floor
+would simply pile up small-clade candidates and be judged against a null dominated by large ones.**
+
+Strata: `[4,6) [6,10) [10,20) [20,50) [50,200) [200,∞)`. Counts are kept **per stratum**, the
+threshold is chosen **per stratum**, and each event's $q$ comes from **its own stratum's curve**.
+
+#### ⚑ Finding 2 — the scan had to be rewritten to stream, and that made the low floor free
+
+The old `scan()` concatenated every candidate's $\Lambda$, and the observed pass built one dict plus
+a cell array per candidate. At floor 2, Pre-TX yields millions of candidates per scan; 1,000
+permutations of that is unmaterialisable, and the observed pass alone would have needed GBs.
+
+Now each `(depth, anchor)` block's survivors are histogrammed into the fixed grid and discarded, so
+memory is $O(\text{strata}\times|\text{grid}|)$ whatever the floor, and the observed run is
+**two-pass**: pass 1 counts only → per-stratum thresholds chosen from the whole curve → pass 2
+collects only what clears its own stratum's threshold. ⚑ **Cost is essentially unchanged** — the
+prefilter is the same comparison the old code already did, and only survivors are binned:
+
+| | floor 10 | floor 2 |
+|---|---|---|
+| Mouse 3 hard, s/scan | 1.1 | **1.0** |
+| Mouse 3 soft d6, s/scan (floor 4) | 5.3 | 6.5 |
+
+#### Smoke test (Mouse 3, small $B$) — the effect is large
+
+| | floor 10, unstratified | floor 2, stratified |
+|---|---|---|
+| hard candidates | 8,538 | 39,964 |
+| **hard events** | **73** | **419** |
+| median clade | 23 cells | **6 cells** |
+| threshold | 10 nats (one, arbitrary) | **2.5–4.1 nats, per stratum** |
+
+Per-stratum thresholds are *not* monotone in size (4-5 cells → 4.1 nats; 20-49 → 2.5; 50-199 → 3.2),
+which no hand-set rule would have guessed and which is the point of estimating them.
+
+⚠ The soft partial fraction **rises** at the lower floor (Mouse 3 d6: 7.1% → 18.0%), as weaker
+events are more often partial. The depth gradient survives (22.5% → 13.7% over depths 1–6), but
+**the "graded appearance is very largely clade coarseness" conclusion must be re-read against the
+low-floor catalogue** rather than carried over.
+
+#### Configuration
+
+Floors: **hard 2 nats, soft 4 nats.** Soft stops at 4 because script `45` measured
+$\Lambda_{\rm soft}$'s null at mean −1.74, sd 3.90 — below ~4 nats there is nothing worth
+calibrating. Outputs are tagged `_lam2` / `_lam4`, so **the floor-10 catalogue is not overwritten**
+and the tables above it stay reproducible.
+
+300 array tasks, all `RUNNING` immediately, all on `-p cpu` (zero on `lesliec`). Collector
+`lf_collect` (11476489) pools and re-runs the observed scans at 64 G — the parts are counts-only
+and need 8–12 G, but the observed pass does hold per-candidate arrays at a low floor.
+
+⚠ **Not yet done, and deliberately out of scope here:** the clone-wide layer (`42`) still uses a
+single un-stratified floor, and clone sizes vary far more than clade sizes do, so the same
+criticism applies to it with more force. Its Mouse 2 result (FDR 4.36%) is the one already-marginal
+number in the whole programme. **Stratify `42` by clone size next.**
+
+⚠ **The 5% target is still not decided.** The smoke run's strata all land at 4.5–4.9% FDR, i.e.
+right on the target, so at 5% roughly 1 event in 20 is false — ~21 of Mouse 3's 419. The run stores
+the **full per-stratum curves**, so any criterion (a stricter rate, or an absolute "expected false
+events ≤ 10") can be applied afterwards at zero cost. Decide it when the curves land.
