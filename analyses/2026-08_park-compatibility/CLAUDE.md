@@ -121,6 +121,14 @@ $q\le1.9\times10^{-4}$. Cell × tape entries inside called blocks: 2,916–266,6
 the $B=3$ null was unbiased in the mean and only missed the tail. Full tables in README
 "B = 1,000 — results".
 
+**⚠⚠ Before any "how widespread" claim, read README "How events are actually called".** The
+10-nat cutoff is a hard-coded **scan floor**, and the adaptive FDR$\le5\%$ step is **degenerate in
+13 of 15 configurations** (FDR at the floor is 262–2,511× below target for the hard catalogue, so
+`LAM` snaps to the floor; it binds only for Mouse 3 soft). ⇒ counts and the dropout share are set by
+an arbitrary constant, and the **arm ranking flips** with it (Pre-TX 1,783 events at $\ge10$, 110 at
+$\ge20$). Quote a curve, never a number. ⚑ The floor is conservatism, not rigour — the numbers are
+loose lower bounds. ⚠ Do not inherit the 5% target; prefer an absolute one.
+
 **Launch state (2026-09-03).** Implemented and submitted across everything: 5 arms × {`42` clone-wide, `40` hard
 sub-clone, `43` soft at depth 4, `43` soft at depth 6} = 15 permutation configurations + 5 direct
 clone-wide runs. 300 array tasks, all `RUNNING` from the moment of submission; a dependent

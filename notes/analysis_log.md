@@ -700,3 +700,43 @@ new events and not one moved threshold. Stated plainly because the honest accoun
 core-hours bought calibration and rhetoric.
 ⇒ It also sharpens the `--lam 4` case — the threshold now demonstrably sits **on** the scan floor in
 14 of 15 configurations, so the floor is the only place more events can come from.
+
+### ⚠⚠ 2026-09-04 — audit: how events are actually called (Justin asked; it matters)
+
+Two thresholds, and **the arbitrary one is doing the work**:
+
+- **scan floor `LAM0 = 10` nats** — hard-coded, fixed a priori. `scan()` only collects pairs with
+  `L >= LAM0`; nothing below exists downstream.
+- **calling threshold `LAM`** — adaptive, smallest grid point with monotonised FDR $\le5\%$.
+
+**The adaptive step is degenerate in 13 of 15 configurations.** FDR at the floor is 0.002–0.019% for
+the hard catalogue — **262× to 2,511× below the 5% target** — so `LAM` snaps to the floor. It binds
+only for Mouse 3 soft (FDR at floor 10.03% d4 / 9.22% d6 ⇒ 16.2 / 15.5).
+⇒ For the hard catalogue the operative threshold **is** the arbitrary 10 nats; the stated FDR rule
+never bites.
+
+**Consequence, and why the "how widespread" claim was not yet safe:** counts are set by the constant
+and the *ranking between arms is not stable under it.* Pre-TX 1,783 events at $\Lambda\ge10$ but
+**110** at $\ge20$ — 2nd place to 4th — because its events pile against the floor (78% within 5
+nats, median 12.0, max 35, clades median 9 cells) while Subclone runs to $\Lambda=1{,}326$. The
+dropout share moves likewise: Subclone 19.09% → 13.62% → 5.49% at $\ge10/20/100$; Pre-TX 1.70% →
+0.20%. **⇒ report a curve or two thresholds, never a single number.**
+
+⚑ **But the floor is conservatism, not rigour.** At FDR 0.002–0.019% the $\Lambda=10$–12 events are
+almost certainly real — we are hundreds of times inside the cliff, so the counts are **loose lower
+bounds**. This converts the `--lam 4` run from "fishing" into "applying the criterion we already
+claim". Further structural lower-bound reasons: `MIN_CLADE=4`; clades exist only where an anchor tape
+resolves them; $\gamma_{C,z}$ absorbs clone-wide by construction; nothing called under 20-cell clones.
+
+**Checked and clean:** dedup keeps the highest-$\Lambda$ clade among overlapping ones for a given
+(clone, tape), so **no cell × tape entry is double-counted**; and kept events are all-or-none —
+`inside_rate` $\ge0.90$ at the 10th percentile in all five arms, median **exactly 1.000**, against an
+expected 0.11–0.41.
+
+⚠ **The 5% target is itself a choice not to inherit.** With $10^5$ candidates, 5% FDR admits ~14,000
+false events in Subclone. For an inspectable catalogue an **absolute** criterion (expected false
+events $\le10$) is more defensible than a rate. Decide this when setting the floor-4 threshold.
+
+⇒ **Threshold-independent claims that should carry the talk:** the null comparison (118–2,522× beyond
+the most extreme of 1,000 permutations), $q\le1.9\times10^{-4}$ for every hard-catalogue event, and
+$\hat\pi$ median 1.000 against expected 0.11–0.41.

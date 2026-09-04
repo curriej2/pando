@@ -1971,3 +1971,83 @@ extra 250 core-hours bought rhetoric and calibration, not any new events.
 ⇒ **And it sharpens the case for the `--lam 4` follow-up.** If more events are wanted, the floor is
 now demonstrably the only place they can come from — the threshold is already sitting on it in
 14 of 15 configurations.
+
+### ⚠⚠ How events are actually called — nail this down before any "how widespread" claim
+
+Justin asked (2026-09-04) whether the 10-nat cutoff is arbitrary or adaptive. **It is both, and the
+arbitrary one is doing the work.** Two distinct thresholds:
+
+| | what it is | value |
+|---|---|---|
+| **scan floor** `LAM0` | hard-coded, fixed before seeing data. `scan()` only puts pairs with `L >= LAM0` in the candidate list — nothing below it exists downstream **at all** | **10 nats** |
+| **calling threshold** `LAM` | adaptive: smallest grid point where the monotonised FDR curve reaches $\le5\%$ | chosen per config |
+
+**The adaptive step is degenerate in 13 of 15 configurations** — `LAM` snaps to the floor because the
+FDR is *already* far below target there:
+
+| config | FDR at floor | × below the 5% target | chosen |
+|---|---|---|---|
+| `40` hard × 5 arms | 0.002–0.019% | **262× – 2,511×** | 10.0 |
+| `43` soft, Pre-TX / Subclone / Mouse 1 / Mouse 2 (both depths) | 0.02–3.3% | 1.5× – 219× | 10.0 |
+| `43` soft **Mouse 3** d4 / d6 | **10.03% / 9.22%** | 0.5× | **16.2 / 15.5** ← only binding case |
+
+⇒ **For the hard catalogue the operative threshold is the arbitrary 10 nats**, and the stated 5%
+FDR rule never bites. We are hundreds to thousands of times stricter than the criterion we claim.
+
+#### Consequence 1 — event counts are set by the constant, and the ranking is not stable
+
+| $\Lambda\ge$ | Subclone | Pre-TX | Mouse 2 | Mouse 1 | Mouse 3 |
+|---|---|---|---|---|---|
+| 10 | 8,220 | **1,783** | 388 | 320 | 73 |
+| 15 | 4,667 | 390 | 230 | 164 | 48 |
+| 20 | 3,102 | **110** | 174 | 114 | 37 |
+
+**Pre-TX falls from 2nd to 4th between $\Lambda\ge10$ and $\ge20$.** Its events pile against the
+floor — 78% within 5 nats of it, median $\Lambda$ 12.0, max 35 — because its clades are small
+(median 9 cells). Subclone runs out to $\Lambda=1{,}326$. So "which arm has the most silencing" is
+threshold-dependent and must not be asserted from one cut.
+
+#### Consequence 2 — the "fraction of dropout" number is a curve, not a number
+
+Cell × tape entries inside called blocks, as % of all missing:
+
+| $\Lambda\ge$ | Subclone | Mouse 2 | Mouse 1 | Mouse 3 | Pre-TX |
+|---|---|---|---|---|---|
+| 10 | 19.09% | 6.43% | 3.64% | 2.28% | 1.70% |
+| 20 | 13.62% | 5.38% | 2.23% | 1.70% | 0.20% |
+| 100 | 5.49% | 2.24% | 0.61% | — | — |
+
+⇒ **Never quote a single figure.** Quote the curve, or two thresholds, and say which.
+
+#### ⚑ But the floor is *conservatism*, not rigour — which cuts the other way
+
+At FDR 0.002–0.019%, the events at $\Lambda=10$–12 are almost certainly real; we are nowhere near a
+false-positive cliff. The reported counts are therefore **lower bounds, and demonstrably loose
+ones.** That converts the `--lam 4` run from "fishing" into "actually applying the criterion we
+already state".
+
+Four further reasons the counts are lower bounds, independent of the floor:
+`MIN_CLADE = 4`; clades exist only where some **anchor tape resolves them** at depth $\le4$ (or 6);
+$\gamma_{C,z}$ absorbs anything **clone-wide** by construction (that is the `42` layer); and nothing
+is called in clones under 20 cells (script `41`).
+
+#### What *is* clean
+
+- **No double counting.** Dedup collapses overlapping clades for one (clone, tape) to the
+  highest-$\Lambda$ one, so a cell × tape entry cannot be counted twice; non-overlapping ones are
+  genuinely separate losses. ⚠ It keeps the *coarsest* passing clade, which is the conservative
+  choice for event count and the liberal one for entries per event.
+- **Kept events are all-or-none, not marginal enrichments.** `inside_rate` $\ge0.90$ at the 10th
+  percentile in every arm, median **exactly 1.000**, against an expected rate of 0.11–0.41.
+
+#### ⚠ And the 5% target itself is a choice that should not be inherited
+
+With candidate counts in the $10^5$, **a 5% FDR admits thousands of false events** — 5% of
+Subclone's 279,973 candidates is ~14,000. For a catalogue meant to be inspected event by event, an
+**absolute** criterion ("threshold such that the expected number of false events $\le10$") is more
+honest than a rate, and at the current floor we already satisfy something far stricter. Decide this
+deliberately when setting the floor-4 threshold rather than defaulting to 0.05.
+
+**⇒ Claims that survive any threshold choice**, and which should therefore carry the talk: the null
+comparison (118–2,522× beyond the most extreme of 1,000 permutations), $q\le1.9\times10^{-4}$ for
+every event in the hard catalogue, and $\hat\pi$ median 1.000 against an expected 0.11–0.41.

@@ -144,6 +144,20 @@ the **symbol-depletion test** of row A9's untested *trans* limb. |
    tree at Park clone sizes, sequential editing at measured $\lambda$/$\xi$, $N=6$, $k=166$, with
    **dropout as a switchable layer**. That simulator also supplies the **homoplasy null** — still the
    single biggest gap in the "dropout not homoplasy" argument.
+0a. **⚠⚠ Event calling is pinned to an ARBITRARY floor — settle the criterion before any
+   "how widespread" claim.** Two thresholds: the scan floor `LAM0 = 10` nats (hard-coded, nothing
+   below it is ever collected) and an adaptive `LAM` (smallest grid point with FDR $\le5\%$).
+   **The adaptive step is degenerate in 13 of 15 configurations** — FDR at the floor is 0.002–0.019%
+   for the hard catalogue, **262–2,511× below target**, so `LAM` snaps to the floor. Binds only for
+   Mouse3 soft (16.2 / 15.5). ⇒ event counts and the dropout share are set by the constant, and the
+   **arm ranking is not stable**: Pre-TX is 2nd at $\Lambda\ge10$ (1,783) and 4th at $\ge20$ (110).
+   **Never quote a single count or fraction — quote the curve.** ⚑ The floor is *conservatism*, not
+   rigour (we sit hundreds of times inside the false-positive cliff), so the numbers are loose lower
+   bounds and `--lam 4` is simply applying the stated criterion. ⚠ Do not inherit 5%: with $10^5$
+   candidates it admits ~14,000 false events in Subclone — prefer an absolute target (expected false
+   events $\le10$). Threshold-independent claims that survive: the 118–2,522× null comparison,
+   $q\le1.9\times10^{-4}$ per event, $\hat\pi$ median 1.000 vs expected 0.11–0.41. Full audit in
+   README "How events are actually called".
 0b. **⭐ Does the co-integrated symbol vanish when a tape is silenced?** (`2026-08_park-compatibility`,
    README "Two directions from the B = 1,000 run"). The first **orthogonal** test of the silencing
    mechanism — every result so far infers it from missingness, which is also what technical dropout
