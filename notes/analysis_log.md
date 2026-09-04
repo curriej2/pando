@@ -513,3 +513,13 @@ residue" was wrong; extrapolating to arms where six levels suffice puts it at ~5
 ⇒ **A per-tape absorbing state is the right and largely sufficient extension**; the
 lineage-varying-rate case is weaker than the depth-4 numbers implied. Inference from a cross-arm
 trend, not a direct measurement — a simulator with known ground truth would settle it.
+
+**⚠⚠ Correction, and the calibration that forced it** (`src/45`). I claimed the soft statistic's
+fitted-parameter advantage is "$\approx0.5$ nats, by Wilks". Both parts wrong. Wilks does not apply
+($H_0$, per-cell $\tilde p_c$, is not nested in $H_1$, one shared $\pi$), and measuring
+$\Lambda_{\rm soft}$ on **all 5,541,360 candidate (clade,tape) pairs** of Mouse3 with no threshold
+gives a **null mean of −1.74**, not +0.5: the fitted-constant model is typically *worse*, because one
+degree of freedom does not buy back the per-cell structure it discards. ⇒ **a positive
+$\Lambda_{\rm soft}$ must overcome a deficit first; it is not a fitting artefact.** Enrichment over
+the null: 1.8× at 2 nats, 5.6× at 10, 8.8× at 16, and 3,705 observed vs **0** null at 25.
+A +1 sd fluctuation in a 20-cell clade buys 0.45 nats; the 10-nat threshold needs +4.6 sd.

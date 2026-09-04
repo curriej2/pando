@@ -1577,3 +1577,43 @@ the case for a lineage-varying rate is weaker than the depth-4 numbers implied.
 ⚠ This is an inference from a trend across arms, not a direct measurement — the recorder cannot be
 pushed past six levels. A simulator with known ground truth could settle it, which is another use for
 the one Figs 5–7 need.
+
+### Is $\Lambda_{\rm soft}$ just "we fitted a parameter"? — measured (`src/45_lrt_calibration.py`)
+
+$\hat\pi = k/m$ matches the clade's observed count exactly, so the natural worry is that $H_1$ is
+guaranteed to beat $H_0$ and the statistic is uninformative. **Measured on all 5,541,360 candidate
+(clade, tape) pairs in Mouse 3, with no threshold:**
+
+| | mean $\Lambda_{\rm soft}$ | sd |
+|---|---|---|
+| observed | **−0.824** | 2.79 |
+| within-clone permutation | **−1.740** | 3.90 |
+| Wilks reference for a 1-parameter fit | +0.500 | — |
+
+⚠⚠ **CORRECTION.** I earlier wrote that the free fitting advantage is "$\approx0.5$ nats, by Wilks".
+**Wrong on both counts.** Wilks does not apply — $H_0$ is not nested in $H_1$, since $H_0$ gives every
+cell its own $\tilde p_c$ (varying through $\alpha_c$) while $H_1$ imposes one shared $\pi$. And the
+measured null mean is **−1.74**, not +0.5: on a typical clade the fitted-constant model is *worse*,
+because one degree of freedom does not buy back the per-cell structure it discarded. **A positive
+$\Lambda_{\rm soft}$ therefore has to overcome a deficit first — it is not a fitting artefact.**
+
+Enrichment over the permutation null, by threshold:
+
+| $\Lambda_{\rm soft}\ge$ | 2 | 4 | 10 | 16 | 25 |
+|---|---|---|---|---|---|
+| observed | 150,463 | 52,169 | 16,301 | 8,954 | **3,705** |
+| null | 83,185 | 11,246 | 2,929 | 1,015 | **0** |
+| enrichment | 1.8× | 4.6× | 5.6× | 8.8× | — |
+
+**What 10 nats costs**, for a 20-cell clade at a clone rate of 0.30 (≈6 missing expected, sd 2.05):
+$k=8$ (+1 sd) → $\Lambda=0.45$; $k=14$ → 6.79; $k=15$ → 8.59; $k=16$ → **10.68**. A one-sd
+fluctuation buys under half a nat; the threshold needs a **+4.6 sd** departure.
+
+**On "why not just a likelihood ratio test":** $\Lambda_{\rm soft}$ *is* one —
+$\log[L(H_1)/L(H_0)]$. What does not apply is the *standard* LRT's $\chi^2$ p-value, for the
+non-nesting reason above; hence permutation. A genuinely simpler alternative is a **2×2 test**
+(clade vs rest-of-clone × missing vs present), which would rank events similarly — but it weights
+every cell equally and so cannot distinguish "the missing cells are the well-captured ones" from
+"the missing cells are the poorly-captured ones". The per-cell $\tilde p_c$ inside $\Lambda$ is what
+makes this a test of *inherited loss* rather than of *dropout rate*, and that is the whole
+discriminator against technical dropout.
