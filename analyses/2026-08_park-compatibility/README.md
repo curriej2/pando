@@ -1825,3 +1825,66 @@ and solve it as an **assignment problem** (Hungarian) rather than tape-by-tape. 
 166 assignments at once, compared against permuted $D$. More powerful than 166 separate tests, and
 the natural form of the question — but do it after the per-tape version, so the examples stay
 inspectable.
+
+### ⚠⚠ Per-combo permutation p-values: well-defined, cheap, and the wrong tool at this floor
+
+**The proposal.** Rather than a pooled count, give every (clade, tape) combo its own permutation
+p-value: $p(S,z) = \bigl(1+\#\{b:\Lambda_b(S,z)\ge\Lambda_{\rm obs}(S,z)\}\bigr)/(B+1)$, then take a
+threshold much stricter than 0.05.
+
+**It is well-defined.** Prefix codes are never permuted, so a clade *slot* persists across
+permutations with its size fixed; $\Lambda_b(S,z)$ is the score that slot gets when its cells are
+random members of the clone. That is exactly the right conditional null.
+
+**It is cheap.** Not by storing $B$ values per combo — Mouse 3 alone has 5,541,360 combos, so 1,000
+each is ~44 GB — but with **one exceedance counter per combo**, incremented in place: ~22 MB.
+
+**⚠ But at the 10-nat floor it is strictly weaker than the pooled count, and the arithmetic is not
+close.** Both spend the same 1,000 permutations; they differ in how many null draws that buys:
+
+| | null draws | resolvable tail probability |
+|---|---|---|
+| per-combo | $B=1{,}000$ | $10^{-3}$ |
+| pooled count | $B\times N_{\rm combos}\approx10^{9}$ | $\sim10^{-7}$ |
+
+Measured: **eight** permutations of Mouse 3's hard scan produced **zero** null candidates above 10
+nats, across every combo. So the per-combo exceedance probability is below $\sim10^{-6}$ and 1,000
+draws return zero essentially always — every real event comes back at exactly $1/1001$, censored,
+unrankable. "The best examples exceed every random permutation" is therefore the *failure* mode of
+the statistic, not its payoff: it saturates precisely where the signal is strongest. The pooled
+count estimates the same tail to ~3% relative precision by borrowing strength across combos — at
+the cost of assuming $\Lambda$'s null is exchangeable *between* combos, which is what stratification
+below repairs.
+
+**⚠⚠ A second floor on $p$, and this one no $B$ can lift.** A within-clone permutation of an
+$m$-cell clade inside an $n_C$-cell clone can only realise $\binom{n_C}{m}$ distinct compositions,
+so $p \ge 1/\binom{n_C}{m}$ **however large $B$ is**:
+
+| clone $n_C$ | clade $m$ | compositions | best achievable $p$ |
+|---|---|---|---|
+| 6 | 4 | 15 | 0.067 — **cannot reach 0.05** |
+| 10 | 4 | 210 | 0.0048 |
+| 20 | 9 | 167,960 | $\sim10^{-5}$ |
+
+⇒ This is a mechanism for "**not one event in any clone under 20 cells**" (script `41`) beyond
+$\gamma_{C,z}$ absorbing everything: the permutation null of a small clone has too few states to
+certify anything. Worth saying in the talk — it makes the power limit structural rather than a
+choice of threshold.
+
+**⇒ What to actually do, all three in the `--lam 4` follow-up, not in the run now finishing:**
+
+1. **Lower the scan floor to 4 nats** — still the binding constraint.
+2. **Stratify the pooled null by clade size** (and expected rate). This is the real repair for
+   "weaker but real". Pooling assumes one null distribution for all combos, and a 500-cell clade has
+   a far heavier $\Lambda$ tail than a 5-cell one, so a single global FDR judges both by an average
+   fitting neither. Per-stratum count vectors cost ~6× the storage — nothing — and keep almost all
+   the resolution while conditioning on what makes a combo easy or hard.
+3. **Then add the per-combo exceedance counter, where it earns its keep.** At $\Lambda\ge4$ the null
+   is substantial (Mouse 3 soft: 11,246 null vs 52,169 observed), so per-combo p-values there are
+   *not* censored. That is exactly the "beaten by a few permutations but still significant" regime.
+
+**⚠ Terminology, to keep straight in the talk.** The current run already attaches a per-event
+number — a **$q$-value**, the FDR of the rejection region containing that event. What it does not
+give is a per-event **$p$**. They answer different questions ("what fraction of calls at this
+threshold are null?" vs "how exceptional is this one combo?"), and for a catalogue the $q$ is the
+more useful of the two.

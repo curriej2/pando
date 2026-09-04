@@ -141,6 +141,19 @@ collected and which this run's grid cannot see beneath. ⇒ **the follow-up is `
 jobs — read this run's FDR curve first, then size it. Expect a chunk of new low-$\Lambda$ events to
 be clade coarseness; the $\hat\pi$-by-depth stratification in `43` is the control.
 
+**A2. ⚠⚠ Per-combo permutation p-values — asked 2026-09-03, answered: not at this floor.**
+Well-defined (clade slots persist under the permutation) and cheap (one exceedance *counter* per
+combo, ~22 MB, never $B$ values per combo). But at the 10-nat floor it is strictly weaker than the
+pooled count: both spend $B=1{,}000$, yet pooling buys $B\times N_{\rm combos}\approx10^9$ null
+draws (tail resolution $10^{-7}$) against 1,000 (resolution $10^{-3}$). Measured: 8 permutations of
+Mouse 3's hard scan gave **zero** null candidates above 10 nats, so every real event censors at
+$1/1001$ — the statistic saturates where the signal is strongest. ⚠ And a second floor no $B$ can
+lift: an $m$-cell clade in an $n_C$-cell clone has only $\binom{n_C}{m}$ permuted compositions, so
+$p\ge1/\binom{n_C}{m}$ — a 4-cell clade in a 6-cell clone **cannot reach $p<0.05$**, which is a
+structural mechanism for "no events in clones <20 cells". ⇒ Fold into the `--lam 4` run instead:
+lower floor + **null stratified by clade size** (the real repair for "weaker but real") + per-combo
+counters, which stop being censored at $\Lambda\ge4$. Full argument in README.
+
 **B. ⭐ Does the co-integrated symbol vanish when a tape is silenced?** The first *orthogonal* test
 of the mechanism — everything so far infers silencing from missingness, which is what technical
 dropout also looks like. pegRNA and tape share one cassette and pegRNAs act in **trans**, so
