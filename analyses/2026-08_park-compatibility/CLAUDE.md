@@ -103,3 +103,80 @@ collisions before calling a figure done.
 - Scripts that only stream the CSVs use stdlib `csv` and run under any python.
 - Numerics/figures need the project env: `/data1/choij10/justin/envs/pando/bin/python`
   (python 3.12 + numpy/scipy/matplotlib, built from the system `miniforge3` module).
+
+---
+
+# ⭐ NEXT TASK (specified 2026-09-03): B = 1,000 permutations → proper p and q values
+
+Everything a fresh session needs is here. Motivation: a presentation audience expects a
+significance test, and our permutation p-values are currently floored at $1/(B+1)$ with $B=3$–200.
+The counts are overwhelming (28,367 candidates vs 1.4 null) but the *formal* claim is only
+$p<0.17$ for the catalogue. Fix by raising $B$.
+
+## ⚠ First, the permutation itself — state it correctly
+
+We do **not** shuffle clone labels for the sub-clone test. The rule is:
+
+> **Permute the label you are testing, blocked by the label above it.** Whole cell ROWS move
+> (a cell's entire 166-tape vector travels together); the labels stay fixed at their positions.
+
+| test | shuffle | blocked within | preserves | destroys |
+|---|---|---|---|---|
+| **clone-level** (`34`, `37`, `38`, `42`) | clone membership | **harvest sample** | cell profiles, tape marginals, clone sizes, clone→sample composition | which cells are in which clone |
+| **sub-clone** (`35`, `36`, `40`, `43`, `45`) | subclade membership | **clone** | all of the above **plus each clone's own rate for every tape** | which cells are in which subclade |
+
+That last preservation is why clone-wide losses are invisible to the event catalogue — they survive
+the within-clone permutation untouched — and why they needed script `42` with the within-sample
+permutation instead.
+
+Implementation (already in the scripts, do not redesign): sort cells by the blocking label, permute
+indices inside each block, invert the map, and index the data arrays with it. Labels and prefix
+codes are never touched.
+
+**And yes — the entire scan is redone per permutation** (all anchors × depths × clades × tapes).
+That is what makes $B=1{,}000$ expensive.
+
+## Measured per-scan cost (elapsed ÷ (nperm+1), from `sacct` 2026-09-03)
+
+| script | Mouse3 | Mouse1 | Mouse2 | Initial | Subclone | **B=1,000 single job** |
+|---|---|---|---|---|---|---|
+| `42_clonewide` | ~0.02 s | ~0.03 s | ~0.03 s | ~0.12 s | ~0.12 s | **~2 min — just run it** |
+| `40_event_catalogue` | 2 s | 4 s | 5 s | 40 s | 39 s | mice ~1 h; Initial/Subclone **~11 h** |
+| `43_soft_events` | 9 s | 27 s | 23 s | 3.2 min | 3.1 min | mice ~7 h; Subclone **~52 h** |
+
+⇒ `42` needs nothing. `40` and `43` need **parallelisation**.
+
+## The design to implement
+
+1. **Add `--permpart i/N --seed s`** to `40_event_catalogue.py` and `43_soft_events.py`. Each task
+   runs $B/N$ permutations with an independent seed and writes **only the threshold-count vector**
+   (counts of candidates ≥ each value on the existing $\Lambda$ grid) to
+   `results/permcounts_{script}_{arm}_p{i}.json`. Do not store candidate lists — the counts are all
+   that the FDR curve needs, and they are a few hundred integers per permutation.
+2. **Submit N = 20 parts** per arm. Subclone soft becomes ~2.6 h per task. Right-size from the table
+   above; do **not** use the 128 G / 12 h defaults (every oversized ask this project made sat in `PD`
+   behind jobs that would have run immediately).
+3. **A merge script** (`46_perm_merge.py`) pools the parts and emits:
+   - **global permutation p-value** — $p = \frac{1+\#\{b:\,C_b \ge C_{\rm obs}\}}{B+1}$ where $C$ is
+     the total candidate count above the chosen threshold. With $B=1{,}000$ and zero exceedances
+     this licenses **$p < 0.001$**.
+   - **per-event q-values** — $q(\Lambda) = \frac{\text{mean null count}(\ge\Lambda)}{\text{observed count}(\ge\Lambda)}$,
+     made monotone by a running minimum from the top, then attached as a column to every row of
+     `events_{arm}.tsv.gz` and `clonewide_{arm}.tsv.gz`.
+4. **Re-run the observed scan once** (cheap) to attach $q$ to the event rows.
+
+## ⚠ What the p-value does and does not establish — say this in the talk
+
+It rejects exactly one null: *dropout is exchangeable among cells within a clone*. It does **not**
+by itself say "silencing happened" — any lineage-correlated effect, technical or biological, breaks
+exchangeability too. The technical explanation is excluded separately by **capture-independence**:
+event cells have median $R_c$ = 116 against 114 for all cells, so they are if anything *better*
+captured than average. Lead with the comparison ("1.4 null events vs 28,367 real"), not the p-value —
+it makes the null explicit, which a p-value hides.
+
+## Process gotchas already paid for
+
+- **`cd` to the repo root before touching `notes/` or the root `CLAUDE.md`.** Two commits this
+  session silently dropped those edits because the shell was left in this directory.
+- **Assert on every `str.replace`** into a notes file — a no-op replace prints success otherwise.
+- **Right-size from a *completed* job's `sacct`**, never a mid-run `sstat`.

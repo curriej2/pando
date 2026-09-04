@@ -523,3 +523,17 @@ degree of freedom does not buy back the per-cell structure it discards. ⇒ **a 
 $\Lambda_{\rm soft}$ must overcome a deficit first; it is not a fitting artefact.** Enrichment over
 the null: 1.8× at 2 nats, 5.6× at 10, 8.8× at 16, and 3,705 observed vs **0** null at 25.
 A +1 sd fluctuation in a 20-cell clade buys 0.45 nats; the 10-nat threshold needs +4.6 sd.
+
+**Next task specified: B = 1,000 permutations for proper p and q values.** Full spec — including the
+correct statement of the permutation, measured per-scan costs, and the parallelisation design — is in
+`analyses/2026-08_park-compatibility/CLAUDE.md` under "NEXT TASK".
+
+⚠ **The permutation, stated correctly** (Justin asked, and the natural phrasing is wrong): we do not
+shuffle *clone* labels for the sub-clone test. The rule is **permute the label being tested, blocked
+by the label above it** — subclade membership within clone for the sub-clone tests, clone membership
+within sample for the clone-level ones. Whole cell rows move; labels stay at their positions. The
+within-clone version preserves each clone's own rate for every tape, which is why clone-wide losses
+are invisible to the event catalogue and needed script `42` instead. The full scan is redone per
+permutation, which is what makes $B=1{,}000$ expensive: measured per-scan costs give ~2 min for `42`
+but ~11 h (`40`) and ~52 h (`43`, Subclone) serially, so `40`/`43` need ~20-way splitting over
+permutation parts with a merge step.

@@ -108,7 +108,12 @@ Dollo character needing one absorbing state in the pruning, not a reason to reac
    **5–7%**. ⇒ **the graded appearance is very largely clade coarseness**, so a per-tape absorbing
    state is the right and largely sufficient extension; the lineage-varying-rate case is weaker than
    the depth-4 numbers implied.
-   **⭐ NEXT: panels c (a worked example inside one large clone) and d (the catalogue).**
+   **⭐ NEXT: (i) B = 1,000 permutations for proper p and q values — full spec, measured per-scan
+   costs and the parallelisation design are in `analyses/2026-08_park-compatibility/CLAUDE.md`
+   under "NEXT TASK"; `42` needs one 2-min job, `40`/`43` need ~20-way splitting (Subclone soft is
+   ~52 h serial). ⚠ The permutation shuffles **the label being tested, blocked by the label above**
+   — subclade membership within clone for the sub-clone tests, clone membership within sample for the
+   clone-level ones. (ii) panels c (a worked example inside one large clone) and d (the catalogue).**
    **The remaining figs are still blocked on the simulator**: birth–death
    tree at Park clone sizes, sequential editing at measured $\lambda$/$\xi$, $N=6$, $k=166$, with
    **dropout as a switchable layer**. That simulator also supplies the **homoplasy null** — still the
