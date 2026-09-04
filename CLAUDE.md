@@ -118,6 +118,18 @@ Dollo character needing one absorbing state in the pruning, not a reason to reac
    tree at Park clone sizes, sequential editing at measured $\lambda$/$\xi$, $N=6$, $k=166$, with
    **dropout as a switchable layer**. That simulator also supplies the **homoplasy null** — still the
    single biggest gap in the "dropout not homoplasy" argument.
+0b. **⭐ Does the co-integrated symbol vanish when a tape is silenced?** (`2026-08_park-compatibility`,
+   README "Two directions from the B = 1,000 run"). The first **orthogonal** test of the silencing
+   mechanism — every result so far infers it from missingness, which is also what technical dropout
+   looks like. pegRNA and tape share one cassette and pegRNAs act in **trans**, so silencing
+   integration $z$ should remove symbol $s(z)$ from **every other tape** in those cells. ⚠ The
+   $z\mapsto s(z)$ map is unknown (`TargetBC` 10-nt vs `NNNN` 4-nt, never linked), so **recover it
+   rather than assume it** and let its structure be the evidence: five-way cross-arm concordance
+   (166 TargetBCs verified identical across arms), near-injectivity at the collision rate predicted
+   for 166 draws from 256 ($E=122$ distinct, 100–106 observed), $\mathrm{corr}(\beta_z,\xi_{s(z)})>0$.
+   **⚠ Step 0 is a power calculation**: what fraction of (tape, site) slots is polymorphic within a
+   clone / within a clade — tapes are ~4.5–5 of 6 saturated, so only post-loss insertions can show
+   the depletion.
 1. **Park et al. data** — matrix loaded, $\xi$/$q$ measured, homoplasy quantified (§D.4b Step 0 and
    the $m$ estimation, both done). **Next: build the cross-tape character sets per clone and run the
    compatibility check + the flat-composition negative control.**

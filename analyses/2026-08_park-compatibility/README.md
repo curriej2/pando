@@ -1685,3 +1685,143 @@ observed-with-`--nullfile` reproduces the previously published Mouse 3 numbers e
 $\Lambda$ total 1,567 nats, 398 clone-wide losses, 13.20% of missing), and the merge **refuses** an
 incomplete set, naming the missing permutation indices.
 
+
+---
+
+## Two directions from the B = 1,000 run (recorded 2026-09-03, to pick up later)
+
+### Direction 1 — how widespread is heritable silencing?
+
+**The idea, as put:** with a properly calibrated null there should be more (clade, tape) combos
+that clear significance but sat below the earlier effect-size cutoff, surfacing more *partial*
+silencing; and we can then count how many **cell × tape** entries sit inside a called event, and
+still separate complete from partial via $\hat\pi$.
+
+**This is the right question, and the quantity to lead with is the cell × tape count, not the event
+count.** An "event" is an artefact of how the clade search happens to carve the tree — the
+catalogue is explicitly a lower bound on events. Cell × tape entries inside called blocks is the
+quantity that says *what a per-tape absorbing state would actually buy the likelihood*, it is
+already partly measured (6.5–19% of missing entries where clones are large enough to detect
+anything), and it is comparable across layers and arms. ⚠ It is a **count inside called blocks**,
+not a share of a total — the retired "fraction of missingness explained" phrasing is wrong for the
+reason recorded above ($\gamma$ forces $\sum_{c\in C}(\text{miss}-\tilde p)=0$ within every
+clone × tape cell).
+
+**⚠⚠ But $B$ alone will not surface the weaker events, and this run cannot answer below 10 nats.**
+Three things are being conflated, and separating them is the whole content of this note:
+
+| knob | what it controls | what $B=1{,}000$ does to it |
+|---|---|---|
+| $B$ | resolution of the $p$-value; precision of the null count at each threshold | fixes it — $p$ floor $0.17\to0.001$ |
+| the FDR **threshold** $\Lambda$ | which candidates are *called* | lowers it where a noisy small-$B$ null had pushed it up |
+| the scan **floor** `--lam` | which candidates are *collected at all* | **nothing — it is fixed at 10 nats** |
+
+The scan floor is a hard cutoff inside `scan()`: nothing below `LAM0` is ever put in the candidate
+list, and this run's grid starts at exactly 10. So the run will move the *threshold* — Mouse 3's
+soft threshold of 16.3 nats came from **three** permutations and should fall toward 10 once the null
+is properly estimated — but it can never look beneath 10.
+
+**⇒ The follow-up this implies: re-run `40`/`43` with `--lam 4`.** $B=1{,}000$ is precisely what
+makes a low floor *interpretable*: at $B=3$ the null count at 4 nats is far too noisy to divide by.
+Script `45` already measured the terrain on Mouse 3 — observed vs null 52,169 / 11,246 at
+$\Lambda\ge4$ (4.6× enrichment) against 16,301 / 2,929 at $\ge10$ (5.6×) — so there is real signal
+below the current floor, at a worse but possibly tolerable FDR. A floor-4 run **subsumes** the
+floor-10 one (its grid contains 10), so it is a replacement, not an addition, and costs ~2–3× the
+current run.
+
+**Decision taken: do not restart the running jobs to do this.** The current run delivers the
+headline $p$-values tonight, its FDR curve at the floor is exactly what tells us how much room lies
+below 10, and 250 core-hours is not worth protecting on a 14,264-CPU partition. Read the curve
+first, then launch floor-4 with a sizing measured from this run.
+
+⚠ **Expect a chunk of the new low-$\Lambda$ events to be clade coarseness, not partial silencing.**
+That is the settled reading of the `MAX_D=6` test: the residual partial fraction is monotone in
+maximum clone size (5.3% at 210 cells → 37.7% at 10,996), i.e. the recorder runs out of resolution
+before the tree does. Any claim that a lower floor reveals *graded* silencing has to survive the
+$\hat\pi$-by-clade-depth stratification, which is already built into `43`.
+
+### Direction 2 — ⭐ does the co-integrated symbol disappear when a tape is silenced?
+
+**This is the sharper of the two, and it is the first genuinely orthogonal test of the mechanism.**
+Everything so far infers silencing from *missingness*, which is also what a technical dropout looks
+like; capture-independence argues against the technical reading but does not exclude it. This
+predicts a signal in a **completely different channel — the symbols written into other tapes** —
+where transcript capture cannot reach.
+
+**The mechanism, and why the prediction is not tautological.** The cassette is
+`PB-U6-pegRNA-NNNNGGA-EF1a-mRFP-TAPE-TargetBC`: one integration carries both a pegRNA (bearing a
+4-nt insert barcode `NNNN`) and a tape (labelled by a 10-nt `TargetBC`). pegRNAs act in ***trans***
+(§0, four independent grounds), so integration $z$'s symbol is written into **every** tape in the
+cell, not its own. Therefore, if silencing an integration kills the whole locus:
+
+> losing tape $z$ from the readout ⇒ symbol $s(z)$ should also stop appearing **at all other tapes**
+> in the same cells.
+
+⚠ **The two promoters are different polymerases** — pegRNA on U6 (Pol III), tape/mRFP on EF1α
+(Pol II). Locus-level heterochromatin should take both, but nothing *forces* it, so the coupling is
+a hypothesis, not a deduction. That is exactly why the test is worth running: it measures the thing
+§0 currently asserts ("nasty coupling", row A9) and Fig 3b interprets ($\beta_z$ = the integration's
+expression level).
+
+**⚠ The blocker: the $z \mapsto s(z)$ map is not known.** `TargetBC` (10-nt, tape) and `NNNN`
+(4-nt, symbol) are different barcode spaces, and nothing in the delivered tables links them —
+the same gap §"Open empirical question" records for the Typewriter lineage data. Recovering it
+would need sequencing of the intact integrations, which we do not have.
+
+**⇒ Invert it: do not assume the map, *recover* it.** Rather than testing a known pair, ask of each
+silencing event *which* symbol is depleted. The map becomes the output, and its internal structure
+becomes the test — because a spurious map has no reason to be consistent, injective, or reproducible.
+
+**The validation ladder — this is what makes it convincing, not the per-event p-values:**
+
+1. **Cross-arm reproducibility (the killer).** Verified 2026-09-03: **all 166 TargetBCs are
+   identical across all five arms** — same engineered line, same integrations. So tape $z$ must name
+   the *same* symbol in Mouse 1, Mouse 2, Mouse 3, Pre-TX and Subclone, recovered independently.
+   Agreement by chance among ~100 symbols is 1%. Five-way concordance is essentially unfakeable.
+2. **Injectivity and the collision structure.** 166 integrations drawing `NNNN` uniformly from
+   $4^4=256$ predicts $256(1-(1-1/256)^{166}) = \mathbf{122}$ distinct symbols. We observe
+   **100–106** design-conforming symbols carrying essentially all edits (103 Pre-TX, 100 Mouse 1,
+   106 Subclone). The recovered map should be near-injective with *exactly* that collision rate —
+   and collisions are not a nuisance but a prediction: a symbol carried by two integrations should
+   show only a **partial** drop when one is silenced.
+3. **Dose.** A symbol named by $j$ tapes should carry ~$j\times$ the base $\xi$.
+4. **$\mathrm{corr}(\beta_z,\ \xi_{s(z)})>0$** across integrations — tape recovery rate and symbol
+   frequency are two readouts of one locus's expression. ⚠ Measured today: $\xi$ is **smooth over a
+   570× range** (0.00008–0.0456), *not* quantised into copy-number multiples, so per-integration
+   expression varies enormously. That kills quantisation as a cheap shortcut but strengthens the
+   premise of test 4 — there is a large dynamic range for the two readouts to correlate over.
+
+**⚠ Step 0 first, because it decides whether any of this has power: how much of the edit content
+postdates the loss?** The symbols already written into a tape before an integration was silenced
+stay there — the tape is an append-only record. So only insertions laid down *after* the silencing
+can show the depletion, and everything inherited from before dilutes it. Tapes here are close to
+saturation (mean ~4.5–5 of 6 sites edited), which is precisely the regime where most content is
+ancestral. **The measurement:** the fraction of (tape, site) slots that are **polymorphic within a
+clone** (⇒ written after the clone founder) and, one level down, polymorphic within a called clade
+(⇒ written after its MRCA). That single number is the power calculation for the whole idea, it is
+cheap, and it should be computed before any examples are pulled.
+
+**Recommended order** — and the user's instinct to look at examples first is right, with Step 0
+slotted ahead of it so we know what we are looking at:
+
+| step | what | why here |
+|---|---|---|
+| 0 | polymorphic-slot fraction, within clone and within clade, per arm | decides feasibility; cheap; also tells us which layer to use |
+| 1 | **hand-inspect 3–5 examples**: highest-$\Lambda$, largest-clade events in Subclone/Mouse 2 big clones. Just print the symbol-frequency table inside vs outside | what was asked for; catches design errors no aggregate would |
+| 2 | screen on the **clone-wide** layer first, not the sub-clone one | it is the strongest layer — Pre-TX alone has 4,763 losses over 1,188 clones, ~30 losing clones per tape — and the loss predates the clone founder, so a larger share of the clone's editing postdates it |
+| 3 | the validation ladder above | this is the actual evidence |
+| 4 | only then the sub-clone version, restricted to post-MRCA insertions | the genuinely *lineage* claim, but power-limited by Step 0 |
+
+**The statistic for steps 2/4.** For tape $z$ and symbol $s$, contrast $s$'s share of insertions in
+cells/clones that lost $z$ against those that did not, on **post-loss insertions only** (within a
+clade: positions beyond the clade's common prefix on each tape; within a clone: clone-polymorphic
+slots). Two controls fall out of the design: the rest of the symbol vector is an internal control
+against a general compositional shift (removing $\xi_s\approx1\%$ renormalises everything else up by
+~1%, which must be divided out), and the tape being scored is **never** the tape supplying the
+insertions — the same cross-tape rule that keeps $\Lambda$ honest.
+
+⚠ **A global alternative worth remembering:** build $D[z,s]$ = depletion of $s$ in cells lacking $z$
+and solve it as an **assignment problem** (Hungarian) rather than tape-by-tape. One statistic, all
+166 assignments at once, compared against permuted $D$. More powerful than 166 separate tests, and
+the natural form of the question — but do it after the per-tape version, so the examples stay
+inspectable.

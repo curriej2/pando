@@ -125,6 +125,37 @@ Motivation, for the record: a presentation audience expects a significance test,
 permutation p-values were floored at $1/(B+1)$ with $B=3$–200. The counts were overwhelming
 (28,367 candidates vs 1.4 null) but the *formal* claim was only $p<0.17$ for the catalogue.
 
+---
+
+## ⭐ NEXT, once the B=1,000 run lands — two directions, written up in full in README
+## "Two directions from the B = 1,000 run"
+
+**A. How widespread is heritable silencing?** Lead with **cell × tape entries inside called
+blocks**, not event counts — events are an artefact of how the clade search carves the tree.
+⚠⚠ **$B$ does not lower the detection floor.** Three distinct knobs: $B$ (p resolution), the FDR
+*threshold* (will fall where a 3-permutation null had pushed it up — Mouse 3 soft 16.3 nats should
+drop toward 10), and the scan **floor** `--lam`, hard-fixed at 10 nats, below which nothing is ever
+collected and which this run's grid cannot see beneath. ⇒ **the follow-up is `40`/`43` with
+`--lam 4`**, which subsumes the floor-10 run; script `45` already shows real signal there
+(4.6× enrichment at $\ge4$ nats on Mouse 3). Deliberately *not* done by restarting the current
+jobs — read this run's FDR curve first, then size it. Expect a chunk of new low-$\Lambda$ events to
+be clade coarseness; the $\hat\pi$-by-depth stratification in `43` is the control.
+
+**B. ⭐ Does the co-integrated symbol vanish when a tape is silenced?** The first *orthogonal* test
+of the mechanism — everything so far infers silencing from missingness, which is what technical
+dropout also looks like. pegRNA and tape share one cassette and pegRNAs act in **trans**, so
+silencing integration $z$ should remove symbol $s(z)$ from **every other tape** in those cells.
+⚠ The $z\mapsto s(z)$ map is unknown (`TargetBC` 10-nt vs `NNNN` 4-nt, never linked), so **do not
+assume it — recover it**, and let its structure be the test: five-way cross-arm concordance (all
+**166 TargetBCs verified identical across arms**, 2026-09-03), near-injectivity with the collision
+rate predicted for 166 draws from 256 ($E=122$ distinct vs 100–106 observed),
+$\mathrm{corr}(\beta_z,\xi_{s(z)})>0$.
+**⚠ Step 0 before anything: measure the fraction of (tape, site) slots polymorphic within a clone
+and within a clade.** Tapes are ~4.5–5/6 saturated, so most content may predate the loss and only
+post-loss insertions can show depletion — that fraction is the power calculation for the whole idea.
+Then 3–5 hand-inspected examples, then screen the **clone-wide** layer first (strongest: 4,763
+losses over 1,188 Pre-TX clones), then the sub-clone version.
+
 ## ⚠ First, the permutation itself — state it correctly
 
 We do **not** shuffle clone labels for the sub-clone test. The rule is:
