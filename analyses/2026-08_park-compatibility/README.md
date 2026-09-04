@@ -1617,3 +1617,62 @@ every cell equally and so cannot distinguish "the missing cells are the well-cap
 "the missing cells are the poorly-captured ones". The per-cell $\tilde p_c$ inside $\Lambda$ is what
 makes this a test of *inherited loss* rather than of *dropout rate*, and that is the whole
 discriminator against technical dropout.
+
+### B = 1,000 permutations — launched (2026-09-03)
+
+Every catalogue so far ran on $B=3$–200 permutations, so its permutation $p$-value was floored at
+$1/(B+1)$: the *formal* claim for the event catalogue was only $p<0.17$, however overwhelming the
+counts (28,367 candidates against ~1.4 null). This raises $B$ to 1,000 for **all three layers × all
+five arms**, and for the soft catalogue at **both** clade resolutions (depth 4 and the full
+recorder depth 6) — 15 configurations, plus the five clone-wide runs.
+
+**Cost, and why it needs splitting.** The entire scan — every anchor × depth × clade × tape — is
+redone per permutation. Measured per-scan cost (elapsed ÷ (nperm+1), from a completed `sacct`):
+`42` 0.02–0.12 s, `40` 2–40 s, `43` 9 s–3.2 min. At $B=1{,}000$ that is ~2 min for `42` but ~11 h
+for `40` on Initial and ~52 h for `43` on Subclone, serially.
+
+**The design (`src/47_submit_B1000.sh`).**
+
+| piece | what it does |
+|---|---|
+| `--permpart i/N` in `40`/`43` | runs permutations $[\,(i{-}1)B/N,\;iB/N)$ and writes **only a count vector**, then exits without doing the observed scan at all |
+| a **fixed** threshold grid | 600 geometric points, 10 → $10^7$ nats, ratio 1.023, *independent of the data* — count vectors from different array tasks are addable only if every task scored the same thresholds |
+| seed $(\text{SEED}, b)$ | permutation $b$ is seeded from its own index, not from a stream advanced $b$ times, so slice boundaries do not change what any permutation is, parts merge in any order, and a duplicated part is detectable |
+| `46_perm_merge.py` | pools the parts, **asserts the set is complete and disjoint**, writes `permnull_{script}_{arm}{tag}.npz` |
+| `48_collect_B1000.sh` | re-runs each observed scan **once** with `--nullfile`, attaching $q$ and the global $p$ |
+
+⚠ **Storing counts, not candidate lists, is what makes this affordable.** Subclone's soft scan
+produces ~876,000 candidates per permutation; 1,000 of those lists would be ~7 GB and useless
+afterwards. The count vector is 600 integers and is everything the FDR curve, the $q$-values and the
+global $p$ need.
+
+**The two quantities, and why the whole per-permutation matrix is kept rather than a mean.**
+
+- **Global $p$** — $p=\bigl(1+\#\{b: C_b\ge C_{\rm obs}\}\bigr)/(B+1)$ with $C$ the total candidate
+  count above a threshold. Needs the *distribution* over $b$, so the $(B\times G)$ matrix is stored.
+  With $B=1{,}000$ and zero exceedances this licenses $p<0.001$.
+- **Per-event $q$** — $q(\Lambda)=\overline{\text{null}}(\ge\Lambda)\,/\,\text{obs}(\ge\Lambda)$,
+  monotonised, then attached as a column of `events_{arm}.tsv.gz` and `clonewide_{arm}.tsv.gz`.
+  Needs the *mean*.
+
+⚠ **Correction to the task spec: the monotonising running minimum goes UP the grid, not down.**
+The spec said "made monotone by a running minimum from the top". Implemented the other way, and the
+reason is BH's: an event at $\Lambda$ can be reported by *any* rejection region $\{\Lambda'\ge t\}$
+containing it, i.e. any $t\le\Lambda$, so its $q$ is $\min_{t\le\Lambda} q_{\rm raw}(t)$ — a running
+minimum from the low-$\Lambda$ end. That is automatically non-increasing in $\Lambda$, which is the
+direction a $q$-value must run. A running minimum from the high end would do the opposite and would
+also drag the $q_{\rm raw}=1$ convention — which the code assigns wherever the observed count is
+zero, i.e. at every threshold above the largest observed $\Lambda$ — back down over the entire
+informative range.
+
+**Sizing.** 1 core, 8 G, 20 array tasks per configuration. Peak RSS across every `40`/`43` run to
+date is 935 MB, so 8 G is ~8× headroom; the inner loop is `bincount`/`exp`, not BLAS, so extra cores
+buy nothing and a 1-core 8 G task backfills into gaps a fat one cannot. Walltimes 6 h (16 h for
+`43` on Initial/Subclone) against a predicted worst case of 2.7 h. **All 300 array tasks entered
+`RUNNING` immediately.**
+
+**Verified before launch** (`logs/smoke_B1000-11388862.out`, Mouse 3, small $B$): parts → merge →
+observed-with-`--nullfile` reproduces the previously published Mouse 3 numbers exactly (73 events,
+$\Lambda$ total 1,567 nats, 398 clone-wide losses, 13.20% of missing), and the merge **refuses** an
+incomplete set, naming the missing permutation indices.
+

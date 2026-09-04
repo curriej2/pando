@@ -76,13 +76,35 @@ such a loss may predate the clone.  Clone-wide cases are counted separately.
 Running the identical pipeline on permuted data gives the expected number of
 candidates at each threshold, hence an empirical FDR.
 
+--------------------------------------------------------------------------------
+ B = 1,000 PERMUTATIONS: parts, a fixed grid, p and q  (added 2026-09-03)
+--------------------------------------------------------------------------------
+The whole scan is redone per permutation, so B = 1,000 is split across array
+tasks with --permpart i/N.  Two rules make the parts addable:
+
+  * A FIXED threshold grid, independent of the data.  Each task writes only the
+    vector #{candidates >= t} for t in that grid -- a few hundred integers per
+    permutation -- never a candidate list.
+  * Permutation b is seeded from (SEED, b), NOT from a stream advanced in order.
+    So permutation b is the same object however B is split, parts can be merged
+    in any order, and a duplicated part is detectable instead of silently
+    doubling the null.
+
+--permpart writes results/permparts/permcounts_40_{arm}_p{i}.npz and exits.
+46_perm_merge.py pools those into results/permnull_40_{arm}.npz; the observed
+run is then redone ONCE with --nullfile <that>, which gives
+
+  * a global permutation p-value, p = (1 + #{b: C_b >= C_obs}) / (B + 1), where
+    C is the total candidate count above a threshold, and
+  * a per-event q-value, attached as a column of events_{arm}.tsv.gz.
+
 Usage: 40_event_catalogue.py <arm> [--screen] [--eps 0.01] [--nperm 10]
-       [--anchors N] [--lam 10]
+       [--anchors N] [--lam 10] [--seed S] [--permpart i/N] [--nullfile F]
 Outputs: results/events_{arm}.tsv.gz   (gitignored: carries clone barcodes)
          results/event_catalogue_{arm}.json  (aggregate, committable)
 ================================================================================
 """
-import gzip, json, sys
+import gzip, json, sys, time
 from pathlib import Path
 import numpy as np
 
@@ -97,7 +119,20 @@ EPS = float(sys.argv[sys.argv.index("--eps") + 1]) if "--eps" in sys.argv else 0
 NPERM = int(sys.argv[sys.argv.index("--nperm") + 1]) if "--nperm" in sys.argv else 10
 NANCH = int(sys.argv[sys.argv.index("--anchors") + 1]) if "--anchors" in sys.argv else 166
 LAM0 = float(sys.argv[sys.argv.index("--lam") + 1]) if "--lam" in sys.argv else 10.0
-rng = np.random.default_rng(20260903)
+SEED = int(sys.argv[sys.argv.index("--seed") + 1]) if "--seed" in sys.argv else 20260903
+PART = sys.argv[sys.argv.index("--permpart") + 1] if "--permpart" in sys.argv else None
+NULLF = sys.argv[sys.argv.index("--nullfile") + 1] if "--nullfile" in sys.argv else None
+tag = "_screen" if SCREEN else ""
+
+# The fixed grid.  It must NOT depend on the data: count vectors from different
+# array tasks are only addable if every task scored the same thresholds.
+GRID = np.unique(np.round(np.geomspace(LAM0, 1.0e7, 600), 4))
+
+
+def counts_ge(v):
+    """#{v >= t} for every t in GRID."""
+    sv = np.sort(v)
+    return (sv.size - np.searchsorted(sv, GRID, side="left")).astype(np.int64)
 
 z0 = np.load(RES / f"dropout_matrix_{arm}.npz", allow_pickle=False)
 Y, clone = z0["recovered"], z0["clone"]
@@ -223,34 +258,97 @@ def scan(Wm, missm, collect):
     return hits, (np.concatenate(lams) if lams else np.zeros(0))
 
 
+order = np.argsort(g_clone, kind="stable")
+bnds = np.concatenate([[0], np.cumsum(np.bincount(g_clone))])
+
+
+def perm_inv(b):
+    """Row permutation for permutation index b, blocked WITHIN CLONE.
+
+    Whole cell ROWS move; labels, prefix codes and P stay at their positions.
+    Seeded from (SEED, b) rather than from a stream advanced b times, so
+    permutation b is the same object however B is split across array tasks."""
+    rb = np.random.default_rng([SEED, b])
+    pm = order.copy()
+    for a_, b_ in zip(bnds[:-1], bnds[1:]):
+        pm[a_:b_] = rb.permutation(pm[a_:b_])
+    inv = np.empty_like(pm)
+    inv[order] = pm
+    return inv
+
+
+# ---- --permpart i/N: run a slice of the B permutations and write counts only
+if PART is not None:
+    ip, npart = (int(x) for x in PART.split("/"))
+    assert 1 <= ip <= npart, PART
+    lo, hi = ((ip - 1) * NPERM) // npart, (ip * NPERM) // npart
+    idx = list(range(lo, hi))
+    print(f"  part {ip}/{npart}: permutations {lo}..{hi-1} of B={NPERM}", flush=True)
+    rows, t0 = [], time.time()
+    for j, b in enumerate(idx):
+        inv = perm_inv(b)
+        _, nl = scan(W[inv], miss[inv], False)
+        rows.append(counts_ge(nl))
+        print(f"    perm {b}: {nl.size:,} candidates "
+              f"[{j+1}/{len(idx)}, {time.time()-t0:.0f}s]", flush=True)
+    outd = RES / "permparts"
+    outd.mkdir(exist_ok=True)
+    fn = outd / f"permcounts_40_{arm}{tag}_p{ip:03d}.npz"
+    np.savez_compressed(fn, grid=GRID, counts=np.array(rows, dtype=np.int64),
+                        perm_index=np.array(idx, dtype=np.int64),
+                        meta=np.array([NPERM, npart, ip, SEED, LAM0], dtype=float))
+    print(f"wrote {fn.relative_to(ROOT)}  ({len(idx)} permutations, "
+          f"{time.time()-t0:.0f}s)")
+    sys.exit(0)
+
 hits, obs_lam = scan(W, miss, True)
 n_cand = obs_lam.size
 print(f"  candidates at Lambda >= {LAM0}: {n_cand:,}", flush=True)
+grid = GRID
+obs_n = counts_ge(obs_lam).astype(float)
 
-# ---- permutation FDR curve, BEFORE choosing a threshold
-order = np.argsort(g_clone, kind="stable")
-bnds = np.concatenate([[0], np.cumsum(np.bincount(g_clone))])
-null_lam = []
-for b in range(NPERM):
-    pm = order.copy()
-    for a_, b_ in zip(bnds[:-1], bnds[1:]):
-        pm[a_:b_] = rng.permutation(pm[a_:b_])
-    inv = np.empty_like(pm); inv[order] = pm
-    _, nl = scan(W[inv], miss[inv], False)
-    null_lam.append(nl)
-    print(f"    perm {b+1}/{NPERM}: {nl.size:,} candidates", flush=True)
-grid = np.unique(np.round(np.geomspace(LAM0, max(obs_lam.max(), LAM0 * 2), 60), 2))
-obs_n = np.array([(obs_lam >= t).sum() for t in grid], float)
-nul_n = np.array([np.mean([(nl >= t).sum() for nl in null_lam]) for t in grid])
-fdr_curve = np.where(obs_n > 0, nul_n / np.maximum(obs_n, 1), 1.0)
+# ---- the null, either pooled from parts or run here
+if NULLF is not None:
+    zn = np.load(NULLF, allow_pickle=False)
+    assert np.array_equal(zn["grid"], GRID), "null file was built on a different grid"
+    null_counts = zn["counts"].astype(float)                 # (B, G)
+    print(f"  null: {null_counts.shape[0]:,} pooled permutations from "
+          f"{Path(NULLF).name}", flush=True)
+else:
+    rows = []
+    for b in range(NPERM):
+        inv = perm_inv(b)
+        _, nl = scan(W[inv], miss[inv], False)
+        rows.append(counts_ge(nl))
+        print(f"    perm {b+1}/{NPERM}: {nl.size:,} candidates", flush=True)
+    null_counts = np.array(rows, dtype=float)
+B = int(null_counts.shape[0])
+nul_n = null_counts.mean(0)
+
+# BH-style monotonisation.  An event at Lambda may be reported at ANY threshold
+# t <= Lambda, so its q is the smallest FDR over those rejection regions: a
+# running minimum UP the grid.  ⚠ Not down from the top -- at high thresholds
+# where nothing is observed the ratio takes the convention 1.0, and a downward
+# running minimum would drag that 1.0 across the whole curve.
+fdr_raw = np.where(obs_n > 0, nul_n / np.maximum(obs_n, 1.0), 1.0)
+fdr_curve = np.minimum(np.minimum.accumulate(fdr_raw), 1.0)
 ok = np.flatnonzero(fdr_curve <= 0.05)
-LAM = float(grid[ok[0]]) if ok.size else float(grid[-1])
-fdr = float(fdr_curve[ok[0]]) if ok.size else float(fdr_curve[-1])
+j0 = int(ok[0]) if ok.size else len(grid) - 1
+LAM = float(grid[j0])
+fdr = float(fdr_curve[j0])
+# global permutation p-value: how often does a permuted scan produce as many
+# candidates above the threshold as the real one?
+p_at = lambda j: (1 + int((null_counts[:, j] >= obs_n[j]).sum())) / (B + 1)
+p_thresh, p_floor = p_at(j0), p_at(0)
+show = np.searchsorted(grid, [10, 15, 20, 30, 50, 75, 100, 200, 500, 1000])
+show = np.unique(np.clip(show, 0, len(grid) - 1))
 print(f"\n  FDR curve: " + "  ".join(
-    f"{t:.0f}n:{100*f:.0f}%" for t, f in zip(grid[::6], fdr_curve[::6])))
+    f"{grid[i]:.0f}n:{100*fdr_curve[i]:.0f}%" for i in show))
 print(f"  => threshold {LAM:.1f} nats at FDR {100*fdr:.1f}% "
-      f"({int((obs_lam>=LAM).sum()):,} candidates, {nul_n[ok[0]] if ok.size else 0:,.0f} expected null)",
-      flush=True)
+      f"({int((obs_lam>=LAM).sum()):,} candidates, {nul_n[j0]:,.1f} expected null)")
+print(f"  global permutation p (B={B:,}): {p_thresh:.4g} at the threshold, "
+      f"{p_floor:.4g} at the scan floor {LAM0:.0f} nats "
+      f"(obs {obs_n[0]:,.0f} vs null mean {nul_n[0]:,.1f})", flush=True)
 
 # ---- deduplicate / enforce one row per loss event, at the chosen threshold
 hits = [h for h in hits if h["lam"] >= LAM]
@@ -269,9 +367,20 @@ print(f"  after overlap/nesting collapse: {len(kept):,} events", flush=True)
 tot_missing = int(miss.sum())
 explained = sum(h["n_missing"] - h["expected"] for h in kept)
 ev_cells = np.unique(np.concatenate([h["cells"] for h in kept])) if kept else np.array([], int)
+qj = np.searchsorted(grid, np.array([h["lam"] for h in kept], float), side="right") - 1
+for h, j_ in zip(kept, np.clip(qj, 0, len(grid) - 1)):
+    h["q"] = float(fdr_curve[j_])
 out = {"arm": arm, "screen": SCREEN, "eps": EPS, "lambda_scan_floor": LAM0,
        "n_cells": int(n), "n_clones": int(Gc), "n_candidates": int(n_cand),
-       "n_events": len(kept), "fdr": fdr, "lambda_chosen": LAM, "n_perm": NPERM,
+       "n_events": len(kept), "fdr": fdr, "lambda_chosen": LAM, "n_perm": B,
+       "seed": SEED, "null_source": (Path(NULLF).name if NULLF else "inline"),
+       "p_global_at_threshold": p_thresh, "p_global_at_scan_floor": p_floor,
+       "p_floor_resolution": 1.0 / (B + 1),
+       "null_mean_at_threshold": float(nul_n[j0]),
+       "null_max_at_threshold": float(null_counts[:, j0].max()),
+       "null_mean_at_scan_floor": float(nul_n[0]),
+       "null_max_at_scan_floor": float(null_counts[:, 0].max()),
+       "max_q_of_kept_events": float(max((h["q"] for h in kept), default=1.0)),
        "fdr_curve": {"lambda": grid.tolist(), "observed": obs_n.tolist(),
                      "null": nul_n.tolist(), "fdr": fdr_curve.tolist()},
        "distinct_tapes": int(len({h["tape"] for h in kept})),
@@ -304,14 +413,13 @@ if kept:
     print(f"  R_c median: all cells {out['Rc_all_median']:.0f}, "
           f"cells in events {out['Rc_event_cells_median']:.0f}", flush=True)
 
-tag = "_screen" if SCREEN else ""
 (RES / f"event_catalogue_{arm}{tag}.json").write_text(json.dumps(out, indent=1))
 with gzip.open(RES / f"events_{arm}{tag}.tsv.gz", "wt") as fh:
     fh.write("clone\tclone_bc\tanchor_tape\tdepth\ttape\tclade_cells\tn_missing\t"
-             "expected\tinside_rate\tlambda_nats\tmedian_Rc\n")
+             "expected\tinside_rate\tlambda_nats\tq_value\tmedian_Rc\n")
     for h in kept:
         fh.write(f"{h['clone']}\t{cl_names[h['clone']]}\t{h['anchor']}\t{h['depth']}\t"
                  f"{h['tape']}\t{h['size']}\t{h['n_missing']}\t{h['expected']:.3f}\t"
-                 f"{h['n_missing']/h['size']:.4f}\t{h['lam']:.3f}\t"
+                 f"{h['n_missing']/h['size']:.4f}\t{h['lam']:.3f}\t{h['q']:.3g}\t"
                  f"{np.median(Rc[h['cells']]):.0f}\n")
 print(f"\nwrote results/event_catalogue_{arm}{tag}.json and events_{arm}{tag}.tsv.gz")

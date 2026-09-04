@@ -52,11 +52,21 @@ BOTH STATISTICS COME FROM ONE SCAN.  Per (clade, tape) we need four group sums:
     Lambda_hard = k log(1-eps) + (m-k) log eps - (A+B)
     Lambda_soft = k log(k/m)  + (m-k) log((m-k)/m) - (A+B)
 
-Usage: 43_soft_events.py <arm> [--nperm 5] [--lam 10]
+--------------------------------------------------------------------------------
+ B = 1,000 PERMUTATIONS  (added 2026-09-03)
+--------------------------------------------------------------------------------
+Same scheme as 40_event_catalogue.py: --permpart i/N runs a slice of the B
+permutations and writes only the count vector on a FIXED threshold grid to
+results/permparts/permcounts_43_{arm}{_d6}_p{i}.npz, then exits.  Permutation b
+is seeded from (SEED, b) so the slices are addable in any order.
+46_perm_merge.py pools them; the observed run is redone once with --nullfile.
+
+Usage: 43_soft_events.py <arm> [--nperm 5] [--lam 10] [--maxd 4]
+       [--seed S] [--permpart i/N] [--nullfile F]
 Output: results/soft_events_{arm}.json
 ================================================================================
 """
-import json, sys
+import json, sys, time
 from pathlib import Path
 import numpy as np
 
@@ -75,7 +85,20 @@ LAM0 = float(sys.argv[sys.argv.index("--lam") + 1]) if "--lam" in sys.argv else 
 # coarsely: at maximum resolution the second kind must resolve into complete ones.
 MAXD = int(sys.argv[sys.argv.index("--maxd") + 1]) if "--maxd" in sys.argv else 4
 DEPTHS = list(range(1, MAXD + 1))
-rng = np.random.default_rng(20260903)
+SEED = int(sys.argv[sys.argv.index("--seed") + 1]) if "--seed" in sys.argv else 20260903
+PART = sys.argv[sys.argv.index("--permpart") + 1] if "--permpart" in sys.argv else None
+NULLF = sys.argv[sys.argv.index("--nullfile") + 1] if "--nullfile" in sys.argv else None
+tag = "" if MAXD == 4 else f"_d{MAXD}"
+
+# fixed threshold grid -- see 40_event_catalogue.py for why it cannot depend on
+# the data.  Identical definition, so the two catalogues are directly comparable.
+GRID = np.unique(np.round(np.geomspace(LAM0, 1.0e7, 600), 4))
+
+
+def counts_ge(v):
+    """#{v >= t} for every t in GRID."""
+    sv = np.sort(v)
+    return (sv.size - np.searchsorted(sv, GRID, side="left")).astype(np.int64)
 
 z0 = np.load(RES / f"dropout_matrix_{arm}.npz", allow_pickle=False)
 Y, clone = z0["recovered"], z0["clone"]
@@ -169,35 +192,96 @@ def scan(mi, a1, a2, pp):
     return cat(LS), {e: cat(v) for e, v in LH.items()}, cat(PI), cat(ER), cat(SZ), cat(DP)
 
 
-ls, lh, pi, er, sz, dp = scan(MISS, ARR1, ARR2, P)
-print(f"  soft candidates at Lambda >= {LAM0}: {ls.size:,}", flush=True)
-
 order = np.argsort(g_clone, kind="stable")
 bnds = np.concatenate([[0], np.cumsum(np.bincount(g_clone))])
-null_ls = []
-for b in range(NPERM):
+
+
+def perm_inv(b):
+    """Within-clone row permutation for permutation index b, seeded from (SEED, b)."""
+    rb = np.random.default_rng([SEED, b])
     pm = order.copy()
     for a_, b_ in zip(bnds[:-1], bnds[1:]):
-        pm[a_:b_] = rng.permutation(pm[a_:b_])
-    inv = np.empty_like(pm); inv[order] = pm
-    nls, *_ = scan(MISS[inv], ARR1[inv], ARR2[inv], P[inv])
-    null_ls.append(nls)
-    print(f"    perm {b+1}/{NPERM}: {nls.size:,} soft candidates", flush=True)
+        pm[a_:b_] = rb.permutation(pm[a_:b_])
+    inv = np.empty_like(pm)
+    inv[order] = pm
+    return inv
 
-grid = np.unique(np.round(np.geomspace(LAM0, max(ls.max(), LAM0 * 2), 60), 2))
-on = np.array([(ls >= t).sum() for t in grid], float)
-nn = np.array([np.mean([(v >= t).sum() for v in null_ls]) for t in grid])
-fdrc = np.where(on > 0, nn / np.maximum(on, 1), 1.0)
+
+if PART is not None:
+    ip, npart = (int(x) for x in PART.split("/"))
+    assert 1 <= ip <= npart, PART
+    lo, hi = ((ip - 1) * NPERM) // npart, (ip * NPERM) // npart
+    idx = list(range(lo, hi))
+    print(f"  part {ip}/{npart}: permutations {lo}..{hi-1} of B={NPERM}", flush=True)
+    rows, t0 = [], time.time()
+    for j, b in enumerate(idx):
+        inv = perm_inv(b)
+        nls, *_ = scan(MISS[inv], ARR1[inv], ARR2[inv], P[inv])
+        rows.append(counts_ge(nls))
+        print(f"    perm {b}: {nls.size:,} soft candidates "
+              f"[{j+1}/{len(idx)}, {time.time()-t0:.0f}s]", flush=True)
+    outd = RES / "permparts"
+    outd.mkdir(exist_ok=True)
+    fn = outd / f"permcounts_43_{arm}{tag}_p{ip:03d}.npz"
+    np.savez_compressed(fn, grid=GRID, counts=np.array(rows, dtype=np.int64),
+                        perm_index=np.array(idx, dtype=np.int64),
+                        meta=np.array([NPERM, npart, ip, SEED, LAM0, MAXD], dtype=float))
+    print(f"wrote {fn.relative_to(ROOT)}  ({len(idx)} permutations, "
+          f"{time.time()-t0:.0f}s)")
+    sys.exit(0)
+
+ls, lh, pi, er, sz, dp = scan(MISS, ARR1, ARR2, P)
+print(f"  soft candidates at Lambda >= {LAM0}: {ls.size:,}", flush=True)
+grid = GRID
+on = counts_ge(ls).astype(float)
+
+if NULLF is not None:
+    zn = np.load(NULLF, allow_pickle=False)
+    assert np.array_equal(zn["grid"], GRID), "null file was built on a different grid"
+    null_counts = zn["counts"].astype(float)
+    print(f"  null: {null_counts.shape[0]:,} pooled permutations from "
+          f"{Path(NULLF).name}", flush=True)
+else:
+    rows = []
+    for b in range(NPERM):
+        inv = perm_inv(b)
+        nls, *_ = scan(MISS[inv], ARR1[inv], ARR2[inv], P[inv])
+        rows.append(counts_ge(nls))
+        print(f"    perm {b+1}/{NPERM}: {nls.size:,} soft candidates", flush=True)
+    null_counts = np.array(rows, dtype=float)
+B = int(null_counts.shape[0])
+nn = null_counts.mean(0)
+
+# BH-style monotonisation: running minimum UP the grid (see 40 for why not down)
+fdr_raw = np.where(on > 0, nn / np.maximum(on, 1.0), 1.0)
+fdrc = np.minimum(np.minimum.accumulate(fdr_raw), 1.0)
 ok = np.flatnonzero(fdrc <= 0.05)
-LAM = float(grid[ok[0]]) if ok.size else float(grid[-1])
-FDR = float(fdrc[ok[0]]) if ok.size else float(fdrc[-1])
-print(f"  FDR curve: " + "  ".join(f"{t:.0f}n:{100*f:.0f}%" for t, f in zip(grid[::6], fdrc[::6])))
-print(f"  => soft threshold {LAM:.1f} nats at FDR {100*FDR:.1f}%", flush=True)
+j0 = int(ok[0]) if ok.size else len(grid) - 1
+LAM = float(grid[j0]); FDR = float(fdrc[j0])
+p_at = lambda j: (1 + int((null_counts[:, j] >= on[j]).sum())) / (B + 1)
+p_thresh, p_floor = p_at(j0), p_at(0)
+show = np.searchsorted(grid, [10, 15, 20, 30, 50, 75, 100, 200, 500, 1000])
+show = np.unique(np.clip(show, 0, len(grid) - 1))
+print(f"  FDR curve: " + "  ".join(f"{grid[i]:.0f}n:{100*fdrc[i]:.0f}%" for i in show))
+print(f"  => soft threshold {LAM:.1f} nats at FDR {100*FDR:.1f}% "
+      f"({int(on[j0]):,} candidates, {nn[j0]:,.1f} expected null)")
+print(f"  global permutation p (B={B:,}): {p_thresh:.4g} at the threshold, "
+      f"{p_floor:.4g} at the scan floor {LAM0:.0f} nats "
+      f"(obs {on[0]:,.0f} vs null mean {nn[0]:,.1f})", flush=True)
 
 sel = ls >= LAM
 out = {"arm": arm, "max_depth": MAXD, "lambda_soft_threshold": LAM, "fdr": FDR,
-       "n_perm": NPERM, "n_soft_candidates": int(sel.sum()), "eps_sweep": {},
-       "by_depth": {}}
+       "n_perm": B, "seed": SEED,
+       "null_source": (Path(NULLF).name if NULLF else "inline"),
+       "n_soft_candidates": int(sel.sum()), "eps_sweep": {}, "by_depth": {},
+       "p_global_at_threshold": p_thresh, "p_global_at_scan_floor": p_floor,
+       "p_floor_resolution": 1.0 / (B + 1),
+       "null_mean_at_threshold": float(nn[j0]),
+       "null_max_at_threshold": float(null_counts[:, j0].max()),
+       "null_mean_at_scan_floor": float(nn[0]),
+       "null_max_at_scan_floor": float(null_counts[:, 0].max()),
+       "fdr_curve": {"lambda": grid.tolist(), "observed": on.tolist(),
+                     "null": nn.tolist(), "fdr": fdrc.tolist()}}
 for e_ in EPS_SWEEP:
     hard_pass = (lh[e_] >= LAM0) & sel
     out["eps_sweep"][str(e_)] = {
@@ -240,6 +324,5 @@ if sel.sum():
         d = out["eps_sweep"][str(e_)]
         print(f"    eps={e_:<6} {d['n_hard_within_soft']:>8,}  "
               f"({100*d['frac_of_soft']:.1f}% of soft)", flush=True)
-tag = "" if MAXD == 4 else f"_d{MAXD}"
 (RES / f"soft_events_{arm}{tag}.json").write_text(json.dumps(out, indent=1))
 print(f"\nwrote results/soft_events_{arm}{tag}.json")

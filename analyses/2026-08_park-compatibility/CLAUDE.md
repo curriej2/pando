@@ -106,12 +106,24 @@ collisions before calling a figure done.
 
 ---
 
-# ⭐ NEXT TASK (specified 2026-09-03): B = 1,000 permutations → proper p and q values
+# B = 1,000 permutations → proper p and q values — **LAUNCHED 2026-09-03**
 
-Everything a fresh session needs is here. Motivation: a presentation audience expects a
-significance test, and our permutation p-values are currently floored at $1/(B+1)$ with $B=3$–200.
-The counts are overwhelming (28,367 candidates vs 1.4 null) but the *formal* claim is only
-$p<0.17$ for the catalogue. Fix by raising $B$.
+**State.** Implemented and submitted across everything: 5 arms × {`42` clone-wide, `40` hard
+sub-clone, `43` soft at depth 4, `43` soft at depth 6} = 15 permutation configurations + 5 direct
+clone-wide runs. 300 array tasks, all `RUNNING` from the moment of submission; a dependent
+`perm_collect` job pools the parts and re-runs each observed scan once with `--nullfile`.
+**Driver: `src/47_submit_B1000.sh`** (re-runnable) → `src/48_collect_B1000.sh` → per-config
+`46_perm_merge.py`. Design, the count-vector trick, and the ⚠ correction to the monotonisation
+direction are written up in README "B = 1,000 permutations — launched".
+
+**First results in (the five `42` clone-wide runs):** $p = 0.000999 = 1/1001$, the floor, in every
+arm at both the chosen threshold and the 10-nat scan floor — i.e. **not one of 1,000 permutations
+came close**. Loss counts are unchanged from $B=200$ (Mouse 1 725, Mouse 2 410, Mouse 3 398), so
+$B$ bought resolution on $p$, not a different answer.
+
+Motivation, for the record: a presentation audience expects a significance test, and our
+permutation p-values were floored at $1/(B+1)$ with $B=3$–200. The counts were overwhelming
+(28,367 candidates vs 1.4 null) but the *formal* claim was only $p<0.17$ for the catalogue.
 
 ## ⚠ First, the permutation itself — state it correctly
 

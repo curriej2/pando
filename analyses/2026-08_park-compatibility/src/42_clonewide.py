@@ -22,7 +22,12 @@ against the one below: Lambda in nats (the likelihood a model gains) and the cou
 of missing entries inside confidently-called blocks.  Do NOT present these as a
 partition of missingness.
 
-Usage: 42_clonewide.py <arm> [--eps 0.01] [--nperm 200] [--lam 10]
+B = 1,000 (2026-09-03): one scan here costs ~0.02-0.12 s, so this layer needs no
+parallelisation -- run it with --nperm 1000 directly.  It reports the same two
+quantities as the sub-clone catalogue: a global permutation p-value at the
+chosen threshold and a per-(clone,tape) q-value attached to every output row.
+
+Usage: 42_clonewide.py <arm> [--eps 0.01] [--nperm 1000] [--lam 10] [--seed S]
 Output: results/clonewide_{arm}.json, results/clonewide_{arm}.tsv.gz
 """
 import gzip, json, sys
@@ -38,7 +43,16 @@ arm = sys.argv[1]
 EPS = float(sys.argv[sys.argv.index("--eps") + 1]) if "--eps" in sys.argv else 0.01
 NPERM = int(sys.argv[sys.argv.index("--nperm") + 1]) if "--nperm" in sys.argv else 200
 LAM0 = float(sys.argv[sys.argv.index("--lam") + 1]) if "--lam" in sys.argv else 10.0
-rng = np.random.default_rng(20260903)
+SEED = int(sys.argv[sys.argv.index("--seed") + 1]) if "--seed" in sys.argv else 20260903
+
+# same fixed grid as scripts 40 and 43, so the layers are directly comparable
+GRID = np.unique(np.round(np.geomspace(LAM0, 1.0e7, 600), 4))
+
+
+def counts_ge(v):
+    """#{v >= t} for every t in GRID."""
+    sv = np.sort(v)
+    return (sv.size - np.searchsorted(sv, GRID, side="left")).astype(np.int64)
 
 z0 = np.load(RES / f"dropout_matrix_{arm}.npz", allow_pickle=False)
 Y, clone, sample = z0["recovered"], z0["clone"], z0["sample"]
@@ -86,34 +100,54 @@ L = lam_all(W)
 obs = L[np.isfinite(L)]
 obs = obs[obs >= LAM0]
 samp_pos = [np.flatnonzero(gs == i) for i in range(Gs)]
-null = []
+grid = GRID
+on = counts_ge(obs).astype(float)
+# per-permutation count vectors, not candidate lists: B = 1,000 x a few hundred
+# integers, and both the mean (for q) and the exceedance count (for p) come out.
+null_counts = np.empty((NPERM, grid.size))
 for b in range(NPERM):
+    rb = np.random.default_rng([SEED, b])       # permutation b independent of B
     perm = np.arange(n)
     for pos in samp_pos:
-        perm[pos] = rng.permutation(pos)
+        perm[pos] = rb.permutation(pos)
     Ln = lam_all(W[perm])
     v = Ln[np.isfinite(Ln)]
-    null.append(v[v >= LAM0])
-    if (b + 1) % max(NPERM // 4, 1) == 0:
+    null_counts[b] = counts_ge(v[v >= LAM0])
+    if (b + 1) % max(NPERM // 10, 1) == 0:
         print(f"    perm {b+1}/{NPERM}", flush=True)
+B = NPERM
+nn = null_counts.mean(0)
 
-grid = np.unique(np.round(np.geomspace(LAM0, max(obs.max(), LAM0 * 2), 60), 2))
-on = np.array([(obs >= t).sum() for t in grid], float)
-nn = np.array([np.mean([(v >= t).sum() for v in null]) for t in grid])
-fdrc = np.where(on > 0, nn / np.maximum(on, 1), 1.0)
+# BH-style monotonisation: running minimum UP the grid (see 40_event_catalogue.py)
+fdr_raw = np.where(on > 0, nn / np.maximum(on, 1.0), 1.0)
+fdrc = np.minimum(np.minimum.accumulate(fdr_raw), 1.0)
 ok = np.flatnonzero(fdrc <= 0.05)
-LAM = float(grid[ok[0]]) if ok.size else float(grid[-1])
-FDR = float(fdrc[ok[0]]) if ok.size else float(fdrc[-1])
-print(f"  candidates >= {LAM0}: {obs.size:,} | null {np.mean([v.size for v in null]):,.0f}")
-print(f"  FDR curve: " + "  ".join(f"{t:.0f}n:{100*f:.0f}%" for t, f in zip(grid[::6], fdrc[::6])))
-print(f"  => threshold {LAM:.1f} nats at FDR {100*FDR:.1f}%", flush=True)
+j0 = int(ok[0]) if ok.size else grid.size - 1
+LAM = float(grid[j0]); FDR = float(fdrc[j0])
+p_at = lambda j: (1 + int((null_counts[:, j] >= on[j]).sum())) / (B + 1)
+p_thresh, p_floor = p_at(j0), p_at(0)
+show = np.searchsorted(grid, [10, 15, 20, 30, 50, 75, 100, 200, 500, 1000])
+show = np.unique(np.clip(show, 0, len(grid) - 1))
+print(f"  candidates >= {LAM0}: {obs.size:,} | null mean {nn[0]:,.1f}")
+print(f"  FDR curve: " + "  ".join(f"{grid[i]:.0f}n:{100*fdrc[i]:.0f}%" for i in show))
+print(f"  => threshold {LAM:.1f} nats at FDR {100*FDR:.1f}%")
+print(f"  global permutation p (B={B:,}): {p_thresh:.4g} at the threshold, "
+      f"{p_floor:.4g} at the scan floor {LAM0:.0f} nats", flush=True)
 
 gg, zz = np.nonzero(L >= LAM)
 mc = np.array([miss[g == c, t].sum() for c, t in zip(gg, zz)], float)
 ec = np.array([P[g == c, t].sum() for c, t in zip(gg, zz)], float)
 szc = sizes[gg].astype(float)
 tot_missing = int(miss.sum())
+qrow = fdrc[np.clip(np.searchsorted(grid, L[gg, zz], side="right") - 1, 0, grid.size - 1)]
 out = {"arm": arm, "eps": EPS, "lambda_threshold": LAM, "fdr": FDR, "n_perm": NPERM,
+       "seed": SEED, "p_global_at_threshold": p_thresh,
+       "p_global_at_scan_floor": p_floor, "p_floor_resolution": 1.0 / (B + 1),
+       "null_mean_at_threshold": float(nn[j0]),
+       "null_max_at_threshold": float(null_counts[:, j0].max()),
+       "null_mean_at_scan_floor": float(nn[0]),
+       "null_max_at_scan_floor": float(null_counts[:, 0].max()),
+       "max_q_of_kept": float(qrow.max()) if qrow.size else 1.0,
        "n_clone_tape_pairs_tested": int(big.sum()) * K,
        "n_clonewide_losses": int(gg.size),
        "distinct_tapes": int(len(set(zz.tolist()))),
@@ -137,8 +171,10 @@ print(f"  missing entries inside them: {mc.sum():,.0f} = "
 print(f"  Lambda total {out['lambda_total_nats']:,.0f} nats", flush=True)
 (RES / f"clonewide_{arm}.json").write_text(json.dumps(out, indent=1))
 with gzip.open(RES / f"clonewide_{arm}.tsv.gz", "wt") as fh:
-    fh.write("clone\tclone_bc\ttape\tclone_cells\tn_missing\texpected\tinside_rate\tlambda_nats\n")
+    fh.write("clone\tclone_bc\ttape\tclone_cells\tn_missing\texpected\tinside_rate\t"
+             "lambda_nats\tq_value\n")
     for i in range(gg.size):
         fh.write(f"{gg[i]}\t{cl_names[gg[i]]}\t{zz[i]}\t{int(szc[i])}\t{int(mc[i])}\t"
-                 f"{ec[i]:.3f}\t{mc[i]/szc[i]:.4f}\t{L[gg[i], zz[i]]:.3f}\n")
+                 f"{ec[i]:.3f}\t{mc[i]/szc[i]:.4f}\t{L[gg[i], zz[i]]:.3f}\t"
+                 f"{qrow[i]:.3g}\n")
 print(f"wrote results/clonewide_{arm}.json")
