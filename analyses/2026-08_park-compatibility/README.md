@@ -2239,3 +2239,86 @@ threshold.** The depth gradient also survives (Subclone 82.1% → 35.7% over dep
   Re-run it with size strata and `--budget`.
 - **An event-level FDR** would need the dedup applied to permuted candidate sets, which the count
   vectors cannot support. The absolute budget sidesteps it rather than solving it.
+
+## ⭐⭐ Per-combo nulls: scoring each combo against its own 1,000 permutations, in nats
+
+Justin, 2026-09-07: *"For a given cell × tape combo, why can't we just check where the real cell
+labeling falls among the 1000 permutations in terms of nats?"* **We can, it is better than the
+stratified global threshold it replaces, and the reason it was not done first is a storage choice
+of mine.** `src/53_percombo.py` + `src/54_percombo_merge.py`.
+
+### ⚠ This defeats my own earlier objection, and I answered the wrong question
+
+On 2026-09-03 I argued per-combo scoring is "the wrong tool at this floor" because the p-value
+censors at $1/(B+1)$: with a per-combo null tail below $10^{-6}$, every real event returns exactly
+$1/1001$ and they cannot be ordered. **That objection is about the *unit*, not the idea.** In nats
+it evaporates — "this combo is 25 nats above the maximum of its own 997 permutations" is fully
+informative precisely where the rank saturates.
+
+### What it dissolves
+
+| problem in the global-threshold analysis | why it disappears |
+|---|---|
+| six hand-drawn **clade-size strata** | each combo's own null conditions on its clade size, its own $\tilde p$ values *and* its clone's composition — at full resolution |
+| **the $\Lambda$ cap** ("a 9-cell Pre-TX clade cannot exceed 12.4 nats") | the cap applies to that clade's *null* too: topping out at 6 nats and scoring 11 is decisive whatever a global cut says |
+| **candidate-vs-event FDR mismatch** | each combo is scored on its own terms, not by a global cut followed by dedup |
+| **the arbitrary scan floor** | there is none; every scorable combo is scored |
+
+### Why it was not done first
+
+The permutation parts stored count vectors **aggregated over combos**, discarding combo identity.
+That followed the original spec and was right for an aggregate FDR — and wrong for this. A combo
+*does* have a stable identity: `(depth, anchor, subclade code, tape)`, all derived from `codes`,
+which the permutation never touches. So per-combo accumulators are well defined; we just never kept
+them. Measured: 5.6 M–103 M combo slots per arm, four accumulators in float32 = **0.02–1.7 GB**.
+⚠ First version allocated $G\times K$ per block and wasted 79% of the array on clades below
+`MIN_CLADE` (26.2 M slots for Mouse 3's 5.5 M combos, and ~490 M / 24 GB for Pre-TX). Compacting to
+kept clades only gives **99.4% scorable** and 4.87 GB peak on Pre-TX.
+
+### ⚑ Multiplicity, calibrated exactly — hold out permutations
+
+The margin needs its own null *across* combos, and accumulators cannot give one. So `53` holds out
+the first `HOLD = 3` permutations as **pseudo-observed** and accumulates over the remaining 997:
+
+$$m_{\rm obs} = \Lambda_{\rm obs} - \max_{b\ge3}\Lambda_b, \qquad
+  m_{\rm null} = \Lambda_{b<3} - \max_{b\ge3}\Lambda_b$$
+
+Both are the margin of a candidate over the max of the **same** permutation set, so under $H_0$ they
+are *exactly* exchangeable — no parametric null, no approximation, nothing censored. Then
+$\mathrm{FDR}(t) = \bigl(\#\{m_{\rm null}\ge t\}/3\bigr)\big/\#\{m_{\rm obs}\ge t\}$, monotonised
+BH-style up the grid.
+
+⚠ **Report the margin, not a z-score.** For a small clone the null is genuinely coarse — a 4-cell
+clade in a 6-cell clone has only $\binom{6}{4}=15$ distinct compositions, so its 997 permutations
+sample 15 values and $\mathrm{sd}$ can be exactly 0. `sd` is written out as context only.
+
+### Mouse 3, validated (2026-09-07) — and the exchangeable null earns its keep immediately
+
+| margin $\ge$ | observed combos | expected false | FDR |
+|---|---|---|---|
+| 0 nats | 1,243,461 | **1,211,286** | **97.4%** |
+| 0.5 | 27,638 | 1,117 | 4.04% |
+| 5 | 16,385 | 77.0 | 0.47% |
+| 11.37 | 10,063 | **2.0** | **0.020%** |
+| 24.8 | 5,611 | 0.0 | 0% |
+
+⚑ **Look at the first row.** 22% of combos have $m_{\rm obs}\ge0$ — vastly more than the $1/998$ a
+continuous null would give — because for small clones the same clade composition recurs across
+permutations, so $\Lambda_{\rm obs}$ *ties* the maximum constantly. The held-out null reproduces
+that exactly (1,211,286 against 1,243,461), so the calibration reports FDR 97% and the ties are
+correctly declared meaningless. **A naive per-combo analysis without this null would have called a
+million events.**
+
+**At expected false $\le2$: margin $\ge11.37$ nats, 10,063 combos → 102 events, 2.82% of all
+missing.** For comparison: 73 events / 2.28% (floor 10, unstratified) and 132 / 3.15% (floor 2,
+stratified, budget). So the per-combo route lands **between the two, with no strata, no floor, and
+an exactly exchangeable null**.
+
+Two things worth saying out loud:
+- **All 102 events beat every one of their 997 permutations** ($n_{\ge}=0$). That is the sentence the
+  question was asking for, and it needs no threshold argument.
+- **Minimum clade size among called events is 5 cells** — independent confirmation of Correction 2:
+  small clades are certifiable, on tapes that should have been there.
+
+⇒ **This should become the primary analysis**, with the stratified global threshold kept as the
+cross-check it now is. Remaining arms in flight (~70 min); `pc_merge` collects them.
