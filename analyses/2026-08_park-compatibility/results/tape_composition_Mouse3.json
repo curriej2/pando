@@ -1,0 +1,2590 @@
+{
+ "arm": "Mouse3",
+ "n_cells": 1928,
+ "n_tapes": 166,
+ "n_symbols": 97,
+ "n_insertions": 949508,
+ "xi_pooled_top": {
+  "ATATGGA": 0.04378056846282496,
+  "AACCGGA": 0.042331396891864,
+  "AACGGGA": 0.03402393660716919,
+  "ATACGGA": 0.029589008202142584,
+  "TTTAGGA": 0.028809657211945554,
+  "ACGAGGA": 0.02814404933923674,
+  "AACTGGA": 0.024463195676076452,
+  "CAAAGGA": 0.02152904451568602,
+  "ATGTGGA": 0.02120466599544185,
+  "CCTGGGA": 0.020440059483437738
+ },
+ "per_site": [
+  {
+   "site": 1,
+   "n": 191057,
+   "tv_vs_pooled": 0.05462108017331626
+  },
+  {
+   "site": 2,
+   "n": 187909,
+   "tv_vs_pooled": 0.05580566561090229
+  },
+  {
+   "site": 3,
+   "n": 181902,
+   "tv_vs_pooled": 0.06020106743265182
+  },
+  {
+   "site": 4,
+   "n": 170413,
+   "tv_vs_pooled": 0.05281800227198393
+  },
+  {
+   "site": 5,
+   "n": 141814,
+   "tv_vs_pooled": 0.06189536510476679
+  },
+  {
+   "site": 6,
+   "n": 76413,
+   "tv_vs_pooled": 0.12388533044156136
+  }
+ ],
+ "per_tape": [
+  {
+   "tape": "GCTGTTCCCC",
+   "idx": 66,
+   "n_cells": 259,
+   "n_ins": 1197,
+   "G2": 2503.40312096671,
+   "df": 96,
+   "tv": 0.5261784519101221,
+   "tv_split_floor": 0.16186090982286633,
+   "excess": 0.3643175420872558,
+   "top_enriched": [
+    "ATCTGGA",
+    "CAATGGA",
+    "TAGGGGA"
+   ]
+  },
+  {
+   "tape": "TCTTTTTCTT",
+   "idx": 124,
+   "n_cells": 1397,
+   "n_ins": 7042,
+   "G2": 7106.959284516186,
+   "df": 96,
+   "tv": 0.34179302322214933,
+   "tv_split_floor": 0.07557223159186977,
+   "excess": 0.26622079163027956,
+   "top_enriched": [
+    "TTTGGGA",
+    "GCCGGGA",
+    "GAATGGA"
+   ]
+  },
+  {
+   "tape": "GCGTTAGTAA",
+   "idx": 64,
+   "n_cells": 1349,
+   "n_ins": 6656,
+   "G2": 4609.901383628404,
+   "df": 96,
+   "tv": 0.32971808680979964,
+   "tv_split_floor": 0.07803380756166597,
+   "excess": 0.25168427924813364,
+   "top_enriched": [
+    "GTTCGGA",
+    "ACGAGGA",
+    "GACAGGA"
+   ]
+  },
+  {
+   "tape": "GTTGGTAAGC",
+   "idx": 95,
+   "n_cells": 1503,
+   "n_ins": 7692,
+   "G2": 5015.436437657794,
+   "df": 96,
+   "tv": 0.3187415442522473,
+   "tv_split_floor": 0.06822931539159723,
+   "excess": 0.2505122288606501,
+   "top_enriched": [
+    "ATCGGGA",
+    "ATACGGA",
+    "GAAAGGA"
+   ]
+  },
+  {
+   "tape": "TTTACTGTAT",
+   "idx": 160,
+   "n_cells": 1501,
+   "n_ins": 7757,
+   "G2": 5083.941662208211,
+   "df": 96,
+   "tv": 0.32169849570637843,
+   "tv_split_floor": 0.07534871582177909,
+   "excess": 0.24634977988459933,
+   "top_enriched": [
+    "GACTGGA",
+    "TTTCGGA",
+    "GACAGGA"
+   ]
+  },
+  {
+   "tape": "GGAAGTGGTA",
+   "idx": 68,
+   "n_cells": 1391,
+   "n_ins": 6570,
+   "G2": 4169.775033788393,
+   "df": 96,
+   "tv": 0.3212171301217001,
+   "tv_split_floor": 0.07734088076243469,
+   "excess": 0.24387624935926544,
+   "top_enriched": [
+    "CCGGGGA",
+    "CCTGGGA",
+    "TTTAGGA"
+   ]
+  },
+  {
+   "tape": "CGGTTCCGTT",
+   "idx": 35,
+   "n_cells": 1521,
+   "n_ins": 7242,
+   "G2": 4693.655507271848,
+   "df": 96,
+   "tv": 0.31409586428248987,
+   "tv_split_floor": 0.07655265923059759,
+   "excess": 0.23754320505189228,
+   "top_enriched": [
+    "GAATGGA",
+    "TAGGGGA",
+    "ACCAGGA"
+   ]
+  },
+  {
+   "tape": "GTGGTCGTTG",
+   "idx": 91,
+   "n_cells": 1006,
+   "n_ins": 4958,
+   "G2": 3391.735746838431,
+   "df": 96,
+   "tv": 0.3302575744964029,
+   "tv_split_floor": 0.09550933450014586,
+   "excess": 0.23474823999625705,
+   "top_enriched": [
+    "CCTGGGA",
+    "ATCGGGA",
+    "CACGGA"
+   ]
+  },
+  {
+   "tape": "CGATTTGTGC",
+   "idx": 29,
+   "n_cells": 1335,
+   "n_ins": 7167,
+   "G2": 4104.221104455024,
+   "df": 96,
+   "tv": 0.3032266247126027,
+   "tv_split_floor": 0.06883462542366277,
+   "excess": 0.23439199928893995,
+   "top_enriched": [
+    "CCTGGGA",
+    "AAGCGGA",
+    "ACCCGGA"
+   ]
+  },
+  {
+   "tape": "CCTTGTGTTG",
+   "idx": 27,
+   "n_cells": 1355,
+   "n_ins": 6594,
+   "G2": 3932.881635991304,
+   "df": 96,
+   "tv": 0.3138313811898039,
+   "tv_split_floor": 0.08079869735607442,
+   "excess": 0.2330326838337295,
+   "top_enriched": [
+    "AACCGGA",
+    "ACATGGA",
+    "ATCAGGA"
+   ]
+  },
+  {
+   "tape": "GGTACGGCTG",
+   "idx": 79,
+   "n_cells": 1326,
+   "n_ins": 6957,
+   "G2": 4275.072036661252,
+   "df": 96,
+   "tv": 0.3119613773481934,
+   "tv_split_floor": 0.07980744515641672,
+   "excess": 0.23215393219177669,
+   "top_enriched": [
+    "GCTAGGA",
+    "AAGAGGA",
+    "AGCTGGA"
+   ]
+  },
+  {
+   "tape": "CATCGACTGC",
+   "idx": 20,
+   "n_cells": 1316,
+   "n_ins": 6620,
+   "G2": 4739.829794781427,
+   "df": 96,
+   "tv": 0.31798746923768484,
+   "tv_split_floor": 0.0866747310314084,
+   "excess": 0.23131273820627646,
+   "top_enriched": [
+    "GCCGGGA",
+    "GTCGGGA",
+    "CTAAGGA"
+   ]
+  },
+  {
+   "tape": "TAAACCGCGA",
+   "idx": 99,
+   "n_cells": 1413,
+   "n_ins": 6494,
+   "G2": 3945.8884335547455,
+   "df": 96,
+   "tv": 0.3063945482212924,
+   "tv_split_floor": 0.07511045292148168,
+   "excess": 0.23128409529981075,
+   "top_enriched": [
+    "CACGGA",
+    "AGCAGGA",
+    "AACCGGA"
+   ]
+  },
+  {
+   "tape": "TTATGTGGAT",
+   "idx": 143,
+   "n_cells": 794,
+   "n_ins": 4116,
+   "G2": 2769.818781281557,
+   "df": 96,
+   "tv": 0.3300393903612742,
+   "tv_split_floor": 0.09964743126468446,
+   "excess": 0.23039195909658977,
+   "top_enriched": [
+    "GAAAGGA",
+    "TCCAGGA",
+    "AACGGGA"
+   ]
+  },
+  {
+   "tape": "AACGGGTTGT",
+   "idx": 0,
+   "n_cells": 1269,
+   "n_ins": 5777,
+   "G2": 3933.876196745008,
+   "df": 96,
+   "tv": 0.32205361390572146,
+   "tv_split_floor": 0.09218623583687824,
+   "excess": 0.22986737806884322,
+   "top_enriched": [
+    "ATCTGGA",
+    "ACAAGGA",
+    "ATCGGGA"
+   ]
+  },
+  {
+   "tape": "TACGGCTATT",
+   "idx": 101,
+   "n_cells": 1481,
+   "n_ins": 7680,
+   "G2": 3910.553220522248,
+   "df": 96,
+   "tv": 0.2868800289609647,
+   "tv_split_floor": 0.06262267436335495,
+   "excess": 0.22425735459760976,
+   "top_enriched": [
+    "ACATGGA",
+    "CCAAGGA",
+    "TCCAGGA"
+   ]
+  },
+  {
+   "tape": "CTCTTAGCGG",
+   "idx": 43,
+   "n_cells": 1197,
+   "n_ins": 6105,
+   "G2": 3596.3167527826777,
+   "df": 96,
+   "tv": 0.3135050673512212,
+   "tv_split_floor": 0.08964300525386228,
+   "excess": 0.22386206209735893,
+   "top_enriched": [
+    "ATAAGGA",
+    "AACCGGA",
+    "GTGTGGA"
+   ]
+  },
+  {
+   "tape": "TATCTTCGGT",
+   "idx": 107,
+   "n_cells": 1222,
+   "n_ins": 6124,
+   "G2": 4303.999622963275,
+   "df": 96,
+   "tv": 0.30349391395903935,
+   "tv_split_floor": 0.07991307534377005,
+   "excess": 0.22358083861526928,
+   "top_enriched": [
+    "ATCCGGA",
+    "AAGCGGA",
+    "ACGTGGA"
+   ]
+  },
+  {
+   "tape": "CTGGGGAAAT",
+   "idx": 46,
+   "n_cells": 1463,
+   "n_ins": 7375,
+   "G2": 4707.417723994097,
+   "df": 96,
+   "tv": 0.3094308940974446,
+   "tv_split_floor": 0.08595896218915001,
+   "excess": 0.22347193190829462,
+   "top_enriched": [
+    "GACTGGA",
+    "GATAGGA",
+    "GATGGA"
+   ]
+  },
+  {
+   "tape": "GCGTACGATG",
+   "idx": 59,
+   "n_cells": 1091,
+   "n_ins": 5182,
+   "G2": 3569.307388377317,
+   "df": 96,
+   "tv": 0.3176625654648753,
+   "tv_split_floor": 0.09585361784282063,
+   "excess": 0.22180894762205466,
+   "top_enriched": [
+    "CTGGGGA",
+    "GATGGA",
+    "GATTGGA"
+   ]
+  },
+  {
+   "tape": "AGGTTTGTCC",
+   "idx": 12,
+   "n_cells": 1410,
+   "n_ins": 7009,
+   "G2": 3859.908130337979,
+   "df": 96,
+   "tv": 0.3004052400540713,
+   "tv_split_floor": 0.08043864208845732,
+   "excess": 0.21996659796561402,
+   "top_enriched": [
+    "AACTGGA",
+    "AGCAGGA",
+    "AACAGGA"
+   ]
+  },
+  {
+   "tape": "TTTGGTTCAC",
+   "idx": 163,
+   "n_cells": 1509,
+   "n_ins": 6813,
+   "G2": 3907.5534591332807,
+   "df": 96,
+   "tv": 0.2937654313978596,
+   "tv_split_floor": 0.07415438548469695,
+   "excess": 0.21961104591316266,
+   "top_enriched": [
+    "TTTAGGA",
+    "GTCGGGA",
+    "CTGCGGA"
+   ]
+  },
+  {
+   "tape": "TTAATACCCC",
+   "idx": 142,
+   "n_cells": 1451,
+   "n_ins": 7073,
+   "G2": 4091.611334917316,
+   "df": 96,
+   "tv": 0.2931479702953395,
+   "tv_split_floor": 0.07534670162669692,
+   "excess": 0.21780126866864258,
+   "top_enriched": [
+    "GTCTGGA",
+    "ACCAGGA",
+    "GTCGGGA"
+   ]
+  },
+  {
+   "tape": "ATTTGAGTCA",
+   "idx": 17,
+   "n_cells": 1169,
+   "n_ins": 6029,
+   "G2": 3806.0054419565645,
+   "df": 96,
+   "tv": 0.30131688652713584,
+   "tv_split_floor": 0.08403862033863903,
+   "excess": 0.21727826618849683,
+   "top_enriched": [
+    "ACAAGGA",
+    "GACTGGA",
+    "CTAAGGA"
+   ]
+  },
+  {
+   "tape": "TGTGACCTGT",
+   "idx": 139,
+   "n_cells": 1370,
+   "n_ins": 6988,
+   "G2": 3649.2800654855637,
+   "df": 96,
+   "tv": 0.290274904645137,
+   "tv_split_floor": 0.07306567384862392,
+   "excess": 0.21720923079651308,
+   "top_enriched": [
+    "ACGAGGA",
+    "GCGTGGA",
+    "GTCCGGA"
+   ]
+  },
+  {
+   "tape": "GTTTTGACAC",
+   "idx": 98,
+   "n_cells": 1462,
+   "n_ins": 7803,
+   "G2": 4450.128105804402,
+   "df": 96,
+   "tv": 0.29218485598633726,
+   "tv_split_floor": 0.0755015489838805,
+   "excess": 0.21668330700245675,
+   "top_enriched": [
+    "GTCCGGA",
+    "TCCCGGA",
+    "GATGGA"
+   ]
+  },
+  {
+   "tape": "ACTTAAATCA",
+   "idx": 4,
+   "n_cells": 1021,
+   "n_ins": 5210,
+   "G2": 2764.4374251020567,
+   "df": 96,
+   "tv": 0.2994832378584307,
+   "tv_split_floor": 0.08575331192197588,
+   "excess": 0.2137299259364548,
+   "top_enriched": [
+    "GAATGGA",
+    "CAAAGGA",
+    "CCTGGGA"
+   ]
+  },
+  {
+   "tape": "CGGGCATAGT",
+   "idx": 33,
+   "n_cells": 1340,
+   "n_ins": 7179,
+   "G2": 3763.84423180507,
+   "df": 96,
+   "tv": 0.28256977326855554,
+   "tv_split_floor": 0.06910222505502535,
+   "excess": 0.2134675482135302,
+   "top_enriched": [
+    "ATGTGGA",
+    "CTGGGGA",
+    "CCGGGGA"
+   ]
+  },
+  {
+   "tape": "TGCTCGATCC",
+   "idx": 130,
+   "n_cells": 1458,
+   "n_ins": 7271,
+   "G2": 3689.6207457362516,
+   "df": 96,
+   "tv": 0.2923433863010504,
+   "tv_split_floor": 0.07957978888038801,
+   "excess": 0.21276359742066236,
+   "top_enriched": [
+    "TTAAGGA",
+    "CCTGGGA",
+    "AAGCGGA"
+   ]
+  },
+  {
+   "tape": "TCATCGGCGT",
+   "idx": 115,
+   "n_cells": 1496,
+   "n_ins": 7163,
+   "G2": 4020.6773364481965,
+   "df": 96,
+   "tv": 0.2944066437400542,
+   "tv_split_floor": 0.0826813740876274,
+   "excess": 0.21172526965242683,
+   "top_enriched": [
+    "GCGTGGA",
+    "AACCGGA",
+    "GTGTGGA"
+   ]
+  },
+  {
+   "tape": "TTTGTGTAAG",
+   "idx": 164,
+   "n_cells": 1525,
+   "n_ins": 7781,
+   "G2": 4326.51779312859,
+   "df": 96,
+   "tv": 0.28791010010074913,
+   "tv_split_floor": 0.07650894352973298,
+   "excess": 0.21140115657101616,
+   "top_enriched": [
+    "GCTAGGA",
+    "AGCTGGA",
+    "TTACGGA"
+   ]
+  },
+  {
+   "tape": "TTGTCTGCGT",
+   "idx": 156,
+   "n_cells": 1358,
+   "n_ins": 6616,
+   "G2": 3594.2966625594495,
+   "df": 96,
+   "tv": 0.2893707278550392,
+   "tv_split_floor": 0.07828054629467157,
+   "excess": 0.21109018156036763,
+   "top_enriched": [
+    "AACAGGA",
+    "TAGAGGA",
+    "ATACGGA"
+   ]
+  },
+  {
+   "tape": "CCCTGTTCAA",
+   "idx": 23,
+   "n_cells": 1533,
+   "n_ins": 8007,
+   "G2": 4079.734454058688,
+   "df": 96,
+   "tv": 0.2795864464047264,
+   "tv_split_floor": 0.06898560801674347,
+   "excess": 0.21060083838798294,
+   "top_enriched": [
+    "AACCGGA",
+    "GAAAGGA",
+    "ACAGGGA"
+   ]
+  },
+  {
+   "tape": "GTGTGGACTG",
+   "idx": 92,
+   "n_cells": 554,
+   "n_ins": 2714,
+   "G2": 2285.4827845614604,
+   "df": 96,
+   "tv": 0.3429297680888622,
+   "tv_split_floor": 0.1324208012943182,
+   "excess": 0.210508966794544,
+   "top_enriched": [
+    "CTGCGGA",
+    "GTCTGGA",
+    "CCAAGGA"
+   ]
+  },
+  {
+   "tape": "ATAGCACGAT",
+   "idx": 14,
+   "n_cells": 1291,
+   "n_ins": 6348,
+   "G2": 3315.8150782607336,
+   "df": 96,
+   "tv": 0.2848737132523068,
+   "tv_split_floor": 0.07447510534819,
+   "excess": 0.2103986079041168,
+   "top_enriched": [
+    "GAATGGA",
+    "AAGAGGA",
+    "ACAAGGA"
+   ]
+  },
+  {
+   "tape": "TGGCGTCGGT",
+   "idx": 133,
+   "n_cells": 1033,
+   "n_ins": 5155,
+   "G2": 3403.2932342121517,
+   "df": 96,
+   "tv": 0.30784835552378564,
+   "tv_split_floor": 0.09753145068741743,
+   "excess": 0.21031690483636822,
+   "top_enriched": [
+    "AACTGGA",
+    "CCAGGGA",
+    "CCGGGGA"
+   ]
+  },
+  {
+   "tape": "TGCTTCCGTC",
+   "idx": 131,
+   "n_cells": 1002,
+   "n_ins": 4477,
+   "G2": 2845.9234554624063,
+   "df": 96,
+   "tv": 0.31292273321970565,
+   "tv_split_floor": 0.10314582594895277,
+   "excess": 0.20977690727075288,
+   "top_enriched": [
+    "ACAAGGA",
+    "ATGTGGA",
+    "GACCGGA"
+   ]
+  },
+  {
+   "tape": "TTTGAGTTTG",
+   "idx": 162,
+   "n_cells": 1373,
+   "n_ins": 6869,
+   "G2": 3413.3657537070494,
+   "df": 96,
+   "tv": 0.2957026712044458,
+   "tv_split_floor": 0.08624592061429792,
+   "excess": 0.2094567505901479,
+   "top_enriched": [
+    "TTTAGGA",
+    "TCTAGGA",
+    "AACGGGA"
+   ]
+  },
+  {
+   "tape": "CTGTACCCAC",
+   "idx": 47,
+   "n_cells": 1328,
+   "n_ins": 6652,
+   "G2": 3408.7228734038626,
+   "df": 96,
+   "tv": 0.288368145776055,
+   "tv_split_floor": 0.07900738014552361,
+   "excess": 0.2093607656305314,
+   "top_enriched": [
+    "AATAGGA",
+    "AACGGGA",
+    "ACGCGGA"
+   ]
+  },
+  {
+   "tape": "CGTCCTGGGC",
+   "idx": 36,
+   "n_cells": 1398,
+   "n_ins": 7192,
+   "G2": 3032.1589646545103,
+   "df": 96,
+   "tv": 0.2692029401406695,
+   "tv_split_floor": 0.06037611992983553,
+   "excess": 0.20882682021083396,
+   "top_enriched": [
+    "ATATGGA",
+    "AACTGGA",
+    "GTCGGGA"
+   ]
+  },
+  {
+   "tape": "GCGGTTCGGA",
+   "idx": 58,
+   "n_cells": 1239,
+   "n_ins": 5974,
+   "G2": 3289.6009246622616,
+   "df": 96,
+   "tv": 0.29366589409660215,
+   "tv_split_floor": 0.0848766677607213,
+   "excess": 0.20878922633588087,
+   "top_enriched": [
+    "ACGAGGA",
+    "ACATGGA",
+    "TTTGGGA"
+   ]
+  },
+  {
+   "tape": "TTCAGTGTTT",
+   "idx": 148,
+   "n_cells": 1341,
+   "n_ins": 6904,
+   "G2": 3534.754901588378,
+   "df": 96,
+   "tv": 0.2912435537689257,
+   "tv_split_floor": 0.08414329674556965,
+   "excess": 0.20710025702335605,
+   "top_enriched": [
+    "AACAGGA",
+    "GATGGGA",
+    "ATGTGGA"
+   ]
+  },
+  {
+   "tape": "CCTTTGGTGT",
+   "idx": 28,
+   "n_cells": 1118,
+   "n_ins": 5470,
+   "G2": 3674.420568499273,
+   "df": 96,
+   "tv": 0.285523399702685,
+   "tv_split_floor": 0.07894421110962645,
+   "excess": 0.20657918859305852,
+   "top_enriched": [
+    "CGACGGA",
+    "ATACGGA",
+    "GTCTGGA"
+   ]
+  },
+  {
+   "tape": "GGATGGGGCA",
+   "idx": 69,
+   "n_cells": 1169,
+   "n_ins": 5863,
+   "G2": 3222.0323423688505,
+   "df": 96,
+   "tv": 0.2890471315863242,
+   "tv_split_floor": 0.08248811952670819,
+   "excess": 0.20655901205961602,
+   "top_enriched": [
+    "ACCTGGA",
+    "GCCGGGA",
+    "GACCGGA"
+   ]
+  },
+  {
+   "tape": "TATTGGGTCA",
+   "idx": 111,
+   "n_cells": 994,
+   "n_ins": 4938,
+   "G2": 2906.1701373604415,
+   "df": 96,
+   "tv": 0.3069847113692134,
+   "tv_split_floor": 0.10156666342889997,
+   "excess": 0.20541804794031343,
+   "top_enriched": [
+    "GCCGGGA",
+    "ACCAGGA",
+    "ACGTGGA"
+   ]
+  },
+  {
+   "tape": "TTGGTGATTG",
+   "idx": 154,
+   "n_cells": 1433,
+   "n_ins": 6962,
+   "G2": 2986.792305919347,
+   "df": 96,
+   "tv": 0.274115387310653,
+   "tv_split_floor": 0.06901289081027868,
+   "excess": 0.20510249650037432,
+   "top_enriched": [
+    "CCTGGGA",
+    "AACGGGA",
+    "ACGTGGA"
+   ]
+  },
+  {
+   "tape": "TGTTATCATA",
+   "idx": 140,
+   "n_cells": 1547,
+   "n_ins": 7796,
+   "G2": 3467.5877201596413,
+   "df": 96,
+   "tv": 0.26670652329767724,
+   "tv_split_floor": 0.06191335925508462,
+   "excess": 0.20479316404259262,
+   "top_enriched": [
+    "TTTAGGA",
+    "ACGAGGA",
+    "TTAAGGA"
+   ]
+  },
+  {
+   "tape": "TTGTCGCCTG",
+   "idx": 155,
+   "n_cells": 1107,
+   "n_ins": 5196,
+   "G2": 3208.365213814553,
+   "df": 96,
+   "tv": 0.30154848354700303,
+   "tv_split_floor": 0.09690532729369897,
+   "excess": 0.20464315625330406,
+   "top_enriched": [
+    "ATTAGGA",
+    "GAAAGGA",
+    "GTGCGGA"
+   ]
+  },
+  {
+   "tape": "GTCTAAAGTG",
+   "idx": 88,
+   "n_cells": 1502,
+   "n_ins": 7483,
+   "G2": 3452.847336811419,
+   "df": 96,
+   "tv": 0.2736080975803197,
+   "tv_split_floor": 0.07050704291815116,
+   "excess": 0.20310105466216852,
+   "top_enriched": [
+    "AACCGGA",
+    "CCCGGGA",
+    "ATATGGA"
+   ]
+  },
+  {
+   "tape": "TTATTTGTTC",
+   "idx": 147,
+   "n_cells": 887,
+   "n_ins": 4590,
+   "G2": 2767.358364124864,
+   "df": 96,
+   "tv": 0.3111347527319186,
+   "tv_split_floor": 0.10819143425296193,
+   "excess": 0.20294331847895666,
+   "top_enriched": [
+    "ATGTGGA",
+    "CTGGGGA",
+    "CACGGA"
+   ]
+  },
+  {
+   "tape": "TGAGGGGTGT",
+   "idx": 127,
+   "n_cells": 1363,
+   "n_ins": 7122,
+   "G2": 3437.1058423401246,
+   "df": 96,
+   "tv": 0.2689956767330269,
+   "tv_split_floor": 0.0673597660113355,
+   "excess": 0.20163591072169137,
+   "top_enriched": [
+    "CCCGGGA",
+    "GTGCGGA",
+    "ATCAGGA"
+   ]
+  },
+  {
+   "tape": "TGTATCGATG",
+   "idx": 138,
+   "n_cells": 1422,
+   "n_ins": 7185,
+   "G2": 4059.006947682582,
+   "df": 96,
+   "tv": 0.28678122160364355,
+   "tv_split_floor": 0.0852652710581535,
+   "excess": 0.20151595054549004,
+   "top_enriched": [
+    "ACGAGGA",
+    "ATATGGA",
+    "ACTTGGA"
+   ]
+  },
+  {
+   "tape": "CGCCACTTTC",
+   "idx": 30,
+   "n_cells": 1494,
+   "n_ins": 7588,
+   "G2": 3454.881217453529,
+   "df": 96,
+   "tv": 0.2720310410611687,
+   "tv_split_floor": 0.07244332067389272,
+   "excess": 0.19958772038727599,
+   "top_enriched": [
+    "ACGTGGA",
+    "GGCTGGA",
+    "TTTCGGA"
+   ]
+  },
+  {
+   "tape": "GGTGTGAATT",
+   "idx": 83,
+   "n_cells": 1481,
+   "n_ins": 7103,
+   "G2": 3522.9772189836917,
+   "df": 96,
+   "tv": 0.27537768568663956,
+   "tv_split_floor": 0.07613994837969604,
+   "excess": 0.19923773730694352,
+   "top_enriched": [
+    "GTGTGGA",
+    "GCCGGGA",
+    "ATATGGA"
+   ]
+  },
+  {
+   "tape": "CCGTTTGAAG",
+   "idx": 26,
+   "n_cells": 1630,
+   "n_ins": 7846,
+   "G2": 3669.2162968445355,
+   "df": 96,
+   "tv": 0.2733596602977187,
+   "tv_split_floor": 0.0741334944832157,
+   "excess": 0.19922616581450298,
+   "top_enriched": [
+    "GATGGGA",
+    "CCAAGGA",
+    "GACTGGA"
+   ]
+  },
+  {
+   "tape": "CGTTTTATTC",
+   "idx": 42,
+   "n_cells": 1334,
+   "n_ins": 6985,
+   "G2": 3386.85654926413,
+   "df": 96,
+   "tv": 0.277887870786981,
+   "tv_split_floor": 0.07942048268676326,
+   "excess": 0.19846738810021775,
+   "top_enriched": [
+    "ATTAGGA",
+    "CAGAGGA",
+    "AGCTGGA"
+   ]
+  },
+  {
+   "tape": "GAGAAATTGG",
+   "idx": 53,
+   "n_cells": 1389,
+   "n_ins": 6759,
+   "G2": 3035.145618192104,
+   "df": 96,
+   "tv": 0.2727470721613863,
+   "tv_split_floor": 0.07434249858418256,
+   "excess": 0.1984045735772037,
+   "top_enriched": [
+    "GACCGGA",
+    "TCCAGGA",
+    "TTTAGGA"
+   ]
+  },
+  {
+   "tape": "TTCATAGCTG",
+   "idx": 149,
+   "n_cells": 1314,
+   "n_ins": 6891,
+   "G2": 3618.334719735792,
+   "df": 96,
+   "tv": 0.2901200096905032,
+   "tv_split_floor": 0.09186295106381903,
+   "excess": 0.1982570586266842,
+   "top_enriched": [
+    "AAGCGGA",
+    "GACAGGA",
+    "GACTGGA"
+   ]
+  },
+  {
+   "tape": "CTTGGTACCC",
+   "idx": 50,
+   "n_cells": 1385,
+   "n_ins": 6959,
+   "G2": 3833.2185442909563,
+   "df": 96,
+   "tv": 0.27853886656866456,
+   "tv_split_floor": 0.08126393026318181,
+   "excess": 0.19727493630548276,
+   "top_enriched": [
+    "GCGTGGA",
+    "ACGTGGA",
+    "ATTAGGA"
+   ]
+  },
+  {
+   "tape": "GCGTATGCAA",
+   "idx": 60,
+   "n_cells": 1240,
+   "n_ins": 6355,
+   "G2": 2740.4649682329145,
+   "df": 96,
+   "tv": 0.2690876883048888,
+   "tv_split_floor": 0.07198850121585926,
+   "excess": 0.19709918708902952,
+   "top_enriched": [
+    "CAAAGGA",
+    "TAGGGGA",
+    "GATGGA"
+   ]
+  },
+  {
+   "tape": "TAGGTCCTTA",
+   "idx": 104,
+   "n_cells": 1379,
+   "n_ins": 7009,
+   "G2": 3533.0464929856835,
+   "df": 96,
+   "tv": 0.2736757301227718,
+   "tv_split_floor": 0.07783111032343935,
+   "excess": 0.19584461979933243,
+   "top_enriched": [
+    "AACGGGA",
+    "GATTGGA",
+    "ATCAGGA"
+   ]
+  },
+  {
+   "tape": "AGGATTCGTT",
+   "idx": 9,
+   "n_cells": 1457,
+   "n_ins": 7163,
+   "G2": 3369.2768316848847,
+   "df": 96,
+   "tv": 0.27815332079952676,
+   "tv_split_floor": 0.08241427375768028,
+   "excess": 0.19573904704184647,
+   "top_enriched": [
+    "AGCAGGA",
+    "AACGGGA",
+    "AACTGGA"
+   ]
+  },
+  {
+   "tape": "TCGCGTCTGG",
+   "idx": 119,
+   "n_cells": 1414,
+   "n_ins": 7032,
+   "G2": 3467.590042246019,
+   "df": 96,
+   "tv": 0.26486593664804275,
+   "tv_split_floor": 0.0699567292307264,
+   "excess": 0.19490920741731635,
+   "top_enriched": [
+    "AACAGGA",
+    "ATCAGGA",
+    "GTGTGGA"
+   ]
+  },
+  {
+   "tape": "TCCTGTTCTT",
+   "idx": 118,
+   "n_cells": 1385,
+   "n_ins": 7190,
+   "G2": 3646.1480293873897,
+   "df": 96,
+   "tv": 0.2881139203479259,
+   "tv_split_floor": 0.09358263840125967,
+   "excess": 0.1945312819466662,
+   "top_enriched": [
+    "TCCAGGA",
+    "CACGGA",
+    "ACAAGGA"
+   ]
+  },
+  {
+   "tape": "GAGGTGGCGT",
+   "idx": 54,
+   "n_cells": 1460,
+   "n_ins": 7451,
+   "G2": 3469.9769405536586,
+   "df": 96,
+   "tv": 0.27704578537703645,
+   "tv_split_floor": 0.0828525923263416,
+   "excess": 0.19419319305069485,
+   "top_enriched": [
+    "ACAGGGA",
+    "GTGTGGA",
+    "AACCGGA"
+   ]
+  },
+  {
+   "tape": "GATTGGTGTC",
+   "idx": 56,
+   "n_cells": 535,
+   "n_ins": 2851,
+   "G2": 1860.9186169916643,
+   "df": 96,
+   "tv": 0.3128791913010438,
+   "tv_split_floor": 0.11890223491188343,
+   "excess": 0.19397695638916038,
+   "top_enriched": [
+    "ACGTGGA",
+    "AGCAGGA",
+    "AATAGGA"
+   ]
+  },
+  {
+   "tape": "GGGGAGGCTT",
+   "idx": 73,
+   "n_cells": 1293,
+   "n_ins": 6773,
+   "G2": 3346.844067279768,
+   "df": 96,
+   "tv": 0.27490238351314616,
+   "tv_split_floor": 0.08162466607286337,
+   "excess": 0.1932777174402828,
+   "top_enriched": [
+    "CAAAGGA",
+    "AGCAGGA",
+    "GAAAGGA"
+   ]
+  },
+  {
+   "tape": "GTTGCGTGTT",
+   "idx": 94,
+   "n_cells": 1362,
+   "n_ins": 6348,
+   "G2": 2709.476524296216,
+   "df": 96,
+   "tv": 0.27653624834891805,
+   "tv_split_floor": 0.08395126974057045,
+   "excess": 0.1925849786083476,
+   "top_enriched": [
+    "ATATGGA",
+    "AACGGGA",
+    "AGCAGGA"
+   ]
+  },
+  {
+   "tape": "CACAAATGAG",
+   "idx": 19,
+   "n_cells": 1500,
+   "n_ins": 7444,
+   "G2": 4240.103348370072,
+   "df": 96,
+   "tv": 0.28181314758361153,
+   "tv_split_floor": 0.0908394711012929,
+   "excess": 0.19097367648231864,
+   "top_enriched": [
+    "GATAGGA",
+    "GATTGGA",
+    "TGGCGGA"
+   ]
+  },
+  {
+   "tape": "GGTAATCCAG",
+   "idx": 77,
+   "n_cells": 1406,
+   "n_ins": 7115,
+   "G2": 3334.684263510494,
+   "df": 96,
+   "tv": 0.26572759018142017,
+   "tv_split_floor": 0.07507658352155243,
+   "excess": 0.19065100665986773,
+   "top_enriched": [
+    "ATCGGGA",
+    "AGCAGGA",
+    "GTCTGGA"
+   ]
+  },
+  {
+   "tape": "TATGATCACC",
+   "idx": 108,
+   "n_cells": 1106,
+   "n_ins": 5638,
+   "G2": 2598.1658703705107,
+   "df": 96,
+   "tv": 0.2755998392725828,
+   "tv_split_floor": 0.08525436368957151,
+   "excess": 0.1903454755830113,
+   "top_enriched": [
+    "AACTGGA",
+    "ACAAGGA",
+    "ACATGGA"
+   ]
+  },
+  {
+   "tape": "GGGTGCGATC",
+   "idx": 76,
+   "n_cells": 1416,
+   "n_ins": 7381,
+   "G2": 3341.7017081491244,
+   "df": 96,
+   "tv": 0.25664466310349254,
+   "tv_split_floor": 0.06654466766873836,
+   "excess": 0.1900999954347542,
+   "top_enriched": [
+    "GTCCGGA",
+    "CAATGGA",
+    "GAAAGGA"
+   ]
+  },
+  {
+   "tape": "GTCGTGGCGG",
+   "idx": 87,
+   "n_cells": 895,
+   "n_ins": 4257,
+   "G2": 2330.183802454708,
+   "df": 96,
+   "tv": 0.28101882598485683,
+   "tv_split_floor": 0.09240731947036541,
+   "excess": 0.18861150651449143,
+   "top_enriched": [
+    "ACTTGGA",
+    "ATATGGA",
+    "GGCTGGA"
+   ]
+  },
+  {
+   "tape": "TCCAGGTGCA",
+   "idx": 116,
+   "n_cells": 1444,
+   "n_ins": 7256,
+   "G2": 3251.7901832042267,
+   "df": 96,
+   "tv": 0.26808277508388834,
+   "tv_split_floor": 0.08068788104905096,
+   "excess": 0.1873948940348374,
+   "top_enriched": [
+    "GTGTGGA",
+    "AATAGGA",
+    "AGCAGGA"
+   ]
+  },
+  {
+   "tape": "CGTGGGTCTC",
+   "idx": 37,
+   "n_cells": 1523,
+   "n_ins": 7400,
+   "G2": 3407.2331405814625,
+   "df": 96,
+   "tv": 0.2665198619447991,
+   "tv_split_floor": 0.07987052603036877,
+   "excess": 0.18664933591443034,
+   "top_enriched": [
+    "CCTGGGA",
+    "GGCTGGA",
+    "CATGGGA"
+   ]
+  },
+  {
+   "tape": "TTGAATCTCC",
+   "idx": 152,
+   "n_cells": 1532,
+   "n_ins": 7756,
+   "G2": 3447.9588583387435,
+   "df": 96,
+   "tv": 0.2650789130554585,
+   "tv_split_floor": 0.07957052053917137,
+   "excess": 0.18550839251628715,
+   "top_enriched": [
+    "GTTCGGA",
+    "AACCGGA",
+    "GACCGGA"
+   ]
+  },
+  {
+   "tape": "TCTGCAGCCT",
+   "idx": 122,
+   "n_cells": 1286,
+   "n_ins": 6637,
+   "G2": 3184.9392352323994,
+   "df": 96,
+   "tv": 0.2692592877348996,
+   "tv_split_floor": 0.08381854275527753,
+   "excess": 0.18544074497962207,
+   "top_enriched": [
+    "CCGGGGA",
+    "AACGGGA",
+    "ACTTGGA"
+   ]
+  },
+  {
+   "tape": "GAACGACTTC",
+   "idx": 51,
+   "n_cells": 834,
+   "n_ins": 4059,
+   "G2": 2081.871327468073,
+   "df": 96,
+   "tv": 0.28627626267165796,
+   "tv_split_floor": 0.1012405694624199,
+   "excess": 0.18503569320923807,
+   "top_enriched": [
+    "AACAGGA",
+    "TTGCGGA",
+    "GACCGGA"
+   ]
+  },
+  {
+   "tape": "TTGTTTAAGC",
+   "idx": 158,
+   "n_cells": 1159,
+   "n_ins": 5754,
+   "G2": 2730.6379517090277,
+   "df": 96,
+   "tv": 0.2822511653507422,
+   "tv_split_floor": 0.09734338095463684,
+   "excess": 0.18490778439610533,
+   "top_enriched": [
+    "ATACGGA",
+    "CGAAGGA",
+    "AACCGGA"
+   ]
+  },
+  {
+   "tape": "GGTGGGTGAA",
+   "idx": 82,
+   "n_cells": 1480,
+   "n_ins": 7357,
+   "G2": 2932.984172539441,
+   "df": 96,
+   "tv": 0.2620799253001646,
+   "tv_split_floor": 0.07730089823235796,
+   "excess": 0.18477902706780663,
+   "top_enriched": [
+    "CCAAGGA",
+    "ATACGGA",
+    "GTCGGGA"
+   ]
+  },
+  {
+   "tape": "AGAAAATTAC",
+   "idx": 6,
+   "n_cells": 1574,
+   "n_ins": 7707,
+   "G2": 3343.6036676123313,
+   "df": 96,
+   "tv": 0.2549865391513963,
+   "tv_split_floor": 0.07081092942224144,
+   "excess": 0.18417560972915487,
+   "top_enriched": [
+    "AACTGGA",
+    "ATGTGGA",
+    "CCCGGGA"
+   ]
+  },
+  {
+   "tape": "AATTTGATCT",
+   "idx": 1,
+   "n_cells": 1232,
+   "n_ins": 5874,
+   "G2": 2757.4747569858187,
+   "df": 96,
+   "tv": 0.25552998669496085,
+   "tv_split_floor": 0.07161335340042571,
+   "excess": 0.18391663329453514,
+   "top_enriched": [
+    "CATGGGA",
+    "GGCAGGA",
+    "CCTGGGA"
+   ]
+  },
+  {
+   "tape": "CCGTTCCGTA",
+   "idx": 24,
+   "n_cells": 1368,
+   "n_ins": 6869,
+   "G2": 3347.1556331773254,
+   "df": 96,
+   "tv": 0.26436537457973713,
+   "tv_split_floor": 0.08104991183730248,
+   "excess": 0.18331546274243465,
+   "top_enriched": [
+    "AACAGGA",
+    "AGCAGGA",
+    "GAGAGGA"
+   ]
+  },
+  {
+   "tape": "TGAATGTGCG",
+   "idx": 126,
+   "n_cells": 1416,
+   "n_ins": 7589,
+   "G2": 3712.509402549664,
+   "df": 96,
+   "tv": 0.2615041056900122,
+   "tv_split_floor": 0.07844179050490831,
+   "excess": 0.1830623151851039,
+   "top_enriched": [
+    "GATAGGA",
+    "CCTGGGA",
+    "ACGTGGA"
+   ]
+  },
+  {
+   "tape": "GTTTGCCGCA",
+   "idx": 97,
+   "n_cells": 1083,
+   "n_ins": 5343,
+   "G2": 2510.4988040546305,
+   "df": 96,
+   "tv": 0.27382056387178455,
+   "tv_split_floor": 0.09077297610938721,
+   "excess": 0.18304758776239732,
+   "top_enriched": [
+    "AACCGGA",
+    "ACAAGGA",
+    "CAAAGGA"
+   ]
+  },
+  {
+   "tape": "TGCATGTGTC",
+   "idx": 129,
+   "n_cells": 1196,
+   "n_ins": 6201,
+   "G2": 3005.1744629795276,
+   "df": 96,
+   "tv": 0.2818642374453437,
+   "tv_split_floor": 0.09917938977768037,
+   "excess": 0.18268484766766335,
+   "top_enriched": [
+    "GAATGGA",
+    "GATGGGA",
+    "ACCTGGA"
+   ]
+  },
+  {
+   "tape": "TTTTGTGTGA",
+   "idx": 165,
+   "n_cells": 1541,
+   "n_ins": 7960,
+   "G2": 4059.4523446441162,
+   "df": 96,
+   "tv": 0.2644566103770597,
+   "tv_split_floor": 0.08234704524573123,
+   "excess": 0.18210956513132848,
+   "top_enriched": [
+    "GTGCGGA",
+    "ATCTGGA",
+    "ACATGGA"
+   ]
+  },
+  {
+   "tape": "TATTCGTGCA",
+   "idx": 110,
+   "n_cells": 1414,
+   "n_ins": 7425,
+   "G2": 2892.3619377294804,
+   "df": 96,
+   "tv": 0.2584184942875283,
+   "tv_split_floor": 0.07653898170113818,
+   "excess": 0.1818795125863901,
+   "top_enriched": [
+    "ATATGGA",
+    "ACCAGGA",
+    "CAAAGGA"
+   ]
+  },
+  {
+   "tape": "TCGTCAGCGT",
+   "idx": 121,
+   "n_cells": 1197,
+   "n_ins": 5537,
+   "G2": 2753.055461291021,
+   "df": 96,
+   "tv": 0.27109970345529344,
+   "tv_split_floor": 0.08924428034534924,
+   "excess": 0.18185542310994418,
+   "top_enriched": [
+    "TAGGGGA",
+    "ATCCGGA",
+    "GACTGGA"
+   ]
+  },
+  {
+   "tape": "AGTTGAGTTA",
+   "idx": 13,
+   "n_cells": 1287,
+   "n_ins": 6166,
+   "G2": 2798.75625904048,
+   "df": 96,
+   "tv": 0.2592773332501197,
+   "tv_split_floor": 0.07852639101187148,
+   "excess": 0.18075094223824822,
+   "top_enriched": [
+    "AACGGGA",
+    "ACCCGGA",
+    "GATAGGA"
+   ]
+  },
+  {
+   "tape": "TTGTGTTGGT",
+   "idx": 157,
+   "n_cells": 1279,
+   "n_ins": 6364,
+   "G2": 2629.6097877034954,
+   "df": 96,
+   "tv": 0.25328619055372315,
+   "tv_split_floor": 0.07302564621248996,
+   "excess": 0.18026054434123318,
+   "top_enriched": [
+    "CAAAGGA",
+    "ATACGGA",
+    "AATAGGA"
+   ]
+  },
+  {
+   "tape": "GGTGTGTGAT",
+   "idx": 84,
+   "n_cells": 1420,
+   "n_ins": 6852,
+   "G2": 3480.0442340202753,
+   "df": 96,
+   "tv": 0.2672834309497861,
+   "tv_split_floor": 0.08784980408517183,
+   "excess": 0.17943362686461428,
+   "top_enriched": [
+    "ATCGGGA",
+    "GTGCGGA",
+    "ACAGGGA"
+   ]
+  },
+  {
+   "tape": "TATTTAGGGT",
+   "idx": 112,
+   "n_cells": 1533,
+   "n_ins": 7723,
+   "G2": 3020.7819756000813,
+   "df": 96,
+   "tv": 0.25598069848902966,
+   "tv_split_floor": 0.07659152394377909,
+   "excess": 0.17938917454525055,
+   "top_enriched": [
+    "GACAGGA",
+    "TTTAGGA",
+    "ATACGGA"
+   ]
+  },
+  {
+   "tape": "ACTGTCCAGG",
+   "idx": 3,
+   "n_cells": 1224,
+   "n_ins": 6274,
+   "G2": 2967.6083062773178,
+   "df": 96,
+   "tv": 0.2775968464458111,
+   "tv_split_floor": 0.09835523106442483,
+   "excess": 0.17924161538138628,
+   "top_enriched": [
+    "ATACGGA",
+    "AAGAGGA",
+    "GTGTGGA"
+   ]
+  },
+  {
+   "tape": "GCGTGGTCGA",
+   "idx": 63,
+   "n_cells": 1239,
+   "n_ins": 6256,
+   "G2": 2968.2741014516632,
+   "df": 96,
+   "tv": 0.27054813450665577,
+   "tv_split_floor": 0.09269795610238042,
+   "excess": 0.17785017840427536,
+   "top_enriched": [
+    "TTTAGGA",
+    "GGAAGGA",
+    "GATGGGA"
+   ]
+  },
+  {
+   "tape": "TCAGAGTTTT",
+   "idx": 114,
+   "n_cells": 991,
+   "n_ins": 5025,
+   "G2": 2366.720556043573,
+   "df": 96,
+   "tv": 0.27888012420278524,
+   "tv_split_floor": 0.10185498364042958,
+   "excess": 0.17702514056235566,
+   "top_enriched": [
+    "AACAGGA",
+    "TAGGGGA",
+    "GAAAGGA"
+   ]
+  },
+  {
+   "tape": "TCACGATCTT",
+   "idx": 113,
+   "n_cells": 1476,
+   "n_ins": 7761,
+   "G2": 3556.598051421822,
+   "df": 96,
+   "tv": 0.27305482643395995,
+   "tv_split_floor": 0.09619217643988387,
+   "excess": 0.17686264999407608,
+   "top_enriched": [
+    "AACCGGA",
+    "TTTAGGA",
+    "AACGGGA"
+   ]
+  },
+  {
+   "tape": "TTCCTCAGTT",
+   "idx": 150,
+   "n_cells": 1268,
+   "n_ins": 6554,
+   "G2": 3114.353223542913,
+   "df": 96,
+   "tv": 0.2700163725826436,
+   "tv_split_floor": 0.09336527193254972,
+   "excess": 0.17665110065009387,
+   "top_enriched": [
+    "AACGGGA",
+    "CAAAGGA",
+    "GCCTGGA"
+   ]
+  },
+  {
+   "tape": "GGTCTTAGTT",
+   "idx": 81,
+   "n_cells": 945,
+   "n_ins": 4190,
+   "G2": 2227.670744416355,
+   "df": 96,
+   "tv": 0.2678647153075061,
+   "tv_split_floor": 0.09161156880744606,
+   "excess": 0.17625314650006005,
+   "top_enriched": [
+    "AGCAGGA",
+    "ATTAGGA",
+    "AGGTGGA"
+   ]
+  },
+  {
+   "tape": "ATTTTGCGCG",
+   "idx": 18,
+   "n_cells": 1099,
+   "n_ins": 5614,
+   "G2": 2590.266466848557,
+   "df": 96,
+   "tv": 0.2566129335483219,
+   "tv_split_floor": 0.0806635588523146,
+   "excess": 0.17594937469600727,
+   "top_enriched": [
+    "TTTAGGA",
+    "ATACGGA",
+    "GTCGGGA"
+   ]
+  },
+  {
+   "tape": "TCCTGCTGCT",
+   "idx": 117,
+   "n_cells": 1331,
+   "n_ins": 6806,
+   "G2": 3193.3853976235214,
+   "df": 96,
+   "tv": 0.26602807056145106,
+   "tv_split_floor": 0.0903294086862126,
+   "excess": 0.17569866187523847,
+   "top_enriched": [
+    "TTACGGA",
+    "ATCCGGA",
+    "GACAGGA"
+   ]
+  },
+  {
+   "tape": "AGGGATCGTC",
+   "idx": 10,
+   "n_cells": 1257,
+   "n_ins": 6175,
+   "G2": 2154.4739745945644,
+   "df": 96,
+   "tv": 0.25471902570710436,
+   "tv_split_floor": 0.07972095572444059,
+   "excess": 0.17499806998266376,
+   "top_enriched": [
+    "ATATGGA",
+    "AACAGGA",
+    "CTGGGGA"
+   ]
+  },
+  {
+   "tape": "CGTGTTCGGG",
+   "idx": 38,
+   "n_cells": 1558,
+   "n_ins": 7346,
+   "G2": 3833.0998726480557,
+   "df": 96,
+   "tv": 0.2669182691331011,
+   "tv_split_floor": 0.09241274101780927,
+   "excess": 0.17450552811529185,
+   "top_enriched": [
+    "CGAAGGA",
+    "TCCCGGA",
+    "CCTGGGA"
+   ]
+  },
+  {
+   "tape": "GTGAACGCGC",
+   "idx": 89,
+   "n_cells": 946,
+   "n_ins": 4539,
+   "G2": 2087.4591786516835,
+   "df": 96,
+   "tv": 0.2647426165128944,
+   "tv_split_floor": 0.09124545340524268,
+   "excess": 0.1734971631076517,
+   "top_enriched": [
+    "ACGAGGA",
+    "TTACGGA",
+    "GAAGGGA"
+   ]
+  },
+  {
+   "tape": "ATGCTTTGGA",
+   "idx": 15,
+   "n_cells": 1459,
+   "n_ins": 7723,
+   "G2": 3318.510413821267,
+   "df": 96,
+   "tv": 0.25134489416775985,
+   "tv_split_floor": 0.07823953484847204,
+   "excess": 0.1731053593192878,
+   "top_enriched": [
+    "ATCGGGA",
+    "CAAAGGA",
+    "TTTAGGA"
+   ]
+  },
+  {
+   "tape": "GGCTGTGAGT",
+   "idx": 72,
+   "n_cells": 1460,
+   "n_ins": 7160,
+   "G2": 2849.5611246836274,
+   "df": 96,
+   "tv": 0.25286380766632316,
+   "tv_split_floor": 0.07978907316401725,
+   "excess": 0.17307473450230593,
+   "top_enriched": [
+    "AACCGGA",
+    "ATCTGGA",
+    "AATAGGA"
+   ]
+  },
+  {
+   "tape": "AGGTGTGGTG",
+   "idx": 11,
+   "n_cells": 1294,
+   "n_ins": 6920,
+   "G2": 2821.754656596673,
+   "df": 96,
+   "tv": 0.2576642975556814,
+   "tv_split_floor": 0.08589314240139745,
+   "excess": 0.17177115515428393,
+   "top_enriched": [
+    "ATATGGA",
+    "AATAGGA",
+    "AGCTGGA"
+   ]
+  },
+  {
+   "tape": "GTCATCCTCG",
+   "idx": 86,
+   "n_cells": 1460,
+   "n_ins": 7014,
+   "G2": 2658.6664870644813,
+   "df": 96,
+   "tv": 0.2521860176165023,
+   "tv_split_floor": 0.08044871995565138,
+   "excess": 0.17173729766085088,
+   "top_enriched": [
+    "ATATGGA",
+    "ATGTGGA",
+    "AACTGGA"
+   ]
+  },
+  {
+   "tape": "AGCAGTGTTG",
+   "idx": 7,
+   "n_cells": 1549,
+   "n_ins": 8161,
+   "G2": 3195.4641211853727,
+   "df": 96,
+   "tv": 0.24420536339731413,
+   "tv_split_floor": 0.07467177909872964,
+   "excess": 0.1695335842985845,
+   "top_enriched": [
+    "GCCGGGA",
+    "AGCTGGA",
+    "CCTGGGA"
+   ]
+  },
+  {
+   "tape": "TGGTTTCTTA",
+   "idx": 136,
+   "n_cells": 1463,
+   "n_ins": 6787,
+   "G2": 2826.2349851265058,
+   "df": 96,
+   "tv": 0.24367415607063436,
+   "tv_split_floor": 0.07488558559121988,
+   "excess": 0.16878857047941448,
+   "top_enriched": [
+    "ACCTGGA",
+    "TAGAGGA",
+    "ACCCGGA"
+   ]
+  },
+  {
+   "tape": "GCGCTCAGTC",
+   "idx": 57,
+   "n_cells": 215,
+   "n_ins": 978,
+   "G2": 705.5632059190161,
+   "df": 96,
+   "tv": 0.33140088821186053,
+   "tv_split_floor": 0.1643629367850944,
+   "excess": 0.16703795142676614,
+   "top_enriched": [
+    "AACCGGA",
+    "TCCCGGA",
+    "ATATGGA"
+   ]
+  },
+  {
+   "tape": "CGTTCCTTCT",
+   "idx": 39,
+   "n_cells": 1362,
+   "n_ins": 6900,
+   "G2": 3277.8675645671156,
+   "df": 96,
+   "tv": 0.2497443685569752,
+   "tv_split_floor": 0.08329205346845399,
+   "excess": 0.1664523150885212,
+   "top_enriched": [
+    "ACTTGGA",
+    "CTAAGGA",
+    "TTTCGGA"
+   ]
+  },
+  {
+   "tape": "GTTGGTATTG",
+   "idx": 96,
+   "n_cells": 1342,
+   "n_ins": 6644,
+   "G2": 2373.583763156724,
+   "df": 96,
+   "tv": 0.22998083174477382,
+   "tv_split_floor": 0.06443591929525434,
+   "excess": 0.16554491244951947,
+   "top_enriched": [
+    "AATAGGA",
+    "AGCAGGA",
+    "ACAAGGA"
+   ]
+  },
+  {
+   "tape": "ACTTTGTGTC",
+   "idx": 5,
+   "n_cells": 1271,
+   "n_ins": 6694,
+   "G2": 2963.834073078356,
+   "df": 96,
+   "tv": 0.26314975773250227,
+   "tv_split_floor": 0.09773126666889849,
+   "excess": 0.1654184910636038,
+   "top_enriched": [
+    "AGCAGGA",
+    "ATGTGGA",
+    "GCTAGGA"
+   ]
+  },
+  {
+   "tape": "TAATTTGTTA",
+   "idx": 100,
+   "n_cells": 1302,
+   "n_ins": 6496,
+   "G2": 3192.9720380136346,
+   "df": 96,
+   "tv": 0.2566071886474242,
+   "tv_split_floor": 0.09120183106693548,
+   "excess": 0.16540535758048874,
+   "top_enriched": [
+    "GATGGGA",
+    "CTGCGGA",
+    "ATGTGGA"
+   ]
+  },
+  {
+   "tape": "CTTAATTGGC",
+   "idx": 49,
+   "n_cells": 1481,
+   "n_ins": 7062,
+   "G2": 3029.1728090793285,
+   "df": 96,
+   "tv": 0.24154494088696107,
+   "tv_split_floor": 0.07676453980801806,
+   "excess": 0.164780401078943,
+   "top_enriched": [
+    "ACGTGGA",
+    "ATCAGGA",
+    "ATATGGA"
+   ]
+  },
+  {
+   "tape": "TATAGTGGAA",
+   "idx": 105,
+   "n_cells": 837,
+   "n_ins": 3787,
+   "G2": 1678.5894903535197,
+   "df": 96,
+   "tv": 0.27495217960187673,
+   "tv_split_floor": 0.11175585967591756,
+   "excess": 0.16319631992595918,
+   "top_enriched": [
+    "AACCGGA",
+    "GAAGGGA",
+    "GAATGGA"
+   ]
+  },
+  {
+   "tape": "GGCGTCTCTT",
+   "idx": 71,
+   "n_cells": 1238,
+   "n_ins": 5986,
+   "G2": 2331.7601680795733,
+   "df": 96,
+   "tv": 0.24035948673389534,
+   "tv_split_floor": 0.07770088037822863,
+   "excess": 0.1626586063556667,
+   "top_enriched": [
+    "ACGTGGA",
+    "ACCCGGA",
+    "GAATGGA"
+   ]
+  },
+  {
+   "tape": "CTGTCTGCCC",
+   "idx": 48,
+   "n_cells": 1392,
+   "n_ins": 7162,
+   "G2": 3063.7723712713628,
+   "df": 96,
+   "tv": 0.24719395247333267,
+   "tv_split_floor": 0.08476180334269902,
+   "excess": 0.16243214913063364,
+   "top_enriched": [
+    "AATGGGA",
+    "CCCGGGA",
+    "GGAAGGA"
+   ]
+  },
+  {
+   "tape": "TTATGTTTTT",
+   "idx": 144,
+   "n_cells": 1529,
+   "n_ins": 7582,
+   "G2": 3083.922819147657,
+   "df": 96,
+   "tv": 0.242186616784786,
+   "tv_split_floor": 0.080490339527928,
+   "excess": 0.161696277256858,
+   "top_enriched": [
+    "ACGAGGA",
+    "TCTAGGA",
+    "CCAAGGA"
+   ]
+  },
+  {
+   "tape": "TTATTGTTCC",
+   "idx": 145,
+   "n_cells": 1489,
+   "n_ins": 7543,
+   "G2": 2910.0943674515656,
+   "df": 96,
+   "tv": 0.2377533731727357,
+   "tv_split_floor": 0.07649480749821497,
+   "excess": 0.16125856567452074,
+   "top_enriched": [
+    "GTGTGGA",
+    "ACCTGGA",
+    "AACTGGA"
+   ]
+  },
+  {
+   "tape": "TGTTCGATGC",
+   "idx": 141,
+   "n_cells": 996,
+   "n_ins": 5031,
+   "G2": 2342.171810564896,
+   "df": 96,
+   "tv": 0.26056322247880637,
+   "tv_split_floor": 0.09950422644269029,
+   "excess": 0.16105899603611606,
+   "top_enriched": [
+    "CGAAGGA",
+    "ATATGGA",
+    "GAAGGGA"
+   ]
+  },
+  {
+   "tape": "TAGGGGGTCG",
+   "idx": 103,
+   "n_cells": 682,
+   "n_ins": 3510,
+   "G2": 1706.6485598912684,
+   "df": 96,
+   "tv": 0.2655141071592685,
+   "tv_split_floor": 0.10553069244695412,
+   "excess": 0.15998341471231436,
+   "top_enriched": [
+    "TTAAGGA",
+    "CCAGGGA",
+    "GATGGGA"
+   ]
+  },
+  {
+   "tape": "CGTTCTCCAG",
+   "idx": 40,
+   "n_cells": 1589,
+   "n_ins": 7803,
+   "G2": 2673.4953669513534,
+   "df": 96,
+   "tv": 0.23796019403889404,
+   "tv_split_floor": 0.07896767043179934,
+   "excess": 0.1589925236070947,
+   "top_enriched": [
+    "AACCGGA",
+    "AATAGGA",
+    "CCCGGGA"
+   ]
+  },
+  {
+   "tape": "TTTCCGTCTT",
+   "idx": 161,
+   "n_cells": 1497,
+   "n_ins": 7313,
+   "G2": 2729.8611190077745,
+   "df": 96,
+   "tv": 0.24438059981264618,
+   "tv_split_floor": 0.08592902710250146,
+   "excess": 0.1584515727101447,
+   "top_enriched": [
+    "AAGAGGA",
+    "ACATGGA",
+    "ACGAGGA"
+   ]
+  },
+  {
+   "tape": "GGGTAGCCAC",
+   "idx": 74,
+   "n_cells": 1589,
+   "n_ins": 7564,
+   "G2": 2819.09101595634,
+   "df": 96,
+   "tv": 0.23231621141624897,
+   "tv_split_floor": 0.07389109517069012,
+   "excess": 0.15842511624555886,
+   "top_enriched": [
+    "AACGGGA",
+    "ACCCGGA",
+    "TAGGGGA"
+   ]
+  },
+  {
+   "tape": "TCTTGGCGCT",
+   "idx": 123,
+   "n_cells": 1375,
+   "n_ins": 6942,
+   "G2": 2327.3786292609043,
+   "df": 96,
+   "tv": 0.23428805366899538,
+   "tv_split_floor": 0.07646850755458251,
+   "excess": 0.15781954611441287,
+   "top_enriched": [
+    "AACCGGA",
+    "GCCTGGA",
+    "ACGAGGA"
+   ]
+  },
+  {
+   "tape": "CGGGAGTTTG",
+   "idx": 32,
+   "n_cells": 1417,
+   "n_ins": 6737,
+   "G2": 2402.6927060257635,
+   "df": 96,
+   "tv": 0.2376997556031546,
+   "tv_split_floor": 0.0812175103515581,
+   "excess": 0.15648224525159649,
+   "top_enriched": [
+    "ATATGGA",
+    "ATACGGA",
+    "AATAGGA"
+   ]
+  },
+  {
+   "tape": "CCGTTGGCGT",
+   "idx": 25,
+   "n_cells": 280,
+   "n_ins": 1235,
+   "G2": 932.7071660058787,
+   "df": 96,
+   "tv": 0.34339267029606235,
+   "tv_split_floor": 0.18719268814716264,
+   "excess": 0.1561999821488997,
+   "top_enriched": [
+    "ACGAGGA",
+    "ATACGGA",
+    "TTTAGGA"
+   ]
+  },
+  {
+   "tape": "AGCCTTGGGT",
+   "idx": 8,
+   "n_cells": 1384,
+   "n_ins": 6791,
+   "G2": 2915.685219991514,
+   "df": 96,
+   "tv": 0.25166420705194054,
+   "tv_split_floor": 0.09570818764025353,
+   "excess": 0.15595601941168702,
+   "top_enriched": [
+    "CCGGGGA",
+    "ATATGGA",
+    "CATGGGA"
+   ]
+  },
+  {
+   "tape": "GTTGCGGCGA",
+   "idx": 93,
+   "n_cells": 178,
+   "n_ins": 649,
+   "G2": 817.9388214025478,
+   "df": 96,
+   "tv": 0.39596805312288946,
+   "tv_split_floor": 0.2403085292551168,
+   "excess": 0.15565952386777265,
+   "top_enriched": [
+    "CAAGGGA",
+    "TTATGGA",
+    "ACAGGGA"
+   ]
+  },
+  {
+   "tape": "CCCGCGCCTG",
+   "idx": 22,
+   "n_cells": 619,
+   "n_ins": 3021,
+   "G2": 1892.8289840846878,
+   "df": 96,
+   "tv": 0.28435809262153505,
+   "tv_split_floor": 0.13134867795320523,
+   "excess": 0.15300941466832982,
+   "top_enriched": [
+    "GTGCGGA",
+    "TCTAGGA",
+    "GTTCGGA"
+   ]
+  },
+  {
+   "tape": "CTCTTGCGCG",
+   "idx": 44,
+   "n_cells": 1287,
+   "n_ins": 6587,
+   "G2": 2487.2911627006224,
+   "df": 96,
+   "tv": 0.25136953216804553,
+   "tv_split_floor": 0.09953904555314534,
+   "excess": 0.15183048661490017,
+   "top_enriched": [
+    "ACGAGGA",
+    "GAAGGGA",
+    "GTCCGGA"
+   ]
+  },
+  {
+   "tape": "TGATGTCGGG",
+   "idx": 128,
+   "n_cells": 1076,
+   "n_ins": 4941,
+   "G2": 2202.2499056711777,
+   "df": 96,
+   "tv": 0.24629430337894434,
+   "tv_split_floor": 0.09532558868837486,
+   "excess": 0.1509687146905695,
+   "top_enriched": [
+    "AACCGGA",
+    "GCGCGG",
+    "AACTGGA"
+   ]
+  },
+  {
+   "tape": "TGAATGCTAA",
+   "idx": 125,
+   "n_cells": 1682,
+   "n_ins": 7437,
+   "G2": 2790.4879778644417,
+   "df": 96,
+   "tv": 0.23440026211204815,
+   "tv_split_floor": 0.0836757025111576,
+   "excess": 0.15072455960089054,
+   "top_enriched": [
+    "GGCTGGA",
+    "ATCGGGA",
+    "GAAAGGA"
+   ]
+  },
+  {
+   "tape": "GAATCTGTGC",
+   "idx": 52,
+   "n_cells": 1356,
+   "n_ins": 6889,
+   "G2": 2511.0489611615676,
+   "df": 96,
+   "tv": 0.2397680462185567,
+   "tv_split_floor": 0.09033034525474082,
+   "excess": 0.1494377009638159,
+   "top_enriched": [
+    "AACCGGA",
+    "GATAGGA",
+    "TTTAGGA"
+   ]
+  },
+  {
+   "tape": "CGTTGGGTAA",
+   "idx": 41,
+   "n_cells": 384,
+   "n_ins": 1808,
+   "G2": 1084.132072751731,
+   "df": 96,
+   "tv": 0.28643537516946915,
+   "tv_split_floor": 0.1386102994082319,
+   "excess": 0.14782507576123724,
+   "top_enriched": [
+    "CTGCGGA",
+    "TTTAGGA",
+    "GCGCGG"
+   ]
+  },
+  {
+   "tape": "GATTGGGCTT",
+   "idx": 55,
+   "n_cells": 1418,
+   "n_ins": 6549,
+   "G2": 2436.7662220878237,
+   "df": 96,
+   "tv": 0.22528120388299355,
+   "tv_split_floor": 0.07804101535935039,
+   "excess": 0.14724018852364318,
+   "top_enriched": [
+    "CCAGGGA",
+    "GCGCGG",
+    "GGCAGGA"
+   ]
+  },
+  {
+   "tape": "TATGCATCTC",
+   "idx": 109,
+   "n_cells": 1435,
+   "n_ins": 7508,
+   "G2": 2551.0956825009507,
+   "df": 96,
+   "tv": 0.22472459238884201,
+   "tv_split_floor": 0.07853340800257046,
+   "excess": 0.14619118438627154,
+   "top_enriched": [
+    "ACGAGGA",
+    "AGCAGGA",
+    "ATTAGGA"
+   ]
+  },
+  {
+   "tape": "ACGCGGCTTC",
+   "idx": 2,
+   "n_cells": 1450,
+   "n_ins": 6137,
+   "G2": 2445.8014674385195,
+   "df": 96,
+   "tv": 0.22059167166548777,
+   "tv_split_floor": 0.08012887369867727,
+   "excess": 0.1404627979668105,
+   "top_enriched": [
+    "TTTAGGA",
+    "ACATGGA",
+    "ATCCGGA"
+   ]
+  },
+  {
+   "tape": "GTGAATGAAG",
+   "idx": 90,
+   "n_cells": 1610,
+   "n_ins": 8114,
+   "G2": 2575.220117031997,
+   "df": 96,
+   "tv": 0.21839465811749878,
+   "tv_split_floor": 0.07908875210284236,
+   "excess": 0.13930590601465642,
+   "top_enriched": [
+    "CCAAGGA",
+    "ACGAGGA",
+    "ATTAGGA"
+   ]
+  },
+  {
+   "tape": "GTATGGTGCT",
+   "idx": 85,
+   "n_cells": 414,
+   "n_ins": 2189,
+   "G2": 1204.8095931840376,
+   "df": 96,
+   "tv": 0.28870130599952576,
+   "tv_split_floor": 0.15002863588017346,
+   "excess": 0.1386726701193523,
+   "top_enriched": [
+    "TACAGGA",
+    "ATGTGGA",
+    "AGCAGGA"
+   ]
+  },
+  {
+   "tape": "TGTAGCCGGC",
+   "idx": 137,
+   "n_cells": 544,
+   "n_ins": 2873,
+   "G2": 1331.2464526103224,
+   "df": 96,
+   "tv": 0.26089053316134164,
+   "tv_split_floor": 0.12921292230990358,
+   "excess": 0.13167761085143806,
+   "top_enriched": [
+    "GGAAGGA",
+    "ATATGGA",
+    "ATGTGGA"
+   ]
+  },
+  {
+   "tape": "TGGGGGGTCT",
+   "idx": 134,
+   "n_cells": 348,
+   "n_ins": 1588,
+   "G2": 857.497210348388,
+   "df": 96,
+   "tv": 0.2918900931143769,
+   "tv_split_floor": 0.16230501114222043,
+   "excess": 0.12958508197215649,
+   "top_enriched": [
+    "ATGTGGA",
+    "GCCTGGA",
+    "AACTGGA"
+   ]
+  },
+  {
+   "tape": "TTGGTATAGT",
+   "idx": 153,
+   "n_cells": 986,
+   "n_ins": 4711,
+   "G2": 2287.5493288426087,
+   "df": 96,
+   "tv": 0.24739041416974897,
+   "tv_split_floor": 0.12077719966300872,
+   "excess": 0.12661321450674023,
+   "top_enriched": [
+    "ACGCGGA",
+    "CCCGGGA",
+    "ATCGGGA"
+   ]
+  },
+  {
+   "tape": "GCTCTTCCGT",
+   "idx": 65,
+   "n_cells": 1291,
+   "n_ins": 6692,
+   "G2": 2106.6351149567463,
+   "df": 96,
+   "tv": 0.20269283795125898,
+   "tv_split_floor": 0.08014205682272908,
+   "excess": 0.12255078112852989,
+   "top_enriched": [
+    "ATCCGGA",
+    "GGCAGGA",
+    "GATAGGA"
+   ]
+  },
+  {
+   "tape": "CTGATTTTCA",
+   "idx": 45,
+   "n_cells": 1264,
+   "n_ins": 6349,
+   "G2": 2134.653426972138,
+   "df": 96,
+   "tv": 0.21642049575676534,
+   "tv_split_floor": 0.0972598658829768,
+   "excess": 0.11916062987378853,
+   "top_enriched": [
+    "CAAAGGA",
+    "GGAAGGA",
+    "AACCGGA"
+   ]
+  },
+  {
+   "tape": "GGGTGCCGTT",
+   "idx": 75,
+   "n_cells": 553,
+   "n_ins": 2677,
+   "G2": 1132.7335098814265,
+   "df": 96,
+   "tv": 0.2661591178847064,
+   "tv_split_floor": 0.14770588117074085,
+   "excess": 0.11845323671396557,
+   "top_enriched": [
+    "AACGGGA",
+    "CCAGGGA",
+    "ATATGGA"
+   ]
+  },
+  {
+   "tape": "GCTGTTCTTC",
+   "idx": 67,
+   "n_cells": 1698,
+   "n_ins": 8560,
+   "G2": 1978.9123913538215,
+   "df": 96,
+   "tv": 0.19421606642530162,
+   "tv_split_floor": 0.08285570416747096,
+   "excess": 0.11136036225783066,
+   "top_enriched": [
+    "ATACGGA",
+    "ATGTGGA",
+    "AACCGGA"
+   ]
+  },
+  {
+   "tape": "TCGGGGGTAT",
+   "idx": 120,
+   "n_cells": 169,
+   "n_ins": 780,
+   "G2": 595.6143294574824,
+   "df": 96,
+   "tv": 0.3181407302375044,
+   "tv_split_floor": 0.22851845033008078,
+   "excess": 0.08962227990742361,
+   "top_enriched": [
+    "AAACGGA",
+    "GCCTGGA",
+    "ATATGGA"
+   ]
+  },
+  {
+   "tape": "CCAAGTAATA",
+   "idx": 21,
+   "n_cells": 931,
+   "n_ins": 4527,
+   "G2": 1226.006561529166,
+   "df": 96,
+   "tv": 0.18243364364465148,
+   "tv_split_floor": 0.098280055105713,
+   "excess": 0.08415358853893848,
+   "top_enriched": [
+    "GATGGA",
+    "GGCAGGA",
+    "GACCGGA"
+   ]
+  },
+  {
+   "tape": "GGTCATCGAA",
+   "idx": 80,
+   "n_cells": 51,
+   "n_ins": 172,
+   "G2": 264.54308343914624,
+   "df": 96,
+   "tv": 0.45828080726564124,
+   "tv_split_floor": 0.3749829118250171,
+   "excess": 0.08329789544062416,
+   "top_enriched": [
+    "CCCGGGA",
+    "CAGTGGA",
+    "GATAGGA"
+   ]
+  },
+  {
+   "tape": "GCGTCCTTCG",
+   "idx": 61,
+   "n_cells": 211,
+   "n_ins": 860,
+   "G2": 582.5910659745578,
+   "df": 96,
+   "tv": 0.2911883284452987,
+   "tv_split_floor": 0.2089393210053491,
+   "excess": 0.08224900743994959,
+   "top_enriched": [
+    "GGCAGGA",
+    "CCCTGGA",
+    "GGAAGGA"
+   ]
+  },
+  {
+   "tape": "TGGAGGTTCG",
+   "idx": 132,
+   "n_cells": 131,
+   "n_ins": 575,
+   "G2": 523.457050858882,
+   "df": 96,
+   "tv": 0.3326256719796284,
+   "tv_split_floor": 0.25377273938425016,
+   "excess": 0.07885293259537823,
+   "top_enriched": [
+    "TTATGGA",
+    "AAGAGGA",
+    "ATACGGA"
+   ]
+  },
+  {
+   "tape": "GCGTGATGGA",
+   "idx": 62,
+   "n_cells": 1797,
+   "n_ins": 8937,
+   "G2": 1357.3974497925578,
+   "df": 96,
+   "tv": 0.15062851616491138,
+   "tv_split_floor": 0.08335602113120458,
+   "excess": 0.0672724950337068,
+   "top_enriched": [
+    "GCGTGGA",
+    "AACCGGA",
+    "ACCTGGA"
+   ]
+  },
+  {
+   "tape": "TTTACATGCT",
+   "idx": 159,
+   "n_cells": 136,
+   "n_ins": 663,
+   "G2": 483.38016092418036,
+   "df": 96,
+   "tv": 0.31645415575136937,
+   "tv_split_floor": 0.24992250323662954,
+   "excess": 0.06653165251473983,
+   "top_enriched": [
+    "ACATGGA",
+    "TGGCGGA",
+    "GCCGGGA"
+   ]
+  },
+  {
+   "tape": "GGTACACGAA",
+   "idx": 78,
+   "n_cells": 150,
+   "n_ins": 698,
+   "G2": 567.81002786153,
+   "df": 96,
+   "tv": 0.31179076999903854,
+   "tv_split_floor": 0.3000032853669755,
+   "excess": 0.011787484632063028,
+   "top_enriched": [
+    "GACTGGA",
+    "GTAGGGA",
+    "AACTGGA"
+   ]
+  },
+  {
+   "tape": "CGGTCTCTAT",
+   "idx": 34,
+   "n_cells": 337,
+   "n_ins": 1223,
+   "G2": 486.7695767927158,
+   "df": 96,
+   "tv": 0.23365037573480443,
+   "tv_split_floor": 0.23079598662207357,
+   "excess": 0.002854389112730865,
+   "top_enriched": [
+    "ACGTGGA",
+    "TTTAGGA",
+    "ACTTGGA"
+   ]
+  }
+ ],
+ "summary": {
+  "tapes_scored": 158,
+  "tv_median": 0.27450888541189955,
+  "tv_max": 0.5261784519101221,
+  "floor_median": 0.0827669832069845,
+  "excess_median": 0.18484340573195598,
+  "excess_max": 0.3643175420872558,
+  "n_tapes_excess_gt_2x_floor": 144
+ }
+}

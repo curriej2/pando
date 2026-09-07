@@ -1,0 +1,497 @@
+{
+ "nperm": 2000,
+ "filters": {
+  "zmax": -3.0,
+  "gapmin": 0.5
+ },
+ "meta": {
+  "Initial": {
+   "n_units": 2772,
+   "rank": 162,
+   "n_symbols": 103,
+   "vif_max": Infinity
+  },
+  "Mouse1": {
+   "n_units": 454,
+   "rank": 142,
+   "n_symbols": 100,
+   "vif_max": Infinity
+  },
+  "Mouse2": {
+   "n_units": 241,
+   "rank": 110,
+   "n_symbols": 98,
+   "vif_max": Infinity
+  },
+  "Mouse3": {
+   "n_units": 155,
+   "rank": 88,
+   "n_symbols": 94,
+   "vif_max": Infinity
+  },
+  "Subclone": {
+   "n_units": 1672,
+   "rank": 166,
+   "n_symbols": 106,
+   "vif_max": 2.16538573020168
+  }
+ },
+ "clone_sharing": {
+  "Initial x Mouse1": 0.9628378378378378,
+  "Initial x Mouse2": 0.963302752293578,
+  "Initial x Mouse3": 0.9533333333333334,
+  "Initial x Subclone": 0.7333333333333333,
+  "Mouse1 x Mouse2": 0.42660550458715596,
+  "Mouse1 x Mouse3": 0.42,
+  "Mouse1 x Subclone": 0.06666666666666667,
+  "Mouse2 x Mouse3": 0.31333333333333335,
+  "Mouse2 x Subclone": 0.26666666666666666,
+  "Mouse3 x Subclone": 0.06666666666666667
+ },
+ "split": [
+  {
+   "pair": "Initial half0 x half1 [all]",
+   "n": 151,
+   "agree": 58,
+   "rate": 0.3841059602649007,
+   "null_mean": 2.329,
+   "null_p95": 5.0,
+   "null_max": 8,
+   "enrichment": 24.9033920137398,
+   "p": 0.0004997501249375312
+  },
+  {
+   "pair": "Initial half0 x half1 [strict]",
+   "n": 55,
+   "agree": 48,
+   "rate": 0.8727272727272727,
+   "null_mean": 1.417,
+   "null_p95": 3.0499999999999545,
+   "null_max": 7,
+   "enrichment": 33.87438249823571,
+   "p": 0.0004997501249375312
+  },
+  {
+   "pair": "Mouse1 half0 x half1 [all]",
+   "n": 23,
+   "agree": 1,
+   "rate": 0.043478260869565216,
+   "null_mean": 0.4895,
+   "null_p95": 2.0,
+   "null_max": 4,
+   "enrichment": 2.0429009193054135,
+   "p": 0.3968015992003998
+  },
+  {
+   "pair": "Mouse1 half0 x half1 [strict]",
+   "n": 3,
+   "note": "too few"
+  }
+ ],
+ "cross_arm_dec": [
+  {
+   "pair": "Initial x Mouse1",
+   "n": 105,
+   "agree": 17,
+   "rate": 0.1619047619047619,
+   "null_mean": 2.105,
+   "null_p95": 5.0,
+   "null_max": 8,
+   "enrichment": 8.076009501187649,
+   "p": 0.0004997501249375312
+  },
+  {
+   "pair": "Initial x Mouse2",
+   "n": 70,
+   "agree": 3,
+   "rate": 0.04285714285714286,
+   "null_mean": 1.0,
+   "null_p95": 3.0,
+   "null_max": 5,
+   "enrichment": 3.0,
+   "p": 0.07496251874062969
+  },
+  {
+   "pair": "Initial x Mouse3",
+   "n": 42,
+   "agree": 5,
+   "rate": 0.11904761904761904,
+   "null_mean": 0.7395,
+   "null_p95": 2.0,
+   "null_max": 5,
+   "enrichment": 6.761325219743069,
+   "p": 0.0009995002498750624
+  },
+  {
+   "pair": "Initial x Subclone",
+   "n": 160,
+   "agree": 3,
+   "rate": 0.01875,
+   "null_mean": 2.6415,
+   "null_p95": 5.0,
+   "null_max": 9,
+   "enrichment": 1.135718341851221,
+   "p": 0.4962518740629685
+  },
+  {
+   "pair": "Mouse1 x Mouse2",
+   "n": 51,
+   "agree": 2,
+   "rate": 0.0392156862745098,
+   "null_mean": 0.521,
+   "null_p95": 2.0,
+   "null_max": 4,
+   "enrichment": 3.838771593090211,
+   "p": 0.08545727136431784
+  },
+  {
+   "pair": "Mouse1 x Mouse3",
+   "n": 40,
+   "agree": 3,
+   "rate": 0.075,
+   "null_mean": 0.5375,
+   "null_p95": 2.0,
+   "null_max": 4,
+   "enrichment": 5.5813953488372094,
+   "p": 0.008995502248875561
+  },
+  {
+   "pair": "Mouse1 x Subclone",
+   "n": 105,
+   "agree": 2,
+   "rate": 0.01904761904761905,
+   "null_mean": 3.234,
+   "null_p95": 6.0,
+   "null_max": 10,
+   "enrichment": 0.6184291898577613,
+   "p": 0.862568715642179
+  },
+  {
+   "pair": "Mouse2 x Mouse3",
+   "n": 25,
+   "agree": 1,
+   "rate": 0.04,
+   "null_mean": 0.5595,
+   "null_p95": 2.0,
+   "null_max": 4,
+   "enrichment": 1.7873100983020553,
+   "p": 0.43728135932033985
+  },
+  {
+   "pair": "Mouse2 x Subclone",
+   "n": 70,
+   "agree": 1,
+   "rate": 0.014285714285714285,
+   "null_mean": 0.839,
+   "null_p95": 2.0,
+   "null_max": 4,
+   "enrichment": 1.1918951132300357,
+   "p": 0.5782108945527237
+  },
+  {
+   "pair": "Mouse3 x Subclone",
+   "n": 42,
+   "agree": 1,
+   "rate": 0.023809523809523808,
+   "null_mean": 0.3805,
+   "null_p95": 2.0,
+   "null_max": 4,
+   "enrichment": 2.628120893561104,
+   "p": 0.3238380809595202
+  }
+ ],
+ "cross_arm_dec_strict": [
+  {
+   "pair": "Initial x Mouse1",
+   "n": 27,
+   "agree": 13,
+   "rate": 0.48148148148148145,
+   "null_mean": 0.7785,
+   "null_p95": 2.0,
+   "null_max": 4,
+   "enrichment": 16.698779704560053,
+   "p": 0.0004997501249375312
+  },
+  {
+   "pair": "Initial x Mouse2",
+   "n": 15,
+   "agree": 1,
+   "rate": 0.06666666666666667,
+   "null_mean": 0.133,
+   "null_p95": 1.0,
+   "null_max": 2,
+   "enrichment": 7.518796992481203,
+   "p": 0.1294352823588206
+  },
+  {
+   "pair": "Initial x Mouse3",
+   "n": 0,
+   "note": "too few"
+  },
+  {
+   "pair": "Initial x Subclone",
+   "n": 65,
+   "agree": 1,
+   "rate": 0.015384615384615385,
+   "null_mean": 1.2235,
+   "null_p95": 3.0,
+   "null_max": 6,
+   "enrichment": 0.8173273395995095,
+   "p": 0.7286356821589205
+  },
+  {
+   "pair": "Mouse1 x Mouse2",
+   "n": 7,
+   "agree": 1,
+   "rate": 0.14285714285714285,
+   "null_mean": 0.1475,
+   "null_p95": 1.0,
+   "null_max": 1,
+   "enrichment": 6.779661016949153,
+   "p": 0.14792603698150925
+  },
+  {
+   "pair": "Mouse1 x Mouse3",
+   "n": 0,
+   "note": "too few"
+  },
+  {
+   "pair": "Mouse1 x Subclone",
+   "n": 21,
+   "agree": 1,
+   "rate": 0.047619047619047616,
+   "null_mean": 2.2045,
+   "null_p95": 4.0,
+   "null_max": 7,
+   "enrichment": 0.4536176003628941,
+   "p": 0.9560219890054973
+  },
+  {
+   "pair": "Mouse2 x Mouse3",
+   "n": 0,
+   "note": "too few"
+  },
+  {
+   "pair": "Mouse2 x Subclone",
+   "n": 14,
+   "agree": 0,
+   "rate": 0.0,
+   "null_mean": 0.0,
+   "null_p95": 0.0,
+   "null_max": 0,
+   "enrichment": 0.0,
+   "p": 1.0
+  },
+  {
+   "pair": "Mouse3 x Subclone",
+   "n": 0,
+   "note": "too few"
+  }
+ ],
+ "cross_arm_cell": [
+  {
+   "pair": "Initial x Mouse1",
+   "n": 163,
+   "agree": 5,
+   "rate": 0.03067484662576687,
+   "null_mean": 1.601,
+   "null_p95": 4.0,
+   "null_max": 8,
+   "enrichment": 3.1230480949406623,
+   "p": 0.02348825587206397
+  },
+  {
+   "pair": "Initial x Mouse2",
+   "n": 157,
+   "agree": 2,
+   "rate": 0.012738853503184714,
+   "null_mean": 1.4985,
+   "null_p95": 4.0,
+   "null_max": 7,
+   "enrichment": 1.3346680013346681,
+   "p": 0.45077461269365315
+  },
+  {
+   "pair": "Initial x Mouse3",
+   "n": 151,
+   "agree": 1,
+   "rate": 0.006622516556291391,
+   "null_mean": 1.457,
+   "null_p95": 4.0,
+   "null_max": 7,
+   "enrichment": 0.6863417982155113,
+   "p": 0.7716141929035483
+  },
+  {
+   "pair": "Initial x Subclone",
+   "n": 166,
+   "agree": 5,
+   "rate": 0.030120481927710843,
+   "null_mean": 1.508,
+   "null_p95": 4.0,
+   "null_max": 6,
+   "enrichment": 3.315649867374005,
+   "p": 0.01699150424787606
+  },
+  {
+   "pair": "Mouse1 x Mouse2",
+   "n": 157,
+   "agree": 1,
+   "rate": 0.006369426751592357,
+   "null_mean": 1.358,
+   "null_p95": 3.0499999999999545,
+   "null_max": 9,
+   "enrichment": 0.7363770250368188,
+   "p": 0.7486256871564217
+  },
+  {
+   "pair": "Mouse1 x Mouse3",
+   "n": 151,
+   "agree": 4,
+   "rate": 0.026490066225165563,
+   "null_mean": 1.367,
+   "null_p95": 4.0,
+   "null_max": 7,
+   "enrichment": 2.926115581565472,
+   "p": 0.057971014492753624
+  },
+  {
+   "pair": "Mouse1 x Subclone",
+   "n": 163,
+   "agree": 2,
+   "rate": 0.012269938650306749,
+   "null_mean": 1.3825,
+   "null_p95": 3.0,
+   "null_max": 8,
+   "enrichment": 1.4466546112115732,
+   "p": 0.41379310344827586
+  },
+  {
+   "pair": "Mouse2 x Mouse3",
+   "n": 151,
+   "agree": 1,
+   "rate": 0.006622516556291391,
+   "null_mean": 1.4795,
+   "null_p95": 4.0,
+   "null_max": 6,
+   "enrichment": 0.6759040216289287,
+   "p": 0.791104447776112
+  },
+  {
+   "pair": "Mouse2 x Subclone",
+   "n": 157,
+   "agree": 4,
+   "rate": 0.025477707006369428,
+   "null_mean": 1.4635,
+   "null_p95": 4.0,
+   "null_max": 7,
+   "enrichment": 2.733173898189272,
+   "p": 0.06046976511744128
+  },
+  {
+   "pair": "Mouse3 x Subclone",
+   "n": 151,
+   "agree": 1,
+   "rate": 0.006622516556291391,
+   "null_mean": 1.27,
+   "null_p95": 3.0,
+   "null_max": 6,
+   "enrichment": 0.7874015748031495,
+   "p": 0.7316341829085458
+  }
+ ],
+ "cross_method": [
+  {
+   "pair": "Initial: dec x cell",
+   "n": 160,
+   "agree": 8,
+   "rate": 0.05,
+   "null_mean": 2.012,
+   "null_p95": 5.0,
+   "null_max": 8,
+   "enrichment": 3.9761431411530817,
+   "p": 0.0014992503748125937
+  },
+  {
+   "pair": "Mouse1: dec x cell",
+   "n": 105,
+   "agree": 0,
+   "rate": 0.0,
+   "null_mean": 1.284,
+   "null_p95": 3.0,
+   "null_max": 6,
+   "enrichment": 0.0,
+   "p": 1.0
+  },
+  {
+   "pair": "Mouse2: dec x cell",
+   "n": 70,
+   "agree": 1,
+   "rate": 0.014285714285714285,
+   "null_mean": 0.9205,
+   "null_p95": 2.0499999999999545,
+   "null_max": 4,
+   "enrichment": 1.0863661053775122,
+   "p": 0.6346826586706646
+  },
+  {
+   "pair": "Mouse3: dec x cell",
+   "n": 42,
+   "agree": 0,
+   "rate": 0.0,
+   "null_mean": 0.306,
+   "null_p95": 1.0,
+   "null_max": 4,
+   "enrichment": 0.0,
+   "p": 1.0
+  },
+  {
+   "pair": "Subclone: dec x cell",
+   "n": 165,
+   "agree": 0,
+   "rate": 0.0,
+   "null_mean": 1.8325,
+   "null_p95": 4.0,
+   "null_max": 8,
+   "enrichment": 0.0,
+   "p": 1.0
+  }
+ ],
+ "injectivity": [
+  {
+   "arm": "Initial",
+   "n_called": 160,
+   "distinct": 71,
+   "expected_if_injective": 81.37735820409365,
+   "ratio": 0.8724785562826046
+  },
+  {
+   "arm": "Mouse1",
+   "n_called": 105,
+   "distinct": 48,
+   "expected_if_injective": 65.19068855075581,
+   "ratio": 0.7363014729109423
+  },
+  {
+   "arm": "Mouse2",
+   "n_called": 70,
+   "distinct": 36,
+   "expected_if_injective": 50.20062964279063,
+   "ratio": 0.7171224794621675
+  },
+  {
+   "arm": "Mouse3",
+   "n_called": 42,
+   "distinct": 29,
+   "expected_if_injective": 34.01511346753668,
+   "ratio": 0.852562200848661
+  },
+  {
+   "arm": "Subclone",
+   "n_called": 165,
+   "distinct": 49,
+   "expected_if_injective": 83.81433539884843,
+   "ratio": 0.5846255269677082
+  }
+ ]
+}

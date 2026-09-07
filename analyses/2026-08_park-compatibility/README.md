@@ -2322,3 +2322,354 @@ Two things worth saying out loud:
 
 ⇒ **This should become the primary analysis**, with the stratified global threshold kept as the
 cross-check it now is. Remaining arms in flight (~70 min); `pc_merge` collects them.
+
+---
+
+# ⭐ Direction 2, opened 2026-09-07: does the co-integrated symbol vanish?
+
+The first **orthogonal** test of heritable silencing. Everything up to here infers silencing from
+*missingness*, which is also what technical dropout looks like. The cassette
+`PB-U6-pegRNA-NNNNGGA-EF1a-mRFP-TAPE-TargetBC` carries a pegRNA and a tape on **one integration**,
+and pegRNAs act in ***trans***, so integration $z$'s symbol $s(z)$ is written into *every* tape in
+the cell. If silencing kills the whole locus, then losing tape $z$ from the readout should also
+remove symbol $s(z)$ from **every other tape** in those cells — a channel transcript capture cannot
+reach.
+
+**Scripts.** `56_symbol_cache.py` (symbol array + first premise check, *superseded* in part) ·
+`57_writes.py` (the write unit, shared) · `58_tape_cis.py` (premise check, corrected) ·
+`59_depletion.py` (hand-inspected clade examples) · `60_deconvolve.py` (tape → symbol).
+
+## Design decisions, taken with Justin 2026-09-07
+
+| decision | chosen | why |
+|---|---|---|
+| unit | **independent post-MRCA writes** | deduplicates identity-by-descent exactly; raw entries are pseudoreplicated |
+| layer | **sub-clone clades in the large clones**, + clone-wide for Pre-TX | the rest of the clone is an internal control no clone-level effect can reach |
+| contrast | **rest of clone, site-matched** | site 6's TV vs pooled is ~2× sites 1–5, and clade writes sit deeper than clone writes |
+| premise check | **run first**, on the same write unit | a *cis* component would manufacture the very signal we want to claim |
+| alphabet | **design-conforming `NNNNGGA` only** | junk is a per-amplicon parsing artefact, hence intrinsically tape-specific |
+| tape → symbol | **regression deconvolution + assignment** | a clade that loses $k$ tapes gives ONE depletion vector |
+
+## Step 0 — the power gate, and it opens
+
+The README's worry was that "tapes are ~4.5–5 of 6 saturated, so most content is ancestral". The
+right unit settles it. For cell group $G$, tape $y$, site $j$: take the depth-$(j{-}1)$ prefix as
+parent; if its children within $G$ take ≥2 distinct values, the MRCA had site $j$ blank, so every
+distinct depth-$j$ code under it is **one write that happened inside $G$**, hence after any loss on
+$G$'s stem. Identical prefixes collapse to one write, so identity-by-descent is deduplicated exactly.
+
+| group | cells | $W$ | expected copies of a median-$\xi$ symbol |
+|---|---|---|---|
+| Mouse2 clone 76 (whole clone) | 3,387 | 40,389 | 300 |
+| Mouse2 clone 76, anchor 112 d3 clade | 2,588 | 28,933 | 216 |
+| …rest of that clone | 799 | 14,266 | 106 |
+| **Subclone clone 6, anchor 90 d1 clade** | 4,967 | **214,076** | **1,238** |
+| …rest of that clone | 932 | 78,854 | 456 |
+| Mouse2 clone 171 | 102 | 8,750 | 65 |
+
+⇒ a complete depletion inside Subclone's clade is a ~1,200 → 0 contrast. **This contradicted the
+README's expectation that the clone-wide layer would be needed for power** — but see Correction 4:
+that was right for the *large* clones and wrong as a general statement.
+
+⚠ Cost of the dedup, stated: two independent writes of the same symbol under the same parent
+collapse to one code, deflating frequent symbols. It biases inside and outside identically, so a
+*contrast* survives it; an absolute $\xi$ would not.
+
+## ⚠⚠ Correction 1 — my first premise check was pseudoreplicated, and I read it as a result
+
+`56` counted raw (cell, tape, site) entries and took its noise floor from a random split of those
+entries. Both halves are wrong for one reason: a symbol written at tape $y$ in a clone founder
+reappears in every descendant. It reported median per-tape TV 0.2745 against a floor of 0.0828 with
+144/158 tapes "above 2× floor" — which reads as a large *cis* effect and is not one.
+
+**The diagnosis is in the cross-arm ordering**, which tracks clonal concentration and nothing about
+tapes: Pre-TX 0.0398 (many clones, median 7 cells) · Mouse1 0.2494 · Mouse3 0.2745 · Subclone 0.4210
+· **Mouse2 0.5632** (one clone holding 98.9% of the pooled weight). The per-*site* statistic moved
+the same way (Mouse2 s1 = 0.192 vs Pre-TX s1 = 0.020), which settles it — **a site cannot be *cis*
+to a tape.** The analytic floor confirms the arithmetic: $\tfrac12\sqrt{2/\pi n}\sum_s\sqrt{p_s}=0.073$
+at $n=2{,}860$, matching the observed 0.083 — the right formula for the wrong $n$.
+
+## The corrected premise check (`58`) — small, real, and *predicted by the mechanism*
+
+Same contrast on deduplicated writes, clone-stratified; null permutes the **tape label** within
+(clone, site), preserving each clone's composition, each site's composition and every (clone, tape)
+write count.
+
+| arm | TV obs | TV null | excess | tapes > null p95 | $G$ vs null mean | $p$ |
+|---|---|---|---|---|---|---|
+| Mouse3 | 0.1513 | 0.1468 | +0.0035 | 15/160 | +2.6% | 0.005 |
+| Mouse2 | 0.1352 | 0.1250 | +0.0064 | 32/164 | +6.3% | 0.005 |
+| Mouse1 | 0.0927 | 0.0804 | +0.0097 | 73/165 | +12.1% | 0.005 |
+| Subclone | 0.0473 | 0.0413 | +0.0066 | 101/166 | +16.2% | 0.005 |
+
+⇒ pseudoreplication was ~98% of the apparent effect, but a residual survives at $p=1/201$ in every
+arm and its **relative size orders by statistical power** (2.6% → 16.2%), which is what a real
+effect looks like.
+
+⭐ **The residual is what the mechanism predicts.** Tape $t$'s writes come only from cells that
+*recovered* $t$ — cells where integration $t$ is expressed — and in exactly those cells pegRNA $t$ is
+expressed too, so $s(t)$ is over-supplied. So the premise check is **not separable from the
+hypothesis**: it is the same measurement, run clade-free on every write in the arm. Its argmax is a
+candidate $z\mapsto s(z)$ map at the highest power available.
+
+## ⚠⚠ Correction 2 — junk symbols dominated the per-tape signal
+
+Top per-tape hits on the powered arms were `TGGGA` (Mouse2, $z=67$), `GAATGGATGAT` (Subclone,
+$z=99$), `ACAAGGG`, `GACTCGGTGCC`, `GCCGGGGTGAG`. **None is a pegRNA insert.** `xi_vectors.json`
+carries 6 non-conforming "promoted" symbols above the count threshold, 2.2% of edits — and junk is a
+*parsing* artefact of a particular amplicon, therefore intrinsically tape-specific. A third reading
+of the residual that was not on my list.
+
+⇒ composition is now measured on **design-conforming `NNNNGGA` only** (94–98 symbols per arm).
+⚠ This does **not** contradict the earlier correction that junk values *are* heritable characters.
+Junk is a fine lineage character — it is inherited. It is not evidence about the writing pool. **The
+two uses need different alphabets**, and conflating them is what produced the first ranking.
+
+## ⚠⚠ Correction 3 — I declared collapse bias absent on the basis of the weakest arm
+
+The write dedup merges two independent writes of the same symbol under one parent, so bushier tries
+collapse more and collapse hits *frequent* symbols hardest. I checked this on Mouse3, found
+$\mathrm{corr}(\text{bushiness},\text{excess})=+0.125$ and $\mathrm{corr}(\xi_s,\overline{|z|})=-0.150$,
+and said collapse was not driving it. On the powered arms:
+
+| arm | corr(bushiness, excess) | corr($\xi_s$, mean\|z\|) | top $z$ median |
+|---|---|---|---|
+| Mouse3 | +0.125 | −0.150 | 2.99 |
+| Mouse2 | −0.006 | +0.156 | 3.25 |
+| Subclone | −0.196 | **+0.356** | 4.11 |
+| Mouse1 | **−0.767** | **+0.363** | 6.74 |
+
+The positive correlation with symbol frequency is exactly the collapse signature. **Mouse3 simply
+lacked the power to show it**, and a null result on the weakest arm is not a clearance.
+
+## The clade examples (`59`) — the signal is real where power exists
+
+Statistic: per symbol, a site-stratified common log-odds ratio $\theta_s$ fitted by profile
+likelihood, reported as $\Lambda_s$ in **nats**. Null: whole cell rows permuted within clone,
+**writes re-extracted** (which writes are post-MRCA depends on who is in the clade).
+
+| arm | clade | $n$ | $W_{\rm in}$ | top symbol | $\theta$ | $\Lambda$ | null max | runner-up |
+|---|---|---|---|---|---|---|---|---|
+| Mouse2 | clone 76 / anchor 125 d3 | 1,304 | 19,304 | AAGCGGA | −0.85 | **56.2** | 6.1 | 7.1 |
+| Subclone | clone 6 / anchor 90 d1 | 4,967 | 197,013 | TGGCGGA | −2.80 | **85.4** | 7.7 | 36.2 |
+| Mouse1 | clone 36 / anchor 26 d2 | 1,131 | 43,050 | GAAAGGA | −0.75 | **26.1** | 5.5 | 2.3 |
+| Mouse3 | clone 111 / anchor 48 d1 | 157 | 1,984 | AATGGGA | −1.35 | 5.2 | 3.0 | 3.0 |
+| Pre-TX | clone 676 / anchor 69 d2 | 71 | 5,452 | GTAGGGA | −1.25 | 7.3 | 3.9 | 2.1 |
+
+All design-conforming, all far past the permutation null, and Mouse1's is a textbook single outlier
+(26.1 against a runner-up of 2.3). **Different clades within Mouse2 return different symbols**, so it
+is not a clone-wide artefact.
+
+## ⚠⚠ The structural limit — the statistic identifies CLADES, not TAPES
+
+$\Lambda$ depends on the clade; the lost tape enters only by being excluded from the write pool. So
+**a clade that loses $k$ integrations yields one depletion vector with all $k$ superposed.**
+
+- Subclone's three catalogue "events" (tapes 65, 157, 142) are **one clade scored three times** —
+  identical $\theta=-2.80$, identical $\Lambda\approx86$. They are one measurement.
+- That clade shows a **ladder** of six symbols above its null max: 85, 36, 24, 21, 13, 9 — consistent
+  with several integrations silenced together.
+- Mouse1's two depth-2 rows are likewise one clade.
+
+⇒ 19 catalogue rows are ~15 distinct clades, and **reading a map off single clades is impossible in
+principle, not merely underpowered.** Hence `60`.
+
+## ⚠⚠ Correction 4 — Pre-TX needs the clone-wide layer after all
+
+Its clades run 71–95 cells and **4 of 5 returned nothing above the null** despite $W_{\rm in}$ of
+5,000–7,000: the limit is clade size, not writes. The README's original recommendation to screen the
+clone-wide layer first was right for this arm; my Step 0 power table generalised from Subclone and
+Mouse2, where it holds, to arms where it does not.
+
+## `60` — the deconvolution
+
+Unit $g$ = a scored group; $X[g,z]=1$ if tape $z$ is called lost in $g$; for each symbol,
+$y[g,s] \approx \sum_z X[g,z]\,B[z,s]$ by weighted least squares, $y$ = site-stratified
+Mantel–Haenszel log-OR, weight = its RBG inverse variance. Under the hypothesis $B[z,\cdot]$ is
+nonzero at one symbol, so $\arg\min_s Z[z,s]$ **is** the map.
+
+⚠ **Losses cluster** ($\rho_{\rm tape}=0.25$), so tapes always lost together are not separable. The
+script reports the conditioning rather than hiding it behind the ridge: effective rank of $X$, and a
+per-tape VIF; tapes with VIF ≥ 5 or coverage < 5 are marked uncallable and excluded from concordance.
+
+⚠⚠ **A correctness fix made while building it.** For the clone-wide layer the comparison group must
+be **pooled from per-clone extractions**, never extracted as one group: handing `extract_writes`
+every cell outside clone $c$ makes it assess polymorphism *across* clones, where almost every parent
+has several children, so the dedup collapses and nearly every entry counts as a write — the exact
+pseudoreplication this direction was rebuilt to avoid. The contrast is assembled by arithmetic from
+$T$, $T_c$, $T_z$ and the $(c,z)$ cross terms.
+
+**Mouse3 (smallest arm) is underdetermined and says so:** 155 usable units for 166 tapes, 89 fitted
+at coverage ≥ 3, 42 callable, median $z=-2.21$ with a median gap to the runner-up of **0.25** — i.e.
+noise. Powered arms in flight.
+
+## Where this stands, and what is still owed
+
+**Settled:** the write unit and its power; that the premise check's first version was
+pseudoreplicated; that a small tape-dependence is real, is predicted by the mechanism, and is partly
+collapse bias and partly junk; that the clade-level depletion signal is real and large in the three
+big clones; that clades, not tapes, are what a single contrast identifies.
+
+**Not yet done, and needed before any claim:**
+1. the recovered map from `60` on the powered arms, with its conditioning;
+2. **five-way cross-arm concordance** — the killer test, since all 166 TargetBCs are identical
+   across arms, so agreement by chance among ~98 conforming symbols is ~1%;
+3. injectivity and the collision rate against the $E=122$ distinct predicted for 166 draws from 256;
+4. dose ($j$ integrations naming a symbol ⇒ ~$j\times$ base $\xi$) and $\mathrm{corr}(\beta_z,\xi_{s(z)})>0$;
+5. a permutation null on the concordance itself (permute loss sets across units, refit, re-measure).
+
+## The recovered map (`60`) — and ⚠⚠ Correction 5, the arms are not independent
+
+| arm | units | tapes fitted | callable | distinct symbols | median $z$ | median gap |
+|---|---|---|---|---|---|---|
+| Pre-TX | 1,449 | 166 | **160** | 71 | **−4.05** | **1.32** |
+| Mouse1 | 585 | 145 | 105 | 48 | −2.89 | 0.42 |
+| Mouse2 | 348 | 118 | 70 | 36 | −2.66 | 0.38 |
+| Mouse3 | 155 | 89 | 42 | 29 | −2.21 | 0.25 |
+
+Injectivity: distinct/expected-if-injective = 0.87 (Pre-TX), 0.85 (Mouse3), 0.74 (Mouse1), 0.72
+(Mouse2) — below the collision prediction, i.e. some pile-up. ⚠ Mouse2 sends **15 of 70 tapes to
+`AAGCGGA`**, which is what a near rank-1 design matrix produces: one clone holds 98.9% of that arm,
+so its clades are nested and share their loss sets, and the deconvolution cannot separate them. VIF
+< 5 did not catch it — **the distinct-symbol count is the diagnostic that does.**
+
+Cross-arm concordance, permutation null ($B=2{,}000$, permuting tape labels within one arm):
+
+| pair | $n$ | agree | rate | null mean | null max | × | $p$ | **shared clones** |
+|---|---|---|---|---|---|---|---|---|
+| Pre-TX × Mouse1 | 105 | 17 | 0.162 | 2.08 | 8 | **8.18** | 0.0005 | **96.3%** |
+| Pre-TX × Mouse3 | 42 | 5 | 0.119 | 0.73 | 5 | 6.82 | 0.0015 | 95.3% |
+| Mouse1 × Mouse3 | 40 | 3 | 0.075 | 0.55 | 4 | 5.43 | 0.0125 | 42.0% |
+| Mouse1 × Mouse2 | 51 | 2 | 0.039 | 0.50 | 3 | 4.00 | 0.0905 | 42.7% |
+| Pre-TX × Mouse2 | 70 | 3 | 0.043 | 0.96 | 6 | 3.12 | 0.0755 | 96.3% |
+| Mouse2 × Mouse3 | 25 | 1 | 0.040 | 0.58 | 4 | 1.74 | 0.4553 | 31.3% |
+
+restricted to confident calls ($z\le-3$, gap $\ge0.5$): **Pre-TX × Mouse1 13/27 = 48.1%, 17.0× null,
+null max 4, $p=0.0005$.**
+
+⚠⚠ **Correction 5, and it retracts the headline I was about to write.** The README has treated
+five-way cross-arm concordance as "essentially unfakeable" because all 166 TargetBCs are identical
+across arms. They are — but **the arms are not independent samples.** Measured on `ClonalBC`:
+
+| pair | shared clones | % of the smaller arm |
+|---|---|---|
+| Pre-TX × Mouse1 | 285 | **96.3** |
+| Pre-TX × Mouse2 | 210 | 96.3 |
+| Pre-TX × Mouse3 | 143 | 95.3 |
+| Mouse1 × Mouse2 | 93 | 42.7 |
+| Mouse2 × Mouse3 | 47 | 31.3 |
+| Subclone × mice | 1 / 4 / 1 | 6.7 / 26.7 / 6.7 |
+
+The mice were transplanted from the pre-TX pool. Silencing is heritable and predates
+transplantation, so **a clone measured in two arms carries the same losses** — cross-arm agreement is
+the same events re-measured, not a replication. My strongest number, Pre-TX × Mouse1, is also the
+most confounded pair.
+
+⇒ **The clean test is a within-arm split on disjoint clones** (`60 --split h/N`): two halves share no
+cell, no clone and no lineage, so agreement between them tests whether $z\mapsto s(z)$ is a property
+of the *line* rather than of the clones it was fitted on. Launched on Pre-TX and Mouse1.
+Subclone × mouse is the one honest cross-arm pair (≤ 4 shared clones) — Subclone's `60` run is still
+in flight.
+
+## ⚠⚠ Correction 6 — the cell-level route fails its own validation
+
+I proposed promoting `58`'s cell-level scan to a primary route, on the argument that the residual
+tape-dependence is what the mechanism predicts. It does not reproduce:
+
+| test | deconvolution (`60`) | cell-level (`58`) |
+|---|---|---|
+| best cross-arm enrichment | 8.18× ($p=0.0005$) | 3.59× ($p=0.011$) |
+| median cross-arm enrichment | 5.4× | 1.5× |
+| pairs at $p<0.05$ | 4 of 6 | 3 of 10 |
+| cross-method agreement (within arm) | Pre-TX 3.38× ($p=0.006$); Mouse1, Mouse2, Mouse3 **0×** | |
+
+The two methods **disagree within the same arm** in three of four cases. So the cell-level residual
+is real (p = 1/201 everywhere) but is not the map — it is dominated by collapse and capture
+structure, exactly the two nuisances the shape diagnostic was meant to separate and did not. The
+argument that it *should* carry the signal was sound; the measurement says it does not, and the
+measurement wins.
+
+## ⭐⭐ The clean test — a within-arm split on disjoint clones — PASSES on Pre-TX
+
+`60 --split h/2` fits the map on a random half of the arm's **clones**. The two halves share no
+cell, no clone and no lineage; the only thing they have in common is the engineered line — the
+integrations and their co-integrated pegRNA barcodes. Verified disjoint: Pre-TX 1,473 + 1,473 of
+2,946 clones (1,431 + 1,343 of 2,774 units); Mouse1 148 + 147 of 295 (235 + 223 of 458).
+
+| split test | $n$ | agree | rate | null mean | null max | × | $p$ |
+|---|---|---|---|---|---|---|---|
+| **Pre-TX half0 × half1, confident calls** | 55 | **48** | **0.873** | 1.42 | 7 | **33.9** | **0.0005** |
+| Pre-TX half0 × half1, all calls | 151 | 58 | 0.384 | 2.33 | 8 | 24.9 | 0.0005 |
+| Mouse1 half0 × half1, all calls | 23 | 1 | 0.043 | 0.49 | 4 | 2.04 | 0.397 |
+
+⭐ **87.3% of confidently-called tapes name the same symbol when estimated from disjoint halves of
+the clone pool**, against a permutation null whose best of 2,000 draws reached 7 of 55. The five
+strongest calls are identical in both halves — `TGTAGCCGGC→AATCGGA` ($z=-17.7/-14.7$),
+`GAACGACTTC→ATACGGA`, `TGTTCGATGC→GACCGGA`, `GGAAGTGGTA→GTGCGGA`, `TATCTTCGGT→ACGTGGA`.
+
+⚠ The permutation null permutes tape labels **within** a half, so it preserves each half's marginal
+symbol distribution exactly — pile-ups on common symbols cannot generate this.
+
+**Mouse1 fails its own split, and that is a power statement, not a contradiction.** Its halves have
+220–234 units against Pre-TX's ~1,400, the design goes rank-deficient (rank 94/95, cond $7\times10^{12}$),
+and half1 sends 8 of its top 10 tapes to `ATGTGGA` — the same near-rank-1 pile-up as Mouse2's
+`AAGCGGA`. ⇒ **the deconvolution needs many clones with *different* loss sets, which is exactly what
+Pre-TX has and the mice do not** — 2,946 clones of median 7 cells, where the mice are dominated by
+one or two huge clones. That inverts the usual ordering in this project, where Pre-TX has been the
+underpowered arm for everything lineage-related.
+
+⇒ **Quote the split, not the cross-arm numbers.** Pre-TX × Mouse1 at 8.18× shares 96.3% of its
+clones; the split at 33.9× shares none.
+
+## ⚑ What the deconvolution actually needs: many INDEPENDENT clones, not many clades
+
+Subclone finished last and makes the point sharply. It has the **most units of any arm** (1,673),
+full rank (166/166), excellent conditioning (cond 10.2, VIF max 2.2) and the best median $z$
+($-4.56$) — and its map is the **most degenerate of all**: 8 of its top 10 tapes call `ATGTGGA`, and
+distinct/expected-if-injective is **0.58**, the worst score in the table.
+
+The reason is that its 1,673 units are clades drawn from **15 clones**. Clades nested inside one
+clone share almost all of their loss sets, so they are near-duplicate rows of $X$ — which inflates
+the apparent unit count and the rank without adding information about *which* tape carries a
+depletion. The conditioning diagnostics do not see it, because $X$ is full rank; only the
+distinct-symbol ratio does.
+
+| arm | clones | units | distinct/expected | split reproducibility |
+|---|---|---|---|---|
+| **Pre-TX** | **2,946** | 2,774 | **0.87** | **87.3% (33.9×, $p=0.0005$)** |
+| Mouse3 | 150 | 156 | 0.85 | — (underdetermined) |
+| Mouse1 | 295 | 458 | 0.74 | 4.3% (2.0×, $p=0.40$) |
+| Mouse2 | 218 | 348 | 0.72 | — |
+| Subclone | **15** | **1,673** | **0.58** | — |
+
+⇒ **the distinct-symbol ratio, not the rank or the VIF, is the diagnostic for whether a
+deconvolution has separated the tapes**, and the ordering it gives is the ordering of *clone counts*,
+not unit counts. Pre-TX — the arm that has been underpowered for every lineage question in this
+project, because its clones are tiny — is the only arm with enough independent loss sets to identify
+the map, and it is the arm where the split test passes.
+
+## Status of Direction 2 at the end of 2026-09-07
+
+**Established.**
+- The write unit, and Step 0's power (`57`).
+- Clade-level depletion is real and large in the three big clones (`59`): Mouse2 $\Lambda=56.3$ vs
+  null max 5.7; Subclone 86.2 vs 8.9; Mouse1 26.1 vs 5.5 — all design-conforming symbols.
+- ⭐ **The recovered $z\mapsto s(z)$ map reproduces across disjoint clone halves of Pre-TX at 87.3%
+  on confident calls, 33.9× a permutation null ($p=1/2001$).** Two halves sharing no cell, no clone
+  and no lineage agree on which symbol a tape's silencing removes. **This is the orthogonal
+  confirmation the direction was opened to get.**
+
+**Six corrections to my own reasoning, all recorded above:** the first premise check was
+pseudoreplicated (1); junk symbols dominated the per-tape signal and needed a separate alphabet from
+the lineage-character alphabet (2); I cleared collapse bias from the weakest arm (3); Pre-TX needs
+the clone-wide layer after all (4); the arms share up to 96.3% of their clones, so cross-arm
+concordance is *not* the killer test the notes call it (5); and the cell-level route I argued for
+fails its own validation, disagreeing with the deconvolution in 4 of 5 arms (6).
+
+**Still owed.**
+1. Dose — a symbol named by $j$ integrations should carry ~$j\times$ base $\xi$.
+2. $\mathrm{corr}(\beta_z,\xi_{s(z)})>0$, the fig-3b link.
+3. Collision structure of the Pre-TX map against $E=122$ for 166 draws from 256.
+4. Whether the map recovered from Pre-TX **predicts** the depleted symbol in the three big mouse
+   clades of `59` — a genuine out-of-sample test, and the one that would tie the two layers together.
+5. More split replicates (different seeds, $N=3,4$) to put an interval on the 87.3%.

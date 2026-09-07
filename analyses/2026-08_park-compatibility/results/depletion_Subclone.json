@@ -1,0 +1,236 @@
+{
+ "arm": "Subclone",
+ "poly": "codes",
+ "nperm": 100,
+ "n_symbols": 106,
+ "events": [
+  {
+   "clone": 6,
+   "anchor": 90,
+   "depth": 1,
+   "tape": 65,
+   "n_in": 4967,
+   "n_out": 521,
+   "W_in": 194156,
+   "W_out": 52217,
+   "lambda_event_nats": 101.153,
+   "top_symbol": "TGGCGGA",
+   "top_theta": -2.8,
+   "top_lambda": 85.43308506728238,
+   "p_permutation": 0.009900990099009901,
+   "null_max_lambda_mean": 3.521712285118101,
+   "null_max_lambda_max": 7.729029992588039,
+   "nperm_used": 100,
+   "ranked": [
+    {
+     "symbol": "TGGCGGA",
+     "theta": -2.8,
+     "lambda": 85.43308506728238,
+     "n_in": 18,
+     "n_out": 93
+    },
+    {
+     "symbol": "GACAGGA",
+     "theta": -0.39999999999999947,
+     "lambda": 36.248049293883014,
+     "n_in": 1740,
+     "n_out": 688
+    },
+    {
+     "symbol": "TAGGGGA",
+     "theta": -0.4499999999999993,
+     "lambda": 24.490800011401916,
+     "n_in": 905,
+     "n_out": 412
+    },
+    {
+     "symbol": "TTTAGGA",
+     "theta": -0.25,
+     "lambda": 21.20882224586603,
+     "n_in": 2489,
+     "n_out": 872
+    },
+    {
+     "symbol": "GATGGGA",
+     "theta": -0.1999999999999993,
+     "lambda": 12.94578629339594,
+     "n_in": 2482,
+     "n_out": 876
+    },
+    {
+     "symbol": "ACGAGGA",
+     "theta": -0.14999999999999947,
+     "lambda": 8.651034459722723,
+     "n_in": 4412,
+     "n_out": 1345
+    },
+    {
+     "symbol": "ACCCGGA",
+     "theta": -0.14999999999999947,
+     "lambda": 4.256793400445531,
+     "n_in": 2170,
+     "n_out": 664
+    },
+    {
+     "symbol": "AACGGGA",
+     "theta": -0.09999999999999964,
+     "lambda": 3.9629624885310477,
+     "n_in": 5484,
+     "n_out": 1546
+    }
+   ]
+  },
+  {
+   "clone": 6,
+   "anchor": 90,
+   "depth": 2,
+   "tape": 157,
+   "n_in": 4963,
+   "n_out": 524,
+   "W_in": 193910,
+   "W_out": 52295,
+   "lambda_event_nats": 74.73,
+   "top_symbol": "TGGCGGA",
+   "top_theta": -2.8,
+   "top_lambda": 86.26286870931813,
+   "p_permutation": 0.009900990099009901,
+   "null_max_lambda_mean": 3.82222799394207,
+   "null_max_lambda_max": 10.32259506893024,
+   "nperm_used": 100,
+   "ranked": [
+    {
+     "symbol": "TGGCGGA",
+     "theta": -2.8,
+     "lambda": 86.26286870931813,
+     "n_in": 18,
+     "n_out": 94
+    },
+    {
+     "symbol": "GACAGGA",
+     "theta": -0.39999999999999947,
+     "lambda": 36.008612384814114,
+     "n_in": 1738,
+     "n_out": 688
+    },
+    {
+     "symbol": "TAGGGGA",
+     "theta": -0.4499999999999993,
+     "lambda": 23.302535626658937,
+     "n_in": 904,
+     "n_out": 409
+    },
+    {
+     "symbol": "TTTAGGA",
+     "theta": -0.25,
+     "lambda": 20.31135646765324,
+     "n_in": 2487,
+     "n_out": 869
+    },
+    {
+     "symbol": "GATGGGA",
+     "theta": -0.1999999999999993,
+     "lambda": 12.974651617474592,
+     "n_in": 2476,
+     "n_out": 876
+    },
+    {
+     "symbol": "ACGAGGA",
+     "theta": -0.14999999999999947,
+     "lambda": 9.426468735513481,
+     "n_in": 4409,
+     "n_out": 1355
+    },
+    {
+     "symbol": "ACCCGGA",
+     "theta": -0.14999999999999947,
+     "lambda": 4.174327118693327,
+     "n_in": 2167,
+     "n_out": 664
+    },
+    {
+     "symbol": "AACGGGA",
+     "theta": -0.09999999999999964,
+     "lambda": 3.482112070909352,
+     "n_in": 5477,
+     "n_out": 1542
+    }
+   ]
+  },
+  {
+   "clone": 6,
+   "anchor": 90,
+   "depth": 2,
+   "tape": 142,
+   "n_in": 4963,
+   "n_out": 524,
+   "W_in": 193902,
+   "W_out": 52289,
+   "lambda_event_nats": 66.402,
+   "top_symbol": "TGGCGGA",
+   "top_theta": -2.8,
+   "top_lambda": 86.17100969986541,
+   "p_permutation": 0.009900990099009901,
+   "null_max_lambda_mean": 3.7562976852359315,
+   "null_max_lambda_max": 8.886558125595911,
+   "nperm_used": 100,
+   "ranked": [
+    {
+     "symbol": "TGGCGGA",
+     "theta": -2.8,
+     "lambda": 86.17100969986541,
+     "n_in": 18,
+     "n_out": 94
+    },
+    {
+     "symbol": "GACAGGA",
+     "theta": -0.39999999999999947,
+     "lambda": 36.401725384568635,
+     "n_in": 1735,
+     "n_out": 688
+    },
+    {
+     "symbol": "TAGGGGA",
+     "theta": -0.4499999999999993,
+     "lambda": 23.270961165247172,
+     "n_in": 903,
+     "n_out": 409
+    },
+    {
+     "symbol": "TTTAGGA",
+     "theta": -0.25,
+     "lambda": 20.151451307014213,
+     "n_in": 2486,
+     "n_out": 868
+    },
+    {
+     "symbol": "GATGGGA",
+     "theta": -0.1999999999999993,
+     "lambda": 12.758228976606915,
+     "n_in": 2477,
+     "n_out": 876
+    },
+    {
+     "symbol": "ACGAGGA",
+     "theta": -0.14999999999999947,
+     "lambda": 9.416829870380752,
+     "n_in": 4405,
+     "n_out": 1354
+    },
+    {
+     "symbol": "ACCCGGA",
+     "theta": -0.14999999999999947,
+     "lambda": 4.334941738487032,
+     "n_in": 2167,
+     "n_out": 665
+    },
+    {
+     "symbol": "AACCGGA",
+     "theta": -0.09999999999999964,
+     "lambda": 3.538086014406872,
+     "n_in": 6533,
+     "n_out": 1829
+    }
+   ]
+  }
+ ]
+}

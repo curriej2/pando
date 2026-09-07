@@ -1,0 +1,3021 @@
+{
+ "arm": "Subclone",
+ "poly": "codes",
+ "n_writes": 1529722,
+ "n_clones": 13,
+ "shape": {
+  "top_z_median": 3.7328767761887742,
+  "top_z_max": 39.12823968647489,
+  "concentration_median": 3.1244073184633634,
+  "n_tapes_top_z_gt4": 66,
+  "n_tapes_conc_gt3": 92,
+  "n_tapes_scored": 166,
+  "corr_bushiness_excess": -0.19834444582672922,
+  "corr_bushiness_concentration": -0.12797001971651464,
+  "corr_symbol_freq_meanabsZ": 0.11991926551352593
+ },
+ "map": [
+  {
+   "tape": "AACGGGTTGT",
+   "idx": 0,
+   "n_writes": 10376,
+   "symbol": "TTATGGA",
+   "z": 4.3619544807010975,
+   "concentration": 3.4225681156483163,
+   "bushiness": 5.4438614900314795
+  },
+  {
+   "tape": "AATTTGATCT",
+   "idx": 1,
+   "n_writes": 12571,
+   "symbol": "AATCGGA",
+   "z": 3.625267401228961,
+   "concentration": 3.1621382234613717,
+   "bushiness": 5.374519025224455
+  },
+  {
+   "tape": "ACGCGGCTTC",
+   "idx": 2,
+   "n_writes": 13309,
+   "symbol": "GTTCGGA",
+   "z": 2.582696863882137,
+   "concentration": 2.541672246203869,
+   "bushiness": 5.182632398753894
+  },
+  {
+   "tape": "ACTGTCCAGG",
+   "idx": 3,
+   "n_writes": 5888,
+   "symbol": "TAGAGGA",
+   "z": 4.908295942269632,
+   "concentration": 3.8507955031419314,
+   "bushiness": 5.766895200783545
+  },
+  {
+   "tape": "ACTTAAATCA",
+   "idx": 4,
+   "n_writes": 10954,
+   "symbol": "ATGTGGA",
+   "z": 4.4873307186326326,
+   "concentration": 3.428832636893127,
+   "bushiness": 4.936457863902659
+  },
+  {
+   "tape": "ACTTTGTGTC",
+   "idx": 5,
+   "n_writes": 4595,
+   "symbol": "TTTAGGA",
+   "z": 2.9912188057505733,
+   "concentration": 2.652475159170666,
+   "bushiness": 5.306004618937644
+  },
+  {
+   "tape": "AGAAAATTAC",
+   "idx": 6,
+   "n_writes": 9904,
+   "symbol": "GGCTGGA",
+   "z": 2.9169287878766084,
+   "concentration": 2.796197023972754,
+   "bushiness": 5.5671725688589095
+  },
+  {
+   "tape": "AGCAGTGTTG",
+   "idx": 7,
+   "n_writes": 9141,
+   "symbol": "CCAGGGA",
+   "z": 2.568904281182394,
+   "concentration": 2.701583101370198,
+   "bushiness": 5.226415094339623
+  },
+  {
+   "tape": "AGCCTTGGGT",
+   "idx": 8,
+   "n_writes": 12036,
+   "symbol": "TGAAGGA",
+   "z": 4.557906549704465,
+   "concentration": 3.532558427331886,
+   "bushiness": 4.9287469287469285
+  },
+  {
+   "tape": "AGGATTCGTT",
+   "idx": 9,
+   "n_writes": 14061,
+   "symbol": "AGAGGGA",
+   "z": 6.580842951190918,
+   "concentration": 5.164266240108025,
+   "bushiness": 5.072510822510822
+  },
+  {
+   "tape": "AGGGATCGTC",
+   "idx": 10,
+   "n_writes": 8411,
+   "symbol": "GAAGGGA",
+   "z": 3.765241736353645,
+   "concentration": 2.884651120234334,
+   "bushiness": 5.299936988027725
+  },
+  {
+   "tape": "AGGTGTGGTG",
+   "idx": 11,
+   "n_writes": 3304,
+   "symbol": "TTATGGA",
+   "z": 8.831710136460313,
+   "concentration": 5.047599171967982,
+   "bushiness": 5.261146496815287
+  },
+  {
+   "tape": "AGGTTTGTCC",
+   "idx": 12,
+   "n_writes": 10544,
+   "symbol": "CGTAGGA",
+   "z": 2.9325407885651855,
+   "concentration": 2.493331641326789,
+   "bushiness": 5.282565130260521
+  },
+  {
+   "tape": "AGTTGAGTTA",
+   "idx": 13,
+   "n_writes": 10977,
+   "symbol": "CAATGGA",
+   "z": 3.7455721525101633,
+   "concentration": 2.6523281203769593,
+   "bushiness": 5.714211348256117
+  },
+  {
+   "tape": "ATAGCACGAT",
+   "idx": 14,
+   "n_writes": 6853,
+   "symbol": "TGGGGGA",
+   "z": 5.539167054652993,
+   "concentration": 4.062855259967199,
+   "bushiness": 6.235668789808917
+  },
+  {
+   "tape": "ATGCTTTGGA",
+   "idx": 15,
+   "n_writes": 7714,
+   "symbol": "CCCTGGA",
+   "z": 4.897012703235121,
+   "concentration": 3.8473209956396794,
+   "bushiness": 5.19811320754717
+  },
+  {
+   "tape": "ATTGTTTTGT",
+   "idx": 16,
+   "n_writes": 4717,
+   "symbol": "GGCTGGA",
+   "z": 3.5551056904505884,
+   "concentration": 2.747084866255311,
+   "bushiness": 4.913541666666666
+  },
+  {
+   "tape": "ATTTGAGTCA",
+   "idx": 17,
+   "n_writes": 7191,
+   "symbol": "GGAGGGA",
+   "z": 4.30902470998729,
+   "concentration": 4.157180162276613,
+   "bushiness": 5.114509246088193
+  },
+  {
+   "tape": "ATTTTGCGCG",
+   "idx": 18,
+   "n_writes": 11101,
+   "symbol": "GTGTGGA",
+   "z": 5.291879724450704,
+   "concentration": 3.8238840152237428,
+   "bushiness": 5.082875457875458
+  },
+  {
+   "tape": "CACAAATGAG",
+   "idx": 19,
+   "n_writes": 14837,
+   "symbol": "CTGGGGA",
+   "z": 2.3007541249682673,
+   "concentration": 2.274678927670308,
+   "bushiness": 5.077686516084873
+  },
+  {
+   "tape": "CATCGACTGC",
+   "idx": 20,
+   "n_writes": 7398,
+   "symbol": "GACTGGA",
+   "z": 3.580173393802771,
+   "concentration": 3.2165491795251904,
+   "bushiness": 5.6602907421576125
+  },
+  {
+   "tape": "CCAAGTAATA",
+   "idx": 21,
+   "n_writes": 10160,
+   "symbol": "CAGTGGA",
+   "z": 2.733646674964674,
+   "concentration": 2.7264812167814845,
+   "bushiness": 5.231719876416066
+  },
+  {
+   "tape": "CCCGCGCCTG",
+   "idx": 22,
+   "n_writes": 7055,
+   "symbol": "CAAAGGA",
+   "z": 3.0204072746876736,
+   "concentration": 2.458969363514443,
+   "bushiness": 5.01778093883357
+  },
+  {
+   "tape": "CCCTGTTCAA",
+   "idx": 23,
+   "n_writes": 14420,
+   "symbol": "GCTAGGA",
+   "z": 3.1387783598788066,
+   "concentration": 2.7446631665836354,
+   "bushiness": 5.164756446991404
+  },
+  {
+   "tape": "CCGTTCCGTA",
+   "idx": 24,
+   "n_writes": 12081,
+   "symbol": "TTGCGGA",
+   "z": 3.0827951256102972,
+   "concentration": 2.8071740469671043,
+   "bushiness": 5.3957123715944615
+  },
+  {
+   "tape": "CCGTTGGCGT",
+   "idx": 25,
+   "n_writes": 11601,
+   "symbol": "GGAGGGA",
+   "z": 2.460845538466594,
+   "concentration": 2.4561913715406467,
+   "bushiness": 4.8116963915387805
+  },
+  {
+   "tape": "CCGTTTGAAG",
+   "idx": 26,
+   "n_writes": 8823,
+   "symbol": "TATAGGA",
+   "z": 3.551935180298731,
+   "concentration": 3.4763194550402003,
+   "bushiness": 5.634099616858237
+  },
+  {
+   "tape": "CCTTGTGTTG",
+   "idx": 27,
+   "n_writes": 9479,
+   "symbol": "CAGAGGA",
+   "z": 4.655383118884134,
+   "concentration": 3.6005262447438073,
+   "bushiness": 4.836224489795918
+  },
+  {
+   "tape": "CCTTTGGTGT",
+   "idx": 28,
+   "n_writes": 7679,
+   "symbol": "TTTCGGA",
+   "z": 7.514656280299385,
+   "concentration": 5.11903711477488,
+   "bushiness": 5.683937823834197
+  },
+  {
+   "tape": "CGATTTGTGC",
+   "idx": 29,
+   "n_writes": 2259,
+   "symbol": "CAAAGGA",
+   "z": 4.004075376431035,
+   "concentration": 3.288093570082159,
+   "bushiness": 5.483009708737864
+  },
+  {
+   "tape": "CGCCACTTTC",
+   "idx": 30,
+   "n_writes": 5099,
+   "symbol": "ATTAGGA",
+   "z": 3.371783161223048,
+   "concentration": 3.46620472811679,
+   "bushiness": 4.893474088291747
+  },
+  {
+   "tape": "CGCGGTCATCG",
+   "idx": 31,
+   "n_writes": 4866,
+   "symbol": "AAAAGGA",
+   "z": 3.932168050274453,
+   "concentration": 2.7473064962819747,
+   "bushiness": 5.985239852398524
+  },
+  {
+   "tape": "CGGGAGTTTG",
+   "idx": 32,
+   "n_writes": 11669,
+   "symbol": "CGATGGA",
+   "z": 3.2845351010831676,
+   "concentration": 2.9847493156149905,
+   "bushiness": 5.202407489968792
+  },
+  {
+   "tape": "CGGGCATAGT",
+   "idx": 33,
+   "n_writes": 8571,
+   "symbol": "TATAGGA",
+   "z": 4.90827828478093,
+   "concentration": 3.70049083176182,
+   "bushiness": 4.991846243447874
+  },
+  {
+   "tape": "CGGTCTCTAT",
+   "idx": 34,
+   "n_writes": 7191,
+   "symbol": "GATTGGA",
+   "z": 5.818749279470039,
+   "concentration": 4.1653821460544265,
+   "bushiness": 5.338530066815145
+  },
+  {
+   "tape": "CGGTTCCGTT",
+   "idx": 35,
+   "n_writes": 11211,
+   "symbol": "CGTAGGA",
+   "z": 3.0225506667128967,
+   "concentration": 2.649380796814246,
+   "bushiness": 5.667846309403438
+  },
+  {
+   "tape": "CGTCCTGGGC",
+   "idx": 36,
+   "n_writes": 7707,
+   "symbol": "CAGTGGA",
+   "z": 4.591588765502137,
+   "concentration": 3.7688804441995196,
+   "bushiness": 5.642020497803807
+  },
+  {
+   "tape": "CGTGGGTCTC",
+   "idx": 37,
+   "n_writes": 12562,
+   "symbol": "TGGGGGA",
+   "z": 4.262727992839371,
+   "concentration": 3.6679805416774154,
+   "bushiness": 5.193054981397272
+  },
+  {
+   "tape": "CGTGTTCGGG",
+   "idx": 38,
+   "n_writes": 12459,
+   "symbol": "CCCTGGA",
+   "z": 2.905797157569309,
+   "concentration": 2.547477197758576,
+   "bushiness": 5.097790507364976
+  },
+  {
+   "tape": "CGTTCCTTCT",
+   "idx": 39,
+   "n_writes": 12084,
+   "symbol": "AATAGGA",
+   "z": 3.8722786687352135,
+   "concentration": 3.418691672458958,
+   "bushiness": 5.431011235955056
+  },
+  {
+   "tape": "CGTTCTCCAG",
+   "idx": 40,
+   "n_writes": 6847,
+   "symbol": "TTTCGGA",
+   "z": 3.2082217768008903,
+   "concentration": 3.016222694670543,
+   "bushiness": 5.80746395250212
+  },
+  {
+   "tape": "CGTTGGGTAA",
+   "idx": 41,
+   "n_writes": 5861,
+   "symbol": "TCATGGA",
+   "z": 2.8709464503714264,
+   "concentration": 2.3104886282367225,
+   "bushiness": 5.195921985815603
+  },
+  {
+   "tape": "CGTTTTATTC",
+   "idx": 42,
+   "n_writes": 9087,
+   "symbol": "AGATGGA",
+   "z": 5.0617126191281105,
+   "concentration": 4.307275967442285,
+   "bushiness": 5.444577591372079
+  },
+  {
+   "tape": "CTCTTAGCGG",
+   "idx": 43,
+   "n_writes": 9867,
+   "symbol": "GTCCGGA",
+   "z": 3.987041349997946,
+   "concentration": 3.562476237749777,
+   "bushiness": 4.813170731707317
+  },
+  {
+   "tape": "CTCTTGCGCG",
+   "idx": 44,
+   "n_writes": 6823,
+   "symbol": "GTCCGGA",
+   "z": 2.968654201651708,
+   "concentration": 2.5691283520492165,
+   "bushiness": 5.624896949711459
+  },
+  {
+   "tape": "CTGATTTTCA",
+   "idx": 45,
+   "n_writes": 12090,
+   "symbol": "AGCAGGA",
+   "z": 2.7134871242865835,
+   "concentration": 2.446689632834476,
+   "bushiness": 5.344827586206897
+  },
+  {
+   "tape": "CTGGGGAAAT",
+   "idx": 46,
+   "n_writes": 14225,
+   "symbol": "TATAGGA",
+   "z": 3.743190493889422,
+   "concentration": 3.281506755850589,
+   "bushiness": 5.133525802959221
+  },
+  {
+   "tape": "CTGTACCCAC",
+   "idx": 47,
+   "n_writes": 7934,
+   "symbol": "ACCTGGA",
+   "z": 2.5961452156909957,
+   "concentration": 2.4937469746166157,
+   "bushiness": 5.749275362318841
+  },
+  {
+   "tape": "CTGTCTGCCC",
+   "idx": 48,
+   "n_writes": 8691,
+   "symbol": "ACTTGGA",
+   "z": 3.3316324611913357,
+   "concentration": 2.8195659887175024,
+   "bushiness": 5.3026235509456985
+  },
+  {
+   "tape": "CTTAATTGGC",
+   "idx": 49,
+   "n_writes": 12227,
+   "symbol": "ACAGGGA",
+   "z": 2.0433698098070336,
+   "concentration": 2.257897940581834,
+   "bushiness": 5.090341382181515
+  },
+  {
+   "tape": "CTTGGTACCC",
+   "idx": 50,
+   "n_writes": 11604,
+   "symbol": "TCTGGGA",
+   "z": 3.191384860998242,
+   "concentration": 2.858330030551918,
+   "bushiness": 5.056209150326797
+  },
+  {
+   "tape": "GAACGACTTC",
+   "idx": 51,
+   "n_writes": 11179,
+   "symbol": "TCTGGGA",
+   "z": 4.778460094641856,
+   "concentration": 3.9446022802458365,
+   "bushiness": 5.187470997679815
+  },
+  {
+   "tape": "GAATCTGTGC",
+   "idx": 52,
+   "n_writes": 14307,
+   "symbol": "TGTAGGA",
+   "z": 2.5745972266454524,
+   "concentration": 2.361995104818059,
+   "bushiness": 4.788152610441767
+  },
+  {
+   "tape": "GAGAAATTGG",
+   "idx": 53,
+   "n_writes": 9009,
+   "symbol": "GAAAGGA",
+   "z": 4.124802016412097,
+   "concentration": 3.5399505456973728,
+   "bushiness": 5.853801169590644
+  },
+  {
+   "tape": "GAGGTGGCGT",
+   "idx": 54,
+   "n_writes": 8022,
+   "symbol": "TTTAGGA",
+   "z": 4.492115316755052,
+   "concentration": 3.634426404805936,
+   "bushiness": 5.574704656011119
+  },
+  {
+   "tape": "GATTGGGCTT",
+   "idx": 55,
+   "n_writes": 11750,
+   "symbol": "GGAGGGA",
+   "z": 4.800013779052006,
+   "concentration": 3.366636528597909,
+   "bushiness": 4.881595346904861
+  },
+  {
+   "tape": "GATTGGTGTC",
+   "idx": 56,
+   "n_writes": 4217,
+   "symbol": "TTACGGA",
+   "z": 7.090076698832106,
+   "concentration": 3.644780655892398,
+   "bushiness": 5.317780580075662
+  },
+  {
+   "tape": "GCGCTCAGTC",
+   "idx": 57,
+   "n_writes": 4378,
+   "symbol": "ACGTGGA",
+   "z": 4.843110088360069,
+   "concentration": 3.547222680875756,
+   "bushiness": 4.9806598407281
+  },
+  {
+   "tape": "GCGGTTCGGA",
+   "idx": 58,
+   "n_writes": 8986,
+   "symbol": "TCCCGGA",
+   "z": 3.342945712776791,
+   "concentration": 2.6518499383068597,
+   "bushiness": 5.4034876728803365
+  },
+  {
+   "tape": "GCGTACGATG",
+   "idx": 59,
+   "n_writes": 6136,
+   "symbol": "GCGTGGA",
+   "z": 7.24662532736278,
+   "concentration": 5.039840042561912,
+   "bushiness": 5.326388888888889
+  },
+  {
+   "tape": "GCGTATGCAA",
+   "idx": 60,
+   "n_writes": 8978,
+   "symbol": "GTCTGGA",
+   "z": 3.470939611654443,
+   "concentration": 3.141108843480922,
+   "bushiness": 5.566026038437694
+  },
+  {
+   "tape": "GCGTCCTTCG",
+   "idx": 61,
+   "n_writes": 8189,
+   "symbol": "ATCAGGA",
+   "z": 2.9684138508425697,
+   "concentration": 2.6172294084502092,
+   "bushiness": 5.3140817650876055
+  },
+  {
+   "tape": "GCGTGATGGA",
+   "idx": 62,
+   "n_writes": 12357,
+   "symbol": "ATCGGGA",
+   "z": 3.429606163789101,
+   "concentration": 3.019172208019504,
+   "bushiness": 5.127385892116183
+  },
+  {
+   "tape": "GCGTGGTCGA",
+   "idx": 63,
+   "n_writes": 13718,
+   "symbol": "TCTGGGA",
+   "z": 9.74173338049553,
+   "concentration": 7.452456032619487,
+   "bushiness": 4.9720913374411015
+  },
+  {
+   "tape": "GCGTTAGTAA",
+   "idx": 64,
+   "n_writes": 15138,
+   "symbol": "AACCGGA",
+   "z": 3.280554828947308,
+   "concentration": 2.970110231086334,
+   "bushiness": 4.827168367346939
+  },
+  {
+   "tape": "GCTCTTCCGT",
+   "idx": 65,
+   "n_writes": 10937,
+   "symbol": "TTACGGA",
+   "z": 2.697124949921306,
+   "concentration": 2.1448475971223764,
+   "bushiness": 5.168714555765596
+  },
+  {
+   "tape": "GCTGTTCCCC",
+   "idx": 66,
+   "n_writes": 7230,
+   "symbol": "CTGGGGA",
+   "z": 3.280974102333871,
+   "concentration": 2.9020099810372475,
+   "bushiness": 5.844785772029103
+  },
+  {
+   "tape": "GCTGTTCTTC",
+   "idx": 67,
+   "n_writes": 11397,
+   "symbol": "GTCGGGA",
+   "z": 4.50099576025864,
+   "concentration": 3.595065479078118,
+   "bushiness": 5.328190743338008
+  },
+  {
+   "tape": "GGAAGTGGTA",
+   "idx": 68,
+   "n_writes": 10566,
+   "symbol": "TTTCGGA",
+   "z": 4.1348143081834134,
+   "concentration": 3.356851957271032,
+   "bushiness": 4.706458797327394
+  },
+  {
+   "tape": "GGATGGGGCA",
+   "idx": 69,
+   "n_writes": 7705,
+   "symbol": "CAGTGGA",
+   "z": 4.145022747540359,
+   "concentration": 3.126148059871584,
+   "bushiness": 5.571221981200289
+  },
+  {
+   "tape": "GGATTGCTCT",
+   "idx": 70,
+   "n_writes": 1843,
+   "symbol": "ATGTGGA",
+   "z": 5.137227060840451,
+   "concentration": 4.344632075165425,
+   "bushiness": 4.6075
+  },
+  {
+   "tape": "GGCGTCTCTT",
+   "idx": 71,
+   "n_writes": 14773,
+   "symbol": "AATAGGA",
+   "z": 3.0028378476577147,
+   "concentration": 2.5199440143243987,
+   "bushiness": 5.0523255813953485
+  },
+  {
+   "tape": "GGCTGTGAGT",
+   "idx": 72,
+   "n_writes": 8250,
+   "symbol": "TGTAGGA",
+   "z": 3.24438102919232,
+   "concentration": 2.8210268794852764,
+   "bushiness": 5.585646580907245
+  },
+  {
+   "tape": "GGGGAGGCTT",
+   "idx": 73,
+   "n_writes": 10594,
+   "symbol": "CGAAGGA",
+   "z": 3.6572478118199596,
+   "concentration": 3.229619391983619,
+   "bushiness": 5.347804139323574
+  },
+  {
+   "tape": "GGGTAGCCAC",
+   "idx": 74,
+   "n_writes": 5717,
+   "symbol": "TCTAGGA",
+   "z": 3.9746532111351063,
+   "concentration": 3.3874478427641272,
+   "bushiness": 6.5411899313501145
+  },
+  {
+   "tape": "GGGTGCCGTT",
+   "idx": 75,
+   "n_writes": 11242,
+   "symbol": "ATATGGA",
+   "z": 2.5448238946988173,
+   "concentration": 2.2565890673384894,
+   "bushiness": 5.098412698412698
+  },
+  {
+   "tape": "GGGTGCGATC",
+   "idx": 76,
+   "n_writes": 11989,
+   "symbol": "TAGAGGA",
+   "z": 7.113006701106275,
+   "concentration": 5.016593545293067,
+   "bushiness": 4.939843428100535
+  },
+  {
+   "tape": "GGTAATCCAG",
+   "idx": 77,
+   "n_writes": 10162,
+   "symbol": "CCAGGGA",
+   "z": 2.5410721300669037,
+   "concentration": 2.483267256853953,
+   "bushiness": 5.562123700054735
+  },
+  {
+   "tape": "GGTACACGAA",
+   "idx": 78,
+   "n_writes": 4441,
+   "symbol": "ATATGGA",
+   "z": 5.205320290017503,
+   "concentration": 3.852003112525721,
+   "bushiness": 5.286904761904762
+  },
+  {
+   "tape": "GGTACGGCTG",
+   "idx": 79,
+   "n_writes": 7129,
+   "symbol": "CGAAGGA",
+   "z": 4.659371477699512,
+   "concentration": 4.080009320593165,
+   "bushiness": 5.257374631268436
+  },
+  {
+   "tape": "GGTCATCGAA",
+   "idx": 80,
+   "n_writes": 6833,
+   "symbol": "CATGGGA",
+   "z": 2.8830711010650725,
+   "concentration": 2.6557316516582747,
+   "bushiness": 4.962236746550472
+  },
+  {
+   "tape": "GGTCTTAGTT",
+   "idx": 81,
+   "n_writes": 13958,
+   "symbol": "ATGTGGA",
+   "z": 2.843962709939952,
+   "concentration": 2.434952694748949,
+   "bushiness": 5.092302079533017
+  },
+  {
+   "tape": "GGTGGGTGAA",
+   "idx": 82,
+   "n_writes": 11388,
+   "symbol": "AACTGGA",
+   "z": 3.700139035843879,
+   "concentration": 3.1116527502549225,
+   "bushiness": 4.9022815325010765
+  },
+  {
+   "tape": "GGTGTGAATT",
+   "idx": 83,
+   "n_writes": 10023,
+   "symbol": "GAGTGGA",
+   "z": 4.722229112727796,
+   "concentration": 4.218794232538169,
+   "bushiness": 5.501097694840834
+  },
+  {
+   "tape": "GGTGTGTGAT",
+   "idx": 84,
+   "n_writes": 14772,
+   "symbol": "ACAAGGA",
+   "z": 3.695251943055672,
+   "concentration": 2.997198874195368,
+   "bushiness": 5.007457627118644
+  },
+  {
+   "tape": "GTATGGTGCT",
+   "idx": 85,
+   "n_writes": 3541,
+   "symbol": "CGATGGA",
+   "z": 33.631339510519226,
+   "concentration": 15.788764394841847,
+   "bushiness": 4.85068493150685
+  },
+  {
+   "tape": "GTCATCCTCG",
+   "idx": 86,
+   "n_writes": 5581,
+   "symbol": "GACTGGA",
+   "z": 3.993629360710958,
+   "concentration": 3.2266743780396543,
+   "bushiness": 5.637373737373737
+  },
+  {
+   "tape": "GTCGTGGCGG",
+   "idx": 87,
+   "n_writes": 10189,
+   "symbol": "TGATGGA",
+   "z": 4.0532026002725035,
+   "concentration": 3.0559648547528973,
+   "bushiness": 5.0970485242621315
+  },
+  {
+   "tape": "GTCTAAAGTG",
+   "idx": 88,
+   "n_writes": 8952,
+   "symbol": "CCAGGGA",
+   "z": 3.4240882806293627,
+   "concentration": 2.6059936811035573,
+   "bushiness": 6.069152542372882
+  },
+  {
+   "tape": "GTGAACGCGC",
+   "idx": 89,
+   "n_writes": 13103,
+   "symbol": "TGGGGGA",
+   "z": 6.393383285342456,
+   "concentration": 5.665475174442927,
+   "bushiness": 5.144483706321163
+  },
+  {
+   "tape": "GTGAATGAAG",
+   "idx": 90,
+   "n_writes": 7555,
+   "symbol": "TAGGGGA",
+   "z": 4.363411476091998,
+   "concentration": 3.286949680835246,
+   "bushiness": 5.373399715504979
+  },
+  {
+   "tape": "GTGGTCGTTG",
+   "idx": 91,
+   "n_writes": 7778,
+   "symbol": "ATAAGGA",
+   "z": 4.196778460237679,
+   "concentration": 3.7431654331055837,
+   "bushiness": 5.937404580152672
+  },
+  {
+   "tape": "GTGTGGACTG",
+   "idx": 92,
+   "n_writes": 5165,
+   "symbol": "CGACGGA",
+   "z": 3.8470844531142454,
+   "concentration": 3.0486281602040726,
+   "bushiness": 4.961575408261287
+  },
+  {
+   "tape": "GTTGCGGCGA",
+   "idx": 93,
+   "n_writes": 5341,
+   "symbol": "ACATGGA",
+   "z": 5.668836738734495,
+   "concentration": 4.779062515594162,
+   "bushiness": 5.325024925224327
+  },
+  {
+   "tape": "GTTGCGTGTT",
+   "idx": 94,
+   "n_writes": 12379,
+   "symbol": "TTTGGGA",
+   "z": 3.9768652212501747,
+   "concentration": 4.208625855244297,
+   "bushiness": 5.308319039451115
+  },
+  {
+   "tape": "GTTGGTAAGC",
+   "idx": 95,
+   "n_writes": 9844,
+   "symbol": "GAGTGGA",
+   "z": 3.2605704940445537,
+   "concentration": 2.8570300725176363,
+   "bushiness": 5.255739455419114
+  },
+  {
+   "tape": "GTTGGTATTG",
+   "idx": 96,
+   "n_writes": 3902,
+   "symbol": "TCATGGA",
+   "z": 3.32320357011995,
+   "concentration": 2.938319669335484,
+   "bushiness": 4.945500633713562
+  },
+  {
+   "tape": "GTTTGCCGCA",
+   "idx": 97,
+   "n_writes": 10537,
+   "symbol": "AGCAGGA",
+   "z": 3.573641858812114,
+   "concentration": 2.704378263854557,
+   "bushiness": 5.231876861966236
+  },
+  {
+   "tape": "GTTTTGACAC",
+   "idx": 98,
+   "n_writes": 10720,
+   "symbol": "TGCTGGA",
+   "z": 39.12823968647489,
+   "concentration": 24.81477818795829,
+   "bushiness": 5.389643036701861
+  },
+  {
+   "tape": "TAAACCGCGA",
+   "idx": 99,
+   "n_writes": 8267,
+   "symbol": "AATCGGA",
+   "z": 3.2978396934916936,
+   "concentration": 2.793793751462297,
+   "bushiness": 5.913447782546495
+  },
+  {
+   "tape": "TAATTTGTTA",
+   "idx": 100,
+   "n_writes": 11626,
+   "symbol": "CCCTGGA",
+   "z": 5.926913946050252,
+   "concentration": 4.3490038910966655,
+   "bushiness": 5.0155306298533215
+  },
+  {
+   "tape": "TACGGCTATT",
+   "idx": 101,
+   "n_writes": 12379,
+   "symbol": "TGGGGGA",
+   "z": 3.714917235193444,
+   "concentration": 3.287444971848163,
+   "bushiness": 5.419877408056042
+  },
+  {
+   "tape": "TAGAGGGTTT",
+   "idx": 102,
+   "n_writes": 2863,
+   "symbol": "CTGCGGA",
+   "z": 3.7238613760436476,
+   "concentration": 3.2913778485239162,
+   "bushiness": 4.632686084142395
+  },
+  {
+   "tape": "TAGGGGGTCG",
+   "idx": 103,
+   "n_writes": 6888,
+   "symbol": "GAAGGGA",
+   "z": 7.479258950174347,
+   "concentration": 5.136401460781981,
+   "bushiness": 4.721041809458534
+  },
+  {
+   "tape": "TAGGTCCTTA",
+   "idx": 104,
+   "n_writes": 14312,
+   "symbol": "CGACGGA",
+   "z": 3.7069742268535575,
+   "concentration": 3.1777477301626256,
+   "bushiness": 4.933471216821785
+  },
+  {
+   "tape": "TATAGTGGAA",
+   "idx": 105,
+   "n_writes": 11495,
+   "symbol": "GTAGGGA",
+   "z": 3.750687093465896,
+   "concentration": 3.844095172703688,
+   "bushiness": 5.138578453285651
+  },
+  {
+   "tape": "TATCAGACGT",
+   "idx": 106,
+   "n_writes": 914,
+   "symbol": "TTTAGGA",
+   "z": 4.106152901320909,
+   "concentration": 3.6322576958081743,
+   "bushiness": 4.663265306122449
+  },
+  {
+   "tape": "TATCTTCGGT",
+   "idx": 107,
+   "n_writes": 4438,
+   "symbol": "ACGCGGA",
+   "z": 4.636565203897177,
+   "concentration": 3.7654033096672244,
+   "bushiness": 5.949061662198392
+  },
+  {
+   "tape": "TATGATCACC",
+   "idx": 108,
+   "n_writes": 13007,
+   "symbol": "TCTGGGA",
+   "z": 3.6853948904012395,
+   "concentration": 2.997311580379322,
+   "bushiness": 5.0434276851492825
+  },
+  {
+   "tape": "TATGCATCTC",
+   "idx": 109,
+   "n_writes": 10770,
+   "symbol": "TATAGGA",
+   "z": 3.2401692079907196,
+   "concentration": 2.6553958134469497,
+   "bushiness": 4.9631336405529956
+  },
+  {
+   "tape": "TATTCGTGCA",
+   "idx": 110,
+   "n_writes": 13236,
+   "symbol": "ACCCGGA",
+   "z": 5.876215914051835,
+   "concentration": 4.811975258831817,
+   "bushiness": 4.966604127579737
+  },
+  {
+   "tape": "TATTGGGTCA",
+   "idx": 111,
+   "n_writes": 7166,
+   "symbol": "TCTGGGA",
+   "z": 10.011749892587007,
+   "concentration": 8.787367975130538,
+   "bushiness": 5.902800658978583
+  },
+  {
+   "tape": "TATTTAGGGT",
+   "idx": 112,
+   "n_writes": 12168,
+   "symbol": "TGGCGGA",
+   "z": 3.3318599777185045,
+   "concentration": 2.842176414071658,
+   "bushiness": 5.436997319034853
+  },
+  {
+   "tape": "TCACGATCTT",
+   "idx": 113,
+   "n_writes": 14411,
+   "symbol": "CCGGGGA",
+   "z": 2.816928876332188,
+   "concentration": 2.7136017002305404,
+   "bushiness": 4.947133539306557
+  },
+  {
+   "tape": "TCAGAGTTTT",
+   "idx": 114,
+   "n_writes": 8741,
+   "symbol": "AGAGGGA",
+   "z": 3.251585886204541,
+   "concentration": 2.40478704641603,
+   "bushiness": 5.129694835680751
+  },
+  {
+   "tape": "TCATCGGCGT",
+   "idx": 115,
+   "n_writes": 10284,
+   "symbol": "TGGGGGA",
+   "z": 3.332253761841384,
+   "concentration": 2.9390954832683973,
+   "bushiness": 5.147147147147147
+  },
+  {
+   "tape": "TCCAGGTGCA",
+   "idx": 116,
+   "n_writes": 10274,
+   "symbol": "TAGGGGA",
+   "z": 5.200702867602448,
+   "concentration": 4.585763762740927,
+   "bushiness": 5.351041666666666
+  },
+  {
+   "tape": "TCCTGCTGCT",
+   "idx": 117,
+   "n_writes": 12999,
+   "symbol": "AACCGGA",
+   "z": 3.448360972429327,
+   "concentration": 2.851806938010498,
+   "bushiness": 4.86307519640853
+  },
+  {
+   "tape": "TCCTGTTCTT",
+   "idx": 118,
+   "n_writes": 9038,
+   "symbol": "ATTAGGA",
+   "z": 4.67652554891604,
+   "concentration": 4.236268577696669,
+   "bushiness": 5.517704517704518
+  },
+  {
+   "tape": "TCGCGTCTGG",
+   "idx": 119,
+   "n_writes": 11944,
+   "symbol": "CTGCGGA",
+   "z": 2.7900546464838745,
+   "concentration": 2.7313801506953483,
+   "bushiness": 5.084716900808854
+  },
+  {
+   "tape": "TCGGGGGTAT",
+   "idx": 120,
+   "n_writes": 9136,
+   "symbol": "TTAAGGA",
+   "z": 2.3731178442474414,
+   "concentration": 2.4020261025107503,
+   "bushiness": 5.383618149675899
+  },
+  {
+   "tape": "TCGTCAGCGT",
+   "idx": 121,
+   "n_writes": 11916,
+   "symbol": "GATGGGA",
+   "z": 3.6553176943376537,
+   "concentration": 3.3598537248009133,
+   "bushiness": 5.350696003592277
+  },
+  {
+   "tape": "TCTGCAGCCT",
+   "idx": 122,
+   "n_writes": 10782,
+   "symbol": "TGAAGGA",
+   "z": 4.418187489913259,
+   "concentration": 3.5920224526165336,
+   "bushiness": 4.869918699186992
+  },
+  {
+   "tape": "TCTTGGCGCT",
+   "idx": 123,
+   "n_writes": 7944,
+   "symbol": "TGTAGGA",
+   "z": 3.965574292811657,
+   "concentration": 3.5375305892814954,
+   "bushiness": 5.512838306731436
+  },
+  {
+   "tape": "TCTTTTTCTT",
+   "idx": 124,
+   "n_writes": 10757,
+   "symbol": "ACCAGGA",
+   "z": 2.693660069467259,
+   "concentration": 2.187869613299591,
+   "bushiness": 5.090866067203029
+  },
+  {
+   "tape": "TGAATGCTAA",
+   "idx": 125,
+   "n_writes": 12036,
+   "symbol": "AAAGGGA",
+   "z": 3.0772088385490433,
+   "concentration": 2.631994396911736,
+   "bushiness": 5.556786703601108
+  },
+  {
+   "tape": "TGAATGTGCG",
+   "idx": 126,
+   "n_writes": 10252,
+   "symbol": "TGTAGGA",
+   "z": 17.450224017359737,
+   "concentration": 12.31618682172135,
+   "bushiness": 4.748494673459935
+  },
+  {
+   "tape": "TGAGGGGTGT",
+   "idx": 127,
+   "n_writes": 11677,
+   "symbol": "AAACGGA",
+   "z": 3.0864872318969994,
+   "concentration": 2.537341268081705,
+   "bushiness": 5.135004397537379
+  },
+  {
+   "tape": "TGATGTCGGG",
+   "idx": 128,
+   "n_writes": 10740,
+   "symbol": "CAATGGA",
+   "z": 2.918697291078853,
+   "concentration": 2.6082442806917205,
+   "bushiness": 5.090047393364929
+  },
+  {
+   "tape": "TGCATGTGTC",
+   "idx": 129,
+   "n_writes": 8631,
+   "symbol": "ACCCGGA",
+   "z": 2.758240033636908,
+   "concentration": 2.2584541483464977,
+   "bushiness": 4.980380842469706
+  },
+  {
+   "tape": "TGCTCGATCC",
+   "idx": 130,
+   "n_writes": 11033,
+   "symbol": "GACAGGA",
+   "z": 3.834868433025265,
+   "concentration": 3.0214506942999835,
+   "bushiness": 5.424287118977384
+  },
+  {
+   "tape": "TGCTTCCGTC",
+   "idx": 131,
+   "n_writes": 8807,
+   "symbol": "TGATGGA",
+   "z": 5.103112422970025,
+   "concentration": 4.132839747841206,
+   "bushiness": 5.318236714975845
+  },
+  {
+   "tape": "TGGAGGTTCG",
+   "idx": 132,
+   "n_writes": 3383,
+   "symbol": "ATATGGA",
+   "z": 4.219660997216711,
+   "concentration": 3.2347470335254305,
+   "bushiness": 4.989675516224189
+  },
+  {
+   "tape": "TGGCGTCGGT",
+   "idx": 133,
+   "n_writes": 5987,
+   "symbol": "ACAGGGA",
+   "z": 3.6534815514496013,
+   "concentration": 2.652528371961576,
+   "bushiness": 5.517972350230415
+  },
+  {
+   "tape": "TGGGGGGTCT",
+   "idx": 134,
+   "n_writes": 9321,
+   "symbol": "GCCTGGA",
+   "z": 4.0645739273727886,
+   "concentration": 3.281818592170374,
+   "bushiness": 5.375432525951557
+  },
+  {
+   "tape": "TGGTGCTCTG",
+   "idx": 135,
+   "n_writes": 1571,
+   "symbol": "ATATGGA",
+   "z": 4.135256335397309,
+   "concentration": 3.122666577055143,
+   "bushiness": 4.540462427745664
+  },
+  {
+   "tape": "TGGTTTCTTA",
+   "idx": 136,
+   "n_writes": 11882,
+   "symbol": "AGCAGGA",
+   "z": 2.306661951259078,
+   "concentration": 2.0323367337589935,
+   "bushiness": 5.227452705675319
+  },
+  {
+   "tape": "TGTAGCCGGC",
+   "idx": 137,
+   "n_writes": 11335,
+   "symbol": "ACTTGGA",
+   "z": 3.33768559550002,
+   "concentration": 2.6431395996245177,
+   "bushiness": 5.159308147473828
+  },
+  {
+   "tape": "TGTATCGATG",
+   "idx": 138,
+   "n_writes": 8013,
+   "symbol": "CGTAGGA",
+   "z": 4.45158449531994,
+   "concentration": 2.8042357359359023,
+   "bushiness": 5.008125
+  },
+  {
+   "tape": "TGTGACCTGT",
+   "idx": 139,
+   "n_writes": 11505,
+   "symbol": "TGCTGGA",
+   "z": 4.736257915107403,
+   "concentration": 4.41781745281159,
+   "bushiness": 5.563346228239845
+  },
+  {
+   "tape": "TGTTATCATA",
+   "idx": 140,
+   "n_writes": 10219,
+   "symbol": "CAAAGGA",
+   "z": 2.2698711701407173,
+   "concentration": 2.2093893042043673,
+   "bushiness": 5.168942842690946
+  },
+  {
+   "tape": "TGTTCGATGC",
+   "idx": 141,
+   "n_writes": 2748,
+   "symbol": "GAAAGGA",
+   "z": 6.263958263033794,
+   "concentration": 5.350817469561079,
+   "bushiness": 5.608163265306122
+  },
+  {
+   "tape": "TTAATACCCC",
+   "idx": 142,
+   "n_writes": 9749,
+   "symbol": "GAGTGGA",
+   "z": 3.883997886495178,
+   "concentration": 2.753762884798979,
+   "bushiness": 5.901331719128329
+  },
+  {
+   "tape": "TTATGTGGAT",
+   "idx": 143,
+   "n_writes": 6364,
+   "symbol": "TGGCGGA",
+   "z": 3.741892176333901,
+   "concentration": 3.219557268948232,
+   "bushiness": 5.733333333333333
+  },
+  {
+   "tape": "TTATGTTTTT",
+   "idx": 144,
+   "n_writes": 9954,
+   "symbol": "TGGCGGA",
+   "z": 3.116925004057759,
+   "concentration": 2.717198602120885,
+   "bushiness": 5.247232472324724
+  },
+  {
+   "tape": "TTATTGTTCC",
+   "idx": 145,
+   "n_writes": 9368,
+   "symbol": "TGATGGA",
+   "z": 3.7773217128943344,
+   "concentration": 3.4460188228536284,
+   "bushiness": 5.663845223700121
+  },
+  {
+   "tape": "TTATTTCGGG",
+   "idx": 146,
+   "n_writes": 4174,
+   "symbol": "ATGTGGA",
+   "z": 5.220129550528921,
+   "concentration": 5.177010700358788,
+   "bushiness": 5.071688942891859
+  },
+  {
+   "tape": "TTATTTGTTC",
+   "idx": 147,
+   "n_writes": 8151,
+   "symbol": "AATGGGA",
+   "z": 3.4658707406408342,
+   "concentration": 3.1509319793850845,
+   "bushiness": 5.466800804828974
+  },
+  {
+   "tape": "TTCAGTGTTT",
+   "idx": 148,
+   "n_writes": 8446,
+   "symbol": "AAGAGGA",
+   "z": 4.020885284875004,
+   "concentration": 3.1080922772063957,
+   "bushiness": 5.0363744782349436
+  },
+  {
+   "tape": "TTCATAGCTG",
+   "idx": 149,
+   "n_writes": 5984,
+   "symbol": "AGAGGGA",
+   "z": 25.625601945818065,
+   "concentration": 15.65473732220253,
+   "bushiness": 4.814159292035399
+  },
+  {
+   "tape": "TTCCTCAGTT",
+   "idx": 150,
+   "n_writes": 6900,
+   "symbol": "AACAGGA",
+   "z": 2.844740084992153,
+   "concentration": 2.6676383889487107,
+   "bushiness": 6.227436823104693
+  },
+  {
+   "tape": "TTCGTGGCAA",
+   "idx": 151,
+   "n_writes": 313,
+   "symbol": "GTTCGGA",
+   "z": 3.1640816394939284,
+   "concentration": 3.105344306356315,
+   "bushiness": 4.815384615384615
+  },
+  {
+   "tape": "TTGAATCTCC",
+   "idx": 152,
+   "n_writes": 11270,
+   "symbol": "ATTAGGA",
+   "z": 3.013599197129173,
+   "concentration": 2.5401027206165336,
+   "bushiness": 5.384615384615385
+  },
+  {
+   "tape": "TTGGTATAGT",
+   "idx": 153,
+   "n_writes": 12566,
+   "symbol": "AGGTGGA",
+   "z": 3.3788869352932487,
+   "concentration": 2.5414923045688664,
+   "bushiness": 5.131073907717436
+  },
+  {
+   "tape": "TTGGTGATTG",
+   "idx": 154,
+   "n_writes": 6944,
+   "symbol": "AACAGGA",
+   "z": 2.7309427292553234,
+   "concentration": 2.7522316975881487,
+   "bushiness": 5.748344370860927
+  },
+  {
+   "tape": "TTGTCGCCTG",
+   "idx": 155,
+   "n_writes": 10978,
+   "symbol": "CCAGGGA",
+   "z": 2.57346609857237,
+   "concentration": 2.5513718295846997,
+   "bushiness": 5.5
+  },
+  {
+   "tape": "TTGTCTGCGT",
+   "idx": 156,
+   "n_writes": 12999,
+   "symbol": "AACGGGA",
+   "z": 3.374793579503117,
+   "concentration": 2.907895782513031,
+   "bushiness": 5.09165687426557
+  },
+  {
+   "tape": "TTGTGTTGGT",
+   "idx": 157,
+   "n_writes": 12082,
+   "symbol": "TTGCGGA",
+   "z": 4.413613796107509,
+   "concentration": 3.9568983330151446,
+   "bushiness": 5.143465304384844
+  },
+  {
+   "tape": "TTGTTTAAGC",
+   "idx": 158,
+   "n_writes": 7591,
+   "symbol": "CCGAGGA",
+   "z": 3.4058317265988554,
+   "concentration": 2.9506902873990035,
+   "bushiness": 5.26056826056826
+  },
+  {
+   "tape": "TTTACATGCT",
+   "idx": 159,
+   "n_writes": 1015,
+   "symbol": "CGATGGA",
+   "z": 16.315009205820044,
+   "concentration": 11.202434263456968,
+   "bushiness": 4.264705882352941
+  },
+  {
+   "tape": "TTTACTGTAT",
+   "idx": 160,
+   "n_writes": 12309,
+   "symbol": "GAGAGGA",
+   "z": 3.6920760352717092,
+   "concentration": 2.729412090285415,
+   "bushiness": 5.148055207026349
+  },
+  {
+   "tape": "TTTCCGTCTT",
+   "idx": 161,
+   "n_writes": 10394,
+   "symbol": "GTCTGGA",
+   "z": 3.744385989187331,
+   "concentration": 2.99964398076433,
+   "bushiness": 5.32752434648898
+  },
+  {
+   "tape": "TTTGAGTTTG",
+   "idx": 162,
+   "n_writes": 13847,
+   "symbol": "AAGAGGA",
+   "z": 5.4849631522912095,
+   "concentration": 4.3856512262384575,
+   "bushiness": 4.988112391930835
+  },
+  {
+   "tape": "TTTGGTTCAC",
+   "idx": 163,
+   "n_writes": 6143,
+   "symbol": "TCATGGA",
+   "z": 3.0749235058266033,
+   "concentration": 2.636666772682067,
+   "bushiness": 5.1927303465765
+  },
+  {
+   "tape": "TTTGTGTAAG",
+   "idx": 164,
+   "n_writes": 7863,
+   "symbol": "GAAGGGA",
+   "z": 4.297464397418904,
+   "concentration": 3.427249280623644,
+   "bushiness": 5.186675461741425
+  },
+  {
+   "tape": "TTTTGTGTGA",
+   "idx": 165,
+   "n_writes": 7409,
+   "symbol": "GTAGGGA",
+   "z": 5.120841768419589,
+   "concentration": 3.84204158292176,
+   "bushiness": 5.898885350318471
+  }
+ ],
+ "n_symbols": 106,
+ "nperm": 200,
+ "tapes_scored": 166,
+ "tv_obs_median": 0.046742824500731896,
+ "tv_null_median": 0.040739211388215936,
+ "excess_median": 0.006108913198022026,
+ "excess_max": 0.061641765815032584,
+ "n_tapes_above_null_p95": 98,
+ "G_obs": 72084.92379304502,
+ "G_null_mean": 61931.311514714354,
+ "G_null_max": 63065.56406652053,
+ "p_global": 0.004975124378109453,
+ "per_tape": [
+  {
+   "tape": "GTATGGTGCT",
+   "idx": 85,
+   "n_writes": 3541,
+   "tv": 0.12494766584052003,
+   "tv_null_mean": 0.06330590002548744,
+   "tv_null_p95": 0.07149067617678669,
+   "excess": 0.061641765815032584
+  },
+  {
+   "tape": "GATTGGTGTC",
+   "idx": 56,
+   "n_writes": 4217,
+   "tv": 0.11454663512337605,
+   "tv_null_mean": 0.0608356433009922,
+   "tv_null_p95": 0.06777036228383282,
+   "excess": 0.053710991822383855
+  },
+  {
+   "tape": "AGGTGTGGTG",
+   "idx": 11,
+   "n_writes": 3304,
+   "tv": 0.11419717568329069,
+   "tv_null_mean": 0.06617450971410406,
+   "tv_null_p95": 0.07372926008075219,
+   "excess": 0.048022665969186626
+  },
+  {
+   "tape": "TGGTGCTCTG",
+   "idx": 135,
+   "n_writes": 1571,
+   "tv": 0.1398631472088533,
+   "tv_null_mean": 0.09502501756884135,
+   "tv_null_p95": 0.10768833655515224,
+   "excess": 0.04483812964001194
+  },
+  {
+   "tape": "TTTACATGCT",
+   "idx": 159,
+   "n_writes": 1015,
+   "tv": 0.1615018732701251,
+   "tv_null_mean": 0.11856834943051758,
+   "tv_null_p95": 0.1349743956902981,
+   "excess": 0.042933523839607524
+  },
+  {
+   "tape": "TTCATAGCTG",
+   "idx": 149,
+   "n_writes": 5984,
+   "tv": 0.08583049239375752,
+   "tv_null_mean": 0.049403393892793676,
+   "tv_null_p95": 0.05603712641123427,
+   "excess": 0.036427098500963845
+  },
+  {
+   "tape": "CGCGGTCATCG",
+   "idx": 31,
+   "n_writes": 4866,
+   "tv": 0.08289538210480693,
+   "tv_null_mean": 0.054501201475091444,
+   "tv_null_p95": 0.061751249126430506,
+   "excess": 0.028394180629715486
+  },
+  {
+   "tape": "CGATTTGTGC",
+   "idx": 29,
+   "n_writes": 2259,
+   "tv": 0.10750383813942829,
+   "tv_null_mean": 0.07975179524215252,
+   "tv_null_p95": 0.09039170687484317,
+   "excess": 0.027752042897275772
+  },
+  {
+   "tape": "TGGAGGTTCG",
+   "idx": 132,
+   "n_writes": 3383,
+   "tv": 0.09033597585282384,
+   "tv_null_mean": 0.0660518982823094,
+   "tv_null_p95": 0.074885383420769,
+   "excess": 0.024284077570514442
+  },
+  {
+   "tape": "TGTATCGATG",
+   "idx": 138,
+   "n_writes": 8013,
+   "tv": 0.06767075523559499,
+   "tv_null_mean": 0.04408680942859772,
+   "tv_null_p95": 0.04929128901502123,
+   "excess": 0.02358394580699727
+  },
+  {
+   "tape": "GGTACACGAA",
+   "idx": 78,
+   "n_writes": 4441,
+   "tv": 0.07737421016647775,
+   "tv_null_mean": 0.05664483760825384,
+   "tv_null_p95": 0.06375984259379437,
+   "excess": 0.020729372558223907
+  },
+  {
+   "tape": "TGTTCGATGC",
+   "idx": 141,
+   "n_writes": 2748,
+   "tv": 0.09432617774405978,
+   "tv_null_mean": 0.0743393191702857,
+   "tv_null_p95": 0.08445740320220248,
+   "excess": 0.01998685857377408
+  },
+  {
+   "tape": "TAGGGGGTCG",
+   "idx": 103,
+   "n_writes": 6888,
+   "tv": 0.06575908820273749,
+   "tv_null_mean": 0.04618485856679474,
+   "tv_null_p95": 0.053200271467640184,
+   "excess": 0.01957422963594275
+  },
+  {
+   "tape": "TGGCGTCGGT",
+   "idx": 133,
+   "n_writes": 5987,
+   "tv": 0.07060544179709058,
+   "tv_null_mean": 0.05112028882681997,
+   "tv_null_p95": 0.0578013169750583,
+   "excess": 0.019485152970270606
+  },
+  {
+   "tape": "TGAATGTGCG",
+   "idx": 126,
+   "n_writes": 10252,
+   "tv": 0.057200215475652356,
+   "tv_null_mean": 0.037961676125841004,
+   "tv_null_p95": 0.04314554790754332,
+   "excess": 0.019238539349811352
+  },
+  {
+   "tape": "ACTTAAATCA",
+   "idx": 4,
+   "n_writes": 10954,
+   "tv": 0.05714369171640682,
+   "tv_null_mean": 0.03899054163369591,
+   "tv_null_p95": 0.04367518157195397,
+   "excess": 0.018153150082710907
+  },
+  {
+   "tape": "ATTGTTTTGT",
+   "idx": 16,
+   "n_writes": 4717,
+   "tv": 0.07321193726391999,
+   "tv_null_mean": 0.05509317994287955,
+   "tv_null_p95": 0.0626748629650852,
+   "excess": 0.018118757321040437
+  },
+  {
+   "tape": "CCTTTGGTGT",
+   "idx": 28,
+   "n_writes": 7679,
+   "tv": 0.06134441821699774,
+   "tv_null_mean": 0.043257871301840306,
+   "tv_null_p95": 0.048785427192602995,
+   "excess": 0.01808654691515743
+  },
+  {
+   "tape": "GCGCTCAGTC",
+   "idx": 57,
+   "n_writes": 4378,
+   "tv": 0.07863761906062547,
+   "tv_null_mean": 0.06141957849308583,
+   "tv_null_p95": 0.06997700001437424,
+   "excess": 0.017218040567539637
+  },
+  {
+   "tape": "TCAGAGTTTT",
+   "idx": 114,
+   "n_writes": 8741,
+   "tv": 0.056460907360799846,
+   "tv_null_mean": 0.039722201633057265,
+   "tv_null_p95": 0.04466237109316304,
+   "excess": 0.01673870572774258
+  },
+  {
+   "tape": "TAGAGGGTTT",
+   "idx": 102,
+   "n_writes": 2863,
+   "tv": 0.08776953474933122,
+   "tv_null_mean": 0.07169672563802242,
+   "tv_null_p95": 0.08024050096881397,
+   "excess": 0.016072809111308803
+  },
+  {
+   "tape": "TATCAGACGT",
+   "idx": 106,
+   "n_writes": 914,
+   "tv": 0.14488397785705961,
+   "tv_null_mean": 0.12886987662112875,
+   "tv_null_p95": 0.14442003936719905,
+   "excess": 0.01601410123593086
+  },
+  {
+   "tape": "GTTGGTATTG",
+   "idx": 96,
+   "n_writes": 3902,
+   "tv": 0.07670350070006726,
+   "tv_null_mean": 0.062064418534314464,
+   "tv_null_p95": 0.07075158403973028,
+   "excess": 0.014639082165752798
+  },
+  {
+   "tape": "GTGAATGAAG",
+   "idx": 90,
+   "n_writes": 7555,
+   "tv": 0.05957320922172283,
+   "tv_null_mean": 0.04551090497778757,
+   "tv_null_p95": 0.05171213792288674,
+   "excess": 0.014062304243935259
+  },
+  {
+   "tape": "GCGTGGTCGA",
+   "idx": 63,
+   "n_writes": 13718,
+   "tv": 0.04651666598694202,
+   "tv_null_mean": 0.032501973959329626,
+   "tv_null_p95": 0.03703945329152318,
+   "excess": 0.014014692027612394
+  },
+  {
+   "tape": "CGGTCTCTAT",
+   "idx": 34,
+   "n_writes": 7191,
+   "tv": 0.05831538571834486,
+   "tv_null_mean": 0.044726582202216786,
+   "tv_null_p95": 0.05044130230688357,
+   "excess": 0.013588803516128074
+  },
+  {
+   "tape": "TTCAGTGTTT",
+   "idx": 148,
+   "n_writes": 8446,
+   "tv": 0.05442848627288628,
+   "tv_null_mean": 0.04086374211139164,
+   "tv_null_p95": 0.04574308666322954,
+   "excess": 0.01356474416149464
+  },
+  {
+   "tape": "GGATGGGGCA",
+   "idx": 69,
+   "n_writes": 7705,
+   "tv": 0.06071876933182272,
+   "tv_null_mean": 0.047476478501121466,
+   "tv_null_p95": 0.05386059669096639,
+   "excess": 0.013242290830701255
+  },
+  {
+   "tape": "TTTACTGTAT",
+   "idx": 160,
+   "n_writes": 12309,
+   "tv": 0.04781496252724502,
+   "tv_null_mean": 0.034822409461319,
+   "tv_null_p95": 0.039175630832001145,
+   "excess": 0.012992553065926019
+  },
+  {
+   "tape": "ATAGCACGAT",
+   "idx": 14,
+   "n_writes": 6853,
+   "tv": 0.06084857640976661,
+   "tv_null_mean": 0.04787376601168982,
+   "tv_null_p95": 0.05379513538899969,
+   "excess": 0.01297481039807679
+  },
+  {
+   "tape": "ATGCTTTGGA",
+   "idx": 15,
+   "n_writes": 7714,
+   "tv": 0.057152405674644496,
+   "tv_null_mean": 0.0443845479994942,
+   "tv_null_p95": 0.04955390547147984,
+   "excess": 0.012767857675150297
+  },
+  {
+   "tape": "GCGGTTCGGA",
+   "idx": 58,
+   "n_writes": 8986,
+   "tv": 0.05239837095717232,
+   "tv_null_mean": 0.03976157673190182,
+   "tv_null_p95": 0.044805644201066086,
+   "excess": 0.012636794225270503
+  },
+  {
+   "tape": "GAGGTGGCGT",
+   "idx": 54,
+   "n_writes": 8022,
+   "tv": 0.05628398867397678,
+   "tv_null_mean": 0.04381141849509713,
+   "tv_null_p95": 0.049519462666659554,
+   "excess": 0.01247257017887965
+  },
+  {
+   "tape": "CGGGCATAGT",
+   "idx": 33,
+   "n_writes": 8571,
+   "tv": 0.053392912147704884,
+   "tv_null_mean": 0.041018080587371254,
+   "tv_null_p95": 0.04719025321199707,
+   "excess": 0.01237483156033363
+  },
+  {
+   "tape": "ATTTTGCGCG",
+   "idx": 18,
+   "n_writes": 11101,
+   "tv": 0.05276998742730584,
+   "tv_null_mean": 0.04061468066504023,
+   "tv_null_p95": 0.046484725730743,
+   "excess": 0.01215530676226561
+  },
+  {
+   "tape": "TTTGTGTAAG",
+   "idx": 164,
+   "n_writes": 7863,
+   "tv": 0.055486509227532996,
+   "tv_null_mean": 0.04337866456573618,
+   "tv_null_p95": 0.04951919737054755,
+   "excess": 0.012107844661796818
+  },
+  {
+   "tape": "TTTTGTGTGA",
+   "idx": 165,
+   "n_writes": 7409,
+   "tv": 0.05713676872548566,
+   "tv_null_mean": 0.045185677261157575,
+   "tv_null_p95": 0.050642180140117725,
+   "excess": 0.011951091464328087
+  },
+  {
+   "tape": "GTCATCCTCG",
+   "idx": 86,
+   "n_writes": 5581,
+   "tv": 0.0680895850798634,
+   "tv_null_mean": 0.056441770006126706,
+   "tv_null_p95": 0.06376355552048281,
+   "excess": 0.011647815073736696
+  },
+  {
+   "tape": "TGCTCGATCC",
+   "idx": 130,
+   "n_writes": 11033,
+   "tv": 0.04918182697601357,
+   "tv_null_mean": 0.03764397170612264,
+   "tv_null_p95": 0.04292301700808326,
+   "excess": 0.011537855269890936
+  },
+  {
+   "tape": "GTCGTGGCGG",
+   "idx": 87,
+   "n_writes": 10189,
+   "tv": 0.049239562257127244,
+   "tv_null_mean": 0.03786669490419156,
+   "tv_null_p95": 0.04315855428746022,
+   "excess": 0.011372867352935682
+  },
+  {
+   "tape": "CCCGCGCCTG",
+   "idx": 22,
+   "n_writes": 7055,
+   "tv": 0.05795034484282076,
+   "tv_null_mean": 0.04662904306389686,
+   "tv_null_p95": 0.05201786034776216,
+   "excess": 0.011321301778923896
+  },
+  {
+   "tape": "GCTGTTCCCC",
+   "idx": 66,
+   "n_writes": 7230,
+   "tv": 0.05644073245338325,
+   "tv_null_mean": 0.04521754760946914,
+   "tv_null_p95": 0.05090752976289767,
+   "excess": 0.01122318484391411
+  },
+  {
+   "tape": "GCGTACGATG",
+   "idx": 59,
+   "n_writes": 6136,
+   "tv": 0.06329517880938403,
+   "tv_null_mean": 0.052107871496218115,
+   "tv_null_p95": 0.057747858029108784,
+   "excess": 0.01118730731316591
+  },
+  {
+   "tape": "GTTTGCCGCA",
+   "idx": 97,
+   "n_writes": 10537,
+   "tv": 0.04863974972097705,
+   "tv_null_mean": 0.037604144006224846,
+   "tv_null_p95": 0.042583199446698965,
+   "excess": 0.011035605714752206
+  },
+  {
+   "tape": "GCTGTTCTTC",
+   "idx": 67,
+   "n_writes": 11397,
+   "tv": 0.04646898837884242,
+   "tv_null_mean": 0.03551146996433765,
+   "tv_null_p95": 0.04068705463747032,
+   "excess": 0.01095751841450477
+  },
+  {
+   "tape": "GTGTGGACTG",
+   "idx": 92,
+   "n_writes": 5165,
+   "tv": 0.06607368650033284,
+   "tv_null_mean": 0.05513140244317228,
+   "tv_null_p95": 0.06155960812704056,
+   "excess": 0.010942284057160558
+  },
+  {
+   "tape": "TCTTTTTCTT",
+   "idx": 124,
+   "n_writes": 10757,
+   "tv": 0.04917581568181675,
+   "tv_null_mean": 0.03827751245219078,
+   "tv_null_p95": 0.043557326819461305,
+   "excess": 0.010898303229625969
+  },
+  {
+   "tape": "TTGGTATAGT",
+   "idx": 153,
+   "n_writes": 12566,
+   "tv": 0.044620863554096474,
+   "tv_null_mean": 0.033831658238161845,
+   "tv_null_p95": 0.038074666630998816,
+   "excess": 0.010789205315934629
+  },
+  {
+   "tape": "TATCTTCGGT",
+   "idx": 107,
+   "n_writes": 4438,
+   "tv": 0.0743474312072768,
+   "tv_null_mean": 0.06357733031318383,
+   "tv_null_p95": 0.07156862882499729,
+   "excess": 0.010770100894092971
+  },
+  {
+   "tape": "GGAAGTGGTA",
+   "idx": 68,
+   "n_writes": 10566,
+   "tv": 0.04770618455496288,
+   "tv_null_mean": 0.03701462656150822,
+   "tv_null_p95": 0.04129567069615124,
+   "excess": 0.010691557993454663
+  },
+  {
+   "tape": "TTGAATCTCC",
+   "idx": 152,
+   "n_writes": 11270,
+   "tv": 0.046294889627301564,
+   "tv_null_mean": 0.03577604160771514,
+   "tv_null_p95": 0.04016839120183882,
+   "excess": 0.010518848019586427
+  },
+  {
+   "tape": "TAATTTGTTA",
+   "idx": 100,
+   "n_writes": 11626,
+   "tv": 0.048577950913040985,
+   "tv_null_mean": 0.03842481051575514,
+   "tv_null_p95": 0.04376622870002739,
+   "excess": 0.010153140397285848
+  },
+  {
+   "tape": "GTCTAAAGTG",
+   "idx": 88,
+   "n_writes": 8952,
+   "tv": 0.05073082401214043,
+   "tv_null_mean": 0.04059013943766192,
+   "tv_null_p95": 0.04605935661895627,
+   "excess": 0.01014068457447851
+  },
+  {
+   "tape": "ACTGTCCAGG",
+   "idx": 3,
+   "n_writes": 5888,
+   "tv": 0.06632912563113302,
+   "tv_null_mean": 0.056194215258420555,
+   "tv_null_p95": 0.06359359469258669,
+   "excess": 0.010134910372712469
+  },
+  {
+   "tape": "AGGGATCGTC",
+   "idx": 10,
+   "n_writes": 8411,
+   "tv": 0.051674227907314754,
+   "tv_null_mean": 0.04156587387117119,
+   "tv_null_p95": 0.04772158239038802,
+   "excess": 0.010108354036143567
+  },
+  {
+   "tape": "TGTAGCCGGC",
+   "idx": 137,
+   "n_writes": 11335,
+   "tv": 0.04739183573239307,
+   "tv_null_mean": 0.037291049975233664,
+   "tv_null_p95": 0.042003565329638066,
+   "excess": 0.010100785757159406
+  },
+  {
+   "tape": "TGGGGGGTCT",
+   "idx": 134,
+   "n_writes": 9321,
+   "tv": 0.050041384637243724,
+   "tv_null_mean": 0.04008873671016762,
+   "tv_null_p95": 0.04599790200482702,
+   "excess": 0.009952647927076105
+  },
+  {
+   "tape": "TGCATGTGTC",
+   "idx": 129,
+   "n_writes": 8631,
+   "tv": 0.05056294541775305,
+   "tv_null_mean": 0.0409066077004549,
+   "tv_null_p95": 0.04641883111461215,
+   "excess": 0.009656337717298152
+  },
+  {
+   "tape": "TATTCGTGCA",
+   "idx": 110,
+   "n_writes": 13236,
+   "tv": 0.04190897011546352,
+   "tv_null_mean": 0.03273002114766479,
+   "tv_null_p95": 0.03701446715212719,
+   "excess": 0.00917894896779873
+  },
+  {
+   "tape": "CTCTTGCGCG",
+   "idx": 44,
+   "n_writes": 6823,
+   "tv": 0.05532979757354299,
+   "tv_null_mean": 0.0462194352441836,
+   "tv_null_p95": 0.051782416332250336,
+   "excess": 0.00911036232935939
+  },
+  {
+   "tape": "GTTGCGGCGA",
+   "idx": 93,
+   "n_writes": 5341,
+   "tv": 0.06170792234556285,
+   "tv_null_mean": 0.052720158010790386,
+   "tv_null_p95": 0.05997139737546382,
+   "excess": 0.008987764334772462
+  },
+  {
+   "tape": "GGGTGCGATC",
+   "idx": 76,
+   "n_writes": 11989,
+   "tv": 0.048874122512126104,
+   "tv_null_mean": 0.039916244563999656,
+   "tv_null_p95": 0.045033774122771215,
+   "excess": 0.008957877948126448
+  },
+  {
+   "tape": "GCTCTTCCGT",
+   "idx": 65,
+   "n_writes": 10937,
+   "tv": 0.04585720923985446,
+   "tv_null_mean": 0.03698211471408611,
+   "tv_null_p95": 0.041916636728535135,
+   "excess": 0.008875094525768346
+  },
+  {
+   "tape": "GGCTGTGAGT",
+   "idx": 72,
+   "n_writes": 8250,
+   "tv": 0.0501771887919748,
+   "tv_null_mean": 0.04154632997488422,
+   "tv_null_p95": 0.04707846453568721,
+   "excess": 0.008630858817090581
+  },
+  {
+   "tape": "GGGTAGCCAC",
+   "idx": 74,
+   "n_writes": 5717,
+   "tv": 0.06573697547903463,
+   "tv_null_mean": 0.05719591926222264,
+   "tv_null_p95": 0.06442258324764241,
+   "excess": 0.008541056216811997
+  },
+  {
+   "tape": "TGATGTCGGG",
+   "idx": 128,
+   "n_writes": 10740,
+   "tv": 0.04457154071272499,
+   "tv_null_mean": 0.036356245367631025,
+   "tv_null_p95": 0.04062175931659581,
+   "excess": 0.008215295345093965
+  },
+  {
+   "tape": "TGAGGGGTGT",
+   "idx": 127,
+   "n_writes": 11677,
+   "tv": 0.043535082690300965,
+   "tv_null_mean": 0.035335557409622416,
+   "tv_null_p95": 0.04023852201502359,
+   "excess": 0.008199525280678549
+  },
+  {
+   "tape": "TTATGTTTTT",
+   "idx": 144,
+   "n_writes": 9954,
+   "tv": 0.046218770610193756,
+   "tv_null_mean": 0.038342414916596235,
+   "tv_null_p95": 0.042810042968952335,
+   "excess": 0.007876355693597521
+  },
+  {
+   "tape": "TATGCATCTC",
+   "idx": 109,
+   "n_writes": 10770,
+   "tv": 0.04472682840512402,
+   "tv_null_mean": 0.0370060761434937,
+   "tv_null_p95": 0.0415245514939934,
+   "excess": 0.007720752261630319
+  },
+  {
+   "tape": "TCTGCAGCCT",
+   "idx": 122,
+   "n_writes": 10782,
+   "tv": 0.04637382997520954,
+   "tv_null_mean": 0.038697028696180136,
+   "tv_null_p95": 0.04420942113314162,
+   "excess": 0.007676801279029408
+  },
+  {
+   "tape": "GAACGACTTC",
+   "idx": 51,
+   "n_writes": 11179,
+   "tv": 0.043893661881090326,
+   "tv_null_mean": 0.03626285487685828,
+   "tv_null_p95": 0.04116445953409315,
+   "excess": 0.007630807004232049
+  },
+  {
+   "tape": "AGCCTTGGGT",
+   "idx": 8,
+   "n_writes": 12036,
+   "tv": 0.04630575169920507,
+   "tv_null_mean": 0.038734249103896626,
+   "tv_null_p95": 0.043691894032358104,
+   "excess": 0.007571502595308442
+  },
+  {
+   "tape": "ACTTTGTGTC",
+   "idx": 5,
+   "n_writes": 4595,
+   "tv": 0.0653799684793068,
+   "tv_null_mean": 0.05782142442003908,
+   "tv_null_p95": 0.0653071990554911,
+   "excess": 0.007558544059267716
+  },
+  {
+   "tape": "AATTTGATCT",
+   "idx": 1,
+   "n_writes": 12571,
+   "tv": 0.04114671404095123,
+   "tv_null_mean": 0.03385834005513827,
+   "tv_null_p95": 0.03806377851064842,
+   "excess": 0.00728837398581296
+  },
+  {
+   "tape": "GGTCATCGAA",
+   "idx": 80,
+   "n_writes": 6833,
+   "tv": 0.0537773372955683,
+   "tv_null_mean": 0.04651236593463243,
+   "tv_null_p95": 0.05274800388646811,
+   "excess": 0.0072649713609358735
+  },
+  {
+   "tape": "GCGTCCTTCG",
+   "idx": 61,
+   "n_writes": 8189,
+   "tv": 0.04893103050263948,
+   "tv_null_mean": 0.04185678307544035,
+   "tv_null_p95": 0.04747690741146652,
+   "excess": 0.007074247427199129
+  },
+  {
+   "tape": "TTATTGTTCC",
+   "idx": 145,
+   "n_writes": 9368,
+   "tv": 0.045969617348643375,
+   "tv_null_mean": 0.03902387922399276,
+   "tv_null_p95": 0.04375333108655751,
+   "excess": 0.006945738124650616
+  },
+  {
+   "tape": "CGTTGGGTAA",
+   "idx": 41,
+   "n_writes": 5861,
+   "tv": 0.06095209827534648,
+   "tv_null_mean": 0.054044350539404,
+   "tv_null_p95": 0.06080690329225163,
+   "excess": 0.006907747735942479
+  },
+  {
+   "tape": "TATGATCACC",
+   "idx": 108,
+   "n_writes": 13007,
+   "tv": 0.040315530972122225,
+   "tv_null_mean": 0.0336043562328296,
+   "tv_null_p95": 0.038137365182808164,
+   "excess": 0.006711174739292627
+  },
+  {
+   "tape": "AGTTGAGTTA",
+   "idx": 13,
+   "n_writes": 10977,
+   "tv": 0.048303145760581756,
+   "tv_null_mean": 0.041627946698599254,
+   "tv_null_p95": 0.046959366511357375,
+   "excess": 0.006675199061982502
+  },
+  {
+   "tape": "CGTTTTATTC",
+   "idx": 42,
+   "n_writes": 9087,
+   "tv": 0.052991786736240346,
+   "tv_null_mean": 0.046534743250835175,
+   "tv_null_p95": 0.05219486544699609,
+   "excess": 0.00645704348540517
+  },
+  {
+   "tape": "GCGTGATGGA",
+   "idx": 62,
+   "n_writes": 12357,
+   "tv": 0.04035536887450796,
+   "tv_null_mean": 0.03393734690621617,
+   "tv_null_p95": 0.03858667538054716,
+   "excess": 0.00641802196829179
+  },
+  {
+   "tape": "CCTTGTGTTG",
+   "idx": 27,
+   "n_writes": 9479,
+   "tv": 0.04578039711928928,
+   "tv_null_mean": 0.039661840717879156,
+   "tv_null_p95": 0.045295370010217044,
+   "excess": 0.006118556401410125
+  },
+  {
+   "tape": "CTTGGTACCC",
+   "idx": 50,
+   "n_writes": 11604,
+   "tv": 0.04150273187799022,
+   "tv_null_mean": 0.035403461883356295,
+   "tv_null_p95": 0.03994049606871486,
+   "excess": 0.006099269994633928
+  },
+  {
+   "tape": "TTCCTCAGTT",
+   "idx": 150,
+   "n_writes": 6900,
+   "tv": 0.052224988570692174,
+   "tv_null_mean": 0.046185068235105584,
+   "tv_null_p95": 0.05226497122359193,
+   "excess": 0.0060399203355865905
+  },
+  {
+   "tape": "CGGTTCCGTT",
+   "idx": 35,
+   "n_writes": 11211,
+   "tv": 0.04276266102887102,
+   "tv_null_mean": 0.03674499679623718,
+   "tv_null_p95": 0.04194322755592234,
+   "excess": 0.006017664232633835
+  },
+  {
+   "tape": "GGGGAGGCTT",
+   "idx": 73,
+   "n_writes": 10594,
+   "tv": 0.043382400095157925,
+   "tv_null_mean": 0.03746246061373682,
+   "tv_null_p95": 0.04188114704261238,
+   "excess": 0.005919939481421103
+  },
+  {
+   "tape": "CGTGGGTCTC",
+   "idx": 37,
+   "n_writes": 12562,
+   "tv": 0.03939873244921577,
+   "tv_null_mean": 0.033537062744836116,
+   "tv_null_p95": 0.03824221459148683,
+   "excess": 0.005861669704379652
+  },
+  {
+   "tape": "GATTGGGCTT",
+   "idx": 55,
+   "n_writes": 11750,
+   "tv": 0.04455505017265909,
+   "tv_null_mean": 0.038704108024681314,
+   "tv_null_p95": 0.043776802668632445,
+   "excess": 0.005850942147977774
+  },
+  {
+   "tape": "GTTGGTAAGC",
+   "idx": 95,
+   "n_writes": 9844,
+   "tv": 0.044716618088627993,
+   "tv_null_mean": 0.038870160609985376,
+   "tv_null_p95": 0.044205219894239076,
+   "excess": 0.005846457478642618
+  },
+  {
+   "tape": "TTTGAGTTTG",
+   "idx": 162,
+   "n_writes": 13847,
+   "tv": 0.041801822330936475,
+   "tv_null_mean": 0.036122289457720835,
+   "tv_null_p95": 0.04086029164709182,
+   "excess": 0.00567953287321564
+  },
+  {
+   "tape": "CTGTCTGCCC",
+   "idx": 48,
+   "n_writes": 8691,
+   "tv": 0.046234087879309306,
+   "tv_null_mean": 0.04057264973609397,
+   "tv_null_p95": 0.04507272267385631,
+   "excess": 0.005661438143215333
+  },
+  {
+   "tape": "TCATCGGCGT",
+   "idx": 115,
+   "n_writes": 10284,
+   "tv": 0.043016448926427045,
+   "tv_null_mean": 0.03741142555605093,
+   "tv_null_p95": 0.042130668353621385,
+   "excess": 0.005605023370376112
+  },
+  {
+   "tape": "TTCGTGGCAA",
+   "idx": 151,
+   "n_writes": 313,
+   "tv": 0.22890401067043026,
+   "tv_null_mean": 0.22332296859850445,
+   "tv_null_p95": 0.24911710046049573,
+   "excess": 0.005581042071925807
+  },
+  {
+   "tape": "GAGAAATTGG",
+   "idx": 53,
+   "n_writes": 9009,
+   "tv": 0.04674350624871143,
+   "tv_null_mean": 0.04124060743687747,
+   "tv_null_p95": 0.047162008945951475,
+   "excess": 0.00550289881183396
+  },
+  {
+   "tape": "AGGTTTGTCC",
+   "idx": 12,
+   "n_writes": 10544,
+   "tv": 0.04407782395249737,
+   "tv_null_mean": 0.03881394789609038,
+   "tv_null_p95": 0.04324018479426279,
+   "excess": 0.005263876056406991
+  },
+  {
+   "tape": "TTTCCGTCTT",
+   "idx": 161,
+   "n_writes": 10394,
+   "tv": 0.046615414714102646,
+   "tv_null_mean": 0.041436401589306816,
+   "tv_null_p95": 0.04694121598326803,
+   "excess": 0.00517901312479583
+  },
+  {
+   "tape": "GGTCTTAGTT",
+   "idx": 81,
+   "n_writes": 13958,
+   "tv": 0.038048318157049885,
+   "tv_null_mean": 0.03289454539502827,
+   "tv_null_p95": 0.037702585706640174,
+   "excess": 0.005153772762021613
+  },
+  {
+   "tape": "GGTGTGAATT",
+   "idx": 83,
+   "n_writes": 10023,
+   "tv": 0.04321387884771589,
+   "tv_null_mean": 0.03811932373186697,
+   "tv_null_p95": 0.04278266646515294,
+   "excess": 0.005094555115848914
+  },
+  {
+   "tape": "TAGGTCCTTA",
+   "idx": 104,
+   "n_writes": 14312,
+   "tv": 0.03672568901626685,
+   "tv_null_mean": 0.03163760855773061,
+   "tv_null_p95": 0.03595175589156567,
+   "excess": 0.0050880804585362385
+  },
+  {
+   "tape": "GTGAACGCGC",
+   "idx": 89,
+   "n_writes": 13103,
+   "tv": 0.03803979096067336,
+   "tv_null_mean": 0.03300145505486369,
+   "tv_null_p95": 0.03740435613971152,
+   "excess": 0.005038335905809668
+  },
+  {
+   "tape": "TATTTAGGGT",
+   "idx": 112,
+   "n_writes": 12168,
+   "tv": 0.039594239761430235,
+   "tv_null_mean": 0.03457715608082963,
+   "tv_null_p95": 0.03919634652829089,
+   "excess": 0.005017083680600602
+  },
+  {
+   "tape": "TCCTGTTCTT",
+   "idx": 118,
+   "n_writes": 9038,
+   "tv": 0.04627375277653132,
+   "tv_null_mean": 0.04125944505767069,
+   "tv_null_p95": 0.046492290044205506,
+   "excess": 0.005014307718860626
+  },
+  {
+   "tape": "TTGTTTAAGC",
+   "idx": 158,
+   "n_writes": 7591,
+   "tv": 0.048946855619375715,
+   "tv_null_mean": 0.044033594137045086,
+   "tv_null_p95": 0.05000645733140813,
+   "excess": 0.004913261482330629
+  },
+  {
+   "tape": "TTAATACCCC",
+   "idx": 142,
+   "n_writes": 9749,
+   "tv": 0.04831535450021863,
+   "tv_null_mean": 0.04378834753792783,
+   "tv_null_p95": 0.05007075761324276,
+   "excess": 0.004527006962290796
+  },
+  {
+   "tape": "TTTGGTTCAC",
+   "idx": 163,
+   "n_writes": 6143,
+   "tv": 0.05763592359410429,
+   "tv_null_mean": 0.053198664165706344,
+   "tv_null_p95": 0.059871065117676876,
+   "excess": 0.004437259428397948
+  },
+  {
+   "tape": "TCGTCAGCGT",
+   "idx": 121,
+   "n_writes": 11916,
+   "tv": 0.039192340178447915,
+   "tv_null_mean": 0.03476296371616263,
+   "tv_null_p95": 0.03975636652876711,
+   "excess": 0.004429376462285285
+  },
+  {
+   "tape": "AGGATTCGTT",
+   "idx": 9,
+   "n_writes": 14061,
+   "tv": 0.037935671206383095,
+   "tv_null_mean": 0.03357178489580652,
+   "tv_null_p95": 0.038112894883864226,
+   "excess": 0.004363886310576576
+  },
+  {
+   "tape": "CGTCCTGGGC",
+   "idx": 36,
+   "n_writes": 7707,
+   "tv": 0.04962446264090788,
+   "tv_null_mean": 0.045289366552893055,
+   "tv_null_p95": 0.05089766743288366,
+   "excess": 0.004335096088014828
+  },
+  {
+   "tape": "TGAATGCTAA",
+   "idx": 125,
+   "n_writes": 12036,
+   "tv": 0.03904748020882141,
+   "tv_null_mean": 0.03485043455524529,
+   "tv_null_p95": 0.039883743788490855,
+   "excess": 0.00419704565357612
+  },
+  {
+   "tape": "TTGTCTGCGT",
+   "idx": 156,
+   "n_writes": 12999,
+   "tv": 0.041171004795079576,
+   "tv_null_mean": 0.03698119449603913,
+   "tv_null_p95": 0.04127784036282666,
+   "excess": 0.004189810299040447
+  },
+  {
+   "tape": "GGCGTCTCTT",
+   "idx": 71,
+   "n_writes": 14773,
+   "tv": 0.037179556056295096,
+   "tv_null_mean": 0.03307111422647363,
+   "tv_null_p95": 0.03725274861175022,
+   "excess": 0.004108441829821466
+  },
+  {
+   "tape": "TTATTTCGGG",
+   "idx": 146,
+   "n_writes": 4174,
+   "tv": 0.06229901332097837,
+   "tv_null_mean": 0.058312979508474166,
+   "tv_null_p95": 0.06687516369406481,
+   "excess": 0.003986033812504203
+  },
+  {
+   "tape": "CGCCACTTTC",
+   "idx": 30,
+   "n_writes": 5099,
+   "tv": 0.05638666015775352,
+   "tv_null_mean": 0.05242891174895622,
+   "tv_null_p95": 0.05989145920861591,
+   "excess": 0.003957748408797299
+  },
+  {
+   "tape": "GGATTGCTCT",
+   "idx": 70,
+   "n_writes": 1843,
+   "tv": 0.1040739135557912,
+   "tv_null_mean": 0.10022842936598514,
+   "tv_null_p95": 0.11366117694565861,
+   "excess": 0.003845484189806056
+  },
+  {
+   "tape": "GTGGTCGTTG",
+   "idx": 91,
+   "n_writes": 7778,
+   "tv": 0.055644202867308964,
+   "tv_null_mean": 0.0519493881434533,
+   "tv_null_p95": 0.05912556685840298,
+   "excess": 0.0036948147238556675
+  },
+  {
+   "tape": "TTGTGTTGGT",
+   "idx": 157,
+   "n_writes": 12082,
+   "tv": 0.03776768269115715,
+   "tv_null_mean": 0.03435543957312777,
+   "tv_null_p95": 0.03866689086167364,
+   "excess": 0.0034122431180293802
+  },
+  {
+   "tape": "TCCAGGTGCA",
+   "idx": 116,
+   "n_writes": 10274,
+   "tv": 0.04079344301440501,
+   "tv_null_mean": 0.03739279452695979,
+   "tv_null_p95": 0.04221165392629513,
+   "excess": 0.0034006484874452222
+  },
+  {
+   "tape": "GGTGTGTGAT",
+   "idx": 84,
+   "n_writes": 14772,
+   "tv": 0.037079694084513275,
+   "tv_null_mean": 0.033897171049206955,
+   "tv_null_p95": 0.039293320314331005,
+   "excess": 0.00318252303530632
+  },
+  {
+   "tape": "CCAAGTAATA",
+   "idx": 21,
+   "n_writes": 10160,
+   "tv": 0.040690347949635594,
+   "tv_null_mean": 0.0375140121381553,
+   "tv_null_p95": 0.04245043430229005,
+   "excess": 0.003176335811480295
+  },
+  {
+   "tape": "CCCTGTTCAA",
+   "idx": 23,
+   "n_writes": 14420,
+   "tv": 0.035708909079881744,
+   "tv_null_mean": 0.03284971636731464,
+   "tv_null_p95": 0.038124088548431564,
+   "excess": 0.002859192712567106
+  },
+  {
+   "tape": "GAATCTGTGC",
+   "idx": 52,
+   "n_writes": 14307,
+   "tv": 0.034128660946845676,
+   "tv_null_mean": 0.031485315877633174,
+   "tv_null_p95": 0.03529514228008964,
+   "excess": 0.002643345069212502
+  },
+  {
+   "tape": "TATAGTGGAA",
+   "idx": 105,
+   "n_writes": 11495,
+   "tv": 0.03932643765909351,
+   "tv_null_mean": 0.03686835130543137,
+   "tv_null_p95": 0.04268853777949718,
+   "excess": 0.0024580863536621395
+  },
+  {
+   "tape": "CATCGACTGC",
+   "idx": 20,
+   "n_writes": 7398,
+   "tv": 0.050279272418032955,
+   "tv_null_mean": 0.04782979350365493,
+   "tv_null_p95": 0.054308520750143495,
+   "excess": 0.0024494789143780227
+  },
+  {
+   "tape": "TTATTTGTTC",
+   "idx": 147,
+   "n_writes": 8151,
+   "tv": 0.04471019524546412,
+   "tv_null_mean": 0.04227428302194279,
+   "tv_null_p95": 0.04762784306427974,
+   "excess": 0.002435912223521332
+  },
+  {
+   "tape": "CGTGTTCGGG",
+   "idx": 38,
+   "n_writes": 12459,
+   "tv": 0.0374009595801295,
+   "tv_null_mean": 0.035005062673505186,
+   "tv_null_p95": 0.03921358384636702,
+   "excess": 0.002395896906624312
+  },
+  {
+   "tape": "CTCTTAGCGG",
+   "idx": 43,
+   "n_writes": 9867,
+   "tv": 0.043212508241879624,
+   "tv_null_mean": 0.040907713733411885,
+   "tv_null_p95": 0.04654790253477007,
+   "excess": 0.002304794508467739
+  },
+  {
+   "tape": "CCGTTCCGTA",
+   "idx": 24,
+   "n_writes": 12081,
+   "tv": 0.04005738272318022,
+   "tv_null_mean": 0.037787013868542406,
+   "tv_null_p95": 0.04345630548150807,
+   "excess": 0.0022703688546378137
+  },
+  {
+   "tape": "GCGTTAGTAA",
+   "idx": 64,
+   "n_writes": 15138,
+   "tv": 0.03729574076102636,
+   "tv_null_mean": 0.035167055722118534,
+   "tv_null_p95": 0.039260009733617415,
+   "excess": 0.0021286850389078266
+  },
+  {
+   "tape": "TTATGTGGAT",
+   "idx": 143,
+   "n_writes": 6364,
+   "tv": 0.053099533529574666,
+   "tv_null_mean": 0.05100172031925261,
+   "tv_null_p95": 0.057237695609666885,
+   "excess": 0.0020978132103220554
+  },
+  {
+   "tape": "TAAACCGCGA",
+   "idx": 99,
+   "n_writes": 8267,
+   "tv": 0.04725220639902413,
+   "tv_null_mean": 0.04518109605191463,
+   "tv_null_p95": 0.051305113810017046,
+   "excess": 0.002071110347109502
+  },
+  {
+   "tape": "TTGGTGATTG",
+   "idx": 154,
+   "n_writes": 6944,
+   "tv": 0.04756189943993579,
+   "tv_null_mean": 0.0455668363658991,
+   "tv_null_p95": 0.051913704307571064,
+   "excess": 0.001995063074036685
+  },
+  {
+   "tape": "CTGATTTTCA",
+   "idx": 45,
+   "n_writes": 12090,
+   "tv": 0.03679920380961232,
+   "tv_null_mean": 0.03483958425216878,
+   "tv_null_p95": 0.03890590564800095,
+   "excess": 0.0019596195574435385
+  },
+  {
+   "tape": "TGTGACCTGT",
+   "idx": 139,
+   "n_writes": 11505,
+   "tv": 0.037571027054272406,
+   "tv_null_mean": 0.035701415166417325,
+   "tv_null_p95": 0.040076370315527625,
+   "excess": 0.0018696118878550813
+  },
+  {
+   "tape": "GCGTATGCAA",
+   "idx": 60,
+   "n_writes": 8978,
+   "tv": 0.04278271359658457,
+   "tv_null_mean": 0.04096533804791053,
+   "tv_null_p95": 0.04614774936195899,
+   "excess": 0.0018173755486740467
+  },
+  {
+   "tape": "TGCTTCCGTC",
+   "idx": 131,
+   "n_writes": 8807,
+   "tv": 0.0455249173382867,
+   "tv_null_mean": 0.043909875121576875,
+   "tv_null_p95": 0.050253996073188506,
+   "excess": 0.0016150422167098277
+  },
+  {
+   "tape": "TGGTTTCTTA",
+   "idx": 136,
+   "n_writes": 11882,
+   "tv": 0.040068464901123306,
+   "tv_null_mean": 0.03848382522846583,
+   "tv_null_p95": 0.04340606364783214,
+   "excess": 0.0015846396726574771
+  },
+  {
+   "tape": "AGAAAATTAC",
+   "idx": 6,
+   "n_writes": 9904,
+   "tv": 0.039887247236024645,
+   "tv_null_mean": 0.03842098877003439,
+   "tv_null_p95": 0.04433639845618191,
+   "excess": 0.0014662584659902583
+  },
+  {
+   "tape": "CTGTACCCAC",
+   "idx": 47,
+   "n_writes": 7934,
+   "tv": 0.04674214275275236,
+   "tv_null_mean": 0.045364704996514994,
+   "tv_null_p95": 0.05159632829601554,
+   "excess": 0.0013774377562373666
+  },
+  {
+   "tape": "GGTACGGCTG",
+   "idx": 79,
+   "n_writes": 7129,
+   "tv": 0.054237353573799496,
+   "tv_null_mean": 0.0528664423012408,
+   "tv_null_p95": 0.05968349847939324,
+   "excess": 0.0013709112725586933
+  },
+  {
+   "tape": "GGTGGGTGAA",
+   "idx": 82,
+   "n_writes": 11388,
+   "tv": 0.04144539086964104,
+   "tv_null_mean": 0.040089758514785315,
+   "tv_null_p95": 0.045008147928956646,
+   "excess": 0.0013556323548557236
+  },
+  {
+   "tape": "ATTTGAGTCA",
+   "idx": 17,
+   "n_writes": 7191,
+   "tv": 0.04634141410110718,
+   "tv_null_mean": 0.0450293356044275,
+   "tv_null_p95": 0.050469237714844274,
+   "excess": 0.0013120784966796847
+  },
+  {
+   "tape": "CGTTCCTTCT",
+   "idx": 39,
+   "n_writes": 12084,
+   "tv": 0.03692065187149004,
+   "tv_null_mean": 0.03588831357865039,
+   "tv_null_p95": 0.04061237096112229,
+   "excess": 0.001032338292839649
+  },
+  {
+   "tape": "GGGTGCCGTT",
+   "idx": 75,
+   "n_writes": 11242,
+   "tv": 0.04181547118215149,
+   "tv_null_mean": 0.04090124661103224,
+   "tv_null_p95": 0.04636495565345934,
+   "excess": 0.0009142245711192473
+  },
+  {
+   "tape": "AACGGGTTGT",
+   "idx": 0,
+   "n_writes": 10376,
+   "tv": 0.042130575581250045,
+   "tv_null_mean": 0.041283162321905424,
+   "tv_null_p95": 0.04618632524575523,
+   "excess": 0.0008474132593446204
+  },
+  {
+   "tape": "GGTAATCCAG",
+   "idx": 77,
+   "n_writes": 10162,
+   "tv": 0.04257702806098633,
+   "tv_null_mean": 0.04186935912340822,
+   "tv_null_p95": 0.04696167964114927,
+   "excess": 0.000707668937578107
+  },
+  {
+   "tape": "CCGTTGGCGT",
+   "idx": 25,
+   "n_writes": 11601,
+   "tv": 0.03562745282957107,
+   "tv_null_mean": 0.03523989270720154,
+   "tv_null_p95": 0.0397535184985264,
+   "excess": 0.0003875601223695263
+  },
+  {
+   "tape": "CGTTCTCCAG",
+   "idx": 40,
+   "n_writes": 6847,
+   "tv": 0.050164330131325284,
+   "tv_null_mean": 0.049844567018732834,
+   "tv_null_p95": 0.05635617862135426,
+   "excess": 0.00031976311259244994
+  },
+  {
+   "tape": "CTGGGGAAAT",
+   "idx": 46,
+   "n_writes": 14225,
+   "tv": 0.033691656173514814,
+   "tv_null_mean": 0.03363089605422297,
+   "tv_null_p95": 0.038004684026737734,
+   "excess": 6.0760119291847214e-05
+  },
+  {
+   "tape": "GTTTTGACAC",
+   "idx": 98,
+   "n_writes": 10720,
+   "tv": 0.04416133822774998,
+   "tv_null_mean": 0.044216349926733824,
+   "tv_null_p95": 0.04911634568524367,
+   "excess": -5.501169898384367e-05
+  },
+  {
+   "tape": "TCGCGTCTGG",
+   "idx": 119,
+   "n_writes": 11944,
+   "tv": 0.03469455686515477,
+   "tv_null_mean": 0.034817947752600914,
+   "tv_null_p95": 0.039508512287292775,
+   "excess": -0.00012339088744614535
+  },
+  {
+   "tape": "CCGTTTGAAG",
+   "idx": 26,
+   "n_writes": 8823,
+   "tv": 0.040902320810471814,
+   "tv_null_mean": 0.04105136381578411,
+   "tv_null_p95": 0.04635837559065039,
+   "excess": -0.00014904300531229375
+  },
+  {
+   "tape": "TTGTCGCCTG",
+   "idx": 155,
+   "n_writes": 10978,
+   "tv": 0.03798456047422326,
+   "tv_null_mean": 0.038148710742983344,
+   "tv_null_p95": 0.043618207854090485,
+   "excess": -0.00016415026876008543
+  },
+  {
+   "tape": "CACAAATGAG",
+   "idx": 19,
+   "n_writes": 14837,
+   "tv": 0.03255034349696077,
+   "tv_null_mean": 0.03299383774501791,
+   "tv_null_p95": 0.0370085326248461,
+   "excess": -0.00044349424805713994
+  },
+  {
+   "tape": "GTTGCGTGTT",
+   "idx": 94,
+   "n_writes": 12379,
+   "tv": 0.03336851593993598,
+   "tv_null_mean": 0.03399058259568581,
+   "tv_null_p95": 0.038632897620532014,
+   "excess": -0.0006220666557498339
+  },
+  {
+   "tape": "TACGGCTATT",
+   "idx": 101,
+   "n_writes": 12379,
+   "tv": 0.03648267263626055,
+   "tv_null_mean": 0.037533162033869666,
+   "tv_null_p95": 0.04213583174337341,
+   "excess": -0.001050489397609114
+  },
+  {
+   "tape": "CGGGAGTTTG",
+   "idx": 32,
+   "n_writes": 11669,
+   "tv": 0.03398754657377455,
+   "tv_null_mean": 0.035316791550527846,
+   "tv_null_p95": 0.04006272887693756,
+   "excess": -0.0013292449767532966
+  },
+  {
+   "tape": "TCCTGCTGCT",
+   "idx": 117,
+   "n_writes": 12999,
+   "tv": 0.03838680355293017,
+   "tv_null_mean": 0.03992569243767961,
+   "tv_null_p95": 0.04461227270138506,
+   "excess": -0.0015388888847494356
+  },
+  {
+   "tape": "AGCAGTGTTG",
+   "idx": 7,
+   "n_writes": 9141,
+   "tv": 0.0374511792157622,
+   "tv_null_mean": 0.039771658218795684,
+   "tv_null_p95": 0.04490948428662018,
+   "excess": -0.0023204790030334835
+  },
+  {
+   "tape": "TCACGATCTT",
+   "idx": 113,
+   "n_writes": 14411,
+   "tv": 0.034013172029262594,
+   "tv_null_mean": 0.036411600099355214,
+   "tv_null_p95": 0.04034815588160562,
+   "excess": -0.0023984280700926203
+  },
+  {
+   "tape": "ACGCGGCTTC",
+   "idx": 2,
+   "n_writes": 13309,
+   "tv": 0.03219159325303785,
+   "tv_null_mean": 0.0348079182219177,
+   "tv_null_p95": 0.039176396651551454,
+   "excess": -0.0026163249688798476
+  },
+  {
+   "tape": "CTTAATTGGC",
+   "idx": 49,
+   "n_writes": 12227,
+   "tv": 0.03295100743831512,
+   "tv_null_mean": 0.03666939416548174,
+   "tv_null_p95": 0.04126565532610155,
+   "excess": -0.0037183867271666227
+  },
+  {
+   "tape": "TCTTGGCGCT",
+   "idx": 123,
+   "n_writes": 7944,
+   "tv": 0.0413110691562049,
+   "tv_null_mean": 0.045138030063930495,
+   "tv_null_p95": 0.05155626188447407,
+   "excess": -0.0038269609077255934
+  },
+  {
+   "tape": "TGTTATCATA",
+   "idx": 140,
+   "n_writes": 10219,
+   "tv": 0.04097786545969714,
+   "tv_null_mean": 0.046235496587078234,
+   "tv_null_p95": 0.05179919490613271,
+   "excess": -0.0052576311273810974
+  },
+  {
+   "tape": "TCGGGGGTAT",
+   "idx": 120,
+   "n_writes": 9136,
+   "tv": 0.0363614290640415,
+   "tv_null_mean": 0.04247552205711061,
+   "tv_null_p95": 0.04778622836589832,
+   "excess": -0.006114092993069108
+  },
+  {
+   "tape": "TATTGGGTCA",
+   "idx": 111,
+   "n_writes": 7166,
+   "tv": 0.04993353951947346,
+   "tv_null_mean": 0.056223416035709926,
+   "tv_null_p95": 0.0620255244086832,
+   "excess": -0.006289876516236463
+  }
+ ]
+}
