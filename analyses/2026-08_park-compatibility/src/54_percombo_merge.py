@@ -15,13 +15,22 @@ THE STATISTIC, per (clade, tape) combo:
 rank saturates at 1/(B+1) for every real event and cannot order them, whereas
 the margin is uncensored and is exactly what makes the question answerable.
 
-WHY NO CLADE-SIZE STRATA HERE.  40_event_catalogue.py needs six size strata to
-stop a 5-cell clade being judged against a null dominated by 500-cell clades.
-Each combo here is judged against its OWN permutations, which already condition
-on its clade size, its own p_tilde values and its clone's composition -- at full
-resolution. The "a 9-cell Pre-TX clade caps at 12.4 nats" problem also
-disappears, because the cap applies to that clade's null too: topping out at 6
-nats and scoring 11 is decisive whatever any global threshold says.
+⚠⚠ CORRECTION (2026-09-07, measured).  The first version of this script applied
+ONE GLOBAL margin threshold and claimed the per-combo null "dissolves" the
+clade-size problem.  HALF RIGHT, and the half that was wrong matters: the NULL
+conditions on clade size, but a GLOBAL THRESHOLD ON THE MARGIN does not.  A
+5-cell clade's Lambda range is compressed, so it cannot reach a 36-nat margin
+however complete the loss.  Measured on Mouse1: clades of 4-9 cells are 55% of
+scorable combos and 0.0% of called events, while 200+ cell clades are 1.3% of
+combos and 36.7% of events.
+
+So the margin is calibrated PER CLADE-SIZE STRATUM here.  That is the synthesis,
+not a retreat: the per-combo null conditions on the individual clade (its size,
+its own p_tilde values, its clone's composition) which no six-bin scheme can do,
+and per-stratum calibration then makes the THRESHOLD comparable across sizes,
+which a single global margin cut cannot.  Each piece does what it is good at.
+The "a 9-cell Pre-TX clade caps at 12.4 nats" problem is genuinely gone, because
+the cap now applies to that clade's null AND to its stratum's threshold.
 
 MULTIPLICITY, calibrated exactly.  53 holds out the first HOLD permutations, so
 
@@ -88,35 +97,51 @@ m_obs = np.where(V, obs - mx, -np.inf)
 m_null = [np.where(V, pseudo[b] - mx, -np.inf) for b in sorted(pseudo)]
 NCV = int(V.sum())
 
+SIZE_EDGES = np.array([4, 6, 10, 20, 50, 200, 10 ** 9])
+NB = len(SIZE_EDGES) - 1
+SIZE_LABEL = ["4-5", "6-9", "10-19", "20-49", "50-199", "200+"]
+strat = np.clip(np.searchsorted(SIZE_EDGES, size, side="right") - 1, 0, NB - 1)
+
 grid = np.unique(np.round(np.concatenate(
     [np.arange(0.0, 5.0, 0.05), np.geomspace(5.0, 2000.0, 300)]), 4))
-o_n = np.array([(m_obs >= t).sum() for t in grid], float)
-u_n = np.array([np.mean([(v >= t).sum() for v in m_null]) for t in grid])
-raw = np.where(o_n > 0, u_n / np.maximum(o_n, 1.0), 1.0)
-q = np.minimum(np.minimum.accumulate(raw), 1.0)
-
-
-def pick(crit, val):
-    ok = np.flatnonzero((u_n <= val) if crit == "abs" else (q <= val))
-    return int(ok[0]) if ok.size else -1
-
-
-print(f"\n  margin FDR curve (nats: observed / null / FDR)")
-for t in (0.0, 0.5, 1.0, 2.0, 5.0, 10.0, 25.0, 50.0):
+o_all = np.array([(m_obs >= t).sum() for t in grid], float)
+u_all = np.array([np.mean([(v >= t).sum() for v in m_null]) for t in grid])
+q_all = np.minimum(np.minimum.accumulate(
+    np.where(o_all > 0, u_all / np.maximum(o_all, 1.0), 1.0)), 1.0)
+print(f"\n  margin FDR curve, POOLED (nats: observed / null / FDR)")
+for t in (0.0, 0.5, 2.0, 5.0, 25.0):
     j = int(np.searchsorted(grid, t, side="right") - 1)
-    print(f"   >={grid[j]:>7.2f}  {o_n[j]:>12,.0f}  {u_n[j]:>12,.1f}  {100*q[j]:>8.4f}%")
-rows = {}
-for nm, crit, val in (("fdr05", "fdr", 0.05), ("fdr01", "fdr", 0.01),
-                      ("budget", "abs", BUDGET)):
-    j = pick(crit, val)
-    rows[nm] = dict(j=j, thr=(float(grid[j]) if j >= 0 else None),
-                    n=(float(o_n[j]) if j >= 0 else 0.0),
-                    exp_false=(float(u_n[j]) if j >= 0 else 0.0),
-                    fdr=(float(q[j]) if j >= 0 else None))
-    r = rows[nm]
-    print(f"  {nm:>7}: margin >= {r['thr']}  ->  {r['n']:,.0f} combos, "
-          f"{r['exp_false']:,.1f} expected false, FDR "
-          f"{100*r['fdr']:.4f}%" if j >= 0 else f"  {nm:>7}: unreachable")
+    print(f"   >={grid[j]:>7.2f}  {o_all[j]:>13,.0f}  {u_all[j]:>13,.1f}  {100*q_all[j]:>8.4f}%")
+
+# ---- per-stratum calibration of the margin
+THRS = np.full(NB, np.inf)
+QS, ON, UN, js = [], [], [], np.full(NB, -1, dtype=int)
+print(f"\n  per-stratum margin threshold at expected false <= {BUDGET:g} per stratum:")
+print(f"   {'clade':>8} {'combos':>12} {'thr(nats)':>10} {'combos>=':>10} "
+      f"{'exp.false':>10} {'FDR%':>9}")
+for i in range(NB):
+    m = V & (strat == i)
+    o_i = np.array([(m_obs[m] >= t).sum() for t in grid], float)
+    u_i = np.array([np.mean([(v[m] >= t).sum() for v in m_null]) for t in grid])
+    q_i = np.minimum(np.minimum.accumulate(
+        np.where(o_i > 0, u_i / np.maximum(o_i, 1.0), 1.0)), 1.0)
+    ON.append(o_i); UN.append(u_i); QS.append(q_i)
+    ok = np.flatnonzero(u_i <= BUDGET)
+    if ok.size and o_i[int(ok[0])] > 0:
+        js[i] = int(ok[0]); THRS[i] = grid[js[i]]
+        print(f"   {SIZE_LABEL[i]:>8} {int(m.sum()):>12,} {THRS[i]:>10.2f} "
+              f"{o_i[js[i]]:>10,.0f} {u_i[js[i]]:>10.2f} {100*q_i[js[i]]:>8.4f}%")
+    else:
+        print(f"   {SIZE_LABEL[i]:>8} {int(m.sum()):>12,} {'NONE':>10} "
+              f"{'--':>10} {'--':>10} {'--':>9}")
+QS, ON, UN = np.array(QS), np.array(ON), np.array(UN)
+rows = {"budget": dict(
+    per_stratum={SIZE_LABEL[i]: (float(THRS[i]) if js[i] >= 0 else None)
+                 for i in range(NB)},
+    n=float(sum(ON[i][js[i]] for i in range(NB) if js[i] >= 0)),
+    exp_false=float(sum(UN[i][js[i]] for i in range(NB) if js[i] >= 0)))}
+print(f"  => {rows['budget']['n']:,.0f} combos above their stratum's margin threshold, "
+      f"{rows['budget']['exp_false']:.1f} expected false in total")
 
 # ---- rebuild the layout so a slot index maps back to (clone, depth, anchor, tape)
 z0 = np.load(RES / f"dropout_matrix_{arm}.npz", allow_pickle=False)
@@ -128,8 +153,7 @@ codes = np.load(RES / (f"prefix_codes6_{arm}.npz" if MAXD > 4
 n, K = Y.shape
 cl_names, g_clone = np.unique(clone, return_inverse=True)
 miss = ~Y
-J = rows["budget"]["j"]
-THRM = grid[J] if J >= 0 else np.inf
+THRM_BY_SLOT = THRS[strat]        # each combo judged at its own stratum's threshold
 hits, off = [], 0
 for d in range(1, MAXD + 1):
     for a_ in range(K):
@@ -145,8 +169,10 @@ for d in range(1, MAXD + 1):
         keep = np.flatnonzero(ns >= MIN_CLADE)
         if keep.size == 0:
             continue
-        blk = m_obs[off:off + keep.size * K].reshape(keep.size, K)
-        gg, zz = np.nonzero(blk >= THRM)
+        sl0 = slice(off, off + keep.size * K)
+        blk = m_obs[sl0].reshape(keep.size, K)
+        thrblk = THRM_BY_SLOT[sl0].reshape(keep.size, K)
+        gg, zz = np.nonzero(blk >= thrblk)
         if gg.size:
             o2 = np.argsort(sub, kind="stable")
             cb = np.concatenate([[0], np.cumsum(ns)])
@@ -157,7 +183,7 @@ for d in range(1, MAXD + 1):
                 hits.append(dict(clone=int(owner[gk]), depth=d, anchor=a_, tape=int(z_),
                                  size=int(ns[gk]), lam=float(obs[sl]),
                                  nullmax=float(mx[sl]), margin=float(m_obs[sl]),
-                                 n_ge=int(n_ge[sl]),
+                                 n_ge=int(n_ge[sl]), strat=SIZE_LABEL[strat[sl]],
                                  mean=float(s1[sl] / max(B, 1)),
                                  sd=float(np.sqrt(max(s2[sl] / max(B, 1)
                                                       - (s1[sl] / max(B, 1)) ** 2, 0.0))),
@@ -174,7 +200,7 @@ for h in hits:
     seen.setdefault(k, []).append(ss); kept.append(h)
 cxt = sum(h["n_missing"] for h in kept)
 tot = int(miss.sum())
-print(f"\n  at the budget margin ({THRM:.2f} nats): {len(hits):,} combos -> "
+print(f"\n  at the per-stratum margins: {len(hits):,} combos -> "
       f"{len(kept):,} events after the overlap collapse")
 print(f"  cell x tape entries inside them: {cxt:,} of {tot:,} = {100*cxt/max(tot,1):.2f}%")
 if kept:
@@ -187,18 +213,25 @@ if kept:
 out = {"arm": arm, "max_depth": MAXD, "B": B, "hold_out": HOLD,
        "n_combo_slots": int(obs.size), "n_scorable": NCV,
        "criteria": rows, "budget": BUDGET,
+       "size_labels": SIZE_LABEL, "size_edges": SIZE_EDGES.tolist(),
+       "strat_margin_thresholds": {SIZE_LABEL[i]: (float(THRS[i]) if js[i] >= 0 else None)
+                                   for i in range(NB)},
+       "strat_combos": {SIZE_LABEL[i]: int((V & (strat == i)).sum()) for i in range(NB)},
+       "pooled_margin_curve": {"nats": grid.tolist(), "observed": o_all.tolist(),
+                               "null": u_all.tolist(), "fdr": q_all.tolist()},
        "n_events": len(kept), "n_combos_above": len(hits),
        "cellxtape_in_events": cxt, "total_missing_entries": tot,
        "frac_missing_in_events": cxt / max(tot, 1),
-       "margin_curve": {"nats": grid.tolist(), "observed": o_n.tolist(),
-                        "null": u_n.tolist(), "fdr": q.tolist()}}
+       "strat_margin_curves": {SIZE_LABEL[i]: {"observed": ON[i].tolist(),
+                                               "null": UN[i].tolist(),
+                                               "fdr": QS[i].tolist()} for i in range(NB)}}
 (RES / f"percombo_{arm}{tag}.json").write_text(json.dumps(out, indent=1))
 with gzip.open(RES / f"percombo_{arm}{tag}.tsv.gz", "wt") as fh:
     fh.write("clone\tclone_bc\tdepth\tanchor\ttape\tclade_cells\tn_missing\tlambda_nats\t"
-             "null_max\tmargin_nats\tn_ge\tnull_mean\tnull_sd\n")
+             "null_max\tmargin_nats\tn_ge\tsize_stratum\tnull_mean\tnull_sd\n")
     for h in kept:
         fh.write(f"{h['clone']}\t{cl_names[h['clone']]}\t{h['depth']}\t{h['anchor']}\t"
                  f"{h['tape']}\t{h['size']}\t{h['n_missing']}\t{h['lam']:.3f}\t"
                  f"{h['nullmax']:.3f}\t{h['margin']:.3f}\t{h['n_ge']}\t"
-                 f"{h['mean']:.3f}\t{h['sd']:.3f}\n")
+                 f"{h['strat']}\t{h['mean']:.3f}\t{h['sd']:.3f}\n")
 print(f"\nwrote results/percombo_{arm}{tag}.json and .tsv.gz")

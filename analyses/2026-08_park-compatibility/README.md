@@ -2673,3 +2673,87 @@ fails its own validation, disagreeing with the deconvolution in 4 of 5 arms (6).
 4. Whether the map recovered from Pre-TX **predicts** the depleted symbol in the three big mouse
    clades of `59` — a genuine out-of-sample test, and the one that would tie the two layers together.
 5. More split replicates (different seeds, $N=3,4$) to put an interval on the 87.3%.
+
+### Per-combo results, all five arms (2026-09-07) — and a division of labour
+
+**⚠⚠ Correction to the first version of this analysis.** It used ONE GLOBAL margin threshold and I
+claimed the per-combo null "dissolves" the clade-size problem. **Half right.** The *null* conditions
+on clade size; a *global threshold on the margin* does not. Measured on Mouse 1: clades of 4–9 cells
+are **55% of scorable combos and 0.0% of called events**, while 200+ cell clades are 1.3% of combos
+and **36.7%** of events. The margin is calibrated **per size stratum** now — the synthesis rather
+than a retreat, since the per-combo null conditions on the individual clade in a way no six-bin
+scheme can, and per-stratum calibration makes the threshold comparable across sizes in a way a
+single global cut cannot. After the fix the **minimum called clade is 4 cells in all five arms.**
+
+| arm | scorable combos | above threshold | **events** | cell × tape | % of all missing | exp. false | $n_{\ge}=0$ |
+|---|---|---|---|---|---|---|---|
+| Subclone | 37.8 M | 411,727 | **4,405** | 686,803 | 49.17% | 9.7 | 4,405 |
+| Pre-TX | 102.6 M | 65,302 | **1,915** | 30,938 | 2.36% | 9.0 | 1,915 |
+| Mouse 1 | 14.7 M | 25,580 | **347** | 20,739 | 5.11% | 11.7 | 347 |
+| Mouse 2 | 7.1 M | 18,446 | **316** | 33,542 | 10.13% | 10.7 | 316 |
+| Mouse 3 | 5.5 M | 11,820 | **128** | 3,952 | 3.09% | 6.7 | 128 |
+
+⭐ **Every called event, in every arm, beats every one of its own 997 permutations.** That is the
+answer to the question as posed, and it needs no threshold argument at all.
+
+#### ⚠⚠ But the raw cell × tape share is inflated by COARSE ATTRIBUTION, and Subclone shows it
+
+Subclone reads 49.17% here against 20.07% from the $\Lambda$ route. The two routes are **not
+disagreeing about which tape was lost in which clone** — 1,269 of ~1,400 (clone, tape) pairs are
+shared, 109 per-combo-only, 53 $\Lambda$-only. They disagree about **which clade to blame**:
+per-combo picks a clade **1.67× larger** (median; larger in 76% of shared pairs). And that has a
+testable consequence — the inside rate, $n_{\rm missing}/|{\rm clade}|$, which must be 1.00 for a
+genuine Dollo loss on the clade's *stem*:
+
+| arm | per-combo (10% / median / mean) | $\Lambda$ route (10% / median / mean) |
+|---|---|---|
+| Subclone | 0.264 / **0.778** / 0.694 | 0.896 / **1.000** / 0.969 |
+| Mouse 2 | 0.361 / 0.888 / 0.773 | 0.939 / 1.000 / 0.984 |
+| Mouse 1 | 0.313 / 0.960 / 0.809 | 0.977 / 1.000 / 0.993 |
+
+⇒ the per-combo route is calling **large, partly-missing clades**. Their present cells *disprove* a
+stem loss on that clade, so counting all their missing entries as "inside one inherited loss"
+over-attributes. **Why it happens:** for a large clade the null $\Lambda$ is strongly *negative* —
+a random relabelling is heavily penalised by the present cells it picks up — so even a modestly
+positive $\Lambda$ yields a large margin. **The margin is an excellent test of non-exchangeability
+and a poor estimator of which clade the loss sits on.** $\Lambda_{\rm hard}$'s high absolute
+threshold implicitly demands a high inside rate, and that is what localises the event.
+
+#### ⇒ The division of labour, and it resolves the confusion
+
+| question | statistic |
+|---|---|
+| **is dropout exchangeable within clones?** (significance) | **per-combo margin** — exact null, no strata, no floor, nothing censored |
+| **how many cell × tape entries sit inside an inherited loss?** (attribution) | **$\Lambda$ with a completeness bar** — or the per-combo margin *plus* inside rate $\ge0.9$ |
+
+With the completeness bar applied to the per-combo events, all four routes agree to within ~1.4× in
+every arm:
+
+| arm | per-combo, all | **per-combo, inside rate $\ge0.9$** | floor 2 stratified | floor 10 |
+|---|---|---|---|---|
+| Subclone | 4,405 / 49.17% | **1,498 / 27.57%** | 6,597 / 20.07% | 8,220 / 19.09% |
+| Mouse 2 | 316 / 10.13% | **152 / 4.73%** | 452 / 7.02% | 388 / 6.43% |
+| Mouse 1 | 347 / 5.11% | **204 / 3.03%** | 424 / 4.34% | 320 / 3.64% |
+| Mouse 3 | 128 / 3.09% | **70 / 2.28%** | 132 / 3.15% | 73 / 2.28% |
+| Pre-TX | 1,915 / 2.36% | **1,202 / 1.63%** | 2,019 / 2.46% | 1,783 / 1.70% |
+
+⚠ **Correction to what I said when launching this:** I wrote that the per-combo route "should become
+the primary analysis" with the $\Lambda$ threshold "kept as the cross-check it now is." Wrong as
+stated. They are not competing estimates of one quantity — **they answer different questions**, and
+the per-combo route needs a completeness criterion bolted on before it can count anything.
+
+#### The tie diagnostic, which validates the held-out null
+
+Share of combos with margin $\ge0$, against the $1/998$ a continuous null would give:
+
+| arm | observed share | FDR at margin $\ge0$ |
+|---|---|---|
+| Mouse 3 | 22.4% | 97.4% |
+| Pre-TX | 23.9% | 92.6% |
+| Mouse 1 | 16.0% | 94.2% |
+| **Subclone** | **3.4%** | **6.4%** |
+
+Small clones admit few distinct clade compositions, so $\Lambda_{\rm obs}$ *ties* the null maximum
+constantly; Subclone's large clones give a near-continuous null and few ties. The held-out
+permutations reproduce each arm's tie rate and correctly declare margin $\ge0$ meaningless.
+**Without them a naive per-combo analysis would have reported 24.5 million events in Pre-TX.**
