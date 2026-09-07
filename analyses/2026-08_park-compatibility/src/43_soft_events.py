@@ -89,7 +89,16 @@ SEED = int(sys.argv[sys.argv.index("--seed") + 1]) if "--seed" in sys.argv else 
 PART = sys.argv[sys.argv.index("--permpart") + 1] if "--permpart" in sys.argv else None
 NULLF = sys.argv[sys.argv.index("--nullfile") + 1] if "--nullfile" in sys.argv else None
 TARGET = float(sys.argv[sys.argv.index("--target") + 1]) if "--target" in sys.argv else 0.05
-tag = ("" if MAXD == 4 else f"_d{MAXD}") + (f"_lam{LAM0:g}" if LAM0 != 10.0 else "")
+# ⚠⚠ --budget X selects each stratum's threshold by an ABSOLUTE expected-false
+# count (null mean <= X per stratum) instead of a RATE.  Measured 2026-09-07:
+# at a 2-nat floor the 5% rate admits 1,313-47,898 expected false CANDIDATES per
+# arm, and the FDR is computed on candidates while the reported quantity is
+# events after the overlap collapse -- a gap that did not matter at 0.01% FDR
+# and is fatal at 5%.  An absolute budget bounds the false EVENT count too,
+# since dedup can only ever reduce it.
+BUDGET = float(sys.argv[sys.argv.index("--budget") + 1]) if "--budget" in sys.argv else None
+tag = ("" if MAXD == 4 else f"_d{MAXD}") + (f"_lam{LAM0:g}" if LAM0 != 10.0 else "") \
+      + (f"_b{BUDGET:g}" if BUDGET is not None else "")
 
 # fixed threshold grid -- see 40_event_catalogue.py for why it cannot depend on
 # the data.  Identical definition, so the two catalogues are directly comparable.
@@ -290,7 +299,8 @@ def qcurve(obs, nul):
 QS = np.array([qcurve(obs_c[i], nul_c[i]) for i in range(NB)])
 js = np.full(NB, -1, dtype=int)
 for i in range(NB):
-    okc = np.flatnonzero(QS[i] <= TARGET)
+    okc = (np.flatnonzero(nul_c[i] <= BUDGET) if BUDGET is not None
+           else np.flatnonzero(QS[i] <= TARGET))
     if okc.size:
         js[i] = int(okc[0])
 LAMv = np.array([grid[js[i]] if js[i] >= 0 else np.inf for i in range(NB)])

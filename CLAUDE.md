@@ -144,8 +144,31 @@ the **symbol-depletion test** of row A9's untested *trans* limb. |
    tree at Park clone sizes, sequential editing at measured $\lambda$/$\xi$, $N=6$, $k=166$, with
    **dropout as a switchable layer**. That simulator also supplies the **homoplasy null** — still the
    single biggest gap in the "dropout not homoplasy" argument.
-0a. **⚠⚠ Event calling is pinned to an ARBITRARY floor — settle the criterion before any
-   "how widespread" claim.** Two thresholds: the scan floor `LAM0 = 10` nats (hard-coded, nothing
+0a. **✅ SETTLED 2026-09-07 — the defensible catalogue, and the criterion is an ABSOLUTE budget
+   not a rate.** Low-floor ($\Lambda\ge2$) + clade-size-stratified + expected false $\le2$ per
+   stratum: **Subclone 6,597 events / 20.07% of all missing · Pre-TX 2,019 / 2.46% · Mouse2 452 /
+   7.02% · Mouse1 424 / 4.34% · Mouse3 132 / 3.15%**, $\le11$ expected false candidates per arm,
+   every event $q\le2\times10^{-3}$. **Quote these.** Against floor 10 that is only 1.1–1.8×
+   (0.8× for Subclone) — the 3–14× the 5% target advertised was false positives.
+   ⚠⚠ **Why a rate fails at a low floor:** FDR is computed on *candidates*, the reported quantity is
+   *events* after the overlap collapse. Harmless at floor 10 (2.15 expected false vs 320 events),
+   fatal at 5% (5,515 vs 2,083), and count vectors cannot dedup permuted sets to fix it. Use
+   `--budget`.
+   ⚠⚠ **Two corrections to my own reasoning, both recorded:** (i) "the floor is conservatism not
+   rigour / loose lower bounds" was right in direction, badly wrong in magnitude — I measured the
+   distance to the cliff in FDR units when it lives in nats; defensible thresholds are **5.9–12.4
+   nats**, essentially where the arbitrary floor sat, so floor-10 was accidentally near-right.
+   (ii) I declared the 4–5 cell stratum "DEAD in all arms" from the arm-*median* $\tilde p$; it
+   calls 18–635 events per arm, because called small-clade events sit at $\tilde p$ 0.05–0.13 vs
+   medians 0.12–0.42. ⇒ **"a small clade is detectable only on a tape that should have been there"**
+   — capture-independence, not a dead zone.
+   ⚑ **`MAX_D=6` survives**: partial fraction at the budget is 8.9–46.3%, unchanged or lower than
+   floor 10. The rise at 5% was mechanical — a partial loss scores lower $\Lambda$, so any threshold
+   drop inflates it. **Always quote the partial fraction with its threshold.**
+   ⚠ Still open: `42` (clone-wide) is unstratified, and clone sizes vary far more than clade sizes —
+   its Mouse2 FDR 4.36% is the last marginal number. Full audit + results in README.
+
+0a-old. *(superseded)* **Event calling was pinned to an ARBITRARY floor.** Two thresholds: the scan floor `LAM0 = 10` nats (hard-coded, nothing
    below it is ever collected) and an adaptive `LAM` (smallest grid point with FDR $\le5\%$).
    **The adaptive step is degenerate in 13 of 15 configurations** — FDR at the floor is 0.002–0.019%
    for the hard catalogue, **262–2,511× below target**, so `LAM` snaps to the floor. Binds only for

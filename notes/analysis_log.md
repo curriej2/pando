@@ -740,3 +740,53 @@ events $\le10$) is more defensible than a rate. Decide this when setting the flo
 ⇒ **Threshold-independent claims that should carry the talk:** the null comparison (118–2,522× beyond
 the most extreme of 1,000 permutations), $q\le1.9\times10^{-4}$ for every hard-catalogue event, and
 $\hat\pi$ median 1.000 against expected 0.11–0.41.
+
+### ⭐ 2026-09-07 — the low-floor run landed, and it corrected me twice
+
+`lf_collect` (40 min): 15 configurations, 300 parts, $B=1{,}000$ each, $p=1/1001$ throughout, all
+merges complete. Then `52_collect_budget.sh` re-reported all 15 against the stored nulls under an
+absolute criterion. **The criterion, not the floor, was doing almost all the work.**
+
+**⚠⚠ The 5% target is unusable at a low floor, for a reason that did not exist at floor 10.** The
+FDR is computed on *candidates*; the reported quantity is *events*, after the overlap collapse. At
+floor 10 that gap was harmless (Mouse 1: 2.15 expected false candidates vs 320 events). At 5% it is
+fatal — 5,515 expected false candidates vs 2,083 events — and the count-vector design cannot dedup
+permuted sets to close it. **A candidate-level rate cannot bound an event-level error unless the
+rate is tiny.** ⇒ added `--budget X`: per-stratum threshold = smallest $\Lambda$ with expected null
+count $\le X$. An absolute budget bounds false *events* too, since dedup only reduces them.
+
+**The defensible catalogue** (floor 2, stratified, expected false $\le2$/stratum): Subclone 6,597
+events / 20.07% of missing; Pre-TX 2,019 / 2.46%; Mouse 2 452 / 7.02%; Mouse 1 424 / 4.34%;
+Mouse 3 132 / 3.15%. Against floor 10 that is **1.1–1.8×, and 0.8× for Subclone** — not the 3–14×
+the 5% target advertised. $\le11$ expected false candidates per arm; every event $q\le2\times10^{-3}$.
+
+**⚠⚠ Correction 1 to 2026-09-04.** I wrote that the floor was "conservatism, not rigour" and the
+counts "loose lower bounds". Direction right, **magnitude badly wrong**: I measured the distance to
+the false-positive cliff in *FDR* units (262–2,511× below target) when the relevant units are
+*nats*. The defensible per-stratum thresholds land at **5.9–12.4 nats** — essentially where the
+arbitrary floor sat. The cliff is 0–4 nats below 10. ⇒ the floor-10 catalogue was accidentally
+near-right; what this bought is a **justified** threshold rather than an inherited one, plus a
+modest gain, plus knowing where the cliff is.
+
+**⚠⚠ Correction 2, within the same session.** I computed each stratum's maximum achievable
+$\Lambda=m\log((1-\varepsilon)/\bar p)$ with the **arm-median** $\bar p$, declared the 4–5 cell
+stratum "DEAD in all five arms", and said so. **The budget catalogue calls 18–635 events there in
+every arm.** $\tilde p$ is per (cell, tape), not per arm, and the events that clear are exactly
+those where recovery was expected: called 4–5 events sit at $\tilde p$ 0.05–0.13 against arm medians
+0.12–0.42, lifting their ceiling above the threshold. ⇒ the right statement is **not** "small clades
+are undetectable" but "**a small clade is detectable only on a tape that should have been there**" —
+capture-independence doing exactly the work it was built for. Small clades stay heavily suppressed
+(34% of Mouse 1's candidates, 12% of its events) but the stratum is live.
+
+**⚑ The `MAX_D=6` conclusion survives; my doubt about it was itself the 5% artefact.** I flagged
+that the partial fraction rose at the lower floor (Mouse 3 d6 8.1%→18.0%) and that "the graded
+appearance is very largely clade coarseness" needed re-reading. At the budget threshold: Mouse 1
+15.9% (was 20.0%), Mouse 2 22.0% (29.6%), Mouse 3 8.9% (8.1%), Pre-TX 15.6% (13.7%), Subclone 46.3%
+(50.3%) — unchanged, and *lower* in three arms. A partial loss scores lower $\Lambda$ by
+construction, so **any** threshold drop inflates the partial fraction with no change in biology.
+⚠ Always quote the partial fraction with its threshold.
+
+**Still open:** `42` (clone-wide) is still unstratified, and clone sizes vary far more than clade
+sizes — its Mouse 2 FDR of 4.36% is the last marginal number. An **event-level** FDR would need the
+dedup run on permuted candidate sets, which count vectors cannot support; the absolute budget
+sidesteps that rather than solving it.

@@ -2134,3 +2134,108 @@ number in the whole programme. **Stratify `42` by clone size next.**
 right on the target, so at 5% roughly 1 event in 20 is false — ~21 of Mouse 3's 419. The run stores
 the **full per-stratum curves**, so any criterion (a stricter rate, or an absolute "expected false
 events ≤ 10") can be applied afterwards at zero cost. Decide it when the curves land.
+
+### ⭐ The low-floor run — results, and two corrections to my own reasoning (2026-09-07)
+
+`lf_collect` completed in 40 min: 15 configurations, 300 parts, $B=1{,}000$ each, $p=1/1001$
+throughout. Then `52_collect_budget.sh` re-reported all 15 against the **already-stored** nulls under
+an absolute criterion. The headline is that **the criterion, not the floor, was doing almost all of
+the work** — and that the floor-10 catalogue was closer to right than I claimed.
+
+#### At the 5% target the gains look dramatic. They are mostly false positives.
+
+| arm | events @ 5% | @ floor 10 | **expected FALSE candidates** | events reported |
+|---|---|---|---|---|
+| Pre-TX | 25,274 | 1,783 | **47,898** | 25,274 |
+| Subclone | 24,684 | 8,220 | **35,784** | 24,684 |
+| Mouse 1 | 2,083 | 320 | **5,515** | 2,083 |
+
+⚠⚠ **The FDR is computed on *candidates*; the reported quantity is *events*, after the overlap
+collapse.** At floor 10 that gap was harmless — Mouse 1 had 2.15 expected false candidates against
+320 events, so even total survival of every false candidate left the catalogue clean. At 5% it is
+fatal: 5,515 expected false candidates against 2,083 events, and the count-vector design cannot
+dedup the permuted sets to close the gap. **A candidate-level rate cannot bound an event-level
+error when the rate is not tiny.**
+
+⇒ `--budget X` added to `40`/`43`: each stratum's threshold is the smallest $\Lambda$ whose
+**expected null count** is $\le X$. An absolute budget bounds the false *event* count too, because
+dedup can only ever reduce it.
+
+#### The defensible catalogue — floor 2, stratified, expected false $\le2$ per stratum
+
+| arm | **events** | floor 10 | ratio | **cell × tape** | floor 10 | % of all missing | floor 10 | exp. false | max $q$ |
+|---|---|---|---|---|---|---|---|---|---|
+| Subclone | **6,597** | 8,220 | **0.8×** | 280,319 | 266,688 | **20.07%** | 19.09% | 10.5 | 2e-4 |
+| Pre-TX | **2,019** | 1,783 | 1.1× | 32,146 | 22,256 | 2.46% | 1.70% | 8.7 | 1e-3 |
+| Mouse 2 | **452** | 388 | 1.2× | 23,233 | 21,277 | 7.02% | 6.43% | 10.6 | 1e-3 |
+| Mouse 1 | **424** | 320 | 1.3× | 17,620 | 14,770 | 4.34% | 3.64% | 10.5 | 1e-3 |
+| Mouse 3 | **132** | 73 | 1.8× | 4,033 | 2,916 | 3.15% | 2.28% | 8.9 | 2e-3 |
+
+⇒ **1.1–1.8× more events than floor 10, and *fewer* for Subclone.** Not 3–14×. Every arm carries
+$\le11$ expected false candidates and every event clears $q\le2\times10^{-3}$. This is the catalogue
+to quote.
+
+#### ⚠⚠ Correction 1 — "the floor is conservatism, not rigour" was wrong in magnitude
+
+Written 2026-09-04: *"At FDR 0.002–0.019% the events at $\Lambda=10$–12 are almost certainly real;
+we are hundreds of times inside the cliff, so the reported counts are loose lower bounds."*
+
+The direction was right, the magnitude badly wrong. **I measured our distance from the
+false-positive cliff in FDR units (262–2,511× below target) when the relevant distance is in
+$\Lambda$ units.** Under a defensible criterion the per-stratum thresholds land at **5.9–12.4 nats**
+— i.e. essentially where the arbitrary floor already sat. The cliff is 0–4 nats below 10, not far
+below. So the floor-10 catalogue was *accidentally near-right*, and what this exercise actually
+bought is **a justified threshold instead of an inherited one**, plus ~20–80% more events, plus the
+knowledge of where the cliff is. That is worth having, but it is not the discovery of a large hidden
+population of events.
+
+#### ⚠⚠ Correction 2 — I called the small-clade strata "dead" and they are not
+
+I computed each stratum's maximum achievable $\Lambda$ as $m\log((1-\varepsilon)/\bar p)$ using the
+**arm-median** expected rate, concluded the 4–5 cell stratum could not clear its own threshold in
+any arm, and said so. **The budget catalogue calls 18–635 events in that stratum in all five arms.**
+
+The error: $\tilde p$ is per (cell, tape), not per arm, and the events that *do* clear are exactly
+the ones where recovery was expected:
+
+| arm | arm median $\tilde p$ | $\tilde p$ of called 4–5 events | implied cap | threshold |
+|---|---|---|---|---|
+| Mouse 1 | 0.405 | **0.098** | 11.6 | 9.6 |
+| Pre-TX | 0.347 | **0.093** | 11.8 | 10.9 |
+| Subclone | 0.116 | **0.052** | 14.7 | 12.4 |
+
+⇒ **capture-independence is doing the work.** A 4-cell clade is certifiable only when those four
+cells were well captured *and* that tape is normally reliable — which lifts its $\Lambda$ ceiling
+above the threshold. The right statement is not "small clades are undetectable" but **"a small clade
+is detectable only on a tape that should have been there"**, which is the same property that makes
+$\Lambda$ a test of inherited loss rather than of dropout rate. Small clades are still heavily
+suppressed — 34% of Mouse 1's candidates sit in 4–5 cells against 12% of its called events — but
+the stratum is live.
+
+#### ⚑ And the `MAX_D=6` conclusion survives — my worry about it was itself the 5% artefact
+
+I flagged that the soft partial fraction rose at the lower floor (Mouse 3 d6 8.1% → 18.0%) and that
+"the graded appearance is very largely clade coarseness" would need re-reading. At the **budget**
+threshold it does not:
+
+| arm | partial, budget | partial, floor 10 |
+|---|---|---|
+| Mouse 1 | **15.9%** | 20.0% |
+| Mouse 2 | **22.0%** | 29.6% |
+| Mouse 3 | **8.9%** | 8.1% |
+| Pre-TX | **15.6%** | 13.7% |
+| Subclone | **46.3%** | 50.3% |
+
+Essentially unchanged, and *lower* in three arms. The rise at 5% was the mechanical consequence of
+admitting weaker events — a partial loss scores lower $\Lambda$ by construction, so any threshold
+drop inflates the partial fraction without any change in biology. **⚠ The partial fraction is
+therefore threshold-dependent in a predictable direction and must always be quoted with its
+threshold.** The depth gradient also survives (Subclone 82.1% → 35.7% over depths 1–6).
+
+#### Still open
+
+- **`42` (clone-wide) remains unstratified.** Clone sizes vary far more than clade sizes, so the
+  criticism applies with more force; its Mouse 2 FDR of 4.36% is the one marginal number left.
+  Re-run it with size strata and `--budget`.
+- **An event-level FDR** would need the dedup applied to permuted candidate sets, which the count
+  vectors cannot support. The absolute budget sidesteps it rather than solving it.

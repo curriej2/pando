@@ -121,6 +121,14 @@ $q\le1.9\times10^{-4}$. Cell × tape entries inside called blocks: 2,916–266,6
 the $B=3$ null was unbiased in the mean and only missed the tail. Full tables in README
 "B = 1,000 — results".
 
+**✅ THE CATALOGUE TO QUOTE (2026-09-07): `*_lam2_b2` / `*_lam4_b2`.** Floor 2 (soft 4),
+clade-size-stratified, threshold per stratum at expected false $\le2$. Subclone 6,597 events /
+20.07% of all missing · Pre-TX 2,019 / 2.46% · Mouse2 452 / 7.02% · Mouse1 424 / 4.34% · Mouse3
+132 / 3.15%. Only 1.1–1.8× floor 10 (0.8× Subclone): the 3–14× at a 5% *rate* was false positives,
+because FDR is computed on candidates while events are what we report. Use `--budget`, not
+`--target`. Two corrections to my own reasoning are recorded in README — the cliff lives at 5.9–12.4
+nats (so floor 10 was accidentally near-right), and the 4–5 cell stratum is live, not dead.
+
 **⚠⚠ Before any "how widespread" claim, read README "How events are actually called".** The
 10-nat cutoff is a hard-coded **scan floor**, and the adaptive FDR$\le5\%$ step is **degenerate in
 13 of 15 configurations** (FDR at the floor is 262–2,511× below target for the hard catalogue, so
