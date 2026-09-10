@@ -181,6 +181,47 @@ the **symbol-depletion test** of row A9's untested *trans* limb. |
    events $\le10$). Threshold-independent claims that survive: the 118–2,522× null comparison,
    $q\le1.9\times10^{-4}$ per event, $\hat\pi$ median 1.000 vs expected 0.11–0.41. Full audit in
    README "How events are actually called".
+0-NEWEST. **⭐⭐ THE TEST IS ANALYTIC AS OF 2026-09-10 — `67_exact_merge.py`, and the machinery is gone.**
+   No calibration draws, no clade-size strata, no permutations required (kept only to validate).
+   The $\gamma_{C,z}$ fit forces $\sum_{c\in C}(X_{cz}-\tilde p_{cz})=0$, so under the within-clone
+   permutation a clade is a simple random sample **without replacement** from its clone's residuals,
+   giving closed-form moments $\mathbb{E}_\pi[T]=m\bar r$,
+   $\mathrm{Var}_\pi[T]=m\frac{n-m}{n-1}\sigma^2$ (population = the clone's cells in that BLOCK).
+   Then $p=\max(p_{\rm normal},p_{\rm hypergeometric})$ and one Bonferroni cut
+   $p\le\mathcal{E}/N_{\rm test}$, which bounds expected false **events** because events are unions
+   of combos and the collapse only merges or drops.
+   ⚠⚠ **The model variance $V$ is wrong by ~2×** (permutation SD of $z$ is 0.51–0.67, not 1); my
+   Monte Carlo check simulated the model null with $\tilde p$ FIXED and so assumed its conclusion.
+   Calling was unaffected; the "standard deviations" interpretation was not.
+   ⚠⚠ **Edgeworth dropped before building** — at $z=6$ the correction is 37× the leading term.
+   ⚑ Strata unnecessary ($\mathrm{Var}_\pi$ conditions on $m$ and $n$); testability structural
+   ($\sigma^2>0$, $m<n$; 53.3% on Mouse3 — the rest have $T\equiv0$ by construction).
+   **Mouse 3: 92 events / 2.97% at $\mathcal{E}=1$**; at matched stringency the three routes converge
+   (128 / 127 / 132 events, 85 clone×tape pairs shared by all three). **9 s / 1.76 GB**, zero
+   permutations ⇒ laptop-scale for future data. Launched on all five arms 2026-09-10.
+   ⚠ Owed: normal tail validated only to $p\approx10^{-3}$ vs events at $10^{-9}$; Bonferroni over
+   dependent tests over-corrects; the hypergeometric is 13× conservative.
+0-NEW. **⭐⭐ THE DETECTOR WAS REBUILT (2026-09-09) — an event is defined on two axes.**
+   `2026-08_park-compatibility`, README "The detector, rebuilt". **Detect** with the one-sided score
+   test $z=(k-E)/\sqrt V$ — the score of a NESTED family $X_c\sim\mathrm{Bern}(\sigma(\eta_c+\delta))$
+   in which $\delta=0$ *is* $H_0$; **attribute** with $\Lambda_{\rm hard}$ (maximised at the largest
+   clade that is still complete — the Dollo rule, via
+   $\Lambda_{\rm hard}=\Lambda_{\rm soft}-m\,\mathrm{KL}(\hat\pi\|1-\varepsilon)$); **report**
+   $\hat\pi=k/m$ instead of assuming it. Mouse 3: **127 events / 3.19% of missing, $\hat\pi$ median
+   1.000 against 0.376 predicted** — the first non-circular completeness claim — converging on the
+   committed routes (128/3.09%, 132/3.15%).
+   ⚠⚠ **$\Lambda_{\rm soft}$ is not a completeness-agnostic $\Lambda_{\rm hard}$**: non-nested against
+   $H_0$, so it mixes elevation with the dispersion of $\tilde p$ inside the clade, and **72% of its
+   Mouse3 calls had no rate elevation at all** ($z<0.5$). Not a calibration failure — the alternative was
+   a mixture. Do not resurrect it as a detector.
+   ⚠⚠ **Supersedes two recorded numbers**: partial fraction **29.9%** (not 8.9% — the hard route cannot
+   see partials, so that was circular), and the **$\hat\pi$-by-depth gradient is gone**, so "graded
+   losses are largely clade coarseness" (09-03, re-confirmed 09-07) was a detector artefact.
+   ⚠ Calibration draws are **appended**, not held out — `62 --calib N` alone, one scan each.
+   **Fig 5 a/b/c built on Mouse 3**; panel a is **faceted by clade size**, one threshold line per facet —
+   that line is the rule and every event clears it. ⚠ Never pool the ceiling across clade sizes: the first
+   version did and put 58 of 127 events below a line they were never tested against, because the decision
+   variable is on neither axis. **⭐ NEXT: the four other arms** (`64_submit_percombo_soft.sh <arm>`).
 0b. **⭐ Does the co-integrated symbol vanish when a tape is silenced?** (`2026-08_park-compatibility`,
    README "Two directions from the B = 1,000 run"). The first **orthogonal** test of the silencing
    mechanism — every result so far infers it from missingness, which is also what technical dropout

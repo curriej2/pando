@@ -790,3 +790,161 @@ construction, so **any** threshold drop inflates the partial fraction with no ch
 sizes — its Mouse 2 FDR of 4.36% is the last marginal number. An **event-level** FDR would need the
 dedup run on permuted candidate sets, which count vectors cannot support; the absolute budget
 sidesteps that rather than solving it.
+
+## ⭐ 2026-09-08/09 — the detector rebuilt: nested families, the score test, $\hat\pi$ made non-circular
+
+Justin asked to settle the "dropout is heritable" figure, and the thing never settled was **what a
+silencing event is**. Two claims had been running together: **A**, dropout is non-exchangeable within
+clones (established three ways, needs no event definition), and **B**, the losses are discrete and
+complete — Dollo characters. Only B needs a definition, and B is what the SciPhy extension rests on.
+
+**First: $\hat\pi$ and `inside_rate` are the same number** ($k/m$), so the completeness bar bolted onto
+the per-combo route on 09-07 already was a $\hat\pi$ threshold. Hard and soft differ in exactly one
+respect — whether completeness is fused into the statistic or reported separately. Made exact by
+$\Lambda_{\rm hard}=\Lambda_{\rm soft}-m\,\mathrm{KL}(\hat\pi\|1-\varepsilon)$ (verified $<5\times10^{-13}$,
+reproduces `43`'s docstring examples). Corollary: $\Lambda_{\rm hard}$ is maximised at the **largest
+clade that is still complete** — the Dollo rule — which is why it was always the right attributor.
+
+**⚠⚠ CORRECTION, and the Mouse 3 run caught it for 25 min of compute.** I proposed detecting on
+$\Lambda_{\rm soft}$ ("$\Lambda_{\rm hard}$ without the completeness requirement") and reporting
+$\hat\pi$. Wrong. It returned 340 events, median $\hat\pi$ 0.203 — of which **226 were clades of 50–199
+cells with $k-E=+0.27$ cells and $z=0.08$**, i.e. no elevation whatsoever. Cause: $H_0$ (product of
+*different* Bernoullis) is **not nested** in $H_1^{\rm soft}$ (product of *identical* ones), so they
+differ in two respects at once — level and homogeneity — and
+$\Lambda_{\rm soft}=m\mathrm{KL}(\hat\pi\|\bar e)+[\ell(\bar e\mathbf 1)-\ell(\tilde p)]$, the second term
+being the dispersion of $\tilde p$ in the clade ($\mathbb{E}_{H_0}=-\sum_c\mathrm{KL}(\tilde p_c\|\bar e)$,
+verified by MC). Real clades are more homogeneous in capture than random subsets of their clone, so that
+term beats its own permutations with zero elevation. On the 226 artefacts the elevation term carried
+**0.1%** of the median margin. ⚠ **Not a calibration failure** — the permutation null was exact; the
+*alternative* was a mixture. $\Lambda_{\rm hard}$ escaped only by brute force ($-3.3m$ nats), i.e. right
+by accident, and by the same term that blinds it to graded losses.
+
+⚠⚠ **A second, earlier correction**: I first blamed the overlap collapse (63 ordered it by the detection
+margin). Measured — collapsing by $\Lambda_{\rm hard}$ gives 341 events against 340. Coarse attribution
+was ~15% of it, not the cause.
+
+**The fix — a nested family.** $X_c\sim\mathrm{Bern}(\sigma(\eta_c+\delta))$ with
+$\eta_c=\alpha_c+\beta_z+\gamma_{C,z}$: $\delta$ is one more additive term in the same logistic
+regression, $\delta=0$ **is** $H_0$ in the interior, $\delta\to\infty$ is total loss, and the per-cell
+heterogeneity is kept in both models so the misfit term cannot arise. Score and information at $\delta=0$
+give $z=(k-E)/\sqrt V$ — simply (observed − expected)/(SD of the count), with $\mathbb{E}_{H_0}[S]=0$ and
+$\mathrm{Var}_{H_0}[S]=V$ holding **exactly** for any $m$ and any heterogeneity. Heterogeneity enters the
+scale, never the location; and by concavity of $p(1-p)$ a homogeneous clade gets the *largest* $V$, so the
+artefact direction is suppressed.
+
+⚠ Wald is unusable here (0.000 on a complete loss — complete separation), and $\hat\delta$ diverges for
+complete losses, so $\hat\delta$ is the effect size for graded shifts and $\hat\pi$ for complete ones.
+⚠ $\chi^2_1$ does not replace the permutation: a nominal 5% test rejects **9.07%** at $m=8$.
+⚠ Score screens, exact LRT characterises the shortlist — purely cost (LRT is ~10× the scan; Pre-TX
+2h → 20h per part).
+
+**Calibration draws are now APPENDED, not held out.** Compare fresh permutations $B,B+1,\dots$ to the
+stored $M=\max_{b<B}z_b$; same exchangeability, and NCAL stops being a launch-time decision (one scan
+each, ~0.1% of the run). Validated on data generated under $H_0$ exactly: ties reproduced (0.0117 vs
+0.0113, against 0.0053 continuous), quantiles match to 3 dp through the 99.99th percentile, LOO ratio
+1.000–1.015, and **12 independent replicates** give ratios 0.998–1.218 with $t$ −0.19 to 1.75 — no
+detectable anti-conservatism, bound ~20% at the smallest counts. ⚠ NCAL is the *only* source of precision
+on the null count; HOLD=3 gave ±40% at the operating point.
+
+**Mouse 3, all three detectors on the same 1,000 permutations.** $\Lambda_{\rm soft}$: 63,920 combos, of
+which **45,916 are large clades with $z<0.5$** — 72% artefact. Score $z$: 19,844 combos, **zero** such.
+$\Lambda_{\rm hard}$: 13,674, zero. ⇒ **127 events, 3.19% of all missing**, $\hat\pi$ median **1.000**
+against $\bar e=0.376$ predicted, $\hat\pi\ge0.99$ in 60.6%, $z$ median 5.23 (min 2.26), LRT median 22.99,
+$\hat\delta$ 60% diverged, smallest clade 4 cells, all beating every permutation. Converges on the
+committed work from a different direction: 127/3.19% vs 128/3.09% (per-combo $\Lambda_{\rm hard}$, d4) vs
+132/3.15% (floor-2 budget); 98 of 124 (clone,tape) pairs shared, 82 three-way.
+
+⚠⚠ **Two numbers now superseded.** (i) The partial fraction is **29.9%**, not 8.9% — the hard route
+cannot see partial losses, so its number was circular; this is the first honest one. (ii) **The
+$\hat\pi$-by-depth gradient is gone** (1.000, 0.992, 1.000, 1.000, 0.992, 0.963 over depths 1–6). Under
+$\Lambda_{\rm soft}$ it ran 0.155→1.000, so the "graded losses are largely clade coarseness" reading
+recorded 09-03 and re-confirmed 09-07 **was an artefact of the detector**. Events are complete at every
+depth; the partial tail sits in 6–9 cell clades where one present cell moves $\hat\pi$ a long way.
+
+**Implementation checks.** `62` reproduces `53`'s observed $\Lambda_{\rm hard}$ **bitwise** (5,574,944
+slots), before and after the score edit. Depth-6 prefix partitions **contain** depth-4 in all five arms,
+so this is a superset of the committed run. Same seed ⇒ the two runs are paired permutation by
+permutation. And $V\to0$ cannot blow up $z$: since $k\le m$, $z\le m(1-\bar e)/\sqrt V$, measured max
+**0.06** across the 638,355 slots with $\bar e>0.999$ — the $\gamma$ margin working.
+
+**Fig 5 built** (`66`, three standalone PNGs: the plane, the survival curves, the completeness histogram).
+⚠⚠ **Panel a's orange "null ceiling" is misleading and must be replaced**: it is a maximum pooled over
+clade sizes, so **58 of 127 called events sit below it**, every one clearing its *own* stratum threshold.
+Root cause is structural — the decision variable (clade size) is on neither axis, so no curve in that
+plane is the decision boundary. Fix by faceting on clade size, or by plotting margin − threshold(stratum).
+Two other defects were caught on inspection and fixed: a filled contour drew a spurious *lower* null
+boundary, and panel b was a per-bin histogram mislabelled as cumulative.
+
+**Next:** the four other arms (same code; Pre-TX 24 G, Subclone 16 G), panel a refaceted, and `42`
+(clone-wide) still unstratified.
+
+## ⭐ 2026-09-10 — exact permutation moments, analytic p-values, and the machinery goes away
+
+Justin pushed back: the 12 calibration draws are convoluted and hard to justify; why not p-values from
+an LRT, accept that small clades have little power, and drop the bespoke apparatus? He was
+substantially right, and chasing it exposed an error in the previous design.
+
+**⚠⚠ CORRECTION — $V$ is the wrong scale, and my check of it was circular.** I asserted
+$\mathrm{Var}[T]=V=\sum_{c\in S}\tilde p(1-\tilde p)$ *exactly* and verified it by Monte Carlo —
+**simulating under the model null with $\tilde p$ FIXED**, i.e. assuming what was to be shown. Under
+the **permutation** null with $\tilde p$ **fitted**, the SD of $z$ is 0.51–0.67, not 1 (measured from
+the stored $s_1,s_2$). Calling was unaffected — the margin compares observed to permuted $z$ on the
+same scale, so a constant factor cancels — but every reading of $z$ as "standard deviations" was
+wrong. ⚠ The score is now written $T$; earlier notes used $S$ for both clade and score.
+
+**The exact moments.** The $\gamma_{C,z}$ fit forces $\sum_{c\in C}(X-\tilde p)=0$ per (clone, tape)
+(verified: max $2.1\times10^{-4}$), so under the within-clone permutation a clade is a simple random
+sample **without replacement** from the clone's residuals. Hence $\mathbb{E}_\pi[T]=m\bar r$ and
+$\mathrm{Var}_\pi[T]=m\frac{n-m}{n-1}\sigma^2$ — closed form, **no permutations required**. The factor
+$(n-m)/(n-1)$ is exactly what $V$ lacked: at $m=n$ the clade is the whole population, $T\equiv0$, and
+the variance correctly vanishes. ⚠ The population is block-conditional (the clone's cells reaching
+that depth on that anchor), not the whole clone; the whole-clone form overstates the SD by 3–6%,
+conservatively. **Verified against the stored permutations: predicted/empirical SD ratio 1.031–1.064
+by stratum, 1.046 overall, correlation 0.93.**
+
+**⚠⚠ CORRECTION 2 — Edgeworth was the wrong tool and was dropped before building.** Its skewness term
+is a *central* correction: at $z=6$, skewness 1, the normal tail is $9.9\times10^{-10}$ and the
+correction $3.6\times10^{-8}$ — 37× the leading term, so the expansion has diverged precisely where
+decisions are made. Replaced by the **hypergeometric**, the exact permutation distribution in the
+constant-$\alpha$ limit (Fisher's exact test on clade × missingness): discrete, skew-exact, no
+expansion. Two p-values per combo, the conservative one used.
+
+**Multiplicity collapses to one number.** $p\le\mathcal{E}/N_{\rm test}$ bounds expected false
+*combos*; events are unions of combos and the collapse only merges or drops, so expected false
+*events* $\le\mathcal{E}$ — **the candidate-vs-event mismatch that forced the absolute budget does not
+arise**. ⚑ And the six clade-size strata are **gone**: $\mathrm{Var}_\pi$ depends explicitly on $m$
+and $n$, so $p$ already conditions on clade size. The strata were a patch for an unstandardised
+statistic.
+
+**Testability is structural.** A combo is testable iff $\sigma^2>0$ and $m<n$ — 53.3% on Mouse3. The
+other 47% are clades that *are* their whole block-conditional population, so $T\equiv0$ and no test
+exists. That is the principled form of "do not call tiny clades": for many there is literally no test.
+
+**Mouse 3.** At $\mathcal{E}=1$: 92 events, 2.97% of missing, $\hat\pi$ median 1.000 (expected 0.402),
+$\ge0.99$ in 66.3%, partial 23.9%, smallest clade 6 cells. At $\mathcal{E}=12$ (matching the old
+rule's ~12 expected false): 128 events, 3.79%. ⭐ **Stringency-matched the three routes converge —
+128 (exact) / 127 (per-combo margin) / 132 (committed $\Lambda$ budget), with 85 (clone,tape) pairs
+common to all three.** Validation on the 124,490 combos the permutations can resolve: median
+$p_{\rm norm}/p_{\rm emp}=2.31$, $p_{\rm hyper}/p_{\rm emp}=13.0$, both conservative.
+⚠ The hypergeometric's conservatism costs real power (normal alone clears 26,973 combos, the max
+12,093); taking the max is a deliberate choice.
+
+**Cost.** The merge runs in **9 s at 1.76 GB** against 10 min before, and needs **zero** permutations —
+so the whole analysis becomes laptop-scale for future datasets. Scripts `67_exact_merge.py`,
+`68_submit_exact.sh`; launched on all five arms.
+
+⚠ Still owed: the normal tail is validated only to $p\approx10^{-3}$ while events sit near $10^{-9}$,
+so beyond that it is extrapolation (the hypergeometric is the guard); Bonferroni over ~$10^6$
+*dependent* tests over-corrects; and this is the **third** detector design in three days, so it is
+held to the same standard — it reproduces the previous catalogues at matched stringency and both of
+its approximations are checked against the stored permutations.
+
+**Five arms landed (2026-09-10).** Cell × tape share of all missing: Subclone 25.48% · Mouse2 7.70% ·
+Mouse1 6.74% · Mouse3 2.97% · Pre-TX 1.33%, against the committed $\Lambda$-budget catalogue's
+20.07 / 7.02 / 4.34 / 3.15 / 2.46% — same ordering but for Mouse3/Pre-TX swapping. **(clone, tape)
+membership agrees strongly** (1,240/1,382 Subclone, 774/817 Pre-TX, 154/163 Mouse2). $\hat\pi$ median
+1.000 in 4/5 arms. Runtime 8 s – 12 min per arm.
+⚠⚠ Two caveats recorded in full in the README: **Subclone's normal p is anti-conservative (0.46) with
+no clean explanation** — the hypergeometric guard binds in 89.4% of its calls, so my earlier
+suggestion to drop it for power is **withdrawn**; and **Subclone fragments at 4.2 events per (clone,
+tape)**, reinforcing "quote cell × tape, never event counts".

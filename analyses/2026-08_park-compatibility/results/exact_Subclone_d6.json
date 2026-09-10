@@ -1,0 +1,25 @@
+{
+ "arm": "Subclone",
+ "max_depth": 6,
+ "efalse": 1.0,
+ "p_threshold": 1.631387237902346e-08,
+ "n_slots": 61727266,
+ "n_valid": 61355415,
+ "n_testable": 61297525,
+ "n_combos_pass": 517039,
+ "n_events": 5863,
+ "cellxtape_in_events": 355849,
+ "total_missing": 1396749,
+ "frac_missing_in_events": 0.25476946824375746,
+ "method": "score standardised by exact finite-population permutation moments; p = max(normal, hypergeometric); Bonferroni",
+ "validation": {
+  "n_compare": 2465153,
+  "ratio_norm": 0.4588043479498321,
+  "ratio_hyper": 2.8980506296145205
+ },
+ "pi_median": 0.9692307692307692,
+ "pi_ge_099": 0.44038887941326965,
+ "pi_lt_090": 0.25464779123315706,
+ "min_clade": 4,
+ "max_p_used": 1.6289383566577715e-08
+}

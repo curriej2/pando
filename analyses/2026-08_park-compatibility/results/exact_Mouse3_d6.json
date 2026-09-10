@@ -1,0 +1,25 @@
+{
+ "arm": "Mouse3",
+ "max_depth": 6,
+ "efalse": 1.0,
+ "p_threshold": 2.7543307719893375e-07,
+ "n_slots": 6849492,
+ "n_valid": 6808230,
+ "n_testable": 3630646,
+ "n_combos_pass": 12093,
+ "n_events": 92,
+ "cellxtape_in_events": 3806,
+ "total_missing": 127961,
+ "frac_missing_in_events": 0.029743437453599142,
+ "method": "score standardised by exact finite-population permutation moments; p = max(normal, hypergeometric); Bonferroni",
+ "validation": {
+  "n_compare": 124490,
+  "ratio_norm": 2.3050910447259456,
+  "ratio_hyper": 12.999999999999993
+ },
+ "pi_median": 1.0,
+ "pi_ge_099": 0.6630434782608695,
+ "pi_lt_090": 0.2391304347826087,
+ "min_clade": 6,
+ "max_p_used": 2.7281408216821863e-07
+}

@@ -13,6 +13,56 @@ gitignored, never copy out). Justin's own copy of the Park, Chang et al. 2026 ta
 - `clonalbc_percell_hamming1_corrected.csv` — 167,736 rows, `CellID,Sample,ClonalBC_raw,ClonalBC`.
   **This is the clone assignment**, needed for §D.4b Procedure step 1 (work within a clone).
 
+**State (2026-09-10, end of session 8). ⭐⭐ THE TEST IS NOW ANALYTIC — `67_exact_merge.py`.**
+No calibration draws, no clade-size strata, no permutations needed at all (they are kept only as a
+validation set). Read README "Exact permutation moments and analytic p-values" before touching event
+calling. Per (clade $S$, tape $z$) with $r_c=X_{cz}-\tilde p_{cz}$ and score $T=k-E$:
+the $\gamma_{C,z}$ fit forces $\sum_{c\in C}r_c=0$, so a clade is a simple random sample **without
+replacement** from its clone's residuals, giving the closed form
+$\mathbb{E}_\pi[T]=m\bar r$ and $\mathrm{Var}_\pi[T]=m\frac{n-m}{n-1}\sigma^2$
+(population = the clone's cells **in that block**, not the whole clone). Then
+$p=\max(p_{\rm normal},p_{\rm hypergeometric})$ and a single Bonferroni cut
+$p\le\mathcal{E}/N_{\rm test}$.
+⚠⚠ **CORRECTION: the model variance $V$ is wrong by ~2×** — the permutation SD of $z=(k-E)/\sqrt V$
+is 0.51–0.67, not 1. My Monte Carlo "verification" simulated the model null with $\tilde p$ FIXED,
+i.e. assumed what it tested. Calling was unaffected (the margin cancels a constant factor) but every
+reading of $z$ as "standard deviations" was wrong.
+⚠⚠ **Edgeworth was dropped before building** — at $z=6$ its correction is 37× the leading term, so
+the expansion diverges where decisions are made. The hypergeometric replaces it (exact in the
+constant-$\alpha$ limit; Fisher's exact test on clade × missingness).
+⚑ **The strata are gone and are not needed**: $\mathrm{Var}_\pi$ depends on $m$ and $n$ explicitly,
+so $p$ already conditions on clade size. ⚑ **Testability is structural**: $\sigma^2>0$ and $m<n$
+(53.3% on Mouse3) — the rest are clades that ARE their whole block population, where $T\equiv0$.
+**Mouse 3: 92 events / 2.97% at $\mathcal{E}=1$; 128 / 3.79% at $\mathcal{E}=12$**, and at matched
+stringency the three routes converge (128 / 127 / 132, 85 clone×tape pairs common to all three).
+Verified: predicted/empirical perm SD ratio 1.046, $p_{\rm norm}/p_{\rm emp}=2.31$ and
+$p_{\rm hyper}/p_{\rm emp}=13.0$ (both conservative). Runs in **9 s / 1.76 GB** on stored parts.
+⚠ Owed: the normal tail is validated only to $p\approx10^{-3}$ while events sit near $10^{-9}$;
+Bonferroni over dependent tests over-corrects; the hypergeometric's 13× conservatism costs real power.
+
+**State (2026-09-09, end of session 7). ⭐ THE DETECTOR WAS REBUILT — read README
+"The detector, rebuilt" before touching event calling.** An event is now defined on **two axes**:
+detect with the one-sided **score test** $z=(k-E)/\sqrt V$ (nested family
+$X_c\sim\mathrm{Bern}(\sigma(\eta_c+\delta))$, $\delta=0$ **is** $H_0$), attribute with
+$\Lambda_{\rm hard}$ (maximised at the largest clade that is still complete = the Dollo rule), and
+**report $\hat\pi=k/m$** rather than assume it. Mouse 3: **127 events / 3.19% of missing**,
+$\hat\pi$ median **1.000** vs $\bar e=0.376$ predicted — the first NON-CIRCULAR completeness claim,
+and it converges on the committed routes (128/3.09%, 132/3.15%).
+⚠⚠ **$\Lambda_{\rm soft}$ is NOT a completeness-agnostic $\Lambda_{\rm hard}$** — it is non-nested
+against $H_0$, decomposes as elevation + *dispersion-of-$\tilde p$*, and 72% of its Mouse3 calls were
+large clades with $z<0.5$ (no elevation at all). Do not resurrect it as a detector.
+⚠⚠ **Two older numbers are superseded**: the partial fraction is **29.9%**, not 8.9% (the hard route
+cannot see partials, so its figure was circular); and the **$\hat\pi$-by-depth gradient is gone**, so
+the "graded losses are largely clade coarseness" reading from 09-03/09-07 was a detector artefact.
+⚠ Calibration draws are **appended** (`62 --calib N`), not held out, so their number is a post-hoc
+decision costing one scan each. NCAL is the only source of precision on the null count.
+**Fig 5 built (`66`, panels a/b/c standalone).** Panel a is **faceted by clade-size stratum**, one
+threshold line per facet — that line *is* the rule, and every called event sits above it. ⚠ Do not
+re-pool it: the earlier single "null ceiling" mixed clade sizes and put 58 of 127 events below a line
+they were never tested against.
+**Only Mouse 3 has been run on the new detector.** The other four arms are the same code
+(`64_submit_percombo_soft.sh <arm>`; Pre-TX 24 G, Subclone 16 G).
+
 **State (2026-09-03, end of session 4).** **Fig 3 done (a–e)**; **row A9 measured** — tape loss is
 heritable, heritable *below* the clone (monotone subclade-depth gradient, 5/5 arms), and discrete
 rather than a graded rate. Fig 4 panels a/b built. Event catalogue, clone-wide layer, soft variant
@@ -61,7 +111,8 @@ statistical power, not inherited from the paper.
 | 1 recorder / $q$ | ✅ done, 2 panels | `20_fig1_recorder.py` |
 | 2 homoplasy | ✅ done, **two versions** — `simple` (present) and `mle` (reserve) | `21_fig2_homoplasy.py <simple\|mle>` |
 | 3 dropout | ✅ **done, 5 panels a–e**, each a standalone PNG | `27` a · `28` b · `30` c · `31` d+e |
-| 4 dropout & lineage (row **A9**) | ⚑ a/b built; catalogue + `MAX_D=6` test done — **c/d next** | `32`–`44` |
+| 4 dropout & lineage (row **A9**) | ⚑ a/b built; catalogue + `MAX_D=6` test done; **c/d now built — see the next row** | `32`–`44` |
+| 4c/d **the detection plane** — what a silencing event IS; fulfils the planned c/d | ✅ **built on Mouse 3**, three standalone PNGs (`fig5a/b/c_*`); panel a faceted by clade size, one threshold line per facet | `62`,`63`,`66` |
 | 5 compatibility spread + homoplasy null | needs the simulator | — |
 | 6 method comparison under simulation | planned; needs simulator | — |
 | 7 calibration / honest uncertainty | planned; needs simulator | — |

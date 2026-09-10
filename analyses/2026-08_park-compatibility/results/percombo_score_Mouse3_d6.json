@@ -1,0 +1,132 @@
+{
+ "arm": "Mouse3",
+ "max_depth": 6,
+ "B": 1000,
+ "n_calib": 12,
+ "eps": 0.01,
+ "budget": 2.0,
+ "pimin": 0.0,
+ "detector": "score z=(k-E)/sqrt(V)",
+ "attributor": "Lambda_hard (largest complete clade)",
+ "n_combo_slots": 6849492,
+ "n_scorable": 6808230,
+ "tie_obs": 0.21025890723433258,
+ "tie_calib": 0.18279902901831066,
+ "continuous_null": 0.000999000999000999,
+ "size_labels": [
+  "4-5",
+  "6-9",
+  "10-19",
+  "20-49",
+  "50-199",
+  "200+"
+ ],
+ "strat_thresholds": {
+  "4-5": 1.72,
+  "6-9": 1.26,
+  "10-19": 1.06,
+  "20-49": 1.08,
+  "50-199": 0.76,
+  "200+": null
+ },
+ "exp_false_total": 9.25,
+ "detector_comparison": {
+  "z": {
+   "above": 19844,
+   "exp_false": 9.25,
+   "med_pi": 0.9933333333333333,
+   "pi99": 0.5274138278572869,
+   "n_big": 8168,
+   "n_big_lowz": 0,
+   "thresholds": {
+    "4-5": 1.72,
+    "6-9": 1.26,
+    "10-19": 1.06,
+    "20-49": 1.08,
+    "50-199": 0.76,
+    "200+": null
+   }
+  },
+  "soft": {
+   "above": 63920,
+   "exp_false": 8.833333333333334,
+   "med_pi": 0.08484848484848485,
+   "pi99": 0.128770337922403,
+   "n_big": 48718,
+   "n_big_lowz": 45916,
+   "thresholds": {
+    "4-5": 4.6,
+    "6-9": 3.65,
+    "10-19": 3.65,
+    "20-49": 4.6,
+    "50-199": 4.5,
+    "200+": null
+   }
+  },
+  "hard": {
+   "above": 13674,
+   "exp_false": 8.75,
+   "med_pi": 0.9891304347826086,
+   "pi99": 0.4980254497586661,
+   "n_big": 4588,
+   "n_big_lowz": 0,
+   "thresholds": {
+    "4-5": 7.0293,
+    "6-9": 9.3057,
+    "10-19": 10.707,
+    "20-49": 12.823,
+    "50-199": 13.8931,
+    "200+": null
+   }
+  }
+ },
+ "n_combos_above": 19844,
+ "n_events": 127,
+ "n_events_margin_collapse": 127,
+ "n_events_pimin": 127,
+ "cellxtape_in_events": 4083,
+ "total_missing_entries": 127961,
+ "frac_missing_in_events": 0.031908159517352944,
+ "z_median": 5.22661018371582,
+ "z_min": 2.255049705505371,
+ "LRT_median": 22.98722624547564,
+ "delta_median": 30.87454316469793,
+ "frac_delta_diverged": 0.5984251968503937,
+ "pi_median": 1.0,
+ "pi_ge_099": 0.6062992125984252,
+ "pi_lt_090": 0.2992125984251969,
+ "min_called_clade": 4,
+ "all_beat_every_permutation": true,
+ "pi_by_depth": {
+  "1": {
+   "n": 22,
+   "median_pi": 1.0,
+   "median_z": 4.586796283721924
+  },
+  "2": {
+   "n": 18,
+   "median_pi": 0.9924242424242424,
+   "median_z": 4.4733498096466064
+  },
+  "3": {
+   "n": 36,
+   "median_pi": 1.0,
+   "median_z": 5.32373309135437
+  },
+  "4": {
+   "n": 29,
+   "median_pi": 1.0,
+   "median_z": 6.254406929016113
+  },
+  "5": {
+   "n": 13,
+   "median_pi": 0.992,
+   "median_z": 4.447144985198975
+  },
+  "6": {
+   "n": 9,
+   "median_pi": 0.9629629629629629,
+   "median_z": 5.795078754425049
+  }
+ }
+}
