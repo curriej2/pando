@@ -3251,3 +3251,52 @@ the statistic).
 | anchor 122 | 0% | 0% | — (defines the clade) |
 | tape 102 | 100.0% | 92.3% | 0.05 — **not called** |
 | tape 40 | 100.0% | **5.7%** | $3\times10^{-46}$ — **called** |
+
+## Fig 4d — the excess curve (`72_fig_excess.py`)
+
+Justin: prevalence is unconvincing at those magnitudes even with the caveats. Agreed — and the plane
+(`71`) turned out not to be the answer either: it draws *combos*, its wedge shape is partly
+mechanical (bigger clades reach smaller $p$), and it shows no null. The audit of it found the figure
+that does work.
+
+**The null here is closed form.** Under $H_0$ the p-values of testable combos are uniform, so
+
+$$\mathbb{E}_0\left[\#\{-\log_{10}p \ge t\}\right] = N_{\rm test}\cdot 10^{-t}$$
+
+⚑ On a log $y$-axis that is a **straight line of slope $-1$**, fixed by one number per arm. ⚑ And the
+Bonferroni cut at one expected false positive is $p\le 1/N_{\rm test}$, i.e. $t=\log_{10}N_{\rm test}$
+— **exactly where that line crosses $y=1$**, so the threshold is a readable feature of the figure
+rather than an annotation. ⚑ Expectation is linear, so the null line needs **no independence
+assumption**; dependence affects the FWER guarantee, not the curve.
+
+| arm | $N_{\rm test}$ | threshold $t$ | observed at $t$ | expected | **excess** |
+|---|---|---|---|---|---|
+| Subclone | 61,297,525 | 7.79 | 499,263 | 1.00 | **499,263×** |
+| Mouse 1 | 14,459,097 | 7.16 | 30,932 | 1.00 | **30,932×** |
+| Mouse 2 | 5,830,551 | 6.77 | 24,467 | 1.00 | **24,467×** |
+| Pre-TX | 80,336,148 | 7.90 | 20,149 | 1.00 | **20,149×** |
+| Mouse 3 | 3,630,646 | 6.56 | 11,119 | 1.00 | **11,119×** |
+
+The null loses a decade per unit of $t$; the observed curves lose a decade over 10–20 units. Pre-TX
+runs out near $t=20$, Mouse 3 near $t=31$, and **Subclone still has $\sim3\times10^4$ combos at
+$t=60$** ($p\le10^{-60}$).
+
+⚠⚠ **These are COMBOS, not events** — the overlap collapse is 25–121×. The panel answers *is there a
+population chance cannot produce?*, not *how many distinct losses are there?* Event counts stay in
+`exact_{arm}_d6.json`.
+⚠ Only testable combos enter, and $N_{\rm test}$ therefore differs per arm (53–100% of valid) — which
+is why each arm needs **its own** null line and threshold.
+⚠ The null assumes the p-values are calibrated. Validated against the stored permutations only to
+$p\approx10^{-3}$ (conservative, 1.04–2.78×); beyond that it is extrapolation, guarded by the
+hypergeometric.
+⚠ A uniform-$p$ null is the **global** null — nothing anywhere. It is the right reference for "is
+there anything", not for "how much".
+
+⚠ Construction detail that mattered: the marker reads the first histogram bin at or above the
+threshold, not the bin *containing* it. Bins are 0.5 wide in $t$, and the containing bin inflated
+Subclone by 9% (544,026 against 499,263). The conservative reading is the one that matches the
+catalogue.
+
+⚠ Rendering defects fixed on inspection: title over the subtitle; five marker labels colliding
+inside $t\in[6.6,7.9]$ (replaced by a grey band plus the counts in the legend); and a $y$-range of 22
+decades that buried the $y=1$ crossing the figure is about (clipped to $3\times10^{-3}$).

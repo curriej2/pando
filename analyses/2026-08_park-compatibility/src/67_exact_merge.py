@@ -224,6 +224,30 @@ print(f"  Bonferroni at E[false] <= {EFALSE:g}: p <= {PCUT:.3e}")
 for nm, pv in (("normal", p_norm), ("hypergeom", p_hyp), ("max (used)", p_use)):
     print(f"    {nm:>12}: {int((TESTABLE & (pv <= PCUT)).sum()):>9,} combos clear")
 
+# ---------------------------------------------------------------- the plane
+# ⚑ The old plane (63/66) had the MARGIN on y, which this route retired.  The
+# natural axis now is -log10(p): the Bonferroni cut is a single horizontal line,
+# and because that cut is EFALSE/N_test it differs per arm -- so the arm goes on
+# the facet and the line in each facet IS the rule, exactly as clade size did
+# before.  Only TESTABLE combos are binned; the rest have no p.
+PI_ED = np.linspace(0.0, 1.0, 51)
+NLP_ED = np.concatenate([np.linspace(0.0, 60.0, 121), [np.inf]])
+SIZE_ED = np.array([4, 6, 10, 20, 50, 200, 10 ** 9])
+SIZE_LAB = ["4-5", "6-9", "10-19", "20-49", "50-199", "200+"]
+strat = np.clip(np.searchsorted(SIZE_ED, m, side="right") - 1, 0, 5)
+pi_all = np.where(m > 0, k / np.maximum(m, 1), np.nan)
+nlp = np.where(TESTABLE, -np.log10(np.maximum(p_use, 1e-300)), np.nan)
+H = np.zeros((6, len(PI_ED) - 1, len(NLP_ED) - 1), np.int64)
+for i in range(6):
+    sel_ = TESTABLE & (strat == i)
+    if sel_.any():
+        H[i] = np.histogram2d(pi_all[sel_], nlp[sel_], bins=[PI_ED, NLP_ED])[0].astype(np.int64)
+np.savez_compressed(RES / f"exact_{tag}_plane.npz", pi_edges=PI_ED, nlp_edges=NLP_ED,
+                    size_labels=np.array(SIZE_LAB), H=H, n_testable=NT, n_valid=int(A["valid"].sum()),
+                    nlp_threshold=-np.log10(PCUT), efalse=EFALSE, arm=np.array(arm))
+print(f"  plane: {H.sum():,} testable combos binned; threshold at "
+      f"-log10(p) = {-np.log10(PCUT):.2f}; max -log10(p) = {np.nanmax(nlp):.1f}")
+
 # ---------------------------------------------------------------- validation
 out_val = {}
 if VALIDATE:
