@@ -56,6 +56,9 @@ miss = ~Y
 codes = np.load(RES / f"prefix_codes6_{arm}.npz", allow_pickle=False)["codes"]
 cd = codes[:, AN, DEP - 1]
 pop = np.flatnonzero((cd >= 0) & (g == CL))
+inclone = np.flatnonzero(g == CL)
+n_exc = inclone.size - pop.size
+anchor_missing_clone = int(miss[inclone, AN].sum())
 vals, inv = np.unique(cd[pop], return_inverse=True)
 sizes = np.bincount(inv)
 if PICK == "largest":
@@ -119,24 +122,39 @@ for i, t in enumerate(KEYS):
     axk.annotate(lab, xy=(i, -0.5), xytext=(0, 8), textcoords="offset points",
                  ha="center", va="bottom", fontsize=8.0, color=col,
                  fontweight="bold" if bold else "normal", annotation_clip=False)
+    if t == AN:
+        foot = "missing\n0% inside\n0% outside"
+    elif not d["testable"]:
+        foot = f"missing\n{d['pi']:.0%} inside\n{d['out']:.0%} outside"
+    else:
+        foot = (f"missing\n{d['pi']:.1%} inside\n{d['out']:.1%} outside\n"
+                f"p = {d['p']:.0e}")
+    axk.annotate(foot, xy=(i, M.shape[0] - 0.5), xytext=(0, -9),
+                 textcoords="offset points", ha="center", va="top", fontsize=8.0,
+                 color=col, fontweight="bold" if bold else "normal",
+                 annotation_clip=False)
 axb.annotate(f"{NBG} other tapes, for background", xy=(NBG / 2, -0.5), xytext=(0, 8),
              textcoords="offset points", ha="center", va="bottom", fontsize=8.5,
              color=INK2, annotation_clip=False)
-axk.annotate(f"the clade\n{m:,} cells" + (f"\n{rc.size} shown" if rc.size < m else ""),
+axk.annotate(f"the clade\n{m:,} cells" + (f"\n{rc.size} shown" if rc.size < m else "\nall shown"),
              xy=(-0.75, rc.size / 2), ha="right", va="center", fontsize=9,
              color=INK, fontweight="bold", annotation_clip=False)
-axk.annotate(f"rest of the\npopulation\n{rest.size:,} cells" +
-             (f"\n{rr.size} shown" if rr.size < rest.size else ""),
+axk.annotate("rest of the population\n" +
+             (f"{rr.size} of {rest.size:,} shown" if rr.size < rest.size
+              else f"{rest.size:,} cells"),
              xy=(-0.75, rc.size + rr.size / 2), ha="right", va="center", fontsize=9,
              color=INK2, annotation_clip=False)
-called = [t for t in KEYS if info[t]["testable"] and info[t]["p"] <= BONF]
-sub = "  ·  ".join(f"tape {t}: {info[t]['pi']:.1%} missing inside the clade vs "
-                   f"{info[t]['out']:.1%} outside  →  exact hypergeometric "
-                   f"p = {info[t]['p']:.0e}" for t in called)
+sub = (f"Called when p ≤ {BONF:.1e} — one expected false positive across the whole arm. "
+       f"p is the exact hypergeometric tail; the catalogue reports the more conservative "
+       f"max(normal, hypergeometric).\n"
+       f"⚠ The anchor is recovered in all {npop:,} cells shown BY CONSTRUCTION — a cell needs "
+       f"it to have a prefix. Across the whole clone it is itself missing in "
+       f"{anchor_missing_clone:,} of {inclone.size:,} ({anchor_missing_clone/inclone.size:.0%}), "
+       f"which is why {n_exc:,} cells are excluded here.")
 fig.suptitle(arg("--title", "A tape lost on one clade").replace("_", " "), fontsize=11, fontweight="bold",
              x=0.11, ha="left", y=1.085)
 fig.text(0.11, 1.022, f"dark = tape missing    ·    {arm} clone {CL}, rows ordered by the "
          f"anchor's depth-{DEP} prefix", fontsize=8.5, color=INK2, ha="left")
-fig.text(0.11, -0.012, sub, fontsize=8.5, color=INK, ha="left")
+fig.text(0.11, -0.105, sub, fontsize=8.5, color=INK, ha="left")
 fig.savefig(FIG / f"fig4c_a_{TAG}.png"); plt.close(fig)
 print(f"wrote figures/fig4c_a_{TAG}.png")

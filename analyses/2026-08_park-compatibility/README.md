@@ -3221,3 +3221,33 @@ same answer — this is the 47% of combos the testability rule excludes), and a 
 ⚠ **The footers quote the exact hypergeometric $p$**; the catalogue reports the more conservative
 $\max(p_{\rm normal}, p_{\rm hypergeometric})$, which for the large example is $1.4\times10^{-24}$
 rather than $7\times10^{-42}$. Both are far past the arm's $1.7\times10^{-7}$ threshold.
+
+#### ⚠⚠ Is the anchor really recovered in every cell? Verified — true, but only by construction
+
+I asserted twice that "the anchor is recovered in every cell, which is what lets it define a clade."
+Justin questioned it. Measured on Mouse2 clone 76, anchor 122, depth 5:
+
+| | cells | anchor 122 missing |
+|---|---|---|
+| block population (reached depth 5 on the anchor) | 2,702 | **0** |
+| whole clone | 3,387 | **648 (19.1%)** |
+| excluded from the block | 685 | 648 — i.e. **94.6% of exclusions are the anchor's own dropout** |
+
+So it is true **of the displayed set and by construction** — a cell needs the anchor to have a prefix
+on it, so cells lacking it never enter the block. It is **not** a biological fact: the anchor drops
+out at 19% like any other tape, and the remaining 37 exclusions are cells that have the anchor but
+did not reach depth 5. ⚠ Stated on the figure, because a reader would otherwise conclude anchor
+tapes are somehow immune to dropout. It is also why one loss is detected through ~160 different
+(anchor, depth) combinations: each anchor excludes a different fifth of the clone.
+
+**Panel a final form** (`70 --tag small`): per-column read-offs under each key column — missing rate
+inside the clade, outside the clade, and $p$ — so the comparison is numeric rather than visual;
+the calling threshold on the figure; "200 of 2,664 **shown**" rather than "sampled", which wrongly
+implied the subsample was part of the test (it is display only — every one of the 2,702 cells enters
+the statistic).
+
+| column | missing inside | missing outside | $p$ |
+|---|---|---|---|
+| anchor 122 | 0% | 0% | — (defines the clade) |
+| tape 102 | 100.0% | 92.3% | 0.05 — **not called** |
+| tape 40 | 100.0% | **5.7%** | $3\times10^{-46}$ — **called** |
