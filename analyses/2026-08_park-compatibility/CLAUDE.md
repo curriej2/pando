@@ -112,6 +112,7 @@ statistical power, not inherited from the paper.
 | 2 homoplasy | ✅ done, **two versions** — `simple` (present) and `mle` (reserve) | `21_fig2_homoplasy.py <simple\|mle>` |
 | 3 dropout | ✅ **done, 5 panels a–e**, each a standalone PNG | `27` a · `28` b · `30` c · `31` d+e |
 | 4 dropout & lineage (row **A9**) | ⚑ a/b built; catalogue + `MAX_D=6` test done; **c/d now built — see the next row** | `32`–`44` |
+| 4c **the worked example** — what a loss looks like, how the test works, and a near-miss | ✅ **built**, three standalone PNGs (`fig4c_a/b/c_*`), all in Mouse2 clone 76 | `69` |
 | 4c/d **the detection plane** — what a silencing event IS; fulfils the planned c/d | ✅ **built on Mouse 3**, three standalone PNGs (`fig5a/b/c_*`); panel a faceted by clade size, one threshold line per facet | `62`,`63`,`66` |
 | 5 compatibility spread + homoplasy null | needs the simulator | — |
 | 6 method comparison under simulation | planned; needs simulator | — |

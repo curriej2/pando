@@ -3149,3 +3149,46 @@ $\hat\pi$ median 0.969 is the lowest of the five) so it fails while its complete
 Pre-TX and Mouse3 sit at 1.0. ⇒ **quote cell × tape, never event counts** — the standing guidance,
 and this is its sharpest demonstration. Cell × tape is safe: the collapse guarantees kept events for
 one (clone, tape) share no cells, so nothing is double-counted.
+
+## Fig 4c — the worked example (`69_fig_example.py`)
+
+Justin: *start with an example that shows how the test works, then progress to the same test applied
+across the data.* Three standalone panels, **all inside Mouse2 clone 76** — the crux clone (near-zero
+CLONE-level excess yet 98.9% of the arm's weight, so nothing visible inside it can be a clone or
+batch effect).
+
+**The example.** Anchor tape 122 at depth 5 defines a **38-cell clade** out of a block population of
+2,702. All 38 lack **tape 40**, which is missing in only 7% of that population — so 2.7 were
+expected. $p = 3.0\times10^{-46}$ against the arm's Bonferroni cut of $1.7\times10^{-7}$.
+
+**⚑ The near-miss came out better than designed.** Within the *same 38 cells*, 27 tapes are missing
+in all of them. Ranked by $p$, the natural pick (rate 1.000, $p=1$) is degenerate — trivially
+unsurprising, and useless for teaching. With $m=38$ all-missing, $p \approx \text{rate}^{38}$, so the
+threshold sits at rate $\approx0.66$; picking from the instructive band 0.70–0.97 gives **tape 102**:
+all 38 missing, but missing in **92.4%** of the population anyway, so 35.1 were expected and
+$p = 0.049$ — **not called**. Same clade, same $k=38$, opposite verdicts, and the raster shows why.
+
+⭐ **And tape 102's real loss is elsewhere in the same clone**: anchor 125 at depth 3, $m=1{,}304$,
+$\hat\pi = 0.994$, $p = 1.4\times10^{-24}$ — which is *why* it is already 92% missing around the
+38-cell clade. The test declines to re-call a block that a larger loss explains.
+⚠ The two clades share **32 of 38 cells but neither contains the other** — they are defined by
+different anchors, so their prefix partitions cross. That is "a prefix only partially defines a
+clade" visible in one example.
+
+| panel | file | claim |
+|---|---|---|
+| a | `fig4c_a_example_raster.png` | cells × tapes; the anchor is entirely recovered (which is what lets it define a clade), tape 40 is a clean block, tape 102 is dark everywhere |
+| b | `fig4c_b_example_test.png` | $P(K\ge k)$ for both tapes: same $k=38$, $p=3.0\times10^{-46}$ vs $p=0.049$, because the two curves differ |
+| c | `fig4c_c_example_symbol.png` | AAGCGGA falls 2.34% → 1.00% inside the 1,304-cell clade, $\Lambda=56.3$ against a null max of 5.7 — the channel technical dropout cannot reach |
+
+⚠ **The two lines of evidence cannot share one example, and the reason is structural.** Detecting a
+loss from missingness is cleanest on a *small* clade against a *reliable* tape; detecting symbol
+depletion needs many post-MRCA writes, hence a *large* clade — and in this clone the large clades are
+near clone-wide, where the tape is mostly missing anyway ($\bar e = 0.92$–0.95 for all three Mouse2
+depletion clades). Hence panel c is a different clade in the same clone, labelled as such.
+
+⚠ Three rendering defects caught on inspection and fixed: the three key tapes were lost among 36
+background columns at the right edge (now a separate wide axis on the left); the panel-b curve
+annotations overprinted each other and the title (now a legend); and panel c coloured only one
+"inside" dot blue while its legend implied all of them, and used the reserved null-orange for a
+comparison group (now neutral vs blue).
