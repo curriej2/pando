@@ -3192,3 +3192,32 @@ background columns at the right edge (now a separate wide axis on the left); the
 annotations overprinted each other and the title (now a legend); and panel c coloured only one
 "inside" dot blue while its legend implied all of them, and used the reserved null-orange for a
 comparison group (now neutral vs blue).
+
+### The same panel at two scales (`70_fig_example_scale.py`)
+
+Panel a generalised so any (clone, anchor, depth, tapes) can be rendered, and run at two scales in
+the same clone. `fig4c_a_small.png` / `fig4c_a_large.png`.
+
+| | small — anchor 122, depth 5 | large — anchor 125, depth 3 |
+|---|---|---|
+| clade | **38** cells of a 2,702-cell block population | **1,304** cells of 3,141 |
+| called tape | 40 — **100.0%** missing inside vs **5.7%** outside | 102 — **99.4%** inside vs **88.3%** outside |
+| exact hypergeometric $p$ | $3\times10^{-46}$ | $7\times10^{-42}$ |
+| visible by eye? | **yes**, a clean block | **no** |
+| third column | tape 102, *not called* ($p=0.049$) | tape 2, **untestable** |
+
+⚑ **Why no clean block can exist at the large scale.** The clade is 42% of its block population, so a
+complete loss mechanically forces the population rate above 0.42 — **a large clade is most of its own
+background**. That is geometry, not a property of this dataset, and it is why the eye stops being a
+useful detector as scale grows while the test does not: 99.4% against 88.3% over 1,304 cells is
+overwhelming, and invisible.
+
+⚑ **The large panel shows all three states a tape can be in**, which the small one cannot: the
+**anchor** (recovered in every cell — that is what lets it define a clade), a tape that is
+**untestable** (tape 2, missing in all 3,141 cells, so $\sigma^2=0$ and every relabelling gives the
+same answer — this is the 47% of combos the testability rule excludes), and a **called** loss. Tapes
+2 and 102 look nearly identical in the raster and could not be more different statistically.
+
+⚠ **The footers quote the exact hypergeometric $p$**; the catalogue reports the more conservative
+$\max(p_{\rm normal}, p_{\rm hypergeometric})$, which for the large example is $1.4\times10^{-24}$
+rather than $7\times10^{-42}$. Both are far past the arm's $1.7\times10^{-7}$ threshold.
