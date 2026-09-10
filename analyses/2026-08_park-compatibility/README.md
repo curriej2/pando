@@ -3300,3 +3300,147 @@ catalogue.
 ⚠ Rendering defects fixed on inspection: title over the subtitle; five marker labels colliding
 inside $t\in[6.6,7.9]$ (replaced by a grey band plus the counts in the legend); and a $y$-range of 22
 decades that buried the $y=1$ crossing the figure is about (clipped to $3\times10^{-3}$).
+
+---
+
+# ⭐⭐ Structured dropout without events: the variogram and the prediction task (2026-09-10)
+
+Justin: *events are hard to justify and probably not useful for calibrating simulations; is there a
+metric based on how similar related cells' dropout profiles are?* Yes — and it is better than
+anything else in this project for that purpose. **No clades, no thresholds, no multiplicity, no event
+definition.** Scripts `73_dropout_variogram.py`, `74_profile_prediction.py`.
+
+## The one confound that would invalidate it, and the fix
+
+Lineage relatedness is read from the edit data, and **dropout decides which edits are readable**. Two
+cells that both lack tapes 1–50 "agree" there, so a naive distance calls them related *because* their
+dropout matches. ⇒ **DISJOINT TAPE SPLIT**: partition the 166 tapes into halves A and B; relatedness
+uses **only A**, dropout uses **only B**. Repeated over random splits. Everything below depends on it.
+
+Two further controls: **Pearson residuals**, not raw missingness (below), so the per-cell, per-tape
+and per-clone-tape margins are already removed; and everything is computed **within clone**.
+
+## The Pearson residual, and why raw residuals will not do
+
+$r_{cz}=X_{cz}-\tilde p_{cz}$ is what the model got wrong. But a Bernoulli's variance depends on its
+mean, $\mathrm{Var}(r)=\tilde p(1-\tilde p)$, so residuals are not comparable: a missing tape at
+$\tilde p=0.05$ is $r=+0.95$ against an SD of 0.218 — a **4.4 SD** surprise — while at $\tilde p=0.5$
+a missing tape is $r=+0.5$ against an SD of 0.5, only **1.0 SD**. Raw products would be dominated by
+high-variance (unreliable) tapes for reasons unrelated to lineage. So divide each by its own null SD:
+
+$$r^{*}_{cz}=\frac{X_{cz}-\tilde p_{cz}}{\sqrt{\tilde p_{cz}(1-\tilde p_{cz})}}$$
+
+Mean 0, variance 1 under $H_0$, for every entry. ⚠ The SD is floored at $\sqrt{0.01\cdot0.99}$ so
+$|r^{*}|\le10.1$ — otherwise $\tilde p$ clipped at $10^{-6}$ admits residuals of 1000. **The floor
+binds on 15.97% of entries** and a sensitivity sweep over it is owed.
+⚠ This is **not** Pearson's correlation coefficient: standardisation is by the *model's* SD, not the
+empirical SD, and nothing is centred. It is a mean standardised co-deviation.
+
+## Part 1 — the variogram (`73`)
+
+Per within-clone pair: relatedness = mean shared prefix depth over jointly recovered **A**-tapes (in
+$[0,6]$; prefixes are nested so counting matching depths *is* the shared depth); similarity =
+$\frac{1}{|B|}\sum_{z\in B} r^{*}_{cz}r^{*}_{c'z}$. Bin pairs by relatedness, average. Null: permute
+cell labels on the **B** residuals only, binned against the same relatedness.
+
+**Result — monotone in 4/4 arms run so far.** obs − null, lowest to highest relatedness bin:
+
+| arm | pairs | lowest bin | highest bin | $t$ range | mean rel at top |
+|---|---|---|---|---|---|
+| Subclone | 5,968,003 | −0.0135 | **+0.1523** | −39.2 … +19.8 | 4.13 |
+| Mouse 1 | 961,030 | −0.0298 | +0.0335 | −27.0 … +14.3 | 4.85 |
+| Mouse 3 | 73,853 | −0.0311 | +0.0338 | −19.4 … +16.6 | 4.91 |
+| Mouse 2 | 781,628 | −0.0160 | +0.0381 | −11.4 … +10.3 | 4.74 |
+| Pre-TX | 438,583 | *running* | | | |
+
+⚑ **The null is flat in every bin of every arm** (+0.0001 to +0.0009) — the permutation destroys the
+lineage-dropout pairing while preserving all margins. ⚑ Subclone's top bin is **6× any other arm**.
+⚠ Not strictly monotone at the bottom (the widest, lowest bin), and only 3/10 individual splits are
+monotone across all bins on Mouse2 c76 — per-bin noise, not a weak trend; the mean curve carries
+$|t|$ up to 39.
+⚠ Pooling coverage varies: Mouse3 97% of within-clone pairs, Pre-TX 88%, Mouse1 63%, **Mouse2 13%**
+and **Subclone 5%** (the `--nsub` cap truncates their huge clones).
+
+## Part 2 — the prediction task (`74`) — ⭐ THIS IS THE DIGESTIBLE ONE
+
+**How to run it.** `74_profile_prediction.py <arm> [--clone C | --pooled] [--nsub 1500] [--nsplit 5]
+[--kk 5,20,50] [--mincl 20]`. Mouse2 c76 at n=1,500 took **8 s**.
+
+**The method, exactly.**
+1. Split the 166 tapes into halves A and B.
+2. For cell $c$, take the $k$ most related cells **in the same clone** using **only A**-tapes,
+   **excluding $c$ itself** (or it predicts itself) → $N(c)$.
+3. Two neighbour signals at each **B**-tape, neither touching $c$'s own data:
+   $u_{cz}=\frac1k\sum_{c'\in N(c)}r^{*}_{c'z}$ (standardised, used for the fit) and
+   $f_{cz}=\frac1k\sum_{c'\in N(c)}X_{c'z}$ (*what fraction of your relatives lack this tape* — used
+   for the readable table).
+4. Fit **one scalar** $w$ on training cells, with the existing linear predictor as a fixed offset:
+   $\operatorname{logit}\Pr(X_{cz}=1)=\eta_{cz}+w\,u_{cz}$ where $\eta_{cz}=\alpha_c+\beta_z+\gamma_{Cz}$.
+   $w=0$ recovers the current model exactly.
+5. Evaluate on **held-out cells**; report the log-likelihood gain in **nats per cell** scaled to 166
+   tapes, plus $e^{w_f}$ from the same fit using centred $f$.
+6. Null: permute cell labels on the **B** residuals within clone. **Quote observed − null only** —
+   the $\gamma$ fit forces $\sum_{c\in C}r_{cz}=0$, so a random clone-mate's residual is negatively
+   correlated with $c$'s by $\approx-1/(n_C-1)$: negligible in a 3,387-cell clone, ~−5% in a 20-cell
+   Pre-TX clone, comparable to the signal and opposite in sign. The permutation carries the same
+   constraint, so the difference is clean and the raw observed number is not.
+
+**Result — Mouse2 clone 76, n=1,500, 5 splits.**
+
+| $k$ | nats/cell obs | null | obs − null | sd | OR obs | OR null |
+|---|---|---|---|---|---|---|
+| 5 | +1.677 | −0.000 | **+1.677** | 0.536 | 2.88 | 0.97 |
+| 20 | +3.040 | −0.001 | **+3.041** | 0.437 | 4.73 | 0.97 |
+| 50 | +3.187 | −0.001 | **+3.188** | 0.343 | 4.24 | 0.97 |
+
+⭐ **The conditional table — hold the model's own prediction fixed, then vary the neighbour signal**
+(k=20). Rows are quartiles of $\tilde p$; columns are what fraction of the cell's relatives lack the
+tape. Counts beneath every rate, because the effect concentrates and the extreme cells are thin.
+
+| model says | none | <25% | 25–50% | 50–75% | 75–<100% | **all** |
+|---|---|---|---|---|---|---|
+| **5%** | 2% | 2% | 4% | 10% | 78% | **89%** |
+| n | 1,768 | 21,190 | 7,245 | 735 | 165 | 35 |
+| **14%** | 9% | 10% | 12% | 18% | 69% | **99%** |
+| n | 408 | 15,054 | 12,510 | 2,542 | 421 | 228 |
+| **37%** | 34% | 36% | 40% | 48% | 68% | **95%** |
+| n | 111 | 8,011 | 13,806 | 6,660 | 2,194 | 345 |
+| **99%** | 50% | 72% | 77% | 78% | 88% | 99% |
+| n | 2 | 528 | 2,961 | 4,617 | 5,025 | 17,992 |
+
+*Where the model predicts 14%, the tape is actually missing in 9% of cells whose relatives all have
+it and **99%** of cells whose relatives all lack it.* Cell and tape quality cannot explain that: the
+model's prediction is held fixed by construction.
+
+⚠ **The odds ratio understates it badly** (4.7 against a table spanning 9%→99%) because $e^{w_f}$ is
+a single *linear* coefficient while the real relationship is flat then a cliff at $f\to1$. Quote the
+table, not the OR.
+⚠ **The extreme cells are thin** — 35, 228, 345 entries. Always show the counts.
+
+## ⚠⚠ Why every average in this project looks small and every extreme looks huge
+
+**The effect is concentrated, not diffuse.** Most (cell, tape) entries carry no lineage signal; a
+minority carry an overwhelming one. That single fact reconciles the whole thread: the variogram's
+0.024, the event route's $p=10^{-46}$, the 1.3–25% prevalence, and the 9%→99% table are all correct
+and all measuring different things. ⇒ **stratify, do not average**, when conveying magnitude.
+
+⚠⚠ **Aggregating over tapes does NOT inflate a correlation** — a correction to what I claimed. A
+per-cell correlation over 83 tapes estimates the *entry-level* correlation; averaging over cells makes
+it precise, not large (ceiling $\approx\sqrt{0.024}=0.155$). What genuinely aggregates is the
+**likelihood gain**, which is why nats per cell is the right technical readout.
+
+## What this is for
+
+The curve's level and slope are the **simulator calibration target**: push simulated data through the
+identical statistic and match. That needs no event definition, no threshold, and no attribution — the
+three things that made the event route unsuitable for calibration.
+
+## Owed
+
+1. Pre-TX pooled variogram (running, ~50 min — 2,946 clones means 2,946 relatedness blocks).
+2. `74` across the other four arms and pooled.
+3. Sensitivity sweep on the Pearson SD floor (binds on 16% of entries).
+4. Raise `--nsub` for Mouse2/Subclone, whose pooled runs cover only 13% and 5% of within-clone pairs.
+5. ⚠ Fixed while writing this up: `73` wrote pooled results to `variogram_{arm}_c76.npz` regardless of
+   mode, so the Mouse2 **single-clone** file was overwritten by its pooled run. Files renamed to
+   `variogram_{arm}_pooled.npz`; the single-clone Mouse2 numbers survive only in this README.

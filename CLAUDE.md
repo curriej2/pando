@@ -181,6 +181,29 @@ the **symbol-depletion test** of row A9's untested *trans* limb. |
    events $\le10$). Threshold-independent claims that survive: the 118–2,522× null comparison,
    $q\le1.9\times10^{-4}$ per event, $\hat\pi$ median 1.000 vs expected 0.11–0.41. Full audit in
    README "How events are actually called".
+0-CURRENT. **⭐⭐ 2026-09-10 — OFF EVENT COUNTING. Two statistics that need no events.**
+   `2026-08_park-compatibility`, README "Structured dropout without events". Justin's call, recorded:
+   events are hard to justify and probably useless for simulator calibration, prevalence (1.3–25%) is
+   a weak headline, and the collapse is a greedy heuristic that fragments 4.2× on Subclone.
+   ⚠⚠ **The confound both scripts defeat:** relatedness is read from the edit data and dropout decides
+   which edits are readable ⇒ **DISJOINT TAPE SPLIT** (relatedness from half A, dropout from half B).
+   **`73` variogram** — similarity of Pearson-residual dropout profiles against lineage relatedness.
+   **Monotone in 4/4 arms run**, null flat in every bin: Subclone −0.014→**+0.152** ($|t|$ to 39),
+   Mouse1/2/3 −0.03→+0.034. Pre-TX pending.
+   **`74` prediction task — the digestible one.** Predict a cell's dropout from its $k$ nearest
+   relatives (found on half A, self excluded), one scalar $w$ on top of the fixed predictor
+   $\eta=\alpha_c+\beta_z+\gamma_{Cz}$, evaluated on held-out cells. **Mouse2 c76: +3.04 nats per
+   cell** (null −0.001). ⭐ *Where the model says 14%, the tape is missing in 9% of cells whose
+   relatives all have it and **99%** of those whose relatives all lack it.*
+   ⚠ Quote observed − null only ($\gamma$ forces $\sum_c r_{cz}=0$, biasing clone-mates by
+   $-1/(n_C-1)$). ⚠ Quote the table, not the odds ratio. ⚠ Print entry counts — extreme cells are thin.
+   ⚠⚠ **The effect is CONCENTRATED, not diffuse** — that reconciles every seemingly-inconsistent
+   number in this thread. **Stratify, never average**, to convey magnitude.
+   ⚠⚠ **Completeness is partly the attribution rule** ($\Lambda_{\rm hard}$ prefers complete clades):
+   power-controlled, strong in 3 arms, equivocal in Mouse1/Mouse3.
+   **⇒ NEXT: Pre-TX variogram, `74` on all arms, sweep the Pearson SD floor, then the SIMULATOR —
+   calibrated by pushing simulated data through `73`/`74` and matching the curve.**
+   **Direction 2 PARKED** (evidential, not modelling; effect on $q$ is a fraction of a percent).
 0-NEWEST. **⭐⭐ THE TEST IS ANALYTIC AS OF 2026-09-10 — `67_exact_merge.py`, and the machinery is gone.**
    No calibration draws, no clade-size strata, no permutations required (kept only to validate).
    The $\gamma_{C,z}$ fit forces $\sum_{c\in C}(X_{cz}-\tilde p_{cz})=0$, so under the within-clone

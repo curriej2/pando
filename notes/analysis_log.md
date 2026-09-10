@@ -948,3 +948,62 @@ membership agrees strongly** (1,240/1,382 Subclone, 774/817 Pre-TX, 154/163 Mous
 no clean explanation** — the hypergeometric guard binds in 89.4% of its calls, so my earlier
 suggestion to drop it for power is **withdrawn**; and **Subclone fragments at 4.2 events per (clone,
 tape)**, reinforcing "quote cell × tape, never event counts".
+
+## ⭐⭐ 2026-09-10 (cont.) — structured dropout without events: the variogram and the prediction task
+
+Justin: events are hard to justify and probably useless for calibrating simulations; is there a
+metric based on how similar related cells' dropout profiles are? Yes, and it is the best thing in the
+project for that purpose. Scripts `73_dropout_variogram.py`, `74_profile_prediction.py`.
+
+**The confound that would have invalidated it.** Lineage relatedness is read from the edit data and
+dropout decides which edits are readable, so two cells that both lack tapes 1–50 look related
+*because* their dropout matches. ⇒ **disjoint tape split**: relatedness from half A only, dropout
+from half B only, repeated over random splits. Plus Pearson residuals (margins already removed) and
+everything within clone.
+
+**Pearson residual** $r^{*}=(X-\tilde p)/\sqrt{\tilde p(1-\tilde p)}$ — necessary because a
+Bernoulli's variance depends on its mean, so a missing tape at $\tilde p=0.05$ is a 4.4 SD surprise
+while at $\tilde p=0.5$ it is 1.0 SD, and raw products would be dominated by unreliable tapes.
+⚠ SD floored so $|r^{*}|\le10.1$; **the floor binds on 16% of entries** and needs a sweep.
+
+**Variogram result: monotone in 4/4 arms run.** obs − null from lowest to highest relatedness bin —
+Subclone −0.0135→**+0.1523** ($|t|$ to 39), Mouse1 −0.0298→+0.0335, Mouse3 −0.0311→+0.0338, Mouse2
+−0.0160→+0.0381. **The null is flat in every bin of every arm** (+0.0001 to +0.0009). Pre-TX still
+running. ⚠ Pooling coverage varies a lot (Mouse3 97%, Pre-TX 88%, Mouse1 63%, Mouse2 13%,
+Subclone 5%) because `--nsub` truncates the huge clones.
+
+**⭐ The prediction task is the digestible one.** For cell $c$, take its $k$ nearest relatives *in the
+same clone* from half A, **excluding itself**; form the neighbour signal over half-B tapes; fit ONE
+scalar $w$ with the existing predictor as a fixed offset,
+$\operatorname{logit}\Pr(X_{cz}=1)=\eta_{cz}+w\,u_{cz}$; evaluate on held-out cells.
+Mouse2 c76: **+3.04 nats per cell** at $k=20$ against a null of −0.001 (sd 0.44 over 5 splits), and
+the conditional table — holding the model's own prediction fixed — reads *where the model predicts
+14%, the tape is missing in 9% of cells whose relatives all have it and **99%** of cells whose
+relatives all lack it*.
+⚠ Quote the table, not the odds ratio: $e^{w_f}=4.7$ badly understates a 9%→99% contrast because it
+is a linear coefficient on a relationship that is flat then a cliff. ⚠ Extreme cells are thin
+(35–345 entries); always print counts. ⚠ Quote observed − null only: the $\gamma$ fit forces
+$\sum_c r_{cz}=0$, so a random clone-mate is negatively correlated with $c$ by $\approx-1/(n_C-1)$ —
+~−5% in a 20-cell clone, comparable to the signal.
+
+**⚠⚠ The organising fact: the effect is CONCENTRATED, not diffuse.** Most entries carry no lineage
+signal, a minority carry an overwhelming one. That reconciles the variogram's 0.024, the event
+route's $p=10^{-46}$, the 1.3–25% prevalence and the 9%→99% table — all correct, all different
+questions. ⇒ **stratify, do not average**, when conveying magnitude.
+⚠⚠ **Correction to my own claim**: aggregating over tapes does NOT inflate a correlation (it makes it
+precise, ceiling $\sqrt{0.024}=0.155$); what aggregates is the likelihood gain.
+
+**Also corrected today:** the completeness claim. $\hat\pi$ median 1.000 is partly the attribution
+rule — the collapse is ordered by $\Lambda_{\rm hard}$, which is maximised at the largest COMPLETE
+clade. Before the collapse, above-threshold combos have median $\hat\pi$ 0.88–0.98. Controlling for
+detection power via slack $=(k-k_{\min})/(m-k_{\min})$: **strong in Pre-TX (0.87), Mouse2 (0.97) and
+Subclone (0.93); equivocal in Mouse1 (0.57) and Mouse3 (0.56)**. Honest headline: *where there was
+room not to be complete, losses are complete in three of five arms.*
+
+**Decision recorded:** Direction 2 (the co-integrated symbol) is **parked, not discarded** — its value
+is evidential, not modelling; the map is many-to-one ($\bar j\approx1.6$), depletion is partial
+(6–47%), and the knock-on to $q$ is a fraction of a percent. The split-half result (87.3%, 33.9×
+null) stands on its own if the biological interpretation ever needs defending.
+**Also decided:** stop leading with event counts. Prevalence is a weak headline at 1.3–25% and the
+collapse is a greedy heuristic that fragments 4.2× on Subclone; the excess curve (`72`) and now the
+variogram/prediction pair replace it.

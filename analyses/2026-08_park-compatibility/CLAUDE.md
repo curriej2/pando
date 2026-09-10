@@ -13,6 +13,65 @@ gitignored, never copy out). Justin's own copy of the Park, Chang et al. 2026 ta
 - `clonalbc_percell_hamming1_corrected.csv` — 167,736 rows, `CellID,Sample,ClonalBC_raw,ClonalBC`.
   **This is the clone assignment**, needed for §D.4b Procedure step 1 (work within a clone).
 
+**⭐⭐ STATE (2026-09-10, end of session 9) — READ THIS FIRST. The thread has moved OFF event
+counting and onto two statistics that need no events at all.** `73_dropout_variogram.py` and
+`74_profile_prediction.py`. Justin's judgement, recorded: events are hard to justify and probably
+useless for calibrating simulations; prevalence (1.3–25%) is a weak headline; the collapse is a
+greedy heuristic that fragments 4.2× on Subclone. **Stop leading with event counts.**
+
+**⚠⚠ THE CONFOUND both scripts exist to defeat.** Lineage relatedness is read from the edit data and
+dropout decides which edits are readable — two cells that both lack tapes 1–50 look related BECAUSE
+their dropout matches. ⇒ **DISJOINT TAPE SPLIT: relatedness from half A only, dropout from half B
+only**, over several random splits. Never remove this.
+
+**⚠ Pearson residuals** $r^{*}=(X-\tilde p)/\sqrt{\tilde p(1-\tilde p)}$, because a Bernoulli's
+variance depends on its mean (a missing tape at $\tilde p=0.05$ is a 4.4 SD surprise; at 0.5 it is
+1.0 SD). SD floored so $|r^{*}|\le10.1$; **the floor binds on 16% of entries — sweep it.**
+
+**Variogram (`73`): monotone in 4/4 arms run.** obs − null, lowest→highest relatedness bin: Subclone
+−0.0135→**+0.1523** ($|t|$ to 39), Mouse1 −0.0298→+0.0335, Mouse3 −0.0311→+0.0338, Mouse2
+−0.0160→+0.0381. **Null flat in every bin of every arm.** Pre-TX was still running at handoff.
+
+**⭐ HOW TO RUN THE PREDICTION TASK (`74`)** — the digestible result, 8 s on Mouse2 c76:
+`74_profile_prediction.py <arm> [--clone C | --pooled] [--nsub 1500] [--nsplit 5] [--kk 5,20,50]`
+1. split the 166 tapes into A and B; 2. for each cell take its $k$ nearest relatives IN THE SAME
+CLONE from half A, **excluding itself**; 3. neighbour signals over half-B tapes, $u$ (mean Pearson
+residual, for the fit) and $f$ (fraction of relatives missing the tape, for the table); 4. fit ONE
+scalar $w$ with the existing predictor as a fixed offset,
+$\operatorname{logit}\Pr(X_{cz}=1)=\eta_{cz}+w\,u_{cz}$, $\eta=\alpha_c+\beta_z+\gamma_{Cz}$;
+5. evaluate on HELD-OUT cells → nats per cell; 6. null = permute cell labels on the B residuals
+within clone.
+⚠⚠ **Quote observed − null only.** The $\gamma$ fit forces $\sum_c r_{cz}=0$, so a random clone-mate
+is negatively correlated with $c$ by $\approx-1/(n_C-1)$ — ~−5% in a 20-cell clone, comparable to
+the signal and opposite in sign.
+**Mouse2 c76: +3.04 nats/cell at $k=20$** (null −0.001, sd 0.44). Conditional table, model prediction
+held fixed: *where the model says 14%, the tape is missing in 9% of cells whose relatives all have it
+and **99%** of those whose relatives all lack it.*
+⚠ Quote the TABLE, not the odds ratio ($e^{w_f}=4.7$ understates a 9%→99% contrast — it is linear,
+the relationship is a cliff). ⚠ Extreme cells hold 35–345 entries; always print counts.
+
+**⚠⚠ THE ORGANISING FACT — the effect is CONCENTRATED, not diffuse.** Most entries carry no lineage
+signal; a minority carry an overwhelming one. That reconciles the variogram's 0.024, the event
+route's $p=10^{-46}$, the 1.3–25% prevalence and the 9%→99% table. ⇒ **stratify, never average**,
+when conveying magnitude. ⚠ Aggregating over tapes does NOT inflate a correlation (ceiling
+$\sqrt{0.024}=0.155$); what aggregates is the likelihood gain.
+
+**⚠⚠ COMPLETENESS IS PARTLY THE ATTRIBUTION RULE.** $\hat\pi$ median 1.000 is inflated because the
+collapse is ordered by $\Lambda_{\rm hard}$, maximised at the largest COMPLETE clade. Pre-collapse,
+above-threshold combos have median $\hat\pi$ 0.88–0.98. Controlling for power via
+slack $=(k-k_{\min})/(m-k_{\min})$: strong in Pre-TX 0.87, Mouse2 0.97, Subclone 0.93; **equivocal in
+Mouse1 0.57 and Mouse3 0.56**. Honest headline: *where there was room not to be complete, losses are
+complete in three of five arms.*
+
+**Direction 2 PARKED, not discarded** — evidential not modelling; map is many-to-one
+($\bar j\approx1.6$), depletion partial (6–47%), knock-on to $q$ a fraction of a percent. The
+split-half result (87.3%, 33.9× null) stands if the biology ever needs defending. Owed if resumed:
+multiplicity check ($\theta$ vs $(j-1)/j$) and the out-of-sample prediction into the mouse clades.
+
+**OWED NEXT.** (1) Pre-TX pooled variogram; (2) `74` on the other four arms and pooled; (3) sweep the
+Pearson SD floor; (4) raise `--nsub` — Mouse2/Subclone pooled cover only 13%/5% of within-clone
+pairs; (5) then the simulator, calibrated by pushing simulated data through `73`/`74` and matching.
+
 **State (2026-09-10, end of session 8). ⭐⭐ THE TEST IS NOW ANALYTIC — `67_exact_merge.py`.**
 No calibration draws, no clade-size strata, no permutations needed at all (they are kept only as a
 validation set). Read README "Exact permutation moments and analytic p-values" before touching event
@@ -112,6 +171,8 @@ statistical power, not inherited from the paper.
 | 2 homoplasy | ✅ done, **two versions** — `simple` (present) and `mle` (reserve) | `21_fig2_homoplasy.py <simple\|mle>` |
 | 3 dropout | ✅ **done, 5 panels a–e**, each a standalone PNG | `27` a · `28` b · `30` c · `31` d+e |
 | 4 dropout & lineage (row **A9**) | ⚑ a/b built; catalogue + `MAX_D=6` test done; **c/d now built — see the next row** | `32`–`44` |
+| 4d **excess curve** — observed vs a closed-form null, 5 arms | ✅ built (`fig4d_excess.png`); 11,119–499,263× at each arm's Bonferroni cut | `72` |
+| 4e **variogram + prediction** — structured dropout with no events | ⚑ measured, **no figure yet**; the simulator calibration target | `73`,`74` |
 | 4c **the worked example** — what a loss looks like, how the test works, and a near-miss | ✅ **built**, three standalone PNGs (`fig4c_a/b/c_*`), all in Mouse2 clone 76 | `69` |
 | 4c/d **the detection plane** — what a silencing event IS; fulfils the planned c/d | ✅ **built on Mouse 3**, three standalone PNGs (`fig5a/b/c_*`); panel a faceted by clade size, one threshold line per facet | `62`,`63`,`66` |
 | 5 compatibility spread + homoplasy null | needs the simulator | — |
