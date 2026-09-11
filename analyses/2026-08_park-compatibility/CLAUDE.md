@@ -36,6 +36,11 @@ shift), M2 cell **+5.3…+9.8 on the mice but NEGATIVE on Subclone/Pre-TX** (the
 filter vs ≥20 — where QC is strict a per-cell parameter is noise; fig 3c as a held-out loss),
 M3 tape-in-clone **+26…+48**, held-out $R^2$ 0.42–0.49. M4 adds **one** parameter against 3,232–64,975.
 
+⭐⭐ **Subclone is FLAT across the floor sweep** (+8.29/+8.31/+8.31; its clones are all large, so
+the floor removes 21 of 38,636 cells) — **the control showing the rise elsewhere is about which
+clones are retained, not about the floor procedure**. ⭐ **$k$ has a genuine optimum near 20 even at
+$n_C$ in the thousands**: Subclone +6.82/+8.31/+7.57 at $k$=5/20/50, so the fall at $k=50$ is not the
+$k/n_C$ effect but the neighbour set reaching past the genuinely related cells.
 **⭐ Clone floor confirms Justin's intuition, monotone 4/4**: Pre-TX +0.75→+3.05→**+4.59** at floors
 20/50/100, Mouse3 +1.11→+1.50→+2.19, Mouse2 +2.13→+2.32→+2.47, Mouse1 +1.14→+1.35→+1.48.
 ⚠ Part is a cleaner test, part is escaping $k/n_C$ — at floor 20 with $k=20$ many clones have

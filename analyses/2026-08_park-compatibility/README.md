@@ -4064,30 +4064,43 @@ five arms — a consistency worth noting, since nothing forces these to agree.
 
 **Clone floor, at $k=20$ (nats per cell, obs − null):**
 
-| arm | floor 20 | floor 50 | floor 100 |
-|---|---|---|---|
-| Pre-TX | +0.75 | +3.05 | **+4.59** |
-| Mouse 3 | +1.11 | +1.50 | **+2.19** |
-| Mouse 2 | +2.13 | +2.32 | **+2.47** |
-| Mouse 1 | +1.14 | +1.35 | **+1.48** |
+| arm | floor 20 | floor 50 | floor 100 | cells retained at 100 |
+|---|---|---|---|---|
+| Pre-TX | +0.75 | +3.05 | **+4.59** | 894 of 19,937 |
+| Mouse 3 | +1.11 | +1.50 | **+2.19** | 671 of 1,346 |
+| Mouse 2 | +2.12 | +2.32 | **+2.47** | 3,992 of 4,622 |
+| Mouse 1 | +1.14 | +1.35 | **+1.48** | 3,490 of 5,752 |
+| **Subclone** | **+8.29** | **+8.31** | **+8.31** | 38,615 of 38,636 |
 
-**Monotone in 4/4 arms**, by 1.3× (Mouse 2) to 6.2× (Pre-TX). ⚠ Part of this is genuinely a cleaner
-test and part is escaping the $k/n_C$ regime — at floor 20 with $k=20$ many clones have
-$k_{\rm eff}=n_C-1$, where the neighbour mean *is* the cell's complement. Do not read the whole rise
-as biology.
+**Monotone in 4/4 arms** that the floor actually touches, by 1.3× (Mouse 2) to 6.2× (Pre-TX).
+⭐⭐ **Subclone is the control that makes this interpretable, and it is flat.** Its clones are all
+large already, so raising the floor from 20 to 100 removes just 21 of 38,636 cells — and the answer
+does not move at all (+8.29 → +8.31 → +8.31). ⇒ **the rise in the other arms is a property of which
+clones are retained, not of the floor procedure itself.** Had the sweep been manufacturing the
+effect, Subclone would have risen too.
+⚠ Part of the rise is a genuinely cleaner test and part is escaping the $k/n_C$ regime — at floor 20
+with $k=20$ many clones have $k_{\rm eff}=n_C-1$, where the neighbour mean *is* the cell's
+complement. Do not read the whole rise as biology.
 
 **$k$, at floor 100:**
 
 | arm | $k=5$ | $k=20$ | $k=50$ |
 |---|---|---|---|
-| Subclone | +6.82 | **+8.31** | *pending* |
-| Pre-TX | **+5.05** | +4.59 | +2.54 |
-| Mouse 2 | +0.74 | +2.47 | **+3.38** |
-| Mouse 1 | +0.65 | +1.48 | **+1.79** |
-| Mouse 3 | +0.98 | +2.19 | **+2.46** |
+| Subclone | +6.82 (13.1%) | **+8.31 (15.9%)** | +7.57 (14.5%) |
+| Pre-TX | **+5.05 (7.8%)** | +4.59 (7.1%) | +2.54 (3.9%) |
+| Mouse 2 | +0.74 (1.3%) | +2.47 (4.4%) | **+3.38 (6.1%)** |
+| Mouse 1 | +0.65 (1.1%) | +1.48 (2.4%) | **+1.79 (2.9%)** |
+| Mouse 3 | +0.98 (1.7%) | +2.19 (3.8%) | **+2.46 (4.3%)** |
 
-Rising in four arms and **falling in Pre-TX**, whose clones are 100–127 cells, so $k=50$ is ~45% of
-the clone. ⇒ **the usable rule is $k \lesssim 0.2\,n_C$**, and $k$ must be reported with $n_C$.
+**There is a genuine optimum, and it is reached by two different routes.** The gain rises with $k$
+until either (i) $k$ becomes a large fraction of $n_C$ — Pre-TX, clones of 100–127, so $k=50$ is
+about 45% and the neighbour mean starts becoming the cell's own complement — or (ii) the neighbour
+set reaches past the genuinely related cells, which is Subclone, where clones run to 10,996 so $k=50$
+is a negligible fraction and yet the gain still falls from +8.31 to +7.57. Both are dilution, of
+different kinds. ⇒ **$k \lesssim 0.2\,n_C$ is the safety rule, but $k\approx20$ is near optimal
+even when $n_C$ is in the thousands**, and $k$ must always be reported with $n_C$.
+⚠ $w$ rises with $k$ in every arm (+0.28 to +1.89). That is not independently meaningful: averaging
+more neighbours shrinks $\mathrm{Var}(u)$, so $w$ must grow to deliver the same logit shift.
 
 ## ⚠ Relation to `74`'s numbers
 

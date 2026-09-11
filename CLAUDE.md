@@ -203,6 +203,11 @@ the **symbol-depletion test** of row A9's untested *trans* limb. |
    **⭐ M2 (per-cell capture) is NEGATIVE on Subclone and Pre-TX** and strongly positive on the mice:
    they carry a ≥100-tape cell filter against ≥20, so where QC is strict a per-cell parameter is pure
    noise out of sample. Fig 3c's "the shelf is a QC choice" as a held-out *loss*.
+   ⭐⭐ **Subclone is FLAT across the floor sweep** (+8.29/+8.31/+8.31 — its clones are all large,
+   so the floor drops 21 of 38,636 cells): the control proving the rise elsewhere is about *which
+   clones are retained*, not about the sweep itself. ⭐ **$k$ optimum is near 20 even at $n_C$ in the
+   thousands** (Subclone +6.82/+8.31/+7.57 at $k$=5/20/50), so the fall at large $k$ has two distinct
+   causes: $k/n_C$ on small clones, and reaching past the genuinely related cells on large ones.
    **⭐ Clone floor monotone 4/4** (Pre-TX +0.75→+4.59 from floor 20→100), confirming Justin's
    intuition — but **clone size makes the measurement cleaner, not the effect bigger**, and the rule
    is $k\lesssim0.2\,n_C$.
