@@ -57,3 +57,6 @@ env/
 analyses/*/results/*.tsv.gz
 analyses/*/results/*.tsv
 logs/
+
+# ---- pre-fix backups kept on disk for re-validation, not committed ----
+analyses/*/results/preblock/

@@ -33,7 +33,9 @@ the signal in a 20-cell clone.  The within-clone permutation null carries the sa
 constraint, so only OBSERVED MINUS NULL is quoted.
 
 Usage: 74_profile_prediction.py <arm> [--clone C | --pooled] [--nsub 1500]
-       [--nsplit 5] [--kk 5,20,50] [--mincl 20] [--seed S]
+       [--nsplit 5] [--kk 5,20,50] [--mincl 20] [--sdfloor 0.01] [--seed S]
+  --nsub 0    no cap -- affordable now that the neighbour search is blocked by clone
+  ⚠ k is capped at n_C - 1 per clone: a cell can never be its own neighbour.
 """
 import json, sys, time
 from pathlib import Path
@@ -54,6 +56,7 @@ POOLED = "--pooled" in sys.argv
 NSUB, NSPLIT = arg("--nsub", 1500, int), arg("--nsplit", 5, int)
 MINCL, SEED = arg("--mincl", 20, int), arg("--seed", 11, int)
 KK = [int(x) for x in arg("--kk", "5,20,50").split(",")]
+PFLOOR = arg("--sdfloor", 0.01, float)   # p~ floor for the Pearson SD
 
 z0 = np.load(RES / f"dropout_matrix_{arm}.npz", allow_pickle=False)
 Y, clone = z0["recovered"], z0["clone"]
@@ -92,7 +95,7 @@ for a_, b_ in zip(b0[:-1], b0[1:]):
         gam = np.clip(gam, -15, 15)
     P[ix] = np.clip(1.0 / (1.0 + np.exp(-(e + gam[None, :]))), 1e-6, 1 - 1e-6)
 ETA = np.log(P / (1 - P))
-SDF = np.sqrt(0.01 * 0.99)
+SDF = np.sqrt(PFLOOR * (1 - PFLOOR))
 RP = (MISSF - P) / np.maximum(np.sqrt(P * (1 - P)), SDF)
 
 rng = np.random.default_rng(SEED)
@@ -103,12 +106,12 @@ if POOLED:
         if sizes[c] < MINCL:
             continue
         ix = np.flatnonzero(g == c)
-        if ix.size > NSUB:
+        if NSUB and ix.size > NSUB:
             ix = np.sort(rng.choice(ix, size=NSUB, replace=False))
         groups.append(ix)
 else:
     ix = np.flatnonzero(g == CL)
-    if ix.size > NSUB:
+    if NSUB and ix.size > NSUB:
         ix = np.sort(rng.choice(ix, size=NSUB, replace=False))
     groups = [ix]
 cells = np.concatenate(groups)
@@ -143,30 +146,56 @@ def ll(Xv, etav, sv, w):
 out = {"arm": arm, "pooled": POOLED, "clone": None if POOLED else CL,
        "n_cells": n, "nsplit": NSPLIT, "k_list": KK, "runs": []}
 t0 = time.time()
+# ⚑ ONE CLONE AT A TIME, for two independent reasons.
+# (i) COST: only within-clone neighbours are ever wanted, so an n x n matrix over
+#     the whole pool does sum_C n_C^2 useful work out of n^2 -- 443x waste on
+#     Pre-TX.  Blocked, peak memory is O(max_C n_C^2) and full-coverage runs fit.
+# (ii) ⚠⚠ CORRECTNESS: with one pooled matrix, self and cross-clone pairs were
+#     both set to -inf, so under argsort(-rel) they TIED at +inf and were ordered
+#     by index -- putting the cell ITSELF inside its own top-k whenever its clone
+#     held fewer than k+1 cells.  That is exactly the circularity step 2 exists to
+#     prevent, and it does NOT cancel in obs - null (the null replaces the self
+#     term with a random clone-mate).  Exposure at k=50 was 71.5% of Pre-TX cells,
+#     29.7% Mouse3, 19.1% Mouse1, 9.3% Mouse2, 0.1% Subclone -- and 0.0% for the
+#     Mouse2 c76 run, which is why that result stands unchanged.
+#     Blocked, the only invalid entry is the diagonal and k is capped at m-1.
 for s in range(NSPLIT):
     rs = np.random.default_rng([SEED, s])
     perm = rs.permutation(K)
     A, Bh = np.sort(perm[:K // 2]), np.sort(perm[K // 2:])
-    agree = np.zeros((n, n), np.int16); denom = np.zeros((n, n), np.int16)
-    for a_ in A:
-        v0 = codes[:, a_, 0] >= 0
-        denom += v0[:, None] & v0[None, :]
-        for d in range(6):
-            cdv = codes[:, a_, d]; okd = cdv >= 0
-            agree += (cdv[:, None] == cdv[None, :]) & okd[:, None] & okd[None, :]
-    rel = np.where(denom > 0, agree / np.maximum(denom, 1), -1.0)
-    np.fill_diagonal(rel, -np.inf)                       # never a neighbour of itself
-    for b_ in range(len(groups)):                        # never across clones
-        lo, hi = off[b_], off[b_ + 1]
-        rel[lo:hi, :lo] = -np.inf; rel[lo:hi, hi:] = -np.inf
     tr = rs.random(n) < 0.5                              # train / held-out cells
     pmN = np.concatenate([lo + rs.permutation(hi - lo)
                           for lo, hi in zip(off[:-1], off[1:])])   # within-clone null
+    SRC = {"obs": (RPc, Mc), "null": (RPc[pmN], Mc[pmN])}
+    U = {(k, t_): np.zeros((n, Bh.size)) for k in KK for t_ in SRC}
+    F = {(k, t_): np.zeros((n, Bh.size)) for k in KK for t_ in SRC}
+    for b_ in range(len(groups)):
+        lo, hi = off[b_], off[b_ + 1]; m = hi - lo
+        if m < 2:
+            continue
+        cb = codes[lo:hi]
+        agree = np.zeros((m, m), np.int16); denom = np.zeros((m, m), np.int16)
+        for a_ in A:
+            v0 = cb[:, a_, 0] >= 0
+            denom += v0[:, None] & v0[None, :]
+            for d in range(6):
+                cdv = cb[:, a_, d]; okd = cdv >= 0
+                agree += (cdv[:, None] == cdv[None, :]) & okd[:, None] & okd[None, :]
+        rel = np.where(denom > 0, agree / np.maximum(denom, 1), -1.0)
+        del agree, denom
+        np.fill_diagonal(rel, -np.inf)                   # never a neighbour of itself
+        nrel = -rel; del rel
+        for k in KK:
+            keff = min(k, m - 1)                         # cannot borrow from other clones
+            nb = np.argpartition(nrel, keff - 1, axis=1)[:, :keff]
+            for t_ in SRC:
+                RPu, Mu = SRC[t_]
+                U[(k, t_)][lo:hi] = RPu[lo:hi][nb][:, :, Bh].mean(1)
+                F[(k, t_)][lo:hi] = Mu[lo:hi][nb][:, :, Bh].mean(1)
+        del nrel
     for k in KK:
-        nb = np.argsort(-rel, axis=1)[:, :k]
-        for tag, RPu, Mu in (("obs", RPc, Mc), ("null", RPc[pmN], Mc[pmN])):
-            u = RPu[nb][:, :, Bh].mean(1)                # [cells, |B|]
-            f = Mu[nb][:, :, Bh].mean(1)
+        for tag in ("obs", "null"):
+            u = U[(k, tag)]; f = F[(k, tag)]
             X = Mc[:, Bh]; E = ETAc[:, Bh]
             wu = fit_w(X[tr].ravel(), E[tr].ravel(), u[tr].ravel())
             fc = f - f.mean()
@@ -183,8 +212,7 @@ for s in range(NSPLIT):
               flush=True)
     if s == 0:                                            # the digestible table, once
         k = KK[len(KK) // 2]
-        nb = np.argsort(-rel, axis=1)[:, :k]
-        f = Mc[nb][:, :, Bh].mean(1); X = Mc[:, Bh]; pv = Pc[:, Bh]
+        f = F[(k, "obs")]; X = Mc[:, Bh]; pv = Pc[:, Bh]
         FB = np.array([-.01, .001, .25, .5, .75, .999, 1.01])
         FL = ["none", "<25%", "25-50%", "50-75%", "75-<100%", "all"]
         qs = np.quantile(pv.ravel(), [0, .25, .5, .75, 1.0])
@@ -205,6 +233,8 @@ for s in range(NSPLIT):
             print(f"  {'n =':>14}" + "".join(f"{c:>13,}" for c in cnt))
         out["table"] = dict(k=k, f_labels=FL, rows=tab)
 tag = f"{arm}_" + ("pooled" if POOLED else f"c{CL}")
+if PFLOOR != 0.01:                       # keep sweep runs off the main result files
+    tag += f"_sd{PFLOOR:g}"
 (RES / f"profilepred_{tag}.json").write_text(json.dumps(out, indent=1))
 R = out["runs"]
 print(f"\n  {'k':>5}{'nats/cell obs':>15}{'null':>9}{'obs-null':>10}{'sd':>8}"

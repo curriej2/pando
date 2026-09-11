@@ -1007,3 +1007,63 @@ null) stands on its own if the biological interpretation ever needs defending.
 **Also decided:** stop leading with event counts. Prevalence is a weak headline at 1.3–25% and the
 collapse is a greedy heuristic that fragments 4.2× on Subclone; the excess curve (`72`) and now the
 variogram/prediction pair replace it.
+
+---
+
+## 2026-09-11 — session 10: the owed list closed, and two defects found before running anything
+
+Justin asked for a fuller report on the dropout-prediction results and for the outstanding
+submissions. Reading `73`/`74` before sizing those jobs turned up two problems, so the sizing came
+after the fixes.
+
+**⚠⚠ Defect 1 — a cell could be its own nearest relative.** `74` marked self *and* cross-clone pairs
+with $-\infty$; under `argsort(-rel)` those tie at $+\infty$ and are ordered by index, so the cell's
+own row entered its top-$k$ whenever its clone held fewer than $k+1$ cells. Verified on a toy: a
+4-cell clone at $k=5$ returns `[1 2 3 0 4]`. It is exactly the circularity step 2 exists to prevent,
+and it does **not** cancel in observed − null, because the within-clone permutation replaces the self
+term with a random clone-mate. Exposure at $k=50$: **Pre-TX 71.5%** of cells, Mouse3 29.7%, Mouse1
+19.1%, Mouse2 9.3%, Subclone 0.1% — i.e. it would have bitten on the very next run in the queue.
+⚑ The published Mouse2 c76 result had 0.0% exposure and reproduces to $10^{-15}$ after the fix.
+
+**⚑ Defect 2 — 443× of the arithmetic was thrown away.** Both scripts built one $n\times n$ matrix
+over all pooled cells and used only the within-clone blocks; the useful fraction is
+$\sum_C n_C^2/n^2$, which is 0.22% on Pre-TX (549 clones of at most 127 cells). Blocking by clone
+fixes defect 1 structurally *and* removes the waste: Pre-TX **68 min 53 s → 33 s** (per split
+411 s → 2 s), and `--nsub` became unnecessary, so coverage went to 100% (Subclone 5%→100%, Mouse2
+13%→100%, Mouse1 63%→100%).
+
+**Validated, not asserted.** Both rewrites preserve the RNG draw order and pair ordering, so they
+should reproduce the old numbers exactly — and do: `73` Mouse3 agrees to $7\times10^{-18}$ with
+identical bin edges and counts; `73` Pre-TX reproduces all ten per-split values of the 68-minute run;
+`74` Mouse2 c76 agrees to $9.8\times10^{-15}$ across 30 runs with a bit-identical conditional table.
+
+**Results, all five arms.** Variogram top bin (obs − null): Pre-TX **+0.2618** ($t=95.9$) · Subclone
+**+0.1406** ($t=31.8$, 127.0 M pairs) · Mouse2 +0.0419 · Mouse1 +0.0369 · Mouse3 +0.0190, null flat
+in every bin of every arm. Prediction task, best $k$, nats/cell: largest clone Subclone c2 **+11.29**,
+Pre-TX c7 **+10.64**, Mouse2 c76 +4.04, Mouse3 c110 +3.33, Mouse1 c36 +1.73; pooled Subclone
+**+9.26**, Pre-TX **+2.86**, Mouse2 +2.65, Mouse1 +0.88, Mouse3 +0.62.
+
+**⚠⚠ Correction to yesterday's reading.** "Subclone is not a gradient — it is a cliff" was an
+artefact of the 5% subsample. At 100% coverage the curve is **strictly monotone across all 13 bins**
+and the top bin moved +0.1523 → +0.1406. The lesson generalises: `--nsub` truncates the largest
+clones hardest, so it **reshapes** the curve rather than merely adding noise.
+
+**⭐ A new methodological finding: the best $k$ inverts with clone size.** Large clones rise with $k$
+(Mouse2 c76 +1.48 → +3.41 → +4.04); small ones collapse (Pre-TX pooled +2.86 → +1.57 → +0.18). Same
+$\gamma$ constraint as the null caveat: as $k\to n_C$ the neighbour mean tends to $-r_{cz}/(n_C-1)$,
+an anti-signal. ⇒ **quote $k$ relative to $n_C$, never absolutely.**
+
+**✅ The SD-floor sweep is answered: it does not matter** — a 20× change in the floor moves the top
+bin by <0.5%. The reason is worth keeping: the floor binds on 3.8–23.4% of entries, but those are
+entries where $\tilde p\approx0$ and the model is *right*, so $r^{*}\approx-0.001$ whatever the
+floor; only the rare confident-and-wrong entries are rescaled, and they are too few to move a mean
+over millions of pairs.
+
+**✅ Fig 4e built** (`75_fig_variogram.py`, three standalone PNGs). Four label collisions were found
+by rendering and inspecting; one annotation was deleted outright rather than repositioned, since
+"minimal annotating text" is the standing preference and the point belongs in the README.
+
+⇒ Owed items (1)–(4) are done, (4) superseded. **The simulator is the only one left**, and its
+calibration target is now concrete: the variogram's slope and convexity, the top-bin value across
+arms (+0.019 to +0.262, a 14× spread), and the nats-by-$k$ curve including its inversion — all from
+the identical scripts, with no threshold, attribution or event definition anywhere in them.

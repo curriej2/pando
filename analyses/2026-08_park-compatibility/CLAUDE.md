@@ -13,7 +13,61 @@ gitignored, never copy out). Justin's own copy of the Park, Chang et al. 2026 ta
 - `clonalbc_percell_hamming1_corrected.csv` — 167,736 rows, `CellID,Sample,ClonalBC_raw,ClonalBC`.
   **This is the clone assignment**, needed for §D.4b Procedure step 1 (work within a clone).
 
-**⭐⭐ STATE (2026-09-10, end of session 9) — READ THIS FIRST. The thread has moved OFF event
+**⭐⭐ STATE (2026-09-11, end of session 10) — READ THIS FIRST. The owed list is CLOSED and the
+simulator is unblocked.** All five arms are measured on both statistics, at 100% pair coverage, and
+two defects in `73`/`74` were found and fixed before the runs (details in README "Session 10").
+
+**⚠⚠ DEFECT FIXED — a cell could be its own nearest relative.** In `74`, self and cross-clone pairs
+were both marked $-\infty$, so they TIED at $+\infty$ under `argsort(-rel)` and were ordered by
+index: the cell itself entered its own top-$k$ whenever its clone held fewer than $k+1$ cells. It
+does **not** cancel in obs − null (the null swaps the self term for a random clone-mate). Exposure at
+$k=50$: Pre-TX **71.5%** of cells, Mouse3 29.7%, Mouse1 19.1%, Mouse2 9.3%, Subclone 0.1%.
+⚑ **The published Mouse2 c76 number was unaffected** (0.0% exposure) and reproduces to $10^{-15}$.
+Both scripts now work **one clone at a time**, which fixes it structurally and is also 443× less
+arithmetic on Pre-TX (68 min 53 s → **33 s**). `--nsub 0` = no cap; validated bit-for-bit against the
+pre-fix outputs, kept in `results/preblock/`.
+
+**⭐ Variogram, 100% coverage, obs − null lowest→top bin.** Pre-TX −0.0529→**+0.2618** ($t=95.9$) ·
+Subclone −0.0102→**+0.1406** ($t=31.8$, 127.0 M pairs) · Mouse2 −0.0106→+0.0419 · Mouse1
+−0.0250→+0.0369 · Mouse3 −0.0311→+0.0190. **Null flat in every bin of every arm.** Interior monotone
+5/5 (dips only at the extreme bins, and only Mouse3's exceed 1 se).
+⚠⚠ **CORRECTION: "Subclone is a cliff, not a gradient" was a 5%-subsample artefact.** At 100%
+coverage it is **strictly monotone, 13/13 bins**; the flat middle is gone and the top bin moved
++0.1523→+0.1406. `--nsub` does not just add noise, it **reshapes** the curve — leave the cap off.
+⚑ Only the SLOPE is a finding: the pair-weighted mean of obs − null equals the all-pairs reference to
+4 dp in every arm, because $\sum_{c\in C} r_{cz}=0$ pins the total. The negative low bins are the
+arithmetic complement of the positive high ones, so do not quote "−0.05 → +0.26" as a range.
+
+**⭐ Prediction task, all five arms. Largest clone, nats/cell (obs − null), best $k$:** Subclone c2
+(10,996 cells) **+11.29** · Pre-TX c7 (127) **+10.64** · Mouse2 c76 (3,387) +4.04 · Mouse3 c110 (210)
++3.33 · Mouse1 c36 (1,607) +1.73. **Pooled:** Subclone **+9.26** · Pre-TX **+2.86** · Mouse2 +2.65 ·
+Mouse1 +0.88 · Mouse3 +0.62.
+**⭐⭐ THE BEST $k$ INVERTS WITH CLONE SIZE — quote $k$ relative to $n_C$, never absolutely.** Large
+clones rise with $k$ (Mouse2 c76 +1.48→+3.41→+4.04); small ones collapse (Pre-TX pooled
++2.86→+1.57→**+0.18**). Same $\gamma$ constraint: as $k\to n_C$ the neighbour mean tends to
+$-r_{cz}/(n_C-1)$, an anti-signal. Pre-TX pooled belongs at $k=5$; its $k=20$ reading is an artefact
+of $k/n_C$, not biology.
+**⭐ The conditional table now rests on fat counts** (Subclone pooled, 38,636 cells): *where the model
+says 7%, the tape is missing in **3%** of cells whose relatives all have it (n=268,916) and **90%** of
+those whose relatives all lack it (n=5,715).* That largely retires the "extreme cells hold 35–345
+entries" caveat. ⚠ Still quote the table, not the OR ($e^{w_f}=19.1$ for a 3%→90% span).
+
+**✅ SD floor swept, and it does not matter** — a 20× change moves the top bin <0.5% (only the 5×
+coarsening to 0.05 does anything, and it *shrinks* the effect). ⚑ Why: the floor binds on 3.8–23.4%
+of entries, but those are entries where $\tilde p\approx0$ and the model is *right*, so
+$r^{*}\approx-0.001$ whatever the floor. It only rescales the rare confident-and-wrong entries, and
+there are too few to move a mean over millions of pairs. `--sdfloor` is now a CLI flag.
+
+**✅ Fig 4e built** (`75_fig_variogram.py`, three standalone PNGs: variogram, conditional table,
+nats-by-$k$). ⚠ Four label collisions found by rendering and inspecting — see README.
+
+**⭐ NEXT: the simulator.** Target, per arm, through the identical scripts: the variogram's slope and
+convexity (not its level), the top-bin value (+0.019 to +0.262, a **14× spread across arms** any
+adequate simulator must generate), and the nats-by-$k$ curve including its inversion.
+
+---
+
+**STATE (2026-09-10, end of session 9). The thread has moved OFF event
 counting and onto two statistics that need no events at all.** `73_dropout_variogram.py` and
 `74_profile_prediction.py`. Justin's judgement, recorded: events are hard to justify and probably
 useless for calibrating simulations; prevalence (1.3–25%) is a weak headline; the collapse is a
@@ -26,14 +80,19 @@ only**, over several random splits. Never remove this.
 
 **⚠ Pearson residuals** $r^{*}=(X-\tilde p)/\sqrt{\tilde p(1-\tilde p)}$, because a Bernoulli's
 variance depends on its mean (a missing tape at $\tilde p=0.05$ is a 4.4 SD surprise; at 0.5 it is
-1.0 SD). SD floored so $|r^{*}|\le10.1$; **the floor binds on 16% of entries — sweep it.**
+1.0 SD). SD floored so $|r^{*}|\le10.1$ (`--sdfloor`). ✅ **Swept 2026-09-11: it does not matter** — a 20×
+change moves the curve <0.5%. The floor binds on 3.78% (Subclone) to 23.35% (Pre-TX) of entries, not
+the single "16%" (which was Mouse2's), but almost all of those are entries the model gets right.
 
-**Variogram (`73`): monotone in 4/4 arms run.** obs − null, lowest→highest relatedness bin: Subclone
-−0.0135→**+0.1523** ($|t|$ to 39), Mouse1 −0.0298→+0.0335, Mouse3 −0.0311→+0.0338, Mouse2
-−0.0160→+0.0381. **Null flat in every bin of every arm.** Pre-TX was still running at handoff.
+**Variogram (`73`) — ⚠ SUPERSEDED by the 100%-coverage run at the top of this file.** These were
+the 2026-09-10 numbers at 5–97% coverage: Subclone −0.0135→+0.1523, Mouse1 −0.0298→+0.0335, Mouse3
+−0.0311→+0.0338, Mouse2 −0.0160→+0.0381, Pre-TX still running. Subclone's shape and top bin both
+moved at full coverage; the others moved slightly.
 
 **⭐ HOW TO RUN THE PREDICTION TASK (`74`)** — the digestible result, 8 s on Mouse2 c76:
-`74_profile_prediction.py <arm> [--clone C | --pooled] [--nsub 1500] [--nsplit 5] [--kk 5,20,50]`
+`74_profile_prediction.py <arm> [--clone C | --pooled] [--nsub 0] [--nsplit 5] [--kk 5,20,50]
+[--sdfloor 0.01]` — **use `--nsub 0`** (no cap; the blocked loop makes full coverage cheap), and
+`--part cpu` on `submit.sh` for these, never `lesliec`.
 1. split the 166 tapes into A and B; 2. for each cell take its $k$ nearest relatives IN THE SAME
 CLONE from half A, **excluding itself**; 3. neighbour signals over half-B tapes, $u$ (mean Pearson
 residual, for the fit) and $f$ (fraction of relatives missing the tape, for the table); 4. fit ONE
@@ -44,11 +103,13 @@ within clone.
 ⚠⚠ **Quote observed − null only.** The $\gamma$ fit forces $\sum_c r_{cz}=0$, so a random clone-mate
 is negatively correlated with $c$ by $\approx-1/(n_C-1)$ — ~−5% in a 20-cell clone, comparable to
 the signal and opposite in sign.
-**Mouse2 c76: +3.04 nats/cell at $k=20$** (null −0.001, sd 0.44). Conditional table, model prediction
+**Mouse2 c76: +4.04 nats/cell at $k=50$** on the full 3,387 cells (the +3.04 on the record was a
+1,500-cell subsample at $k=20$). Conditional table, model prediction
 held fixed: *where the model says 14%, the tape is missing in 9% of cells whose relatives all have it
 and **99%** of those whose relatives all lack it.*
 ⚠ Quote the TABLE, not the odds ratio ($e^{w_f}=4.7$ understates a 9%→99% contrast — it is linear,
-the relationship is a cliff). ⚠ Extreme cells hold 35–345 entries; always print counts.
+the relationship is a cliff). ⚠ On Mouse2 c76 the extreme cells hold 35–345 entries — but Subclone pooled gives the same contrast
+on 1,968–398,226, so prefer it for the headline. Always print counts.
 
 **⚠⚠ THE ORGANISING FACT — the effect is CONCENTRATED, not diffuse.** Most entries carry no lineage
 signal; a minority carry an overwhelming one. That reconciles the variogram's 0.024, the event
@@ -68,9 +129,9 @@ complete in three of five arms.*
 split-half result (87.3%, 33.9× null) stands if the biology ever needs defending. Owed if resumed:
 multiplicity check ($\theta$ vs $(j-1)/j$) and the out-of-sample prediction into the mouse clades.
 
-**OWED NEXT.** (1) Pre-TX pooled variogram; (2) `74` on the other four arms and pooled; (3) sweep the
-Pearson SD floor; (4) raise `--nsub` — Mouse2/Subclone pooled cover only 13%/5% of within-clone
-pairs; (5) then the simulator, calibrated by pushing simulated data through `73`/`74` and matching.
+**OWED NEXT — ✅ (1)–(4) ALL DONE 2026-09-11, see the session-10 state block at the top.**
+~~(1) Pre-TX pooled variogram; (2) `74` on the other four arms and pooled; (3) sweep the Pearson SD
+floor; (4) raise `--nsub`~~ — (5) **the simulator** is now the only one left, and is next.
 
 **State (2026-09-10, end of session 8). ⭐⭐ THE TEST IS NOW ANALYTIC — `67_exact_merge.py`.**
 No calibration draws, no clade-size strata, no permutations needed at all (they are kept only as a
@@ -172,7 +233,7 @@ statistical power, not inherited from the paper.
 | 3 dropout | ✅ **done, 5 panels a–e**, each a standalone PNG | `27` a · `28` b · `30` c · `31` d+e |
 | 4 dropout & lineage (row **A9**) | ⚑ a/b built; catalogue + `MAX_D=6` test done; **c/d now built — see the next row** | `32`–`44` |
 | 4d **excess curve** — observed vs a closed-form null, 5 arms | ✅ built (`fig4d_excess.png`); 11,119–499,263× at each arm's Bonferroni cut | `72` |
-| 4e **variogram + prediction** — structured dropout with no events | ⚑ measured, **no figure yet**; the simulator calibration target | `73`,`74` |
+| 4e **variogram + prediction** — structured dropout with no events | ✅ **built**, three standalone PNGs (`fig4e_a/b/c_*`), all five arms at 100% coverage; the simulator calibration target | `73`,`74`,`75` |
 | 4c **the worked example** — what a loss looks like, how the test works, and a near-miss | ✅ **built**, three standalone PNGs (`fig4c_a/b/c_*`), all in Mouse2 clone 76 | `69` |
 | 4c/d **the detection plane** — what a silencing event IS; fulfils the planned c/d | ✅ **built on Mouse 3**, three standalone PNGs (`fig5a/b/c_*`); panel a faceted by clade size, one threshold line per facet | `62`,`63`,`66` |
 | 5 compatibility spread + homoplasy null | needs the simulator | — |

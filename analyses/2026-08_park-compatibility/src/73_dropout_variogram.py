@@ -35,7 +35,10 @@ marginal, and is binned against the SAME relatedness values.
 gamma fit forces sum_c r_cz = 0, so sum_{c != c'} r_c r_c' = -sum_c r_c^2.  The
 reference level is therefore the all-pairs mean, which is printed.
 
-Usage: 73_dropout_variogram.py <arm> --clone C [--nsub 2000] [--nsplit 10] [--seed S]
+Usage: 73_dropout_variogram.py <arm> [--clone C | --pooled] [--nsub 2000] [--nsplit 10]
+       [--mincl 20] [--sdfloor 0.01] [--seed S]
+  --nsub 0    no cap -- affordable now that the pair loop is blocked by clone
+  --sdfloor   p~ floor for the Pearson SD (default 0.01 => |r*| <= 10.1)
 """
 import json, sys, time
 from pathlib import Path
@@ -52,9 +55,10 @@ def arg(f, d, c=str):
 
 arm = sys.argv[1]
 CL = arg("--clone", 76, int)
-NSUB = arg("--nsub", 2000, int)
+NSUB = arg("--nsub", 2000, int)          # 0 = no cap (blocked loop makes this affordable)
 NSPLIT = arg("--nsplit", 10, int)
 SEED = arg("--seed", 11, int)
+PFLOOR = arg("--sdfloor", 0.01, float)   # p~ floor for the Pearson SD; |r*| <= 1/sqrt(p(1-p))
 
 z0 = np.load(RES / f"dropout_matrix_{arm}.npz", allow_pickle=False)
 Y, clone = z0["recovered"], z0["clone"]
@@ -102,7 +106,7 @@ R = MISSF - P
 # 1-1e-6], and an unfloored Pearson residual could reach 1000 for a cell missing a
 # tape the model says is essentially always present.  Those terms are the most
 # informative ones but would single-handedly set the mean.
-SDFLOOR = np.sqrt(0.01 * 0.99)
+SDFLOOR = np.sqrt(PFLOOR * (1 - PFLOOR))
 SD = np.maximum(np.sqrt(P * (1 - P)), SDFLOOR)
 RP = R / SD
 print(f"  Pearson residuals: SD floored at {SDFLOOR:.4f} (max |r*| = "
@@ -118,7 +122,7 @@ if POOLED:
     groups = []
     for c in use:
         ix = np.flatnonzero(g == c)
-        if ix.size > NSUB:
+        if NSUB and ix.size > NSUB:
             ix = np.sort(rng.choice(ix, size=NSUB, replace=False))
         groups.append(ix)
     tot_pairs = sum(x.size * (x.size - 1) // 2 for x in groups)
@@ -128,58 +132,78 @@ if POOLED:
           f"= {100*tot_pairs/max(allp,1):.0f}% of all {allp:,}", flush=True)
 else:
     ix = np.flatnonzero(g == CL)
-    if ix.size > NSUB:
+    if NSUB and ix.size > NSUB:
         ix = np.sort(rng.choice(ix, size=NSUB, replace=False))
     groups = [ix]
     print(f"{arm} clone {CL}: {int((g == CL).sum()):,} cells, using {ix.size:,}", flush=True)
+WHAT = f"POOLED {len(groups)} clones" if POOLED else f"clone {CL}"
 cells = np.concatenate(groups)
 n = cells.size
 codes = np.load(RES / f"prefix_codes6_{arm}.npz", allow_pickle=False)["codes"][cells]
 Rc, RPc = R[cells], RP[cells]
 off = np.concatenate([[0], np.cumsum([x.size for x in groups])])
-print(f"{arm} clone {CL}: {int((g == CL).sum()):,} cells, using {n:,}; "
-      f"{n*(n-1)//2:,} pairs; {NSPLIT} tape splits", flush=True)
-print(f"  gamma check: max |sum_c r_cz| over tapes in this clone = "
-      f"{np.abs(R[g == CL].sum(0)).max():.2e}", flush=True)
+print(f"{arm} {WHAT}: {n:,} cells; {NSPLIT} tape splits", flush=True)
+# ⚠ the gamma check must be run on the CELLS ACTUALLY USED, not on clone CL --
+# in pooled mode clone 76 may hold 0 cells, and the old check then printed a
+# vacuous 0.00e+00 (Subclone) or a reading off a 1-cell clone (Mouse3).
+gchk = max(float(np.abs(R[ix_].sum(0)).max()) for ix_ in groups)
+print(f"  gamma check: max over clones of max_z |sum_c r_cz| = {gchk:.2e}", flush=True)
 
 # ⚠ deciles up to 0.9 then finer, because the top decile's MEAN relatedness (4.42
 # on Mouse2 c76) is well short of the top of the range (~5.5): the closest pairs
 # were being averaged away with merely-close ones.
 QS = np.array([0, .1, .2, .3, .4, .5, .6, .7, .8, .9, .95, .98, .995, 1.0])
 EDGES = None                      # set from split 0's relatedness, then reused
-# pair indices, restricted to WITHIN-clone pairs
-ii, jj = [], []
-for b_ in range(len(groups)):
-    lo, hi = off[b_], off[b_ + 1]
-    a_, c_ = np.triu_indices(hi - lo, 1)
-    ii.append(a_ + lo); jj.append(c_ + lo)
-iu = (np.concatenate(ii), np.concatenate(jj))
-print(f"  {iu[0].size:,} within-clone pairs extracted", flush=True)
+# ⚑ ONE CLONE AT A TIME.  Only within-clone pairs are ever used, so building a
+# single n x n matrix over the whole pool computes sum_C n_C^2 useful entries out
+# of n^2 -- a waste of 1.8x (Mouse2) to 443x (Pre-TX, 549 small clones).  Blocking
+# by clone drops the cost to sum_C n_C^2 and the peak memory to O(max_C n_C^2),
+# which is what makes 100%-coverage runs affordable (Subclone: 5% -> 100%).
+# The pair ORDER is unchanged (the old iu was itself built block by block), the
+# RNG draw order is unchanged, and the global null permutation pm is still global.
+npairs = sum((hi - lo) * (hi - lo - 1) // 2 for lo, hi in zip(off[:-1], off[1:]))
+print(f"  {npairs:,} within-clone pairs; largest clone {max(x.size for x in groups):,} cells "
+      f"(peak block {max(x.size for x in groups)**2*8/2**30:.2f} GB/matrix)", flush=True)
 curves, nulls, refs, relmeans, cnts = [], [], [], [], []
 t0 = time.time()
 for s in range(NSPLIT):
     rs = np.random.default_rng([SEED, s])
     perm = rs.permutation(K)
     A, Bh = np.sort(perm[:K // 2]), np.sort(perm[K // 2:])
-    agree = np.zeros((n, n), np.int16)
-    denom = np.zeros((n, n), np.int16)
-    for a_ in A:
-        v0 = codes[:, a_, 0] >= 0
-        both = v0[:, None] & v0[None, :]
-        denom += both
-        for d in range(6):
-            cdv = codes[:, a_, d]
-            ok = cdv >= 0
-            agree += ((cdv[:, None] == cdv[None, :]) & ok[:, None] & ok[None, :])
-    rel = np.where(denom > 0, agree / np.maximum(denom, 1), np.nan)
     RB, RPB = Rc[:, Bh], RPc[:, Bh]
-    sim = (RPB @ RPB.T) / Bh.size            # PEARSON -- the primary statistic
-    cov = (RB @ RB.T) / Bh.size              # raw covariance, kept for comparability
-    pm = rs.permutation(n)
-    simN = (RPB[pm] @ RPB[pm].T) / Bh.size
-    r_, s_, sn_, c_ = rel[iu], sim[iu], simN[iu], cov[iu]
-    keep = np.isfinite(r_)
-    r_, s_, sn_, c_ = r_[keep], s_[keep], sn_[keep], c_[keep]
+    pm = rs.permutation(n)                   # global null permutation, as before
+    RPN = RPB[pm]
+    rr, ss, snn = [], [], []
+    ssum = csum = 0.0; nkept = 0
+    for b_ in range(len(groups)):
+        lo, hi = off[b_], off[b_ + 1]
+        m = hi - lo
+        if m < 2:
+            continue
+        cb = codes[lo:hi]
+        agree = np.zeros((m, m), np.int16)
+        denom = np.zeros((m, m), np.int16)
+        for a_ in A:
+            v0 = cb[:, a_, 0] >= 0
+            denom += v0[:, None] & v0[None, :]
+            for d in range(6):
+                cdv = cb[:, a_, d]
+                ok = cdv >= 0
+                agree += ((cdv[:, None] == cdv[None, :]) & ok[:, None] & ok[None, :])
+        relb = np.where(denom > 0, agree / np.maximum(denom, 1), np.nan)
+        del agree, denom
+        Xb, Nb, Cb = RPB[lo:hi], RPN[lo:hi], RB[lo:hi]
+        tu = np.triu_indices(m, 1)
+        r0 = relb[tu]; del relb
+        s0 = ((Xb @ Xb.T) / Bh.size)[tu]     # PEARSON -- the primary statistic
+        n0 = ((Nb @ Nb.T) / Bh.size)[tu]
+        c0 = ((Cb @ Cb.T) / Bh.size)[tu]     # raw covariance, kept for comparability
+        kp = np.isfinite(r0)
+        rr.append(r0[kp]); ss.append(s0[kp]); snn.append(n0[kp])
+        ssum += float(s0[kp].sum()); csum += float(c0[kp].sum()); nkept += int(kp.sum())
+        del r0, s0, n0, c0, kp
+    r_ = np.concatenate(rr); s_ = np.concatenate(ss); sn_ = np.concatenate(snn)
+    del rr, ss, snn
     if EDGES is None:                        # quantile bins, from split 0, reused
         EDGES = np.unique(np.quantile(r_, QS))
         EDGES[0] -= 1e-9; EDGES[-1] += 1e-9
@@ -188,9 +212,9 @@ for s in range(NSPLIT):
     cnt = np.bincount(bi, minlength=nb).astype(float)
     mean = lambda v: np.where(cnt > 0, np.bincount(bi, weights=v, minlength=nb) / np.maximum(cnt, 1), np.nan)
     curves.append(mean(s_)); nulls.append(mean(sn_)); relmeans.append(mean(r_))
-    cnts.append(cnt); refs.append((s_.mean(), c_.mean()))
+    cnts.append(cnt); refs.append((ssum / max(nkept, 1), csum / max(nkept, 1)))
     print(f"  split {s+1}/{NSPLIT}: |A|={A.size} |B|={Bh.size}  all-pairs Pearson "
-          f"{s_.mean():+.4f}  raw cov {c_.mean():+.2e}  [{time.time()-t0:.0f}s]", flush=True)
+          f"{refs[-1][0]:+.4f}  raw cov {refs[-1][1]:+.2e}  [{time.time()-t0:.0f}s]", flush=True)
 
 C = np.array(curves); N = np.array(nulls); RM = np.array(relmeans); CNT = np.array(cnts).mean(0)
 allref = float(np.mean([r[0] for r in refs])); allcov = float(np.mean([r[1] for r in refs]))
@@ -210,6 +234,8 @@ for i in range(C.shape[1]):
           f"{np.nanmean(C[:, i]):>+11.4f}{np.nanmean(N[:, i]):>+11.4f}{mu:>+11.4f}"
           f"{sd:>11.4f}{t:>7.1f}")
 TAG = f"{arm}_" + ("pooled" if POOLED else f"c{CL}")
+if PFLOOR != 0.01:                       # keep sweep runs off the main result files
+    TAG += f"_sd{PFLOOR:g}"
 np.savez_compressed(RES / f"variogram_{TAG}.npz", edges=EDGES, obs=C, null=N,
                     relmeans=RM, counts=CNT, allref=allref, allcov=allcov,
                     n_cells=n, nsplit=NSPLIT)

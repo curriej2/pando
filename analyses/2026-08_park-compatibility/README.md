@@ -3444,3 +3444,273 @@ three things that made the event route unsuitable for calibration.
 5. ⚠ Fixed while writing this up: `73` wrote pooled results to `variogram_{arm}_c76.npz` regardless of
    mode, so the Mouse2 **single-clone** file was overwritten by its pooled run. Files renamed to
    `variogram_{arm}_pooled.npz`; the single-clone Mouse2 numbers survive only in this README.
+
+---
+
+# ⭐⭐ Session 10 (2026-09-10): the owed list closed, and two defects in `73`/`74` found first
+
+Justin asked for a full report on the dropout-prediction results and for the outstanding
+submissions. Reading the two scripts before sizing those jobs turned up two problems, one of them a
+correctness bug in the exact place the design was built to be careful. Both are fixed, both fixes are
+validated against the pre-fix results, and the whole owed list then became cheap enough to run in one
+sitting.
+
+## ⚠⚠ Defect 1 — a cell could be its own nearest relative
+
+`74` builds one pooled $n\times n$ relatedness matrix and marks both the diagonal and every
+cross-clone pair with $-\infty$:
+
+```python
+rel = np.where(denom > 0, agree / np.maximum(denom, 1), -1.0)
+np.fill_diagonal(rel, -np.inf)                 # never a neighbour of itself
+for b_ in ...: rel[lo:hi, :lo] = -np.inf; rel[lo:hi, hi:] = -np.inf
+nb = np.argsort(-rel, axis=1)[:, :k]
+```
+
+Under `argsort(-rel)` those two groups **tie at $+\infty$** and are therefore ordered by index. So
+when a clone holds fewer than $k+1$ cells, the $+\infty$ block reaches into the top-$k$ — and the
+first member of that block, by index, is very often the cell itself. Verified on a toy (4-cell clone,
+$k=5$): row 0's neighbour list comes back `[1 2 3 0 4]` — itself at position 3, a cross-clone cell at
+position 4.
+
+That is exactly the circularity step 2 exists to prevent, and — this is the part that matters — it
+does **not** cancel in observed − null, because the within-clone permutation replaces the self term
+with a random clone-mate. The leak enters $u_{cz}$ with weight $1/k$ alongside a fitted $w\approx2$,
+so it pushes the observed gain up and nothing pushes the null.
+
+**Exposure, as the % of cells whose clone holds $\le k$ members:**
+
+| arm | $k=5$ | $k=20$ | $k=50$ |
+|---|---|---|---|
+| Mouse 3 | 0.0% | 3.0% | 29.7% |
+| Mouse 2 | 0.0% | 0.9% | 9.3% |
+| Mouse 1 | 0.0% | 0.3% | 19.1% |
+| **Pre-TX** | 0.0% | 3.2% | **71.5%** |
+| Subclone | 0.0% | 0.0% | 0.1% |
+
+⚑ **The published Mouse 2 c76 result is untouched** — 1,500 cells in one clone, 0.0% exposure at
+every $k$ — which is why it reproduces bit-for-bit below. The bug would have bitten precisely on the
+next run in the queue: pooled Pre-TX at $k=50$, where 71.5% of cells sit in clones too small to
+supply 50 distinct relatives.
+
+**Fix.** Do the neighbour search inside each clone block, where the only invalid entry is the
+diagonal, and cap $k$ at $n_C-1$. `argpartition` replaces `argsort` (the mean over the top-$k$ does
+not care about their order), which is also the cheaper primitive.
+
+## ⚑ Defect 2 — 443× of the work was thrown away
+
+Both scripts build a single $n\times n$ matrix over every pooled cell and then use only the
+within-clone blocks. The useful fraction is $\sum_C n_C^2 / n^2$:
+
+| arm | full cells (clones $\ge20$) | $\sum_C n_C^2$ | $n^2$ built | waste |
+|---|---|---|---|---|
+| **Pre-TX** | 19,937 | 897,103 | 397,483,969 | **443×** |
+| Mouse 3 | 1,346 | 149,052 | 1,811,716 | 12.2× |
+| Mouse 1 | 5,752 | 3,069,854 | 33,085,504 | 10.8× |
+| Subclone | 38,636 | 254,124,612 | 1,492,740,496 | 5.9× |
+| Mouse 2 | 4,622 | 11,597,460 | 21,362,884 | 1.8× |
+
+Pre-TX is the extreme because it is 549 clones of at most 127 cells: almost every entry of its
+19,937² matrix is a cross-clone pair that is computed, stored, and discarded. Blocking by clone drops
+the cost to $\sum_C n_C^2$ and the peak memory from $O(n^2)$ to $O(\max_C n_C^2)$ — which is what
+makes the `--nsub` cap unnecessary and 100%-coverage runs affordable.
+
+**Measured, same input, same seed:**
+
+| arm | before | after | coverage before → after |
+|---|---|---|---|
+| **Pre-TX** | **68 min 53 s** | **33 s** | 88% → 88% (the 88% is the $n_C\ge20$ floor, not the cap) |
+| Mouse 2 | 1 min 03 s | 1 min 26 s | **13% → 100%** |
+| Mouse 1 | 6 min 29 s | 26 s | **63% → 100%** |
+| Mouse 3 | 13 s | 4 s | 97% → 97% |
+
+Pre-TX is **125× faster wall-clock** and its per-split time fell from 411 s to 2 s. Mouse 1 and
+Mouse 2 are now at full coverage; Mouse 2 costs *more* wall-clock than before only because it is
+doing 8× the pairs.
+
+## The fixes are validated, not asserted
+
+Both rewrites preserve the RNG draw order and the pair ordering, so they should reproduce the old
+numbers exactly rather than merely agree in spirit. They do:
+
+| check | result |
+|---|---|
+| `73` Mouse 3 pooled, blocked vs pooled | `edges`, `relmeans`, `counts`, `allcov` **identical**; `obs` max $\lvert\Delta\rvert=6.9\times10^{-18}$, `null` $2.0\times10^{-18}$ |
+| `73` Pre-TX, per-split all-pairs Pearson | −0.0185, −0.0187, −0.0183, −0.0183, −0.0184, −0.0184, −0.0185 … **every split identical to the 68-minute run** |
+| `74` Mouse 2 c76, 30 runs (5 splits × 3 $k$ × obs/null) | max $\lvert\Delta\rvert$ over $w_u$, $w_f$, nats $= 9.8\times10^{-15}$; conditional table **bit-identical** |
+
+Pre-fix outputs are kept in `results/preblock/` for anyone who wants to redo the comparison.
+
+⚠ `74` is reproducible to floating-point noise rather than exactly because `argpartition` may pick a
+different member of a tied group at the $k$-th boundary; relatedness is a ratio of small integers, so
+ties are common. It does not matter — the statistic is a mean over the selected set — but it is why
+the deltas are $10^{-15}$ and not $0$.
+
+## ⚠ A third, cosmetic-but-misleading defect, also fixed
+
+In pooled mode `73` printed `"{arm} clone {CL}"` regardless (hence `Subclone clone 76: 0 cells`), and
+its $\gamma$ check was evaluated on clone `CL` only. So the reassuring `0.00e+00` in the Subclone log
+was **vacuous** — that clone holds no cells in that run — and Mouse 3's and Mouse 1's were readings
+off a 1-cell and a 2-cell clone. Only Mouse 2's 3.39e-03 was ever a real check. The check now runs
+over the cells actually used, and reports the max over clones: Mouse 3 2.10e-04, Pre-TX 2.33e-04,
+Subclone 7.35e-04 — all still negligible, but now actually measured.
+
+## ✅ The Pearson SD floor: swept, and it does not matter
+
+`--sdfloor` is now a CLI flag (it was hard-coded in both scripts), and the sweep is the answer to
+owed item 3. Top-bin obs − null, four floors:
+
+| arm | $p_{\rm floor}=0.0005$ ($\lvert r^{*}\rvert\le44.7$) | 0.002 (22.4) | **0.01 (10.1, default)** | 0.05 (4.6) |
+|---|---|---|---|---|
+| Pre-TX | +0.2618 | +0.2618 | **+0.2618** | +0.2583 |
+| Mouse 2 | — | +0.0426 | **+0.0419** | +0.0391 |
+| Mouse 1 | — | +0.0378 | **+0.0369** | +0.0315 |
+| Mouse 3 | +0.0185 | +0.0186 | **+0.0190** | +0.0190 |
+
+**A 20× change in the floor moves the curve by less than 0.5%.** Only the 5× coarsening to 0.05 does
+anything at all, and it *shrinks* the effect (Mouse 1 −15%) because it starts clipping genuinely
+informative moderate residuals. The default sits safely inside a plateau.
+
+⚑ **Why the floor binds on 23% of entries yet changes nothing.** Those are entries where $\tilde p$
+is clipped near 0 or 1 — and at $\tilde p\approx10^{-6}$ the model is almost always *right*, so
+$r=X-\tilde p\approx-10^{-6}$ and $r^{*}\approx-0.001$ whatever the floor. The floor only rescales
+the rare entries where such a confident prediction is *wrong*, and there are too few of those to move
+a mean over millions of pairs. So "the floor binds on 16% of entries" was never the right worry —
+what matters is how many *surprises* it rescales, and that number is small.
+⚠ The 16% in the earlier note is Mouse 2's figure specifically; the range across arms is 3.78%
+(Subclone) to 23.35% (Pre-TX), so quote it per arm.
+
+## ✅ The variogram at 100% coverage, all five arms — and ⚠⚠ a correction to yesterday's reading
+
+| arm | cells | within-clone pairs | coverage | lowest bin | **top bin** | $t$ | rel at top | monotone? |
+|---|---|---|---|---|---|---|---|---|
+| **Pre-TX** | 19,937 | 438,583 | 88%\* | −0.0529 | **+0.2618** | **95.9** | 3.03 | one dip, bins 1→2 |
+| **Subclone** | 38,636 | **127,042,988** | **100%** | −0.0102 | **+0.1406** | 31.8 | 3.78 | **strictly monotone, 13/13** |
+| Mouse 2 | 4,622 | 5,796,213 | **100%** | −0.0106 | +0.0419 | 12.3 | 4.73 | one dip, −0.0003 (0.3 se) |
+| Mouse 1 | 5,752 | 1,532,026 | **100%** | −0.0250 | +0.0369 | 10.9 | 4.78 | one dip at the top, −0.0017 (0.5 se) |
+| Mouse 3 | 1,346 | 73,831 | 97% | −0.0311 | +0.0190 | 4.1 | 5.29 | two dips, both real (6.5 se, 3.5 se) |
+
+\* Pre-TX's 88% is the $n_C\ge20$ clone floor, not a subsampling cap — it is at full coverage for its
+clone set. Mouse 3's 97% likewise.
+
+**The null is flat in every bin of every arm** (+0.0001 to +0.0009, and +0.0002 in all 13 Subclone
+bins). ⚑ **Pre-TX is the strongest arm in the entire thread** — +0.2618 at $t=95.9$, 1.9× Subclone's
+top bin and reached at *lower* relatedness (3.03 vs 3.78), on clones of at most 127 cells.
+
+⚠⚠ **CORRECTION to the 2026-09-10 reading. "Subclone is not a gradient — it is a cliff" was an
+artefact of the 5% subsample.** At 100% coverage (127.0 M pairs against 5.97 M) the curve is
+**strictly monotone across all 13 bins**: −0.0102, −0.0090, −0.0059, −0.0053, −0.0045, −0.0030,
+−0.0002, +0.0022, +0.0049, +0.0116, +0.0255, +0.0605, +0.1406. The flat, dipping middle section that
+made it look like a threshold is gone. The top bin also moved, +0.1523 → **+0.1406**, and $t$ rose
+19.8 → **31.8**. The curve is still strongly *convex* — accelerating, which is the concentration fact
+— but there is no discrete cliff, and the "threshold at relatedness ≈3" claim should not be made.
+⚑ The general lesson: `--nsub` truncates the biggest clones hardest, so it does not merely add noise,
+it **reshapes** the curve. Coverage is now 100% everywhere and the cap should stay off.
+
+⚠ **Monotonicity, stated honestly.** The dips are at the extremes, not in the body. Pre-TX's is
+bins 1→2 (relatedness 0.004 vs 0.026 — essentially unrelated cells, where the level is arbitrary
+anyway); Mouse 1's and Mouse 2's are a fraction of a standard error; only Mouse 3 has real ones, and
+it is the smallest arm, with 284 pairs in its top bin. **Interior monotone in 5/5.**
+
+⚑ **And the level is not a finding — only the slope is.** The pair-weighted mean of obs − null equals
+the all-pairs reference to four decimals in every arm (Mouse 3 −0.00452 vs −0.00459; Mouse 2 −0.00014
+vs +0.00001; Mouse 1 −0.00107 vs −0.00102; Subclone +0.00031 vs +0.00017), because
+$\sum_{c\in C} r_{cz}=0$ pins the total. So the negative low bins are the **arithmetic complement**
+of the positive high bins, not a second result, and quoting the range "−0.05 → +0.26" overstates the
+effect by implying two findings where there is one. Quote the top bins against the flat null.
+
+## ✅ The prediction task on all five arms — and $k$ inverts with clone size
+
+**Largest clone in each arm, held-out gain in nats per cell (observed − null, ± se over 5 splits):**
+
+| arm | clone | cells | $k=5$ | $k=20$ | $k=50$ |
+|---|---|---|---|---|---|
+| **Subclone** | c2 | 10,996 | **+11.29 ± 0.33** | +10.29 ± 0.39 | +8.84 ± 0.38 |
+| **Pre-TX** | c7 | 127 | **+10.64 ± 0.65** | +7.37 ± 0.57 | +3.52 ± 0.64 |
+| Mouse 2 | c76 | 3,387 | +1.48 ± 0.24 | +3.41 ± 0.22 | **+4.04 ± 0.21** |
+| Mouse 3 | c110 | 210 | +2.29 ± 0.29 | **+3.33 ± 0.34** | +3.16 ± 0.35 |
+| Mouse 1 | c36 | 1,607 | +0.74 ± 0.11 | +1.41 ± 0.14 | **+1.73 ± 0.13** |
+
+**Pooled over every clone with $\ge20$ cells:**
+
+| arm | clones | cells | $k=5$ | $k=10$ | $k=20$ | $k=50$ |
+|---|---|---|---|---|---|---|
+| **Subclone** | 12 | 38,636 | **+9.26 ± 0.13** | — | +8.70 ± 0.12 | +7.45 ± 0.11 |
+| **Pre-TX** | 549 | 19,937 | **+2.86 ± 0.05** | +1.57 ± 0.03 | +0.18 ± 0.01 | — |
+| Mouse 2 | 22 | 4,622 | +1.14 ± 0.12 | — | +2.39 ± 0.12 | **+2.65 ± 0.12** |
+| Mouse 1 | 64 | 5,752 | +0.83 ± 0.03 | — | **+0.88 ± 0.06** | +0.51 ± 0.07 |
+| Mouse 3 | 23 | 1,346 | **+0.62 ± 0.06** | — | +0.59 ± 0.06 | +0.18 ± 0.03 |
+
+Every null is within ±0.001 of zero in the large-clone runs. ⚠ In the *small*-clone runs it is not:
+Pre-TX c7's null is +0.033 at $k=5$ and **+0.644** at $k=50$ — which is the constraint below, showing
+up in the null exactly as it should. Another reason to quote observed − null only.
+
+**⭐ THE NEW METHODOLOGICAL FINDING: the best $k$ is not a constant, it inverts with clone size.**
+In large clones the gain rises with $k$ and saturates (Mouse 2 c76: +1.48 → +3.41 → +4.04). In small
+ones it collapses (Pre-TX pooled: +2.86 → +1.57 → **+0.18**; Pre-TX c7: +10.64 → +3.52). The
+mechanism is the $\gamma$ constraint already on the record: $\sum_{c\in C} r_{cz}=0$, so as $k$
+approaches $n_C$ the neighbour mean tends to $-r_{cz}/(n_C-1)$ — an **anti-signal**. Averaging over
+most of a clone measures the cell's own complement, not its relatives.
+⇒ **$k$ must be quoted relative to clone size, never absolutely**, and a pooled run over small clones
+belongs at $k=5$. Pre-TX pooled at $k=20$ reads +0.18 and at $k=5$ reads +2.86 — a 16× difference
+that is entirely an artefact of the ratio $k/n_C$, not of the biology.
+⚑ This is also why $k$ was capped at $n_C-1$ in the rewrite: without the cap the same mechanism runs
+all the way to the cell predicting itself.
+
+**⭐ The conditional read-off, now on fat counts.** The earlier caveat — *extreme cells hold 35–345
+entries, always print counts* — is largely retired by the Subclone pooled run, where the same
+contrast rests on tens of thousands of entries (38,636 cells, 12 clones, $k=20$, model prediction
+held fixed):
+
+| model says | none | <25% | 25–50% | 50–75% | 75–<100% | **all** |
+|---|---|---|---|---|---|---|
+| **3%** | 1% | 2% | 14% | 32% | 53% | **61%** |
+| n | 398,226 | 380,979 | 15,556 | 3,212 | 2,061 | 1,968 |
+| **7%** | 3% | 5% | 23% | 52% | 83% | **90%** |
+| n | 268,916 | 483,124 | 32,387 | 7,038 | 4,614 | 5,715 |
+| **15%** | 8% | 13% | 28% | 54% | 87% | **95%** |
+| n | 159,141 | 516,574 | 83,671 | 19,152 | 9,317 | 14,252 |
+| **77%** | 11% | 25% | 42% | 62% | 87% | 97% |
+| n | 23,559 | 146,742 | 110,187 | 80,338 | 99,032 | 341,853 |
+
+*Where the model predicts 7%, the tape is missing in **3%** of cells whose relatives all have it
+(n = 268,916) and **90%** of cells whose relatives all lack it (n = 5,715).* Cell and tape quality
+cannot explain that: the model's own prediction is held fixed by construction.
+⚠ The odds ratio still understates it — $e^{w_f}=19.1$ against a table spanning 3%→90% — for the same
+reason as before: a linear coefficient on a relationship that is flat and then steep. Quote the table.
+⚠ The lowest stratum's "all" cell tops out at 61%, not ~100%: those are tapes the model already
+thinks are nearly always present, and even unanimous relatives do not push them all the way. The
+contrast is still 1% → 61% on 398,226 and 1,968 entries.
+
+## Fig 4e built (`75_fig_variogram.py`) — three standalone PNGs
+
+| panel | file | claim |
+|---|---|---|
+| a | `fig4e_a_variogram.png` | dropout co-deviation rises with lineage relatedness, five arms, against a flat permuted null |
+| b | `fig4e_b_prediction.png` | holding the model's own prediction fixed, a cell's relatives move its dropout rate from ~1% to ~95% |
+| c | `fig4e_c_nats.png` | held-out likelihood gain by $k$ — and the inversion of the best $k$ with clone size |
+
+⚠ Three label collisions were found by rendering and inspecting, and fixed: an annotation sitting on
+the Subclone curve (deleted — it belongs in this README, and "minimal annotating text" is the house
+rule); the legend sitting on the 99% series in b (moved above the axes) and on the Subclone curve in
+c (moved below); and the four count labels in b's "all" column, which **converge at 92–99% so no
+data-anchored placement can separate them** — they now sit on a fixed ladder in the right margin,
+colour-coded to their series.
+⚠ `matplotlib`'s log-scale minor tick labels ("$6\times10^0$", "$3\times10^1$") appeared on panel c's
+$k$ axis and had to be turned off explicitly with `ax.minorticks_off()`.
+
+## Where this leaves the owed list
+
+| # | owed as of 2026-09-10 | status |
+|---|---|---|
+| 1 | Pre-TX pooled variogram | ✅ **done** — and it is the strongest arm |
+| 2 | `74` on the other four arms and pooled | ✅ **done**, all five arms, single-clone and pooled |
+| 3 | sweep the Pearson SD floor | ✅ **done** — it does not matter (<0.5% over a 20× range) |
+| 4 | raise `--nsub` | ✅ **superseded** — the cap is gone, coverage is 100% |
+| 5 | the simulator, calibrated through `73`/`74` | ⭐ **now unblocked and next** |
+
+⭐ **The calibration target is now concrete.** For each arm the simulator must reproduce, through the
+identical code: the variogram's **slope and convexity** (not its level, which is pinned), the
+**top-bin value** (+0.019 to +0.262 — a 14× spread across arms that any adequate simulator has to
+generate), and the **nats-per-$k$ curve including its inversion** at small clone size. All three come
+from the same two scripts with no threshold, no attribution and no event definition anywhere in them.

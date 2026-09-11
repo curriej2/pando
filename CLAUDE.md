@@ -181,7 +181,39 @@ the **symbol-depletion test** of row A9's untested *trans* limb. |
    events $\le10$). Threshold-independent claims that survive: the 118–2,522× null comparison,
    $q\le1.9\times10^{-4}$ per event, $\hat\pi$ median 1.000 vs expected 0.11–0.41. Full audit in
    README "How events are actually called".
-0-CURRENT. **⭐⭐ 2026-09-10 — OFF EVENT COUNTING. Two statistics that need no events.**
+0-CURRENT. **⭐⭐ 2026-09-11 — BOTH STATISTICS MEASURED ON ALL FIVE ARMS AT 100% COVERAGE; THE
+   OWED LIST IS CLOSED AND THE SIMULATOR IS THE ONLY THING LEFT.**
+   `2026-08_park-compatibility`, README "Session 10". **⚠⚠ Two defects in `73`/`74` found by reading
+   the code before sizing the jobs.** (i) *A cell could be its own nearest relative*: self and
+   cross-clone pairs were both $-\infty$, so they tied at $+\infty$ under `argsort` and were ordered
+   by index — exposure at $k=50$ was **71.5% of Pre-TX cells**, and it does not cancel in obs − null.
+   ⚑ The published Mouse2 c76 result was unaffected (0.0% exposure) and reproduces to $10^{-15}$.
+   (ii) *443× of the arithmetic was discarded*: a pooled $n\times n$ matrix where only within-clone
+   blocks are used. Both fixed by working **one clone at a time** — Pre-TX **68 min 53 s → 33 s**,
+   and `--nsub` is gone, so coverage is 100% (Subclone 5%→100%, Mouse2 13%→100%).
+   **⭐ Variogram, obs − null top bin:** Pre-TX **+0.2618** ($t=95.9$) · Subclone **+0.1406**
+   ($t=31.8$, 127.0 M pairs) · Mouse2 +0.0419 · Mouse1 +0.0369 · Mouse3 +0.0190. Null flat in every
+   bin of every arm; interior monotone 5/5. **Pre-TX is the strongest arm in the thread.**
+   ⚠⚠ **CORRECTION: "Subclone is a cliff, not a gradient" was a 5%-subsample artefact** — at full
+   coverage it is strictly monotone 13/13. `--nsub` *reshapes* the curve, it does not merely add
+   noise. ⚑ Only the SLOPE is a finding: the pair-weighted mean is pinned at the all-pairs reference
+   by $\sum_c r_{cz}=0$, so the negative low bins are the complement of the positive high ones.
+   **⭐ Prediction task, best $k$, nats/cell (obs − null).** Largest clone: Subclone c2 **+11.29** ·
+   Pre-TX c7 **+10.64** · Mouse2 c76 +4.04 · Mouse3 c110 +3.33 · Mouse1 c36 +1.73. Pooled: Subclone
+   **+9.26** · Pre-TX **+2.86** · Mouse2 +2.65 · Mouse1 +0.88 · Mouse3 +0.62.
+   **⭐⭐ The best $k$ INVERTS with clone size** — large clones rise with $k$, small ones collapse
+   (Pre-TX pooled +2.86 → +0.18 from $k=5$ to $k=20$), same $\gamma$ constraint. **Quote $k$ relative
+   to $n_C$, never absolutely.**
+   ⭐ *Subclone pooled, 38,636 cells: where the model says 7%, the tape is missing in **3%** of cells
+   whose relatives all have it (n=268,916) and **90%** of those whose relatives all lack it
+   (n=5,715)* — the same read-off as Mouse2 c76 but on fat counts, retiring the thin-cell caveat.
+   **✅ SD floor swept: it does not matter** (a 20× change moves the curve <0.5%), because the floor
+   binds where the model is *right*. **✅ Fig 4e built** (`75`, three standalone PNGs).
+   **⇒ NEXT: THE SIMULATOR.** Calibration target, per arm, through the identical scripts: the
+   variogram's slope and convexity (not its level), the top-bin value (+0.019 to +0.262, a **14×
+   spread across arms**), and the nats-by-$k$ curve including its inversion.
+
+0-PREV. **⭐⭐ 2026-09-10 — OFF EVENT COUNTING. Two statistics that need no events.**
    `2026-08_park-compatibility`, README "Structured dropout without events". Justin's call, recorded:
    events are hard to justify and probably useless for simulator calibration, prevalence (1.3–25%) is
    a weak headline, and the collapse is a greedy heuristic that fragments 4.2× on Subclone.

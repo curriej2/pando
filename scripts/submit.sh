@@ -9,11 +9,16 @@
 set -euo pipefail
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 MEM=16G; TIME=4:00:00; CPUS=4; DEP=""   # modest by default -- raise only from a measured MaxRSS
+# ⚠ --part cpu for anything that is neither GPU-bound nor ~1TB-fat, and ALWAYS for a
+# wide set of small jobs: lesliec's four nodes are the lab's only GPU nodes, and
+# pure-CPU work parked there blocks a labmate's A100 job on CPUs (CLAUDE.md, 2026-09-03).
+PART="lesliec,cpu"
 while [[ "${1:-}" == --* ]]; do
   case "$1" in
     --mem)  MEM="$2";  shift 2;;
     --time) TIME="$2"; shift 2;;
     --cpus) CPUS="$2"; shift 2;;
+    --part) PART="$2"; shift 2;;
     --dep)  DEP="--dependency=afterok:$2"; shift 2;;
     *) echo "unknown flag $1" >&2; exit 1;;
   esac
@@ -21,6 +26,6 @@ done
 SCRIPT="${1:?usage: submit.sh [--mem M] [--time T] [--cpus N] <script.py> [args...]}"; shift
 NAME="$(basename "$SCRIPT" .py)${1:+_$1}"
 mkdir -p "$ROOT/logs"
-sbatch $DEP -A lesliec -p lesliec,cpu -c "$CPUS" --mem "$MEM" -t "$TIME" \
+sbatch $DEP -A lesliec -p "$PART" -c "$CPUS" --mem "$MEM" -t "$TIME" \
        -J "$NAME" -o "$ROOT/logs/%x-%j.out" --wrap \
        "cd $ROOT && /data1/choij10/justin/envs/pando/bin/python -u $SCRIPT $*"
