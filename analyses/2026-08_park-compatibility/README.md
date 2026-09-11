@@ -3785,3 +3785,314 @@ across strata), consistent with its being the arm with the weakest capture–rel
 ⚠ Residual caveat: within a stratum `denom` still varies (Mouse 2's stratum 1 spans 1–32 tapes), so
 this bounds the confound rather than eliminating it arithmetically. Given that the sign flips across
 arms and Mouse 2's top bin is the worst-captured, we are not close to the regime where it matters.
+
+---
+
+# ⭐⭐ The nested ladder: specification agreed with Justin, 2026-09-11 (script `77`)
+
+**Why this exists.** The predictability result is the one with a punchline for an audience, but
+fig 4e shows only the *last step* of an argument whose earlier steps are what make it convincing.
+The ladder puts every technical explanation on the chart first, in the order a sceptic raises them,
+and lets the lineage term be the thing that survives them.
+
+**⇒ Read this section before touching `77`.** The design went through two rounds of correction with
+Justin and both corrections are recorded below, because each fixed something that was wrong.
+
+## The model, fitted inside one clone
+
+Everything happens **within a clone**. The likelihood factorises exactly over clones, so there is no
+cross-clone parameter and each clone is a separate small problem.
+
+$$\mathrm{logit}\ p_{cz} = \alpha_c + \beta_z$$
+
+$\alpha_c$ is the cell offset, $\beta_z$ the tape offset, both private to the clone being fitted.
+
+⚑ **Justin's simplification, and it is exact.** The earlier draft wrote a global
+$\mu + \alpha_c + \beta_z + \gamma_{C z}$. Setting $b_{C z} = \beta_z + \gamma_{C z}$ shows the two
+are the *same model*: every parameter in clone $C$'s likelihood term appears in no other clone's, so
+the likelihood factorises and fitting globally with $\gamma$ equals fitting each clone alone. The
+within-clone form is strictly better because (i) it makes the confounding argument **structural** —
+clone, batch, harvest and mouse are held fixed by construction, not by trusting $\gamma$ to have
+absorbed them — and (ii) it fixes an identifiability error in the first draft (see below).
+
+## The rungs
+
+$$M_0:\quad \mathrm{logit}\ p_{cz} = \mu$$
+$$M_1:\quad \mathrm{logit}\ p_{cz} = \mu_C$$
+$$M_2:\quad \mathrm{logit}\ p_{cz} = \mu_C + \alpha_c$$
+$$M_3:\quad \mathrm{logit}\ p_{cz} = \alpha_c + \beta_z$$
+$$M_4:\quad \mathrm{logit}\ p_{cz} = \alpha_c + \beta_z + w\,u_{cz}$$
+
+Each rung is the next objection an audience raises: *dropout happens · some clones are worse · inside
+a clone some cells are badly captured · inside a clone some tapes are badly recovered* — and then
+*after all of that, a cell's relatives still predict it.* $\beta_z$ absorbs $\mu_C$, so $M_3$
+properly contains $M_1$ and $M_2$, and **clone-wide silencing lives in $M_3$** as a large positive
+$\beta_z$ in one clone and not others.
+
+## ⚠⚠ Identifiability: one constraint PER CLONE
+
+$$\sum_{c \in C} \alpha_c = 0 \quad \text{for each clone } C$$
+
+**Why.** Adding $\delta$ to every $\alpha_c$ and subtracting it from every $\beta_z$ leaves every
+fitted probability unchanged, so the likelihood has a flat ridge and the printed coefficients are
+meaningless without a convention. The constraint says *$\alpha_c$ is how much cell $c$ deviates from
+the average cell of its own clone*. It changes no probability and no likelihood value.
+⚠⚠ **Correction to the first draft.** I originally wrote $\sum_c \alpha_c = 0$ globally plus
+$\sum_C n_C \gamma_{C z} = 0$. That is **under-specified**: $\delta$ is free separately in each clone,
+so $n_{\rm clones}-1$ ridges survive. One constraint per clone is required.
+
+## Fitting: ⚠ two-stage, deliberately
+
+$M_0$–$M_3$ are each a **fresh** maximum-likelihood fit on training entries. Then $M_3$ is
+**frozen**, $u$ is built from its residuals, and $M_4$ fits **only** $w$ with
+$\eta_{cz}=\hat\alpha_c+\hat\beta_z$ as a fixed offset.
+⚠⚠ **Correction to the second draft**, on Justin's challenge: I had written $M_4$ as a joint refit of
+$\alpha$, $\beta$ and $w$. Two-stage is right, for three reasons. (i) It removes a circularity — $u$
+is built from $M_3$'s residuals, so if $M_3$ then moves, the residuals generating $u$ are no longer
+the residuals of the model $u$ sits in. (ii) It is **conservative**: a constrained optimum cannot
+exceed an unconstrained one, so if $\alpha$ and $\beta$ already absorbed lineage signal, $M_3$ keeps
+the credit and the lineage rung understates itself. (iii) "One parameter" becomes literal.
+⇒ **$\Delta_4$ is a LOWER BOUND on the likelihood-ratio gain.** Say so when reporting it.
+
+**The score equations, and why they are the engine.** At the $M_3$ optimum,
+
+$$\sum_{z\,:\,M_{cz}=1} (X_{cz}-p_{cz}) = 0 \quad\text{for each cell}\qquad
+\sum_{c \in C,\ M_{cz}=1} (X_{cz}-p_{cz}) = 0 \quad\text{for each tape}$$
+
+These are not assumptions — they are what maximum likelihood *means* for this model. Both margins are
+matched **exactly**, so the model cannot be surprised by *how many* tapes a cell is missing nor by
+*how many* cells are missing a tape. ⇒ **the only thing left to be surprised by is WHICH cells are
+missing WHICH tapes** — the pattern, not the abundance. That is what turns the question from "is
+there a lot of dropout" into "is the dropout arranged along the lineage", and it is also why
+$\sum_{c\in C} r_{cz}=0$ holds exactly rather than approximately.
+
+## The two splits, and what each defends against
+
+**Tape split** $A \cup B$, $|A|=|B|=83$. Relatedness from $A$ only, model fitted and scored on $B$
+only. ⚠ **Departure 1 from `74`**, which fits $\eta$ on all 166 tapes: cell $c'$'s $A$-tapes would
+otherwise enter both $\rho_{cc'}$ and $\alpha_{c'}$, so neighbour *selection* and neighbour *residual*
+would share data — and the within-clone permutation destroys that pairing, so it would NOT cancel in
+observed − null.
+
+**Entry mask** $M_{cz}\sim\mathrm{Bernoulli}(1/2)$ over $z \in B$, giving $\mathcal{T}$ (train) and
+$\mathcal{V}$ (held out). **Why entries and not cells:** $M_3$ carries 3,232–64,975 parameters, and
+in-sample likelihood always rises when parameters are added, so an in-sample ladder measures
+flexibility, not truth. Only a genuine held-out set lets a rung **lose** — and the possibility of
+losing is what makes the comparison mean anything. Every cell and tape still appears in $\mathcal{T}$,
+so all layers stay estimable.
+
+## Relatedness and the neighbour signal
+
+$$D_{cc'} = \sum_{a \in A} \mathbf{1}[\text{both determined at depth 1 on tape } a]$$
+$$G_{cc'} = \sum_{a \in A}\sum_{d=1}^{6} \mathbf{1}[\text{depth-}d\text{ codes valid and equal}]$$
+$$\rho_{cc'} = \frac{G_{cc'}}{D_{cc'}}$$
+
+the **mean** shared prefix depth per jointly determined $A$-tape (audited in `76`: it is a mean, not
+a total, so a thin pair is not scored as distant). $N_k(c)$ is the $k_{\rm eff}=\min(k, n_C-1)$ most
+related cells in the same clone, excluding $c$ — the cap is the structural guarantee against the
+self-neighbour bug.
+
+With $s_{cz}=\max(\sqrt{\tilde p_{cz}(1-\tilde p_{cz})}, \sqrt{\pi_0(1-\pi_0)})$, $\pi_0=0.01$:
+
+$$r^{*}_{cz} = \frac{X_{cz}-\tilde p_{cz}}{s_{cz}}, \qquad
+m_{cz}=\sum_{c'\in N_k(c)} M_{c'z}, \qquad
+u_{cz} = \frac{1}{\max(m_{cz},1)}\sum_{c'\in N_k(c)} M_{c'z}\,r^{*}_{c'z}$$
+
+and $f_{cz}$ likewise with $X_{c'z}$ in place of $r^{*}_{c'z}$ — the human-readable *fraction of your
+relatives missing this tape*. ⚠ **Departure 2 from `74`**: $u$ now uses **training entries of the
+neighbours only**, or $\mathcal{V}$ would help build the predictor.
+**Why Pearson and not raw residuals:** a Bernoulli's variance depends on its mean, so a missing tape
+at $\tilde p=0.05$ is a 4.4 SD surprise while at $\tilde p=0.5$ it is 1.0 SD. Raw residuals would be
+dominated by the high-variance, least informative entries.
+
+## Evaluation, and what each number means
+
+$$\ell_j = \frac{1}{|\mathcal{V}|}\sum_{(c,z)\in\mathcal{V}}
+\left[X_{cz}\log \hat p^{(j)}_{cz} + (1-X_{cz})\log(1-\hat p^{(j)}_{cz})\right]$$
+
+$$\Delta_j = \ell_j - \ell_{j-1}, \qquad R^2_j = 1 - \frac{\ell_j}{\ell_0}, \qquad Q = 1 - \frac{\ell_4}{\ell_3}$$
+
+- **$\Delta_j$** — nats per held-out entry bought by rung $j$. Multiply by $K=166$ for nats per cell,
+  the unit the earlier results use. **It can be negative**, and on Pre-TX at 12.7 training entries per
+  parameter that is a live possibility for $M_3$. That is the point of holding out.
+- **$R^2_j$** — held-out McFadden pseudo-$R^2$. The saturated log-likelihood is 0 (with
+  $\hat p = X$ every term is $\log 1$), so $-\ell_0$ is the total deviance available. This is the
+  ladder chart: unitless, bounded, familiar.
+- **$Q$** — ⭐ *of everything still unexplained after every technical correction, the share that
+  knowing a cell's relatives removes.* $R^2$ will be dominated by the first rungs and would undersell
+  the result; $Q$ is the honest zoom and is the number I expect to carry the talk.
+
+**Why log-likelihood and not accuracy:** dropout runs at 22–40% and the informative entries are the
+rare extreme ones, so accuracy would be dominated by the easy majority and nearly flat across the
+ladder. Log-likelihood is a proper scoring rule, and it is the quantity the model itself optimises.
+
+## The permutation null — required, not optional
+
+$\Delta_4$ is biased **even when nothing is going on**: the score equation forces
+$\sum_{c\in C} r_{cz}=0$, so a random clone-mate carries a deterministic *anti*-signal of about
+$-1/(n_C-1)$ — −5.3% in a 20-cell clone, comparable to the effect and opposite in sign. Permute cells
+within clone, rebuild $u$, refit $w$, rescore, and quote
+
+$$\Delta_4^{\rm obs} - \Delta_4^{\rm null}$$
+
+The permutation carries the identical constraint, so the bias appears in both terms and cancels.
+**Only the difference may be quoted.** It preserves every margin (each cell's residual vector travels
+whole, tape distributions, clone sizes, the relatedness matrix) and destroys exactly one thing: the
+pairing between a residual vector and its cell's position in the tree.
+⚠ **What it establishes:** it rejects *dropout is exchangeable among the cells of a clone*. It does
+not by itself say "silencing" — any lineage-correlated effect breaks exchangeability. Technical
+explanations are excluded separately, by capture-independence and by `76`.
+
+## Replication, and how to describe the error bar
+
+$S$ tape splits × $R$ entry masks. ⚠ The replicates share the same cells, so their spread is **not**
+a sampling standard error — it measures stability against the arbitrary choices of split and mask.
+Label it that way.
+
+## Leakage audit — assertions in code, not reassurance in prose
+
+1. $c \notin N_k(c)$, via $k_{\rm eff}\le n_C-1$. 2. $\rho$ depends on $A$ alone, every $p_{cz}$ on
+$B$ alone. 3. $u$ and $f$ use only $M_{c'z}=1$. 4. No entry of $\mathcal{V}$ enters any fit or
+covariate. 5. Neighbours never cross a clone.
+⚠ **Stated, not buried:** $\alpha_c$ for a held-out entry comes from that cell's *other* $B$-tapes in
+$\mathcal{T}$. The ladder answers *given most of this cell's tapes, how well can I predict the rest*,
+not *given a wholly new cell*.
+
+## ⭐ Clone-size floor: `--mincl 100`, settled by arithmetic 2026-09-11
+
+Justin's intuition — the test is cleanest on large clones — is right, via three mechanisms, but the
+curve flattens far earlier than expected. Training entries per $M_3$ parameter
+$= (n_C|B|/2)/(n_C+|B|-1)$:
+
+| $n_C$ | 20 | 50 | 100 | 200 | 500 | 3,387 | 10,996 | limit |
+|---|---|---|---|---|---|---|---|---|
+| train/param | **8.1** | 15.7 | 22.8 | 29.4 | 35.7 | 40.5 | 41.2 | 41.5 |
+
+Plus the bias $-1/(n_C-1)$ falls from −5.3% to −0.03%, and "nearest relative" becomes a real
+distinction. **But the steep gain is 20→200 and above 500 you are within 15% of the ceiling**, while
+a high floor costs whole arms:
+
+| arm | ≥20 | ≥50 | **≥100** | ≥200 |
+|---|---|---|---|---|
+| Subclone | 12 cl / 38,636 c | 11 / 38,615 | **11 / 38,615** | 11 / 38,615 |
+| Pre-TX | 549 / 19,937 | 85 / 5,933 | **8 / 894** | **0 / 0** |
+| Mouse 1 | 64 / 5,752 | 29 / 4,654 | **13 / 3,490** | 3 / 2,246 |
+| Mouse 2 | 22 / 4,622 | 9 / 4,243 | **5 / 3,992** | 2 / 3,590 |
+| Mouse 3 | 23 / 1,346 | 8 / 946 | **4 / 671** | 1 / 210 |
+
+⇒ **floor 100 as primary** (nearly 3× the train/param of floor 20, a real analysis in all five arms),
+with 20 and 50 as sensitivity. Floor 200 deletes Pre-TX and Mouse 3 — Pre-TX's largest clone is 127.
+⚠⚠ **Clone size makes the MEASUREMENT cleaner, NOT the effect bigger** — Pre-TX c7 (127 cells) gave
++10.64 nats/cell against Mouse1 c36 (1,607 cells) at +1.73. Keep the two claims apart.
+⚠ At floor 100 Subclone holds 38,615 of 47,662 retained cells (**81%**), so a pooled run would be
+Subclone in disguise. **Report per arm, never pooled.**
+
+## ⚠ Relation to the numbers already on record
+
+Departures 1 and 2 mean the $M_3\to M_4$ rung will **not** reproduce +9.26 nats/cell on Subclone
+pooled or its siblings, which were fitted on all 166 tapes with *cells* held out. Both are
+legitimate and answer slightly different questions; the new one is strictly harder. **Report both,
+labelled.**
+
+---
+
+# ⭐⭐ The ladder — results (2026-09-11, `77`), and ⚠⚠ a bug in the null it found immediately
+
+## ⚠⚠ FIRST: the null was wrong, and it is wrong in `74` too
+
+The very first run returned a **negative** lineage rung on Pre-TX at floor 20 ($w=-0.452$). The cause
+is the score equation we had just written down. $M_3$ forces $\sum_{c\in C} r_{cz}=0$ over training
+entries, so a neighbour set that **excludes $c$** necessarily carries $-1/(n_C-1)$ of $c$'s own
+residual — a leak of the entry into its own predictor. The null as built (inherited from `74`)
+permutes residual **rows** across fixed neighbour **slots**, which yields a uniform $k$-subset of all
+$n_C$ cells **including $c$**, whose expectation is the clone mean, zero. So the null carries no leak
+and the subtraction cannot cancel it. Simulated over 400 replicates:
+
+| $n_C$ | observed | null as built | self-excluding null | theory $-1/(n_C-1)$ |
+|---|---|---|---|---|
+| 21 | −0.0500 | +0.0005 | −0.0500 | −0.0500 |
+| 31 | −0.0350 | +0.0004 | −0.0324 | −0.0333 |
+| 101 | −0.0115 | +0.0014 | −0.0095 | −0.0100 |
+| 3,387 | −0.0003 | +0.0000 | −0.0000 | −0.0003 |
+
+⚑ **Negligible at $n_C=3387$, fatal at $n_C=31$** — which is exactly why large-clone results never
+showed it and Pre-TX (median clone 31) inverted.
+**The fix is also the question we actually mean:** the null is now **$k$ random clone-mates, self
+excluded** — *are the nearest relatives more informative than arbitrary ones?* Re-running Pre-TX, the
+null reproduces the leak ($w_{\rm null}=-1.513$, $\Delta_{\rm null}=-0.0109$) and obs − null comes out
+**+0.745 nats/cell $\pm$ 0.031**. Positive, as it must be.
+⚠ **This puts a question mark on `74`'s small-clone numbers**, Pre-TX pooled's +2.86 included.
+Large-clone results (Subclone, Mouse2 c76) are unaffected — the leak there is $3\times10^{-4}$.
+
+## The ladder, primary configuration (floor 100, $k=20$, 5 splits × 2 masks)
+
+Nats per held-out cell, scaled to all 166 tapes.
+
+| arm | cells | clones | M1 clone | M2 cell | M3 tape-in-clone | **M4 lineage, obs − null** | se | **$Q$** | $w$ |
+|---|---|---|---|---|---|---|---|---|---|
+| **Subclone** | 38,615 | 11 | +0.21 | −0.90 | +38.65 | **+8.31** | 0.09 | **+15.9%** | +1.55 |
+| **Pre-TX** | 894 | 8 | +0.16 | −1.11 | +26.40 | **+4.59** | 0.12 | **+7.1%** | +1.19 |
+| Mouse 2 | 3,992 | 5 | +0.07 | +6.36 | +47.87 | **+2.47** | 0.09 | +4.4% | +1.15 |
+| Mouse 3 | 671 | 4 | +0.34 | +9.77 | +43.70 | **+2.19** | 0.09 | +3.8% | +0.99 |
+| Mouse 1 | 3,490 | 13 | +0.95 | +5.31 | +41.05 | **+1.48** | 0.05 | +2.4% | +0.78 |
+
+**Positive in 5/5 arms at 16–90 standard errors.** $Q$ is the share of *remaining* deviance removed:
+of everything still unexplained after cell quality and per-clone-per-tape recoverability, knowing a
+cell's 20 nearest relatives removes **15.9%** on Subclone.
+
+### What each rung teaches
+
+**M1, clone identity, buys almost nothing (+0.07 to +0.95).** Within an arm, which clone a cell
+belongs to barely predicts its overall dropout *rate*. The clonal signal is not a rate shift — it is
+per-(clone, tape), which is M3. This is worth saying because "clone effects" is the first thing an
+audience reaches for.
+
+**⭐ M2, per-cell capture, splits the arms by their QC cut, and the split is exact.** It is strongly
+positive on the mice (+5.3 to +9.8) and **negative** on Subclone (−0.90) and Pre-TX (−1.11). The mice
+carry a $\ge20$-tape cell filter and Subclone and Pre-TX a $\ge100$-tape filter — so where the QC cut
+is strict the per-cell variation has already been removed and a per-cell parameter is pure noise on
+held-out data. This is fig 3c's "the shelf is a QC choice" showing up as a *negative held-out gain*,
+and it is a result an in-sample ladder would have reported as a gain.
+
+**M3, tape recoverability within clone, dominates everything (+26 to +48).** Held-out $R^2$ reaches
+0.42–0.49. This is the honest technical baseline, and clone-wide silencing lives inside it.
+
+**M4 adds ONE parameter** against 3,232–64,975 in M3, and $w$ lands between +0.78 and +1.55 across
+five arms — a consistency worth noting, since nothing forces these to agree.
+
+## Sensitivity — and it confirms Justin's clone-size intuition quantitatively
+
+**Clone floor, at $k=20$ (nats per cell, obs − null):**
+
+| arm | floor 20 | floor 50 | floor 100 |
+|---|---|---|---|
+| Pre-TX | +0.75 | +3.05 | **+4.59** |
+| Mouse 3 | +1.11 | +1.50 | **+2.19** |
+| Mouse 2 | +2.13 | +2.32 | **+2.47** |
+| Mouse 1 | +1.14 | +1.35 | **+1.48** |
+
+**Monotone in 4/4 arms**, by 1.3× (Mouse 2) to 6.2× (Pre-TX). ⚠ Part of this is genuinely a cleaner
+test and part is escaping the $k/n_C$ regime — at floor 20 with $k=20$ many clones have
+$k_{\rm eff}=n_C-1$, where the neighbour mean *is* the cell's complement. Do not read the whole rise
+as biology.
+
+**$k$, at floor 100:**
+
+| arm | $k=5$ | $k=20$ | $k=50$ |
+|---|---|---|---|
+| Subclone | +6.82 | **+8.31** | *pending* |
+| Pre-TX | **+5.05** | +4.59 | +2.54 |
+| Mouse 2 | +0.74 | +2.47 | **+3.38** |
+| Mouse 1 | +0.65 | +1.48 | **+1.79** |
+| Mouse 3 | +0.98 | +2.19 | **+2.46** |
+
+Rising in four arms and **falling in Pre-TX**, whose clones are 100–127 cells, so $k=50$ is ~45% of
+the clone. ⇒ **the usable rule is $k \lesssim 0.2\,n_C$**, and $k$ must be reported with $n_C$.
+
+## ⚠ Relation to `74`'s numbers
+
+The ladder's M3→M4 rung is a strictly harder task ($B$-only fitting, entries held out rather than
+cells, two-stage so $\Delta_4$ is a lower bound) and it is smaller than `74`'s figures: Subclone
++8.31 here against +9.26 there, Mouse 2 +2.47 against +2.65 pooled. Both are legitimate. Quote the
+ladder when the argument needs the technical baseline on the same chart, and `74` when the question
+is simply how much a cell's relatives are worth.

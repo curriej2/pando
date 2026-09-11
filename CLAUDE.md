@@ -181,7 +181,35 @@ the **symbol-depletion test** of row A9's untested *trans* limb. |
    events $\le10$). Threshold-independent claims that survive: the 118–2,522× null comparison,
    $q\le1.9\times10^{-4}$ per event, $\hat\pi$ median 1.000 vs expected 0.11–0.41. Full audit in
    README "How events are actually called".
-0-CURRENT. **⭐⭐ 2026-09-11 — BOTH STATISTICS MEASURED ON ALL FIVE ARMS AT 100% COVERAGE; THE
+0-CURRENT. **⭐⭐ 2026-09-11 — THE NESTED LADDER IS BUILT (`77`), AND IT FOUND A BUG IN THE NULL
+   THAT ALSO AFFECTS `74`.** `2026-08_park-compatibility`, README "The nested ladder".
+   **The design, agreed with Justin over three rounds:** fit **within clone** (so clone, batch,
+   harvest and mouse are held fixed *by construction*, not by trusting a $\gamma$ term), hold out
+   **entries** not cells (so a rung can LOSE — the only way the comparison means anything), and fit
+   $M_4$ **two-stage** on a frozen offset (so $\Delta_4$ is a conservative lower bound and "one
+   parameter" is literal). Justin's simplification — fit $\alpha$ and $\beta$ inside the clone
+   rather than adding $\gamma_{Cz}$ — is **exactly equivalent**, since the likelihood factorises over
+   clones, and it fixed an identifiability error of mine (one constraint is needed **per clone**).
+   ⚠⚠ **THE NULL MUST EXCLUDE SELF.** The $M_3$ score equation forces $\sum_{c\in C}r_{cz}=0$, so a
+   self-excluding neighbour set carries $-1/(n_C-1)$ of the cell's own residual. `74`'s null permutes
+   residual ROWS across fixed neighbour SLOTS — a uniform subset of ALL $n_C$ cells INCLUDING $c$,
+   expectation 0 — so it carries no leak and obs−null cannot cancel it. Negligible at $n_C=3387$,
+   **fatal at $n_C=31$**: Pre-TX returned a negative lineage rung until fixed. The null is now
+   **$k$ random clone-mates, self excluded**. ⚠ `74`'s small-clone numbers are in question.
+   **⭐ RESULTS (floor 100, $k=20$, nats/cell obs−null):** Subclone **+8.31±0.09**, $Q$=**15.9%** ·
+   Pre-TX **+4.59±0.12**, 7.1% · Mouse2 +2.47, 4.4% · Mouse3 +2.19, 3.8% · Mouse1 +1.48, 2.4%.
+   **Positive 5/5 at 16–90 se**, $w$ = +0.78…+1.55. $Q$ = *of everything still unexplained after
+   every technical correction, the share that knowing a cell's relatives removes* — the talk number.
+   **⭐ M2 (per-cell capture) is NEGATIVE on Subclone and Pre-TX** and strongly positive on the mice:
+   they carry a ≥100-tape cell filter against ≥20, so where QC is strict a per-cell parameter is pure
+   noise out of sample. Fig 3c's "the shelf is a QC choice" as a held-out *loss*.
+   **⭐ Clone floor monotone 4/4** (Pre-TX +0.75→+4.59 from floor 20→100), confirming Justin's
+   intuition — but **clone size makes the measurement cleaner, not the effect bigger**, and the rule
+   is $k\lesssim0.2\,n_C$.
+   **⇒ NEXT: the $\gamma$/$\beta_z$ skew test** (is the clone-tape coefficient right-skewed, as
+   one-directional Dollo loss predicts, against a permutation null?), then the talk figures.
+
+0-PREV2. **⭐⭐ 2026-09-11 — BOTH STATISTICS MEASURED ON ALL FIVE ARMS AT 100% COVERAGE; THE
    OWED LIST IS CLOSED AND THE SIMULATOR IS THE ONLY THING LEFT.**
    `2026-08_park-compatibility`, README "Session 10". **⚠⚠ Two defects in `73`/`74` found by reading
    the code before sizing the jobs.** (i) *A cell could be its own nearest relative*: self and

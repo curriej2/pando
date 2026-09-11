@@ -13,7 +13,42 @@ gitignored, never copy out). Justin's own copy of the Park, Chang et al. 2026 ta
 - `clonalbc_percell_hamming1_corrected.csv` — 167,736 rows, `CellID,Sample,ClonalBC_raw,ClonalBC`.
   **This is the clone assignment**, needed for §D.4b Procedure step 1 (work within a clone).
 
-**⭐⭐ STATE (2026-09-11, end of session 10) — READ THIS FIRST. The owed list is CLOSED and the
+**⭐⭐ STATE (2026-09-11, session 11) — READ THIS FIRST. THE LADDER IS BUILT (`77`) AND IT FOUND A
+BUG IN THE NULL THAT ALSO AFFECTS `74`.** Full spec and results in README "The nested ladder".
+
+**⚠⚠ THE NULL MUST EXCLUDE SELF.** $M_3$ forces $\sum_{c\in C} r_{cz}=0$, so a neighbour set
+excluding $c$ carries $-1/(n_C-1)$ of $c$'s OWN residual. `74`'s null permutes residual ROWS across
+fixed neighbour SLOTS, giving a uniform subset of ALL $n_C$ cells INCLUDING $c$ — expectation zero,
+so it carries NO leak and obs−null cannot cancel it. Verified by simulation (400 reps): observed
+−0.0500 at $n_C=21$ vs theory $-1/20$, old null +0.0005, self-excluding null −0.0500. **Negligible at
+$n_C=3387$ ($3\times10^{-4}$), fatal at $n_C=31$** — Pre-TX returned a NEGATIVE lineage rung until
+fixed. ⇒ **the null is now "$k$ random clone-mates, self excluded"**, which is also the question we
+mean: are the NEAREST relatives more informative than ARBITRARY ones?
+⚠ **`74`'s small-clone numbers are in question** (Pre-TX pooled +2.86); its large-clone ones are not.
+
+**⭐ THE LADDER, floor 100, $k=20$ (nats/cell, obs−null, 5 splits × 2 masks).** Fitted WITHIN CLONE,
+held-out ENTRIES, two-stage so $\Delta_4$ is a lower bound.
+Subclone **+8.31±0.09 ($Q$=15.9%)** · Pre-TX **+4.59±0.12 (7.1%)** · Mouse2 +2.47±0.09 (4.4%) ·
+Mouse3 +2.19±0.09 (3.8%) · Mouse1 +1.48±0.05 (2.4%). **Positive 5/5 at 16–90 se.** $w$ = +0.78 to
++1.55, consistent across arms. $Q$ = share of REMAINING deviance removed — **the talk number**.
+**Rungs:** M1 clone +0.07…+0.95 (clone identity buys almost nothing — the clonal signal is not a rate
+shift), M2 cell **+5.3…+9.8 on the mice but NEGATIVE on Subclone/Pre-TX** (they carry a ≥100-tape
+filter vs ≥20 — where QC is strict a per-cell parameter is noise; fig 3c as a held-out loss),
+M3 tape-in-clone **+26…+48**, held-out $R^2$ 0.42–0.49. M4 adds **one** parameter against 3,232–64,975.
+
+**⭐ Clone floor confirms Justin's intuition, monotone 4/4**: Pre-TX +0.75→+3.05→**+4.59** at floors
+20/50/100, Mouse3 +1.11→+1.50→+2.19, Mouse2 +2.13→+2.32→+2.47, Mouse1 +1.14→+1.35→+1.48.
+⚠ Part is a cleaner test, part is escaping $k/n_C$ — at floor 20 with $k=20$ many clones have
+$k_{\rm eff}=n_C-1$. **Rule: $k\lesssim0.2\,n_C$**, and always report $k$ with $n_C$.
+⚑ **Floor 100 chosen by arithmetic**: train/param at $M_3$ = $(n_C|B|/2)/(n_C+|B|-1)$ runs 8.1 → 22.8
+→ 41.5 (limit) at $n_C$ = 20/100/∞, so the steep gain is 20→200. Floor 200 deletes Pre-TX (max clone
+127) and Mouse3. ⚠⚠ Clone size makes the MEASUREMENT cleaner, NOT the effect bigger — Pre-TX c7 (127
+cells) gave +10.64 vs Mouse1 c36 (1,607) at +1.73.
+⚠ Report per arm, never pooled: at floor 100 Subclone is 81% of retained cells.
+
+---
+
+**STATE (2026-09-11, end of session 10). The owed list is CLOSED and the
 simulator is unblocked.** All five arms are measured on both statistics, at 100% pair coverage, and
 two defects in `73`/`74` were found and fixed before the runs (details in README "Session 10").
 
