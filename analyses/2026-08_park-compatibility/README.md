@@ -3714,3 +3714,74 @@ identical code: the variogram's **slope and convexity** (not its level, which is
 **top-bin value** (+0.019 to +0.262 — a 14× spread across arms that any adequate simulator has to
 generate), and the **nats-per-$k$ curve including its inversion** at small clone size. All three come
 from the same two scripts with no threshold, no attribution and no event definition anywhere in them.
+
+---
+
+# ✅ Standing control: is "lineage relatedness" secretly a measure of shared tapes? (2026-09-11)
+
+Justin, on reading the method: *relatedness is used to pick the nearest neighbours — is it just the
+mean shared prefix depth, or is it larger for cells that share more tapes? I want to be sure we
+aren't artificially identifying this structure by using a metric that selects for it.* The right
+worry: the disjoint tape split stops A's dropout being read as B's dropout, but it does not by itself
+stop a pair's overall **capture quality** from leaking across the split. Script `76`.
+
+## The metric, confirmed two ways
+
+$$\mathrm{rel}_{cc'}=\frac{\text{agree}}{\text{denom}}
+=\frac{\#\{(\text{tape},\text{depth}):\text{both codes valid and equal}\}}
+{\#\{\text{A-tapes determined in BOTH cells}\}}$$
+
+= **mean shared prefix depth per jointly determined A-tape**, in $[0,6]$. Validity is nested in depth
+(`44_prefix_codes6.py`: `ok &= S[:,:,d] >= 0`), so `agree` can only count tapes already in `denom` —
+the denominator is the **jointly determined count, not $|A|=83$**. ⇒ a pair sharing two tapes at
+shared depths 4 and 5 scores $9/2=4.5$, identical to a pair sharing eighty tapes at mean depth 4.5.
+**It is a mean, not a total.** Brute-forced against an independent loop on sampled real pairs, 5/5
+exact, including an 11-tape pair scoring 1.818 — thinness does not push a pair to an extreme.
+⚠ "Determined" is stricter than "recovered": it needs a kept-alphabet symbol at **site 1**, so a tape
+read as junk at site 1 is absent from `denom` though the cell counted it toward the tape filter.
+
+## The association exists, is inconsistent in sign, and does not produce the gradient
+
+| arm | corr(rel, denom) Pearson | Spearman | mean denom, lowest → top rel bin |
+|---|---|---|---|
+| Mouse 3 | **+0.278** | +0.334 | — |
+| Pre-TX | +0.140 | +0.137 | 56.9 → 61.4 (+7.9%) |
+| Mouse 2 | +0.106 | +0.109 | 37.7 → 47.5 (bin 9) → **29.5** (top) |
+| Mouse 1 | +0.059 | +0.038 | — |
+| **Subclone** | **−0.108** | −0.053 | 62.6 → 58.9 (flat/down) |
+
+⚑ **The sign is not even consistent across arms** — strongly positive on Mouse 3, *negative* on
+Subclone, the largest arm — while the relatedness gradient is positive in all five. A confound that
+manufactured the gradient would have to act in a consistent direction; this one does not.
+⚑ **Mouse 2 runs backwards where it matters**: the top relatedness bin, which carries the largest
+obs − null (+0.0393), holds the **worst**-captured pairs in the arm (29.5 tapes against a mean of
+~44). Capture cannot be generating the top of that curve.
+⚑ **Pre-TX** has the clearest positive association and it is still tiny: mean denom rises 7.9% across
+the bins while obs − null swings by 0.31.
+
+## ⭐ The control that settles it: the gradient at FIXED joint capture
+
+Splitting within-clone pairs into joint-capture quartiles and re-running the variogram inside each.
+Spread = top relatedness bin − lowest, within that stratum:
+
+| arm | stratum 1 (lowest capture) | 2 | 3 | 4 (highest) |
+|---|---|---|---|---|
+| Pre-TX | **+0.0894** | +0.1016 | +0.1096 | +0.1273 |
+| Subclone | **+0.0228** | +0.0300 | +0.0395 | +0.0345 |
+| Mouse 1 | **+0.0523** | +0.0447 | +0.0415 | +0.0429 |
+| Mouse 3 | **+0.0164** | +0.0455 | +0.0597 | +0.0814 |
+| Mouse 2 | **+0.0146** | +0.0245 | +0.0359 | +0.0447 |
+
+**Positive in 20 of 20 strata**, including the lowest-capture stratum of every arm. ⇒ the gradient is
+not a capture artefact.
+
+⚑ **Why the spread grows with capture in 4/5 arms — and it cuts in our favour.** `rel` is a mean over
+`denom` tapes, so its noise scales as $1/\sqrt{\mathrm{denom}}$; a noisily measured relatedness smears
+pairs across bins and **attenuates** the gradient. This is regression dilution, not a capture effect:
+low-capture pairs are measured badly, not behaving differently. The consequence is that the pooled
+variogram **understates** the true gradient — a conservative bias. Mouse 1 is the exception (flat
+across strata), consistent with its being the arm with the weakest capture–relatedness coupling.
+
+⚠ Residual caveat: within a stratum `denom` still varies (Mouse 2's stratum 1 spans 1–32 tapes), so
+this bounds the confound rather than eliminating it arithmetically. Given that the sign flips across
+arms and Mouse 2's top bin is the worst-captured, we are not close to the regime where it matters.
