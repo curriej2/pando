@@ -4185,3 +4185,76 @@ should have been there"*: both are capture-independence, seen from different dir
 ⚠ Counts are printed on the **"all"** bin only — the "none" bin holds 1.2–2.6 M entries in every
 facet so its support is never in doubt, and its two labels collided over near-identical $y$. The
 load-bearing count is the random-clone-mate "all" cell, as thin as **780**.
+
+---
+
+# ⭐⭐ Fig C, rebuilt MODEL-FREE (2026-09-12) — `81`, `82` — and the naive version fails BACKWARDS
+
+## Why the model came out
+
+Justin, on the stratified version: *the "20 random clone-mates" line rises as the neighbour fraction
+goes up, but the null is supposedly held constant by what the model predicts. Do you see the tension?*
+
+Yes, and it is fatal to the old caption. **Simulated a world with NO lineage structure at all**
+(dropout depends only on $\alpha_c+\beta_z$, cells exchangeable within clone) and ran the identical
+pipeline: the "arbitrary clone-mates" curve still rose **14.9% → 28.2%**. Two mechanisms:
+
+- **the stratum is coarse** — mean $\tilde p$ inside a facet moves 14.1% → 16.8% across $f$ bins, so
+  some of the rise is residual $\tilde p$ variation the quartile failed to hold fixed. ~1/5 of it.
+- **⚠⚠ $\tilde p$ is an ESTIMATE, and this part is irreducible.** $\beta_z$ is fitted from a few
+  dozen entries per tape per clone. **Stratifying on a noisy estimate does not hold the truth
+  fixed**, so a second independent 20-cell sample carries real information about the true clone-tape
+  rate even when nothing lineage-related exists. No re-binning removes this.
+
+⇒ the old caption ("holding the model's prediction fixed") implied the grey line should be flat. **It
+cannot be flat.** ⚑ The *analysis* was never wrong — the ladder quotes obs − null throughout and the
+null is exactly this — but the figure overclaimed.
+
+Also fixed by going model-free: with a 50% mask the denominator $m\sim\mathrm{Binomial}(20,0.5)$
+**varied**, so "all your neighbours lack it" meant "all $m$ observed ones", and reaching that with
+$m=4$ is **~15,600× easier by chance** than with $m=10$.
+
+## ⚠⚠ The naive model-free plot ALSO fails — and shows the effect backwards
+
+$x$ = the number of a cell's 20 neighbours missing the tape (fixed denominator, no mask, no model).
+Plotting rate against $x$:
+
+| arm | unanimous, relatives | arbitrary | information (nats/cell) rel | arb | ratio | median rate diff at matched $j$ |
+|---|---|---|---|---|---|---|
+| **Subclone** | **38.7%** | 21.8% | 45.5 | 34.3 | **1.33** | −2.6 pp |
+| Pre-TX | 27.4% | 18.5% | 33.3 | 25.8 | 1.29 | −0.6 pp |
+| Mouse 3 | 24.0% | 15.4% | 42.0 | 34.9 | 1.20 | −2.4 pp |
+| Mouse 2 | 18.2% | 17.9% | 44.5 | 38.9 | 1.15 | −13.3 pp |
+| Mouse 1 | 15.6% | 13.7% | 37.2 | 34.3 | 1.08 | −9.1 pp |
+
+**At matched $j$ the ARBITRARY clone-mates are the better predictor in 5/5 arms.** That is correct,
+not a bug: if 15 of 20 *random* cells lack a tape the clone-wide rate must be high, whereas 15 of 20
+*relatives* can be a local cluster in a clone where the tape is otherwise fine. So at matched $j$ the
+random sample implies a worse tape. ⇒ **a single rate-vs-$j$ panel would show the effect inverted.**
+
+## ⭐ Where the effect actually lives, and the figure that shows it
+
+**In the DISTRIBUTION of $j$, not the rate given $j$.** Relatives cluster, so they reach unanimity far
+more often, and unanimity is where the rate is decisive (Subclone: 3.0% at $j{=}0$, 97.0% at
+$j{=}20$). Arbitrary clone-mates bunch in the middle where the rate is an uninformative 20–40%.
+
+⇒ **two stacked panels sharing $x$** (`fig6c_modelfree_{arm}.png`):
+**top** how often each count occurs — *these differ, and that IS the effect*;
+**bottom** the rate at each count — *these coincide*.
+Reading: ***a given level of neighbour agreement means the same thing whoever the neighbours are, but
+your relatives reach agreement far more often.*** Subclone: all 20 agree the tape is missing
+**11.0% vs 4.3% of pairs (2.5×)**; unanimous either way **38.7% vs 21.8%**.
+
+⚑ Mutual information ranks the arms the same way the ladder's $M_4$ rung does (Subclone and Pre-TX
+high, Mouse 1 low), which is a useful coherence check. ⚠ They are **not** the same quantity — this
+one includes everything the neighbours say, the clone-tape rate that $M_3$ already knew included.
+
+## ⚠ What the model-free figure gives up, and where it is recovered
+
+$\alpha_c$ is no longer removed, so if nearest relatives systematically share capture quality with
+the cell, $j_{\rm rel}$ could predict for a technical reason. corr(relatedness, joint capture) runs
+**−0.108 (Subclone) to +0.278 (Mouse 3)** — real, and inconsistent in sign. It is excluded
+**elsewhere**: `76` shows the gradient survives in **20 of 20** joint-capture strata, and the ladder
+adjusts for $\alpha_c$ explicitly and still finds +8.31 nats.
+⇒ **division of labour, and say it in the caption: this figure is the communication object, the
+ladder is the controlled measurement.** Do not let the figure imply it does both.
