@@ -4109,3 +4109,79 @@ cells, two-stage so $\Delta_4$ is a lower bound) and it is smaller than `74`'s f
 +8.31 here against +9.26 there, Mouse 2 +2.47 against +2.65 pooled. Both are legitimate. Quote the
 ladder when the argument needs the technical baseline on the same chart, and `74` when the question
 is simply how much a cell's relatives are worth.
+
+---
+
+# ⭐⭐ The talk figure set (2026-09-12) — `80_fig_ladder.py`, three standalone PNGs
+
+Built from `77` (the ladder) and `79` (relatives against strangers). Every value is an arithmetic
+function of one stored quantity per replicate:
+
+$$\ell_j = \frac{1}{|\mathcal{V}|}\sum_{(c,z)\in\mathcal{V}}
+\left[X_{cz}\log\hat p^{(j)}_{cz} + (1-X_{cz})\log(1-\hat p^{(j)}_{cz})\right]$$
+
+the **mean held-out log-likelihood per test entry** under each nested model, plus
+$\ell_4^{\rm null}$. All six are computed on the *same* held-out entries, so the differences are
+like-for-like.
+
+## Fig 6a — cost against benefit (`fig6a_cost_benefit.png`)
+
+$y = K(\ell_j-\ell_{j-1})$ with $K=166$: $\ell$ is per *entry*, so multiplying by the tape count puts
+it on the per-*cell* scale every earlier result uses. For $j=4$, $K(\ell_4-\ell_4^{\rm null})$
+instead — the raw rung is biased because the $M_3$ score equation forces the clone's residuals to sum
+to zero, so a self-excluding neighbour set carries $-1/(n_C-1)$ of the cell's own residual; the null
+carries the identical term. Error bars are sd/$\sqrt{10}$ over replicates.
+
+Parameter counts are **derived from the model definitions, not counted**:
+$M_1 = n_{\rm clones}-1$ · $M_2 = n-n_{\rm clones}$ · $M_3 = n_{\rm clones}(|B|-1)$ · $M_4 = 1$,
+with $|B|=K/2=83$ because the model is fitted on half the tapes (the other half defines relatedness
+and must stay disjoint). The $M_3$ count is $n_{\rm clones}|B|$ new $\beta$ minus the
+$n_{\rm clones}$ intercepts they absorb.
+
+⚠⚠ **The first version was a log scatter of gain against parameters with an arm's four rungs joined
+by a line. Two faults:** the line implied a **trajectory** through a space the rungs do not move
+through, and $M_3$'s +48 nats squashed $M_4$'s +1.5…+8.3 against the axis. Grouped bars put the rungs
+side by side, show the negative $M_2$ honestly, and carry the parameter cost as printed text — which
+is where it belongs, since 1 and 38,604 do not share a usable axis.
+
+## Fig 6b — the honest zoom (`fig6b_deviance.png`)
+
+The saturated log-likelihood is **0** ($\hat p = X$ gives $\log 1$ everywhere), so $-\ell_0$ is the
+total deviance available and every share is a fraction of it:
+
+$$\text{technical}=1-\frac{\ell_3}{\ell_0},\qquad
+\text{lineage}=\frac{\ell_4-\ell_4^{\rm null}}{-\ell_0},\qquad
+Q=\frac{\text{lineage}}{1-\text{technical}}=\frac{\ell_4-\ell_4^{\rm null}}{-\ell_3}$$
+
+The two forms of $Q$ are algebraically identical, so the bar and the printed percentage cannot
+disagree. **Why a second quantity is needed:** the technical rungs explain 28–50% of total deviance,
+so a plain stacked bar makes lineage look trivial. $Q$ re-bases onto what is *left*.
+⚠ $M_1$/$M_2$/$M_3$ are deliberately not shown separately here — $M_2$ is negative on two arms and a
+negative segment in a stacked bar is unreadable. Fig 6a carries the breakdown.
+
+## Fig 6c — relatives against strangers (`fig6c_relatives.png`)
+
+Per held-out entry, $f_{cz}$ = fraction of $c$'s neighbours missing tape $z$, over the neighbours'
+**training** entries only. Two neighbour sets: the $k$ nearest relatives (from tape half $A$, self
+excluded) and $k$ **random clone-mates** (self excluded) — the latter *is* the ladder's null, so the
+flat series is **the null drawn from data, not asserted**. Binned by $f$ within quartiles of
+$\tilde p$, so cell and tape quality are identical across the $x$-axis by construction.
+
+⚠⚠ **CORRECTION caught by rendering.** The first version auto-picked the best-supported stratum —
+which is the one where the model already predicts **77%** dropout, and there the two curves nearly
+**coincide**. A tape the model expects to be missing is missing for everyone, so lineage has nothing
+to add. **The effect lives where the model expects the tape to be PRESENT**, and that modulation is a
+result, so the figure now facets all four strata rather than cropping to one. Subclone:
+
+| model predicts | relatives, none → all | random clone-mates, none → all |
+|---|---|---|
+| 2% | 1% → **67%** | 3% → 54% |
+| **6%** | 3% → **90%** (n=42,600) | 6% → **34%** (n=780) |
+| **15%** | 8% → **91%** (n=89,221) | 14% → **32%** (n=4,687) |
+| 77% | 15% → 97% | 27% → 95% — *no separation* |
+
+⚑ This connects to the 2026-09-07 finding that *"a small clade is detectable only on a tape that
+should have been there"*: both are capture-independence, seen from different directions.
+⚠ Counts are printed on the **"all"** bin only — the "none" bin holds 1.2–2.6 M entries in every
+facet so its support is never in doubt, and its two labels collided over near-identical $y$. The
+load-bearing count is the random-clone-mate "all" cell, as thin as **780**.
