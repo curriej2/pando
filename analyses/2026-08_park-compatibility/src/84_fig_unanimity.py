@@ -79,9 +79,14 @@ for ax, key, ttl in ((axs[0], "miss", f"missing in ALL {KUSE} cells"),
     ax.scatter(pm[BOTH], pr[BOTH], s=26, color=COL[ARM], alpha=0.8, zorder=4,
                edgecolor=SURFACE, linewidth=0.5)
     cens = ok0 & (pr > 0) & (pm == 0)                  # control never unanimous
+    # ⭐ OPEN markers, restored 2026-09-14 on Justin's second thought.  This column
+    # sits at a CENSORING FLOOR, not at a measured x, and with filled markers a
+    # reader takes it for a measurement.  The open style is the only visual signal
+    # that these tapes are 'below the resolution of the control', which is also
+    # where the effect is strongest -- 49 tapes on Pre-TX at k = 5.
     if cens.sum():
-        ax.scatter(np.full(int(cens.sum()), FLOOR), pr[cens], s=26, color=COL[ARM],
-                   alpha=0.8, zorder=4, edgecolor=SURFACE, linewidth=0.5)
+        ax.scatter(np.full(int(cens.sum()), FLOOR), pr[cens], s=30, facecolor="none",
+                   edgecolor=COL[ARM], linewidth=1.0, zorder=4)
     MED[key] = float(np.median(pr[BOTH] / pm[BOTH]))
     NOTE[key] = (int((pr[BOTH] > pm[BOTH]).sum()), int(BOTH.sum()),
                  int(cens.sum()), int((ok0 & (pr == 0) & (pm > 0)).sum()))
@@ -102,8 +107,9 @@ cap = (
     f"Statistics use the {bm} tapes measurable in BOTH panels — a tape needs a high missing rate to "
     f"reach all-{KUSE}-missing and a low one to reach all-{KUSE}-present, so the two tests otherwise "
     f"exclude opposite ends of the range.\n"
-    f"⚠ The leftmost column is a censoring floor, not a measurement: {ac} tapes (left) and {pc} "
-    f"(right) where the matched control never reached unanimity, plotted at 0.5/n. "
+    f"\u26a0 The open circles at the left edge are a censoring floor, not a measurement: "
+    f"{ac} tapes (left) and {pc} (right) where the matched control never reached "
+    f"unanimity, plotted at 0.5/n. "
     f"{ab} and {pb} tapes lie below the line off the log axis.\n"
     f"Capture is matched cell by cell on rank: {cm['rel']:.1f} vs {cm['mat']:.1f} A-tapes recovered "
     f"per set, against {cm['rnd']:.1f} for unmatched random sets."

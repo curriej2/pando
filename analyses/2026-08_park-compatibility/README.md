@@ -4416,6 +4416,8 @@ the fold is pinned near 1.
    not how far apart they would have been. ⚑ **The unmatched numbers stay in the caption**, because
    they are the evidence the matching was necessary rather than decorative.
 
-⚠ One thing lost with (1), so it is stated in the caption instead: **the leftmost column is a
-censoring floor, not a measurement** — tapes where the matched control never reached unanimity,
-plotted at $0.5/n_{\rm sets}$. Pre-TX has **49** at $k$=5, and they are where the effect is strongest.
+⚠⚠ **(1) was REVERSED on Justin's second thought and the open markers are back.** The reason is the
+one I flagged when making the change: that column sits at a **censoring floor, not at a measured
+$x$**, and with filled markers a reader takes it for a measurement. The open style is the only visual
+signal that those tapes are *below the resolution of the control* — which is also where the effect is
+strongest, **49 tapes on Pre-TX at $k$=5**. Changes (2)–(4) stand.
