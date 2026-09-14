@@ -60,6 +60,10 @@ for ax, key, ttl in ((axs[0], "miss", f"missing in ALL {KUSE} cells"),
     live = ok0 & (pr > 0)
     on = live & (pm > 0)                       # both measurable
     off = live & (pm == 0)                     # matched-random never unanimous
+    # ⚠ tapes where RELATIVES never reached unanimity but the matched control
+    # did: they lie against the effect and cannot go on a log y axis, so they
+    # are excluded from the plot and MUST be counted in the caption.
+    against = ok0 & (pr == 0) & (pm > 0)
     lim = (FLOOR / 2.2, 1.35)
     ax.plot(lim, lim, color=NEUT2, lw=1.1, zorder=2)
     ax.scatter(pm[on], pr[on], s=26, color=COL[ARM], alpha=0.8, zorder=4,
@@ -84,6 +88,7 @@ for ax, key, ttl in ((axs[0], "miss", f"missing in ALL {KUSE} cells"),
             ls=(0, (5, 3)), zorder=3)
     ax.text(0.03, 0.97, f"median {med:.2f}x the matched random rate\n"
             f"{above} of {int(on.sum())} tapes above the line"
+            + (f"\n{int(against.sum())} below it, off the log axis" if against.sum() else "")
             + (f"\n{int(off.sum())} more off-scale (open)" if off.sum() else ""),
             transform=ax.transAxes, ha="left", va="top", fontsize=8.6,
             color=COL[ARM] if key == "miss" else INK2, linespacing=1.5)

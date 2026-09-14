@@ -97,6 +97,15 @@ SER = ("rel", "mat", "rnd")
 miss = {k: {s: np.zeros(K, np.int64) for s in SER} for k in KK}
 pres = {k: {s: np.zeros(K, np.int64) for s in SER} for k in KK}
 nset = {k: np.zeros(K, np.int64) for k in KK}
+# ⭐ COMPANION DIAGNOSTICS: the distributions the matching is supposed to equalise
+# (capture) and the one it must NOT (relatedness).  Fixed bins so splits and clones
+# can be accumulated without keeping per-set values.
+HC = np.linspace(0, K // 2, 84)      # set MEAN capture, in A-tapes recovered
+HS = np.linspace(0, 30, 61)          # WITHIN-set sd of capture
+HR = np.linspace(0, 6, 61)           # WITHIN-set mean pairwise relatedness
+hcap = {k: {s: np.zeros(len(HC) - 1, np.int64) for s in SER} for k in KK}
+hsd  = {k: {s: np.zeros(len(HS) - 1, np.int64) for s in SER} for k in KK}
+hrel = {k: {s: np.zeros(len(HR) - 1, np.int64) for s in SER} for k in KK}
 capsum = {k: {s: 0.0 for s in SER} for k in KK}
 capsd = {k: {s: 0.0 for s in SER} for k in KK}
 capn = {k: 0 for k in KK}
@@ -149,6 +158,18 @@ for s_ in range(NSPLIT):
                 cap = RA[lo:hi][IDX]             # capture profile of the set
                 capsum[k][tag] += float(cap.mean()) * S
                 capsd[k][tag] += float(cap.std(1).mean()) * S
+                hcap[k][tag] += np.histogram(cap.mean(1), bins=HC)[0]
+                hsd[k][tag] += np.histogram(cap.std(1), bins=HS)[0]
+                # within-set mean pairwise relatedness: the manipulation itself.
+                # rel holds -inf on the diagonal and -1 where a pair shares no
+                # determined A-tape, so both are masked out of the mean.
+                sub = rel[IDX[:, :, None], IDX[:, None, :]]
+                good = np.isfinite(sub) & (sub >= 0)
+                np.einsum('sii->si', good)[:] = False
+                nv = good.sum((1, 2))
+                mr = np.where(nv > 0, np.where(good, sub, 0).sum((1, 2)) /
+                              np.maximum(nv, 1), np.nan)
+                hrel[k][tag] += np.histogram(mr[np.isfinite(mr)], bins=HR)[0]
             capn[k] += S
         del rel
     print(f"  split {s_+1}/{NSPLIT} [{time.time()-t0:.0f}s]", flush=True)
@@ -159,7 +180,11 @@ out = dict(arm=arm, mincl=MINCL, kk=KK, nsets=NSETS, nsplit=NSPLIT, ndec=NDEC,
            miss={str(k): {s: miss[k][s].tolist() for s in SER} for k in KK},
            pres={str(k): {s: pres[k][s].tolist() for s in SER} for k in KK},
            cap_mean={str(k): {s: capsum[k][s] / capn[k] for s in SER} for k in KK},
-           cap_within_sd={str(k): {s: capsd[k][s] / capn[k] for s in SER} for k in KK})
+           cap_within_sd={str(k): {s: capsd[k][s] / capn[k] for s in SER} for k in KK},
+           bins=dict(cap=HC.tolist(), sd=HS.tolist(), rel=HR.tolist()),
+           hist_cap={str(k): {s: hcap[k][s].tolist() for s in SER} for k in KK},
+           hist_sd={str(k): {s: hsd[k][s].tolist() for s in SER} for k in KK},
+           hist_rel={str(k): {s: hrel[k][s].tolist() for s in SER} for k in KK})
 (RES / f"unanimity_{arm}_mincl{MINCL}.json").write_text(json.dumps(out))
 print(f"\n  CAPTURE CHECK (mean A-tapes recovered per set, and mean WITHIN-set sd)")
 for k in KK:

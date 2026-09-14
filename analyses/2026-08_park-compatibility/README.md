@@ -4336,3 +4336,33 @@ structure the two set types are exchangeable and every tape sits on the line.
 dropping them silently would understate it.
 ⚠ Sets anchored on every cell would overlap heavily, so anchors are **sampled** and **no confidence
 interval is put on the result**.
+
+## ⭐ Companion: what the matching equalised, and what it did not (`85`, `fig6d_setdiag_*`)
+
+Three distributions over **sets** (not cells), so the design is checkable rather than asserted:
+
+| | **left** set mean capture | **middle** within-set sd of capture | **right** within-set mean pairwise relatedness |
+|---|---|---|---|
+| Subclone | 65.18 / **65.16** / 66.09 | 3.87 / **3.95** / 4.83 | **3.85** / 2.34 / 2.25 |
+| Pre-TX | 66.24 / **66.22** / 66.84 | 3.82 / **3.87** / 4.36 | **1.76** / 0.47 / 0.42 |
+| Mouse 3 | 46.67 / **46.74** / 52.72 | 14.45 / **14.39** / 13.28 | **4.47** / 2.83 / 2.78 |
+
+(related / capture-matched / plain random.) Reading left to right: **the two set types are
+indistinguishable in capture — level AND within-set spread — and differ only in how related their
+members are.** That is the entire design in one figure.
+
+⚑ **The middle panel matters more than it looks.** What drives all-$k$ unanimity is within-set
+*homogeneity* of capture: twenty uniformly badly-captured cells agree easily. Matching the mean alone
+would not have controlled it. ⚑ **The plain-random curve is kept to show the matching was necessary,
+not decorative** — it sits visibly apart in both capture panels on every arm.
+⚑ Pre-TX has the most separated relatedness distributions (1.76 vs 0.47, a 3.7× ratio against a low
+baseline), which is why it also has the largest unanimity effect.
+
+## ⚠ An accounting inconsistency between `83`'s summary and `84`'s figure, now fixed
+
+The figure requires both axes positive to place a point on a log–log plane, so it silently dropped
+tapes where the **relatives** never reached unanimity but the matched control did — points lying
+maximally *against* the effect. On Pre-TX that was 2 tapes, and it moved the reported median from
+**7.44** (script, including them at fold 0) to **7.99** (figure, excluding them). They are now counted
+in the caption ("2 below it, off the log axis"), so every tape is accounted for.
+⇒ **Quote the script's median, not the figure's**, or state which convention is in use.
