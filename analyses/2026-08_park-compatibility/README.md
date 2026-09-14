@@ -4366,3 +4366,56 @@ maximally *against* the effect. On Pre-TX that was 2 tapes, and it moved the rep
 **7.44** (script, including them at fold 0) to **7.99** (figure, excluding them). They are now counted
 in the caption ("2 below it, off the log axis"), so every tape is accounted for.
 ⇒ **Quote the script's median, not the figure's**, or state which convention is in use.
+
+## ⭐ Fig C and its companion, refined (2026-09-14, Justin's four changes + the $k$ sweep)
+
+**$k$ sweep, median fold missing / present, on tapes eligible for BOTH tests:**
+
+| arm | $k$=2 | $k$=3 | **$k$=5** | $k$=10 | $k$=20 |
+|---|---|---|---|---|---|
+| **Pre-TX** | 2.46/1.05 (158) | 5.82/1.10 (152) | **9.77/1.22 (90)** | 12.18/1.50 (29) | 2.70/1.52 (9) |
+| **Subclone** | 1.77/1.04 (160) | 3.29/1.08 (159) | **3.84/1.15 (145)** | 1.63/1.35 (89) | 1.76/1.72 (66) |
+| Mouse 1 | 1.05/1.02 (160) | 1.11/1.04 (156) | 1.30/1.07 (149) | 1.86/1.17 (111) | 1.92/1.30 (62) |
+| Mouse 2 | 1.04/0.98 (159) | 1.08/0.98 (153) | 1.16/1.02 (150) | 1.35/1.05 (130) | 2.00/1.05 (63) |
+| Mouse 3 | 1.05/1.01 (149) | 1.06/1.02 (143) | 1.24/1.04 (137) | 1.32/1.19 (63) | 1.50/1.24 (21) |
+
+⭐ **$k=5$ maximises the discriminator** (missing ÷ present): Pre-TX 2.3/5.3/**8.0**/8.1/1.8 and
+Subclone 1.7/3.0/**3.3**/1.2/1.0 across $k$=2/3/5/10/20. Below it unanimity is too easy to be
+informative; above it the **present** fold climbs too (Subclone 1.15→1.72), eroding the contrast,
+and the tape count collapses — Pre-TX has **9** common tapes at $k$=20.
+⚑ **$k=2$ is the variogram in disguise** — a "set" is a pair, so it asks whether related pairs
+co-lose tapes more than matched random pairs. Useful as a cross-check, too weak as a headline.
+⇒ **$k$=5 primary, $k$=3 as the near-complete-coverage version** (152–159 tapes).
+
+## ⚠⚠ The two panels were computed on DIFFERENT tapes — now fixed
+
+A tape enters the **missing** panel only if all-$k$-missing occurred at least once in both set types,
+which needs a **high** missing rate; the **present** panel needs the opposite. **The two tests exclude
+opposite ends of the per-tape rate range**, and the exclusion tracks each arm's overall missing rate:
+
+| arm | overall missing | MISS panel | PRES panel | both |
+|---|---|---|---|---|
+| Pre-TX | 23.2% | **96** | 152 | 90 |
+| Subclone | 21.8% | 146 | 158 | 145 |
+| Mouse 1 | 36.3% | 159 | 148 | 149 |
+| Mouse 2 | 37.1% | 159 | 151 | 150 |
+| Mouse 3 | 40.0% | 158 | **139** | 137 |
+
+Pre-TX at 23% loses 70 tapes from the *missing* panel — too well recovered ever to be unanimously
+absent; Mouse 3 at 40% loses 27 from the *present* panel for the mirror reason. ⇒ **all statistics
+now use the common set.** It *strengthens* the result (Pre-TX ratio 6.8→**8.0**, Subclone 2.7→3.1)
+because the common set drops near-dead tapes where both set types reach unanimity automatically and
+the fold is pinned near 1.
+
+## The four presentation changes (Justin, 2026-09-14)
+
+1. **No open/closed marker distinction** — the censored column is visible as a column.
+2. **No dashed median lines** — the points being above the diagonal is visible.
+3. **Caption text moved below the axes**, not on the canvas. It can then be fuller.
+4. **Plain-random dropped from the companion** — the reader needs to see the two groups are even,
+   not how far apart they would have been. ⚑ **The unmatched numbers stay in the caption**, because
+   they are the evidence the matching was necessary rather than decorative.
+
+⚠ One thing lost with (1), so it is stated in the caption instead: **the leftmost column is a
+censoring floor, not a measurement** — tapes where the matched control never reached unanimity,
+plotted at $0.5/n_{\rm sets}$. Pre-TX has **49** at $k$=5, and they are where the effect is strongest.

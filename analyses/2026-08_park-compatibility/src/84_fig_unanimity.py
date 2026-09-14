@@ -1,25 +1,34 @@
 #!/usr/bin/env python3
 r"""
-FIG C v3 -- per-tape unanimity, two panels.  From `83`.
+FIG C -- per-tape unanimity, two panels.  From `83`.
 
   LEFT   how often is a tape missing in ALL k cells of a set
   RIGHT  how often is it PRESENT in all k -- the discriminator
 
 x = capture-matched random sets, y = sets of close relatives, log-log, one point
-per tape.  THE DIAGONAL IS THE NULL, and it is drawn from data: under no lineage
-structure the two set types are exchangeable and every tape sits on the line.
+per tape.  THE DIAGONAL IS THE NULL, drawn from data: under no lineage structure
+the two set types are exchangeable and every tape sits on the line.
 
-WHY TWO PANELS.  Shared capture quality would cluster BOTH unanimity types --
-uniformly well-captured cells agree on presence, uniformly badly-captured cells
-agree on absence.  One-directional loss should lift MISSING and leave PRESENT
-alone, because presence is merely the default state.  So the left panel rising off
-the diagonal while the right panel stays on it is evidence the effect is not
-capture, obtained without any model.
+WHY TWO PANELS.  Shared capture would cluster BOTH unanimity types -- uniformly
+well-captured cells agree on presence, uniformly badly-captured cells agree on
+absence.  One-directional loss should lift MISSING and leave PRESENT nearly alone,
+since presence is merely the default state.
 
-⚠ Tapes with zero matched-random unanimity cannot be placed on a log axis.  They
-are drawn as OPEN markers on the left edge at 0.5/nsets and counted in the caption:
-they are tapes where the effect is strongest, so dropping them silently would
-understate it.
+⭐ COMMON-TAPE CONVENTION (Justin, 2026-09-14).  A tape enters the MISSING panel
+only if all-k-missing happened at least once in both set types, which needs a high
+missing rate; the PRESENT panel needs the opposite.  The two tests therefore
+exclude OPPOSITE ENDS of the per-tape rate range, and the panels were being
+computed on different tape populations -- Pre-TX 96 vs 152.  All statistics are now
+computed on the tapes eligible for BOTH, so the two medians are comparable.  It
+also strengthens the result, because the common set drops near-dead tapes where
+both set types reach unanimity automatically and the fold is pinned near 1.
+
+⚠ Tapes where the matched control NEVER reached unanimity have no x to plot on a
+log axis.  They are drawn at the left-edge floor 0.5/nsets.  That column is a
+CENSORING CONVENTION, not a measurement -- it is stated in the caption.
+⚠ Tapes where the RELATIVES never reached unanimity but the control did lie against
+the effect and also cannot be plotted; they are counted in the caption.
+⚠ Anchors are sampled and sets overlap, so no confidence interval is drawn.
 
 Usage: 84_fig_unanimity.py [arm] [k]        (default Subclone 5)
 """
@@ -51,55 +60,57 @@ d = json.loads((RES / f"unanimity_{ARM}_mincl100.json").read_text())
 ns = np.array(d["nset"][KUSE], float)
 ok0 = ns > 0
 FLOOR = 0.5 / ns.max()
-FOLD = {}
+P = {}
+for key in ("miss", "pres"):
+    pr = np.where(ok0, np.array(d[key][KUSE]["rel"], float) / np.maximum(ns, 1), 0.0)
+    pm = np.where(ok0, np.array(d[key][KUSE]["mat"], float) / np.maximum(ns, 1), 0.0)
+    P[key] = (pr, pm)
+BOTH = ok0.copy()
+for key in ("miss", "pres"):
+    BOTH &= (P[key][0] > 0) & (P[key][1] > 0)
+
 fig, axs = plt.subplots(1, 2, figsize=(9.6, 4.9), sharex=True, sharey=True)
+lim = (FLOOR / 2.2, 1.35)
+MED, NOTE = {}, {}
 for ax, key, ttl in ((axs[0], "miss", f"missing in ALL {KUSE} cells"),
                      (axs[1], "pres", f"present in ALL {KUSE} cells")):
-    pr = np.where(ok0, np.array(d[key][KUSE]["rel"], float) / np.maximum(ns, 1), np.nan)
-    pm = np.where(ok0, np.array(d[key][KUSE]["mat"], float) / np.maximum(ns, 1), np.nan)
-    live = ok0 & (pr > 0)
-    on = live & (pm > 0)                       # both measurable
-    off = live & (pm == 0)                     # matched-random never unanimous
-    # ⚠ tapes where RELATIVES never reached unanimity but the matched control
-    # did: they lie against the effect and cannot go on a log y axis, so they
-    # are excluded from the plot and MUST be counted in the caption.
-    against = ok0 & (pr == 0) & (pm > 0)
-    lim = (FLOOR / 2.2, 1.35)
+    pr, pm = P[key]
     ax.plot(lim, lim, color=NEUT2, lw=1.1, zorder=2)
-    ax.scatter(pm[on], pr[on], s=26, color=COL[ARM], alpha=0.8, zorder=4,
+    ax.scatter(pm[BOTH], pr[BOTH], s=26, color=COL[ARM], alpha=0.8, zorder=4,
                edgecolor=SURFACE, linewidth=0.5)
-    if off.sum():
-        ax.scatter(np.full(int(off.sum()), FLOOR), pr[off], s=30, facecolor="none",
-                   edgecolor=COL[ARM], linewidth=1.0, zorder=4)
-    ax.set_xscale("log"); ax.set_yscale("log"); ax.set_xlim(*lim); ax.set_ylim(*lim)
-    ax.set_aspect("equal")
+    cens = ok0 & (pr > 0) & (pm == 0)                  # control never unanimous
+    if cens.sum():
+        ax.scatter(np.full(int(cens.sum()), FLOOR), pr[cens], s=26, color=COL[ARM],
+                   alpha=0.8, zorder=4, edgecolor=SURFACE, linewidth=0.5)
+    MED[key] = float(np.median(pr[BOTH] / pm[BOTH]))
+    NOTE[key] = (int((pr[BOTH] > pm[BOTH]).sum()), int(BOTH.sum()),
+                 int(cens.sum()), int((ok0 & (pr == 0) & (pm > 0)).sum()))
+    ax.set_xscale("log"); ax.set_yscale("log")
+    ax.set_xlim(*lim); ax.set_ylim(*lim); ax.set_aspect("equal")
     ax.set_xlabel("capture-matched random sets")
     ax.set_title(ttl, fontsize=10.5, pad=8, color=INK)
-    fold = pr[on] / pm[on]
-    med = float(np.median(fold))
-    above = int((pr[on] > pm[on]).sum())
-    FOLD[key] = med
-    # ⚠ "present stays ON the diagonal" was too strong: every present tape is
-    # above the line too, just by far less.  Draw the median fold as a line
-    # PARALLEL to the diagonal so the magnitude is visible rather than only
-    # annotated, and let the two medians carry the discriminator between them.
-    xx = np.array(lim)
-    ax.plot(xx, med * xx, color=COL[ARM] if key == "miss" else INK2, lw=1.1,
-            ls=(0, (5, 3)), zorder=3)
-    ax.text(0.03, 0.97, f"median {med:.2f}x the matched random rate\n"
-            f"{above} of {int(on.sum())} tapes above the line"
-            + (f"\n{int(against.sum())} below it, off the log axis" if against.sum() else "")
-            + (f"\n{int(off.sum())} more off-scale (open)" if off.sum() else ""),
-            transform=ax.transAxes, ha="left", va="top", fontsize=8.6,
-            color=COL[ARM] if key == "miss" else INK2, linespacing=1.5)
 axs[0].set_ylabel("sets of close relatives")
-axs[1].text(0.97, 0.03, f"missing clusters {FOLD['miss']/FOLD['pres']:.1f}x more"
-            f"\nthan presence does", transform=axs[1].transAxes, ha="right",
-            va="bottom", fontsize=8.8, color=INK, linespacing=1.5)
 cm = d["cap_mean"][KUSE]
-fig.suptitle(f"{NICE[ARM]} · one point per tape · the diagonal is the null\n"
-             f"capture matched cell by cell: {cm['rel']:.1f} vs {cm['mat']:.1f} A-tapes "
-             f"recovered per set (unmatched random would be {cm['rnd']:.1f})",
-             fontsize=8.8, color=INK2, y=1.03)
+am, bm, ac, ab = NOTE["miss"]
+_, _, pc, pb = NOTE["pres"]
+cap = (
+    f"{NICE[ARM]} · one point per tape · $k$ = {KUSE} · the grey diagonal is the null: with no "
+    f"lineage structure the two set types are exchangeable and every tape sits on it.\n"
+    f"Median fold change, relatives over capture-matched random: "
+    f"{MED['miss']:.2f}× for MISSING against {MED['pres']:.2f}× for PRESENT, "
+    f"a ratio of {MED['miss']/MED['pres']:.1f}×. {am} of {bm} tapes lie above the line on the left.\n"
+    f"Statistics use the {bm} tapes measurable in BOTH panels — a tape needs a high missing rate to "
+    f"reach all-{KUSE}-missing and a low one to reach all-{KUSE}-present, so the two tests otherwise "
+    f"exclude opposite ends of the range.\n"
+    f"⚠ The leftmost column is a censoring floor, not a measurement: {ac} tapes (left) and {pc} "
+    f"(right) where the matched control never reached unanimity, plotted at 0.5/n. "
+    f"{ab} and {pb} tapes lie below the line off the log axis.\n"
+    f"Capture is matched cell by cell on rank: {cm['rel']:.1f} vs {cm['mat']:.1f} A-tapes recovered "
+    f"per set, against {cm['rnd']:.1f} for unmatched random sets."
+)
+fig.text(0.5, -0.02, cap, ha="center", va="top", fontsize=8.0, color=INK2,
+         linespacing=1.65, wrap=True)
 fig.savefig(FIG / f"fig6c_unanimity_{ARM}_k{KUSE}.png"); plt.close(fig)
-print(f"wrote figures/fig6c_unanimity_{ARM}_k{KUSE}.png")
+print(f"wrote figures/fig6c_unanimity_{ARM}_k{KUSE}.png  "
+      f"miss {MED['miss']:.2f} pres {MED['pres']:.2f} ratio {MED['miss']/MED['pres']:.2f} "
+      f"n_common {bm} censored {ac}/{pc}")
