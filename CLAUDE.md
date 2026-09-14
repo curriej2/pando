@@ -181,7 +181,25 @@ the **symbol-depletion test** of row A9's untested *trans* limb. |
    events $\le10$). Threshold-independent claims that survive: the 118–2,522× null comparison,
    $q\le1.9\times10^{-4}$ per event, $\hat\pi$ median 1.000 vs expected 0.11–0.41. Full audit in
    README "How events are actually called".
-0-CURRENT. **⭐⭐ 2026-09-11 — THE NESTED LADDER IS BUILT (`77`), AND IT FOUND A BUG IN THE NULL
+0-CURRENT. **⭐⭐ 2026-09-14 — ⭐ THE SILENCING EVIDENCE IS SUFFICIENT (Justin's call). FIGURE
+   PROGRAMME CLOSED; THE SIMULATOR IS NEXT.** `2026-08_park-compatibility`, README and its CLAUDE.md.
+   **Four figures carry it**, five arms each: `fig6a` the ladder (held-out gain vs parameters spent),
+   `fig6b` $Q$ (the lineage share of what the technical model left), `fig6c` per-tape unanimity
+   (missing vs present against the diagonal), `fig6d` the companion (capture matched, relatedness not).
+   **Ladder:** Subclone **+8.31 nats/cell, $Q$=15.9%** · Pre-TX **+4.59, 7.1%** · Mouse2 +2.47 ·
+   Mouse3 +2.19 · Mouse1 +1.48 — positive 5/5 at 16–90 se, one added parameter against 3,232–64,975.
+   **Per-tape unanimity** ($k$=5, common tapes): Pre-TX **9.77× missing vs 1.22× present**, Subclone
+   **3.84× vs 1.15×**, mice ~1.2× vs ~1.03×.
+   ⚠⚠ **Four corrections this thread paid for, all recorded**: the null must exclude self; a cell
+   could be its own nearest relative; stratifying on an ESTIMATE does not hold the truth fixed (a
+   no-structure simulation still rose 14.9→28.2%); and capture matching must be by rank, not decile
+   (deciles inflated folds up to 20%).
+   ⇒ **NEXT: the simulator.** Target the ladder's 4-vector including the SIGN of $M_2$, the
+   variogram's slope and convexity, the nats-by-$k$ inversion, and the unanimity fold. ⚠ These are
+   JOINT constraints on (tree, editing, dropout) — the variogram's $x$-axis is the editing process —
+   so calibrate tree and editing first, then use these to falsify rather than to fit.
+
+0-PREV3. **⭐⭐ 2026-09-11 — THE NESTED LADDER IS BUILT (`77`), AND IT FOUND A BUG IN THE NULL
    THAT ALSO AFFECTS `74`.** `2026-08_park-compatibility`, README "The nested ladder".
    **The design, agreed with Justin over three rounds:** fit **within clone** (so clone, batch,
    harvest and mouse are held fixed *by construction*, not by trusting a $\gamma$ term), hold out

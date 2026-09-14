@@ -13,7 +13,60 @@ gitignored, never copy out). Justin's own copy of the Park, Chang et al. 2026 ta
 - `clonalbc_percell_hamming1_corrected.csv` — 167,736 rows, `CellID,Sample,ClonalBC_raw,ClonalBC`.
   **This is the clone assignment**, needed for §D.4b Procedure step 1 (work within a clone).
 
-**⭐⭐ STATE (2026-09-11, session 11) — READ THIS FIRST. THE LADDER IS BUILT (`77`) AND IT FOUND A
+**⭐⭐ STATE (2026-09-14, session 12) — READ THIS FIRST. ⭐ THE EVIDENCE FOR HERITABLE TAPE
+SILENCING IS CONSIDERED SUFFICIENT (Justin's call, recorded). The figure programme for it is CLOSED;
+the next thread is the SIMULATOR.**
+
+**The four figures that carry it**, all in `figures/`, all five arms:
+| fig | script | what it shows |
+|---|---|---|
+| `fig6a_cost_benefit` | `77`,`80` | the ladder — held-out gain against parameters spent, per rung |
+| `fig6b_deviance` | `77`,`80` | $Q$, the lineage share of what the technical model left |
+| `fig6c_unanimity_{arm}_k{3,5}` | `83`,`84` | per-tape unanimity, missing vs present, against the diagonal |
+| `fig6d_setdiag_{arm}_k5` | `83`,`85` | the companion — capture matched, relatedness not |
+
+**⭐ THE HEADLINE NUMBERS.** Ladder (floor 100, $k$=20, nats/cell obs−null): Subclone **+8.31±0.09**
+($Q$=**15.9%**) · Pre-TX **+4.59±0.12** (7.1%) · Mouse2 +2.47 · Mouse3 +2.19 · Mouse1 +1.48,
+**positive 5/5 at 16–90 se**, $w$=+0.78…+1.55. Per-tape unanimity ($k$=5, common tapes, median fold
+relatives ÷ capture-matched): Pre-TX **9.77× missing vs 1.22× present (ratio 8.0)** · Subclone
+**3.84× vs 1.15× (3.3)** · mice 1.16–1.30× vs ~1.03×.
+
+**⚠⚠ THE FOUR CORRECTIONS THIS THREAD PAID FOR — do not reintroduce any of them.**
+1. **The null must EXCLUDE SELF.** $M_3$ forces $\sum_{c\in C}r_{cz}=0$, so a self-excluding
+   neighbour set carries $-1/(n_C-1)$ of the cell's own residual. `74`'s row-permutation null does
+   not, so obs−null cannot cancel it. Fatal at $n_C=31$ (Pre-TX went NEGATIVE), negligible at 3,387.
+   ⇒ **null = $k$ random clone-mates, self excluded.** ⚠ `74`'s small-clone numbers remain in doubt.
+2. **A cell could be its own nearest relative** (`74`, pre-fix): self and cross-clone pairs both
+   $-\infty$, tied under `argsort`. 71.5% of Pre-TX cells at $k$=50. Fixed by blocking per clone.
+3. **Stratifying on $\tilde p$ does not hold the truth fixed**, because $\tilde p$ is an ESTIMATE.
+   Simulated with NO lineage structure, the "arbitrary clone-mates" curve still rose 14.9%→28.2%.
+   ⇒ the model-stratified Fig C overclaimed; the per-tape version needs no model.
+4. **Capture matching must be cell-by-cell on RANK, not by decile.** Deciles left Mouse2 at rel 37.8
+   vs mat 40.9 and **inflated the folds by up to 20%**. Related sets really are worse captured
+   (Mouse2 37.4 vs 54.5 unmatched), so this control is load-bearing, not a formality.
+
+**⚠ Three framing rules learned here.** (i) **Per tape, never pooled** — the pooled unanimity number
+was a mixture dominated by near-dead tapes ($0.22^{20}=5\times10^{-14}$ expected vs 4.3% observed).
+(ii) **Common-tape convention**: all-$k$-missing needs a high rate, all-$k$-present a low one, so the
+two panels otherwise sit on opposite ends of the range. (iii) **$k$=5 maximises the discriminator**;
+$k$=2 is the variogram in disguise, $k$=20 leaves Pre-TX only 9 common tapes.
+
+**⇒ NEXT: THE SIMULATOR.** Calibration target per arm, through the identical scripts: the ladder's
+4-vector $(\Delta_1..\Delta_4)$ — including the **sign** of $M_2$, which is negative exactly where
+the cell filter is strict — the variogram's slope and convexity, the nats-by-$k$ inversion, and the
+per-tape unanimity fold. ⚠ These are **joint** constraints on (tree, editing, dropout), not clean
+per-parameter ones: the variogram's $x$-axis IS the editing process. Calibrate tree and editing first
+against statistics that do not involve dropout, then bring these in. Their value is falsification,
+not fitting — tune on the ladder, validate on the variogram.
+
+⚠ **PARKED with a known flaw: the $\beta_z$ skew test** (`78`). Dispersion is hugely inflated
+($z$=11–89 in 5/5 arms) but moment skew is not, because centring $\gamma$ on the clone-weighted mean
+turns a one-directional effect two-sided when there are few clones (4–11 here). Rebuild against a low
+quantile or an out-of-arm baseline before drawing any conclusion about directionality.
+
+---
+
+**STATE (2026-09-11, session 11). THE LADDER IS BUILT (`77`) AND IT FOUND A
 BUG IN THE NULL THAT ALSO AFFECTS `74`.** Full spec and results in README "The nested ladder".
 
 **⚠⚠ THE NULL MUST EXCLUDE SELF.** $M_3$ forces $\sum_{c\in C} r_{cz}=0$, so a neighbour set
@@ -276,6 +329,10 @@ statistical power, not inherited from the paper.
 | 4e **variogram + prediction** — structured dropout with no events | ✅ **built**, three standalone PNGs (`fig4e_a/b/c_*`), all five arms at 100% coverage; the simulator calibration target | `73`,`74`,`75` |
 | 4c **the worked example** — what a loss looks like, how the test works, and a near-miss | ✅ **built**, three standalone PNGs (`fig4c_a/b/c_*`), all in Mouse2 clone 76 | `69` |
 | 4c/d **the detection plane** — what a silencing event IS; fulfils the planned c/d | ✅ **built on Mouse 3**, three standalone PNGs (`fig5a/b/c_*`); panel a faceted by clade size, one threshold line per facet | `62`,`63`,`66` |
+| 6a **the ladder** — held-out gain against parameters spent, per rung | ✅ **built**, five arms | `77`,`80` |
+| 6b **$Q$** — the lineage share of what the technical model left | ✅ **built**, five arms | `77`,`80` |
+| 6c **per-tape unanimity** — missing vs present against the diagonal | ✅ **built**, five arms × $k$=3,5 | `83`,`84` |
+| 6d **the companion** — capture matched, relatedness not | ✅ **built**, five arms | `83`,`85` |
 | 5 compatibility spread + homoplasy null | needs the simulator | — |
 | 6 method comparison under simulation | planned; needs simulator | — |
 | 7 calibration / honest uncertainty | planned; needs simulator | — |

@@ -1067,3 +1067,52 @@ by rendering and inspecting; one annotation was deleted outright rather than rep
 calibration target is now concrete: the variogram's slope and convexity, the top-bin value across
 arms (+0.019 to +0.262, a 14× spread), and the nats-by-$k$ curve including its inversion — all from
 the identical scripts, with no threshold, attribution or event definition anywhere in them.
+
+---
+
+## 2026-09-14 — session 12: the silencing evidence is called sufficient; figure programme closed
+
+Justin's call, recorded: the four figures below are enough to demonstrate that heritable tape
+silencing is real. Work now moves to the simulator.
+
+**The four figures.** `fig6a` the ladder (held-out gain against parameters spent, per rung) ·
+`fig6b` $Q$ (the lineage share of what the technical model left) · `fig6c` per-tape unanimity
+(missing vs present, against the diagonal) · `fig6d` the companion (capture matched, relatedness
+not). All five arms; 6c also at $k$=3.
+
+**The numbers.** Ladder, floor 100, $k$=20, nats per held-out cell (obs − null): Subclone
+**+8.31±0.09** ($Q$=**15.9%**), Pre-TX **+4.59±0.12** (7.1%), Mouse2 +2.47, Mouse3 +2.19,
+Mouse1 +1.48 — **positive 5/5 at 16–90 se**, with one added parameter against 3,232–64,975 in the
+technical model. Per-tape unanimity, $k$=5, common tapes, median fold relatives ÷ capture-matched:
+Pre-TX **9.77× for missing against 1.22× for present**, Subclone **3.84× vs 1.15×**, mice ~1.2× vs
+~1.03×.
+
+**⚠⚠ Four corrections this thread paid for, none of them cosmetic.**
+1. *The null must exclude self.* The $M_3$ score equation forces $\sum_{c\in C}r_{cz}=0$, so a
+   self-excluding neighbour set carries $-1/(n_C-1)$ of the cell's own residual; `74`'s
+   row-permutation null does not, so obs − null cannot cancel it. Pre-TX returned a **negative**
+   lineage rung until fixed.
+2. *A cell could be its own nearest relative* — self and cross-clone pairs both $-\infty$, tied
+   under `argsort`, affecting 71.5% of Pre-TX cells at $k$=50.
+3. *Stratifying on an estimate does not hold the truth fixed.* Simulating a world with **no** lineage
+   structure, the "arbitrary clone-mates" curve still rose 14.9% → 28.2%, so the model-stratified
+   figure's caption was wrong even though the underlying measurement was not.
+4. *Capture matching must be by rank, not decile* — deciles inflated the mouse folds by up to 20%,
+   and related sets really are worse captured (Mouse2 37.4 vs 54.5 A-tapes unmatched).
+
+**⚑ And three framing rules.** Per tape, never pooled — the pooled unanimity figure was a mixture
+dominated by near-dead tapes. Common-tape convention — all-$k$-missing needs a high rate and
+all-$k$-present a low one, so the two panels otherwise sit on opposite ends of the range. And $k$=5
+maximises the discriminator, with $k$=2 being the variogram in disguise.
+
+**⇒ Next thread: the simulator**, to be discussed fresh. Calibration target per arm, through the
+identical scripts: the ladder's 4-vector including the *sign* of the $M_2$ rung, the variogram's
+slope and convexity, the nats-by-$k$ inversion, and the per-tape unanimity fold. These are **joint**
+constraints on (tree, editing, dropout) rather than clean per-parameter ones — the variogram's
+$x$-axis is the editing process — so tree and editing should be calibrated first against statistics
+that do not involve dropout, and these used to falsify rather than to fit.
+
+⚠ Parked with a known flaw: the $\beta_z$ skew test. Dispersion is hugely inflated ($z$ = 11–89 in
+5/5 arms) but moment skew is not, because centring on the clone-weighted mean turns a one-directional
+effect two-sided when there are few clones. Rebuild against a low quantile before concluding anything
+about directionality.
