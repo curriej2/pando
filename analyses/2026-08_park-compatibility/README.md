@@ -4258,3 +4258,81 @@ the cell, $j_{\rm rel}$ could predict for a technical reason. corr(relatedness, 
 adjusts for $\alpha_c$ explicitly and still finds +8.31 nats.
 ⇒ **division of labour, and say it in the caption: this figure is the communication object, the
 ladder is the controlled measurement.** Do not let the figure imply it does both.
+
+---
+
+# ⭐⭐ Fig C v3 — PER-TAPE unanimity, capture-matched (2026-09-12/13) — `83`, `84`
+
+Justin's design: *for a given tape, take k closely-related cells and k random cells, many times over.
+How often is the tape missing in ALL k?* Plus: control for capture quality.
+
+## ⚠⚠ Why per-tape is NECESSARY, not merely nicer — the pooled number was a mixture
+
+Subclone's overall missing rate is 21.8%, so under independence a random set of 20 would all lack a
+tape with probability $0.22^{20}=5\times10^{-14}$. The pooled figure showed **4.3%** — twelve orders
+of magnitude higher, and essentially all of it tapes that are **already nearly dead inside a clone**.
+⇒ the pooled unanimity statistic measures *how many tapes are nearly dead*, not how much relatedness
+clusters dropout. **The 2.5× I quoted from the pooled statistic was that mixture.** Per tape the
+honest median is 1.05–7.44×.
+
+## ⭐ The capture control was load-bearing, and deciles were not enough
+
+Three set types: **rel** (anchor + its $k-1$ nearest, relatedness from tape half A) · **mat**
+(capture-matched random) · **rnd** (plain random). Capture = A-tapes recovered, measured on **A only**
+so the matching variable is disjoint from the outcome measured on B.
+
+Related sets are *much* worse captured than plain random ones — Mouse2 **37.4 vs 54.5** A-tapes — so
+without matching this statistic would largely have been a capture artefact.
+⚠⚠ **Decile matching left a residual gap** (Mouse2: rel 37.8 vs mat 40.9) because within a decile the
+related cells sit at the low end, and a better-captured control yields FEWER all-missing sets, so the
+fold change came out **inflated**. Replaced with a **rank caliper** — each cell replaced by one drawn
+within $\pm\max(3, n_C/40)$ of its own capture rank. That closes the gap to 0.1 tapes and **cut the
+mouse folds by up to 20%**:
+
+| arm | $k$=5 median fold: decile → **caliper** | capture rel / mat / plain-random |
+|---|---|---|
+| Pre-TX | 9.00 → **7.44** | 66.1 / 66.1 / 66.7 |
+| Mouse 1 | 1.41 → **1.27** | 45.3 / 45.4 / 55.1 |
+| Mouse 2 | 1.40 → **1.14** | 37.4 / 37.5 / 54.5 |
+| Mouse 3 | 1.25 → **1.17** | 46.6 / 46.6 / 52.6 |
+
+⚑ **Why marginal matching would not do:** what drives all-$k$-missing is within-set *homogeneity* of
+capture, not the mean. Twenty uniformly badly-captured cells reach unanimity far more easily than a
+mixed set with the same average.
+
+## Results, $k=5$, per tape
+
+| arm | median fold | tapes above the line | off-scale (matched never unanimous) |
+|---|---|---|---|
+| **Pre-TX** | **7.44** | 95 / 98 | — |
+| **Subclone** | **3.05** | **146 / 146** | 14 |
+| Mouse 1 | 1.27 | 148 / 159 | — |
+| Mouse 3 | 1.17 | 117 / 160 | — |
+| Mouse 2 | 1.14 | 129 / 159 | — |
+
+⭐ **Subclone: every measurable tape is above the line** (159/159 at $k$=3, 146/146 at $k$=5,
+93/93 at $k$=10, 79/79 at $k$=20).
+⚠ **$k$=20 was Justin's starting point and it is too stringent**: $P(\text{all }k) \approx q^k$ needs
+$q\gtrsim0.70$ to reach $10^{-3}$, so only 26–101 of 166 tapes have a measurable denominator against
+156–160 at $k$=3–5. **Operating point $k=5$.**
+
+## ⭐ The all-present discriminator, and ⚠ a correction to my own framing
+
+Shared capture would cluster **both** unanimity types; one-directional loss should lift **missing**
+much more. Median fold at $k$=5, missing vs present: Pre-TX **7.44 / 1.17** · Subclone **3.05 / 1.15**
+· Mouse1 1.27 / 1.08 · Mouse3 1.17 / 1.04 · Mouse2 1.14 / 1.03.
+⚠ **"Present stays ON the diagonal" was too strong** — every present tape is *also* above the line
+(158/158 on Subclone), just by far less. The claim is the **ratio of the two medians** (2.7× on
+Subclone, 6.4× on Pre-TX), not that presence shows nothing. The figure now draws each median as a
+line **parallel to the diagonal**, so the magnitude is visible rather than asserted.
+
+## The figure (`fig6c_unanimity_{arm}_k5.png`)
+
+Two panels, missing | present. One point per tape, $x$ = capture-matched random sets, $y$ = sets of
+close relatives, log–log. **The diagonal is the null and it is drawn from data**: under no lineage
+structure the two set types are exchangeable and every tape sits on the line.
+⚠ Tapes where the matched control never reached unanimity cannot go on a log axis; they are drawn as
+**open markers at $0.5/n_{\rm sets}$** and counted, because they are where the effect is strongest and
+dropping them silently would understate it.
+⚠ Sets anchored on every cell would overlap heavily, so anchors are **sampled** and **no confidence
+interval is put on the result**.
