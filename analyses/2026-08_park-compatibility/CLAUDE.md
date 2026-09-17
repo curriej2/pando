@@ -13,6 +13,45 @@ gitignored, never copy out). Justin's own copy of the Park, Chang et al. 2026 ta
 - `clonalbc_percell_hamming1_corrected.csv` — 167,736 rows, `CellID,Sample,ClonalBC_raw,ClonalBC`.
   **This is the clone assignment**, needed for §D.4b Procedure step 1 (work within a clone).
 
+**⭐⭐ STATE (2026-09-17) — THIS ANALYSIS IS CLOSED. Work moved to
+`../2026-09_simulator`.** Nothing further is planned here. Two things were corrected on the way out,
+both of which affect numbers recorded below.
+
+⚠⚠ **A compatibility rerun was proposed and WITHDRAWN.** I queued an Initial rerun and a Subclone
+memory-pricing to serve fig 5. Justin pushed back correctly: max-compatible-set died in the
+2026-09-01 pivot, and the *diagnostic* role the pivot preserved for compatibility has since been
+superseded by the ladder, $Q$, the variogram and unanimity. Compatibility now survives only as a
+**free end-stage check on the simulator** — Mouse3 is complete on disk, so reproducing its
+63.56% / 94.66% / +31.09-point spread costs no new compute on real data.
+
+⚑ **Mouse3 needed no rerun — the README note saying otherwise is stale.** `src/14` was updated to
+persist both conventions, and `conflict_degrees_{as_absent,excluded}_Mouse3.npz` have been on disk
+since 2026-08-31. The "lost" conflict-concentration numbers, recomputed 2026-09-17 (reading rule:
+*characters conflicting* is the share of the 55,875 characters with ≥1 incompatible partner — higher
+means conflict is more widespread; *top 10%* is the share of all conflict edges carried by the 10%
+most-conflicted characters — higher means more concentrated, hence more removable):
+
+| convention | characters conflicting | edges | top 1% | top 10% |
+|---|---|---|---|---|
+| missing-excluded | 58.0% | 1,462,105 | 10.0% | 45.9% |
+| **missing-as-absent** | **91.3%** | 9,972,354 | **4.3%** | **27.1%** |
+
+The excluded row reproduces the README's Reading 3 exactly. The as-absent row is new and
+**strengthens** the finding: on the only convention that licenses a skeleton, conflict is even more
+diffuse. Against homoplasy's top 1% of prefix nodes carrying 65–73% of all recurrences, the two have
+opposite fingerprints — **homoplasy is concentrated and removable; the observed conflict is not.**
+
+⚠⚠ **Initial's compatibility number is budget-truncated and biased — do not quote it.** `src/14`
+orders clones by ascending character count and breaks on a wall-clock budget. Initial covered 1,780
+of 2,137 eligible clones (83%) but only **534,328 of 1,006,226 characters (53%)**, and the largest
+clone processed held **41 cells against 127 eligible**. Since compatibility falls monotonically with
+clone size and the spread widens with it, Initial's true compatibility is **lower** and its spread
+**wider** than the recorded 80.60% / 91.91% / +11.31 points. The README's reading that "Initial's
+spread is smaller because its clones are tiny" is therefore partly an artefact of which clones ran.
+Mouse3 (91/91 eligible clones, all 55,875 characters) is unaffected and is the one trustworthy arm.
+
+---
+
 **⭐⭐ STATE (2026-09-14, session 12) — READ THIS FIRST. ⭐ THE EVIDENCE FOR HERITABLE TAPE
 SILENCING IS CONSIDERED SUFFICIENT (Justin's call, recorded). The figure programme for it is CLOSED;
 the next thread is the SIMULATOR.**

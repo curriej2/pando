@@ -4651,3 +4651,194 @@ Restrict each clone to a **common well-determined cell subset** (cells with, say
 readable). On that subset the two conventions coincide and a skeleton *is* constructible. It trades
 cells for validity; with Park's median clone size of 4 it may not leave much, but it is the
 principled middle and is untested.
+
+---
+
+# Session 3 — SciPhy's own simulation design, and the birth–death sampling model (2026-09-15)
+
+*The validation close read queued under "Next up" (§2a, "Session 3 — Validation and phylodynamics,
+pp. 13–15"), done now because the simulator thread needs it. Register as §1a–1c. Numerics in this
+section were verified by Monte Carlo before being written down.*
+
+## S3.1 What SciPhy actually simulates
+
+From Methods p. 13, in order:
+
+1. **100 trees** under a **birth–death sampling** model (parameters in Supp. Table 1). Tree sizes
+   span small (0–150 tips), medium (150–450), large (450–650).
+2. Draw the **clock rate** $r\sim\mathrm{LogNormal}(\mu=-2,\sigma=0.5)$, 95% HDI $[0.035,0.31]$,
+   and **edit probabilities** $f_k\sim\mathrm{Dirichlet}(\alpha=1.5)$ over 13 distinct edits
+   (Table 2). The clock prior is chosen to give **one to eight insertions** over the experiment.
+3. Simulate the editing of **10 independent tapes** along each tree.
+4. Infer with SciPhy **using the same distributions as priors** → coverage of the 95% HPD.
+5. Score: tree height, tree length, **B1 balance**; topology via a CCD0 point estimate, scored by
+   **Phylogenetic Information (PI) distance**, benchmarked against a random birth–death tree.
+
+⭐ **They already simulate both of our dropout axes**, by name: *"heritable loss of tapes at a
+constant rate through time, capturing, e.g., transgene silencing, and tape dropout at sequencing."*
+20 tapes per tree, 9.7–88% missing per alignment, ~11 tapes recovered per cell.
+⚠ But their **inference** handling is to filter to "the largest complete set of tapes without
+missing data that includes at least a third of all cells" — they simulate dropout and then delete
+it rather than model it. That is precisely the row **A6** gap this project exists to close.
+⚑ Reusable finding: **PI distance is "particularly sensitive" to tape loss, while wRF rises only
+weakly.** Topology degrades under dropout; branch lengths hold up. Tells us which metric will show
+the effect.
+
+⚠⚠ **Do not inherit their procedure.** Drawing parameters from a prior is *simulation-based
+calibration* — it tests that the implementation is correct, not that the parameters are realistic.
+Our homoplasy null needs parameters **fitted to Park**, at one measured point. Both have a place:
+fitted for the null, drawn for the design sweep (§I.7.7) and for any SBC later.
+
+## S3.2 The repository (`github.com/azwaans/SciPhy`)
+
+`src/sciphy/evolution/simulation/SimulatedSciPhyAlignment.java`, **260 lines**, and the tree is an
+**input** (`examples/single_bcode/simulation/simulate_alignment_fixed_tree.xml`). SciPhy does not
+simulate trees at all — they come from BEAST's birth–death simulators or R's TreeSim. The core is
+
+```java
+long nPotentialInserts = Randomizer.nextPoisson(deltaT * clockRate);
+while (nPossibleInserts > 0 && nPotentialInserts > 0) {
+    int newInsertion = Randomizer.randomChoicePDF(transitionProbs) + 1;
+    rootSequence[insertionIndex] = newInsertion; ... }
+```
+
+⇒ **Language decision: simulator in Python.** Forward simulation touches each edit once (Park scale
+≈ 32 M draws per replicate — seconds in numpy). The paper's optimisations — subtree likelihood
+caching 3.5×, tape-level threading, 8× overall at 1,000 sequences — are all **MCMC likelihood
+evaluation**, the other workload. If SciPhy *inference* is wanted on simulated data, drive BEAST as
+an external process on generated XML. Java is forced only if the A9 absorbing state has to live
+inside BEAST's MCMC.
+
+## S3.3 The birth–death sampling model
+
+Start with one lineage at time 0. Until the present $T$, each extant lineage independently splits at
+rate $b$ and dies at rate $\delta$. At $T$ each of the $N(T)$ survivors is sampled independently
+with probability $\rho$. The **reconstructed tree** spans the sampled tips; everything else is pruned.
+
+**Biological reading.** $b$ = per-cell division rate (mean wait $1/b$); $\delta$ = per-cell removal —
+apoptosis, necrosis, immune clearance, or differentiation/emigration out of the sampled compartment.
+Derived: net growth $r=b-\delta$ (doubling time $\ln2/r$) and **turnover** $\delta/b\in[0,1)$.
+
+⭐ **Why $\delta$ is not a nuisance parameter for us.** Turnover acts through the *pull of the
+present*: high turnover means most deep lineages died, so survivors' common ancestors are recent and
+branchings pile up near the present. **$\delta$ therefore sets how many independent lineages exist
+at each depth — which is exactly $m$**, and homoplasy is $\binom{m}{2}q$.
+
+### S3.3.1 The mean, and why it only sees $b-\delta$
+
+In $[t,t+dt]$, given $N(t)=n$: a birth occurs w.p. $nb\,dt$ ($\Delta N=+1$), a death w.p.
+$n\delta\,dt$ ($\Delta N=-1$). So $\mathbb{E}[\Delta N\mid N(t)=n]=n(b-\delta)dt$, and by the law of
+total expectation
+
+$$\frac{d\,\mathbb{E}[N]}{dt}=(b-\delta)\,\mathbb{E}[N]\qquad\Longrightarrow\qquad
+\mathbb{E}[N(T)]=e^{(b-\delta)T}$$
+
+⚠ **Only the difference appears.** $b=10,\delta=9$ and $b=1,\delta=0$ have identical mean growth and
+completely different trees. This is the root of the identifiability problem.
+⚠ **And the mean is a bad summary**: at $b=0.6,\delta=0.3,T=10$, $\mathbb{E}[N]=20.1$ while
+$P(\text{extinct})=0.49$ and the conditional mean is 39.2 — the "expected" value essentially never
+occurs.
+
+### S3.3.2 $\alpha$ and $\beta$, derived
+
+Let $F(s,t)=\mathbb{E}[s^{N(t)}]$. Conditioning on the first interval $[0,dt]$ — divide (w.p.
+$b\,dt$, giving **two independent copies**, hence $F^2$), die (w.p. $\delta\,dt$, giving 1), or
+nothing — yields the **Riccati** equation
+
+$$\partial_t F=bF^2-(b+\delta)F+\delta=(F-1)(bF-\delta)$$
+
+Its roots are $F=1$ and $F=\delta/b$. Separating and applying $F(s,0)=s$:
+
+$$F(s,t)=\frac{(bs-\delta)-\delta(s-1)e^{rt}}{(bs-\delta)-b(s-1)e^{rt}}$$
+
+Setting $s=0$ and reading the coefficients gives, with $u=e^{rt}$,
+
+$$\alpha=\frac{\delta(u-1)}{bu-\delta},\qquad \beta=\frac{b(u-1)}{bu-\delta},\qquad
+F=\alpha+(1-\alpha)\frac{(1-\beta)s}{1-\beta s}$$
+
+$$\Rightarrow\quad P(N=0)=\alpha,\qquad P(N=n)=(1-\alpha)(1-\beta)\beta^{\,n-1}\ (n\ge1)$$
+
+**Verified** (`scratchpad`, 2026-09-15): $F(s,0)=s$; $F(0)=\alpha$; Riccati form $\equiv$ geometric
+form to machine precision at six values of $s$; MC $\mathbb{E}[s^N]$ matches to 1.4 se at 30,000 reps.
+Separately, $\mathbb{E}[N]$ 20.14 vs 20.09, $P(N{=}0)$ 0.4879 vs 0.4872, conditional mean 39.33 vs 39.17.
+
+**Reading them.** Same denominator, numerators differ only $\delta$ vs $b$, so $\beta/\alpha=b/\delta$
+exactly. Checks: $\delta=0\Rightarrow\alpha=0$; $T\to\infty$, $b>\delta\Rightarrow\alpha\to\delta/b$
+(ultimate extinction = death/birth ratio); $b=\delta\Rightarrow\alpha=\delta T/(1+\delta T)\to1$
+(critical processes die out, but only as $1/T$). Also $1-\beta=r/\Delta$ and $1-\alpha=ur/\Delta$
+with $\Delta=bu-\delta$, so $\mathbb{E}[N]=(1-\alpha)/(1-\beta)=u=e^{rT}$. ✓
+
+**The structural consequence:** conditional on survival $N$ is **geometric** — an *exponentially
+bounded* tail. Exact for every $b,\delta,T$, not an approximation.
+
+### S3.3.3 ⭐⭐ Shape and time factorise — verified
+
+For a constant-rate birth–death, **conditional on tip count the topology does not depend on $b$ or
+$\delta$**: lineages are exchangeable, so every labelled history is equally likely.
+
+Verified by forward simulation at $n=8$, $P(\text{smaller root clade}=k)$:
+
+| $k$ | Yule $\delta/b=0$ | low turnover 0.14 | high turnover 0.75 | Yule–Harding theory |
+|---|---|---|---|---|
+| 1 | 0.2905 | 0.2814 | 0.2914 | 0.2857 |
+| 2 | 0.2858 | 0.2834 | 0.3005 | 0.2857 |
+| 3 | 0.2806 | 0.2892 | 0.2645 | 0.2857 |
+| 4 | 0.1431 | 0.1460 | 0.1435 | 0.1429 |
+| accepted | 12,072 | 10,434 | 1,860 | — |
+
+se = 0.0041 / 0.0044 / 0.0105; largest deviation 2.0 se on one cell of twelve. Theory: the root
+splits $(i,n-i)$ with probability $1/(n-1)$ for **every** $i$ — uniform over ordered splits, so a
+1-vs-7 split is as likely as 4-vs-4.
+
+⇒ **tree generation factorises: shape is parameter-free (Yule/Harding), and all of $b,\delta,\rho$
+act on the branching TIMES.**
+
+⚠⚠ **"A random binary tree" is ambiguous and the wrong choice biases the homoplasy null.** Uniform
+over *topologies* (PDA) is **not** uniform over *labelled histories* (Yule). PDA is markedly more
+imbalanced, and most libraries' "random tree" means PDA. Birth–death gives Yule. Clade sizes set $m$.
+
+### S3.3.4 ⚠ Identifiability: fit two parameters, not three
+
+$(b,\delta,\rho)$ are not separately identifiable from reconstructed tree shape. Verified: BD$(1.0,0.5)$
+sampled at $\rho=0.7$ and BD$(0.7,0.2)$ sampled completely give matching conditional clade-size
+distributions (0.01199/0.01226, 0.01324/0.01345, … to $n=50$), though different $P(0$ sampled$)$
+(0.498 vs 0.283) — the equivalence concerns the tree *given it exists*.
+⚠ The rescaling $\delta\mapsto\delta-b(1-\rho)$ requires $\delta>b(1-\rho)$; at Park-like $\rho$ the
+equivalent $\delta$ is negative ($-0.499$ at $\rho=0.0008$), so it is a statement about the density,
+not a simulable process.
+
+### S3.3.5 Three routes to a topology, and which to use
+
+| route | how | verdict |
+|---|---|---|
+| **forward + reject** | simulate to $T$, $\rho$-sample, discard unless tips $=n$ | correct, extends to anything, but **0.7% acceptance at high turnover** (measured) and hopeless at $n=10{,}997$. Use only to validate |
+| **forward to size** | run until $n$ extant lineages, stop | conditions on $n$ but **not on $T$** — a different distribution, and we need $T$ because it sets $\Lambda=\lambda T$ |
+| **⭐ direct conditioned sampling** | (a) shape by uniform random joining; (b) $n-1$ branching times from the BDS density given $n$ and $T$ | exact, $O(n)$, scales. **This is the one to build** |
+
+⚠ Owed: derive and verify the conditional branching-time density, checked against forward+reject at
+small $n$ where rejection is still feasible.
+
+## S3.4 ⚠⚠ A single homogeneous birth–death CANNOT produce Park's clone sizes
+
+The geometric tail of §S3.3.2 is exponentially bounded. Fitting a geometric to each arm's **median**
+and asking how many clones it predicts at least as large as the largest observed:
+
+| arm | clones | median | max | expected $\#\ge$ max | observed |
+|---|---|---|---|---|---|
+| Mouse3 | 149 | 4 | 210 | $2.8\times10^{-14}$ | 1 |
+| Mouse1 | 295 | 4 | 1,607 | $4.0\times10^{-119}$ | 1 |
+| Mouse2 | 216 | 2 | 3,387 | underflow | 1 |
+| Initial | 2,946 | 6 | 127 | $1.4\times10^{-3}$ | 1 |
+| Subclone | 15 | 997 | 10,997 | $7.2\times10^{-3}$ | 1 |
+
+Mouse2's largest clone holds **62.9%** of that arm's cells. Biologically unsurprising — it is a
+metastasis experiment, clones differ in fitness, and Subclone's sizes are by design — but it is the
+default we would otherwise have adopted.
+
+⇒ **DESIGN DECISION: do not simulate clone sizes. Take them from the data and simulate the tree
+within each clone conditioned on its observed size.** This is what SciPhy's own benchmark does for
+its comparator trees ("conditioning on the number of tips to match that of the dataset"). It absorbs
+the across-lineage rate heterogeneity, leaving only the much weaker assumption of constant rates
+*within* a clone, testable against the prefix-clade-size-by-depth data (§D.4b, 1,567,321 nodes).
+⇒ It also **removes** a $(b,\delta,\rho)$ fit: with shape parameter-free and $\rho$ collapsed, the
+tree contributes essentially **one effective number** — how deep the coalescences sit.

@@ -1116,3 +1116,83 @@ that do not involve dropout, and these used to falsify rather than to fit.
 5/5 arms) but moment skew is not, because centring on the clone-weighted mean turns a one-directional
 effect two-sided when there are few clones. Rebuild against a low quantile before concluding anything
 about directionality.
+
+---
+
+## 2026-09-15 — session 13: scoping the simulator; SciPhy's Session 3 read; the tree model settled
+
+**Scope corrected, twice, both times narrowing.**
+
+⚠⚠ **Correction 1 — I proposed compute for a dead question.** I queued an Initial compatibility
+rerun and a Subclone memory-pricing to serve fig 5 ("compatibility spread + homoplasy null").
+Justin pushed back: max-compatible-set died in the 2026-09-01 pivot. Right. The pivot preserved
+compatibility as a *diagnostic* ("the diagnostics are the deliverable"), but **that sentence is now
+stale too** — the dropout diagnostic has been superseded by the ladder, $Q$, the variogram and
+unanimity, all on five arms with proper nulls, and declared sufficient on 09-14. ⇒ **both runs
+withdrawn.** Compatibility survives only as a free end-stage check: Mouse3 is complete on disk, so if
+the finished simulator reproduces 63.56% / 94.66% / +31.09 through `src/14`, that costs nothing.
+
+⚑ Found while checking: **Mouse3 needed no rerun** — `conflict_degrees_{as_absent,excluded}_Mouse3.npz`
+have been on disk since Aug 31; the README note saying `src/14` saves only one convention is stale.
+The "lost" concentration numbers, recomputed: **as-absent 91.3% of characters conflict, top 10% hold
+27.1% of edges**; excluded 58.0% / 45.9% (reproducing the README exactly). The as-absent row
+*strengthens* the finding — against homoplasy's top 1% carrying 65–73%, conflict is diffuse.
+⚠ **Initial's compatibility run was budget-truncated and is biased**: 1,780 of 2,137 eligible clones,
+**53% of characters**, and the largest clone processed had **41 cells against 127 eligible**.
+`src/14` orders clones ascending and breaks on wall-clock. Its 80.60% / 91.91% / +11.31 is computed
+on the small end, so the true spread is wider. Not worth fixing given the above — but do not quote it.
+
+**⚠⚠ Correction 2 — the homoplasy null is narrower than I framed it.** For the mouse arms it is
+largely unnecessary: script 06 already *measured* level-0 recurrences at 0.03–0.11 per node with
+0.4–1.1% of nodes carrying any. It is load-bearing only for **Subclone** (median clade 933, 16.0
+mean recurrences, 40.8% of nodes) — where the strongest dropout signals also live, so the two
+processes are genuinely entangled — and for the **design sweep**, where $q$ is the sole channel from
+$\xi$ to topology. And the currency should change: incompatibility is a perfect-phylogeny quantity,
+while the likelihood route cares about *reconstruction accuracy*. ⇒ **fig 5 to be renamed and
+rescoped** away from its skeleton-era title.
+
+**Editing layer, measured (all five arms, from the cached `dropout_matrix_*.npz`).**
+- ⚠ **Depth 0 is censored**: `10_build_characters.py` returns `ABSENT` when the prefix is empty, so
+  "recovered but wholly unedited" is indistinguishable from dropout. Fits must be zero-truncated.
+  At Initial's $\hat\Lambda\approx2.82$, $e^{-\Lambda}=5.9\%$ against a 25.07% `ABSENT` rate — **up
+  to a quarter of Initial's apparent dropout may be unedited tape.** Negligible in Mouse3 (0.34%).
+- **A single rate is decisively rejected**, $\chi^2/\mathrm{df}$ = 15,836–86,154 across arms
+  ($\hat\Lambda$ = 2.87 Initial, 4.69 Subclone, 5.39/5.52/5.69 Mouse1/2/3).
+- **Per-tape rates are real and large**: per-tape mean depth 1.33–5.54 (Mouse3), fitted $\Lambda_z$
+  3.71–7.62. $\mathrm{corr}(\beta_z,\bar L_z)$ = −0.63/−0.59/−0.33/−0.59 (Mouse3/Mouse1/Subclone/
+  Initial), **unchanged** in the best-captured decile (−0.647/−0.572/−0.331/−0.577). Not a
+  cell-capture artefact. ⚑ SciPhy fits per-tape clock rates with shared $\xi$ — same decision,
+  reached independently.
+- ⭐ **Site 6 is mechanistically different, and it survives the per-tape fit.** obs/exp at depths
+  4/5/6: Mouse3 0.99/**2.09**/**0.82**, Mouse1 1.04/1.85/0.84, Initial 1.02/1.34/0.66. A pile-up at
+  five filled sites and a deficit at six, which tape heterogeneity cannot make. Independently, $q$ is
+  elevated at site 6 in 5/5 arms. Two unrelated signals.
+- ⚑ **The arms are a natural two-timepoint experiment**: Initial $\Lambda\approx2.87$ vs mice
+  5.39–5.69, ratio $\approx1.9$. With the durations this identifies $\lambda$ and tests rate constancy.
+- ⚠⚠ **Editing and dropout are not separately fittable.** Missingness is informative for depth
+  ($\rho$ to −0.63), so fitting $\Lambda$ on clean reads conditions on a depth-dependent selection
+  and is biased upward — visible as the per-tape fit over-predicting depths 1–3 by ~2× in Mouse3.
+  This **revises** the "calibrate editing first, then dropout" ordering proposed earlier the same day.
+- ⚠ Unresolvable in Park: "tape $z$ edits less" vs "tape $z$ is transcribed less and read less
+  fully". The control conditions on *cell* capture, not per-tape read depth, and Park ships no
+  molecule counts. dtt-mouse does (`n_loci`, `mean_dominance`).
+
+**SciPhy Session 3 close read done — full write-up at `notes/sciphy_notes.md` §S3.**
+Their recipe, the fact that they already simulate both dropout axes but filter rather than model
+them, the 260-line Java simulator that takes the tree as an *input*, the language decision (Python
+for simulation; BEAST only if SciPhy inference is wanted), and the birth–death sampling model derived
+in full with the Riccati/pgf route. Everything verified by Monte Carlo.
+
+**⭐⭐ Two results that settle the tree model.**
+1. **Shape and time factorise.** Conditional on tip count, topology is independent of $b$ and
+   $\delta$ — verified across turnover 0 → 0.75, root-split distributions agreeing with Yule–Harding
+   to ≤2.0 se. ⇒ shape is parameter-free; all of $b,\delta,\rho$ act on the branching times.
+   ⚠ "Random binary tree" is ambiguous — PDA ≠ Yule, and PDA is far more imbalanced. Clade sizes set $m$.
+2. **A single homogeneous birth–death cannot produce Park's clone sizes.** The geometric tail
+   predicts $2.8\times10^{-14}$ (Mouse3) to underflow (Mouse2) clones as large as the largest
+   observed; one is observed in every arm. ⇒ **do not simulate clone sizes — take them from the data
+   and condition the within-clone tree on observed size.** Removes the $(b,\delta,\rho)$ fit; with
+   $\rho$ also non-identifiable, the tree contributes **one effective number**.
+
+**⇒ NEXT:** derive and verify the conditional branching-time density (route (c) in §S3.3.5), checked
+against forward+reject at small $n$; then the joint editing/dropout fit.

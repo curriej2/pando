@@ -14,6 +14,63 @@ from ENGRAM + DNA Typewriter data. Secondary goal: make the inference scale.
 - Flag corrections to earlier notes explicitly rather than silently editing conclusions.
 - Commit at the end of each working session; the commit message summarises what changed.
 
+### ⚠⚠ Propose before you compute — the approval gate
+
+**Do not write an analysis script, and do not launch a job, until Justin has said go.** Brainstorming
+is collaborative and welcome; execution is gated. Never put the proposal and the run in the same turn,
+and never treat "that sounds interesting" as approval.
+
+A proposal is short — aim for under ~25 lines — and has four parts:
+
+1. **The question, in one sentence.** Specifically: *what would change about the project's
+   conclusions* depending on how it comes out. If nothing changes either way, say so and drop it.
+2. **The math, written out.** The estimator or test statistic in symbols, its null hypothesis, and
+   the assumptions it needs to be valid. Define **every** symbol against the house register (§H.6.0)
+   — including ones defined in an earlier session — and give units. If a quantity is new, name it
+   and say what one unit of it means.
+3. **What could make it wrong.** Name the confound the design defeats *and* the one it does not.
+   In this project the recurring one is circularity: relatedness is read from the same edit data
+   whose readability dropout controls.
+4. **The output, structurally — a mock, not a description.** Sketch the actual table or panel with
+   placeholder numbers: exact column headers with units, how many rows and what indexes them, the
+   grid a curve runs over, the axes of a figure. Then state **the reading rule**: what the
+   no-effect value is, which direction means the effect is present, and what magnitude would count
+   as decisive versus marginal.
+
+**Why this is a hard rule.** A result whose test Justin did not understand *before* it ran costs more
+to read than the run saved, and it tends to be overturned later — the ⚠⚠ corrections littered
+through this file (self left in the null, stratifying on an estimate, decile instead of rank
+matching, $\Lambda_{\rm soft}$ used as a detector) are all cases where the reasoning was finished
+after the numbers arrived instead of before. Approval is cheaper than retraction.
+
+- If the design turns out to be wrong **mid-run**: stop, say what broke, and re-propose. Do not
+  patch the statistic and keep going.
+- **Exempt:** cheap reversible probes whose purpose is to *check* rather than to conclude — a row
+  count, whether a column exists, an assertion on a table already in memory, reading a log. The gate
+  applies to anything whose numbers would be quoted, plotted, or written into the notes.
+
+### Reporting numbers — definitions travel with them
+
+- **No large tables of bare numbers.** Every number that appears carries: what it is, its units, its
+  null / no-effect value, and what a larger value would mean. A reader who has forgotten the variable
+  must still be able to read the line. Loosely-defined symbols are the main way output becomes
+  unusable here.
+- Prefer **one number carrying the point inside a sentence** over a grid of numbers. Where a table
+  really is the right shape, keep it small, label every column with units, and put the reading rule
+  immediately above it — not in a paragraph further down.
+- Quote a threshold-dependent number **with its threshold**, an effect **with its comparison**
+  (observed − null), and a per-$k$ or per-clone number **relative to the denominator that matters**
+  ($k/n_C$, not $k$). These three have each already caused a retraction in this project.
+
+### Caveats are wanted — raise them fully
+
+- A side analysis that surfaces a real caveat, bug, or confound is **not** noise: report it
+  unprompted and at length. Say what was found, how, **which recorded numbers it affects**, and
+  whether it moves a number or overturns a claim we have been quoting. Mark it ⚠ in the notes, as
+  the existing record does.
+- Keep those two categories distinct in the write-up. "This shifts 16.3 to 15.5 nats" and "this
+  means the gradient we reported does not exist" need different headlines.
+
 ## Repository map
 
 ```
@@ -53,6 +110,8 @@ Dollo character needing one absorbing state in the pruning, not a reason to reac
 already back at $p=1/1001$ in 5/5 arms. ⚠ Two orthogonal follow-ups are specified but not run: a
 `--lam 4` re-run with a size-stratified null (the floor, not $B$, is what hides weaker events), and
 the **symbol-depletion test** of row A9's untested *trans* limb. |
+
+| `2026-09_simulator` | Build the forward simulator (birth–death tree → sequential editing → dropout) for the homoplasy null and the design sweep. | **Design settled and verified; nothing built.** Tree model: shape/time factorise, clone sizes taken from data not simulated, two effective parameters not three. BDS branching-time CDF closed-form and invertible. Editing layer measured (per-tape rates real, site 6 anomalous, depth 0 censored). ⚠ Editing and dropout must be fitted jointly. |
 
 ## Already settled — do not re-derive unless asked
 
@@ -181,7 +240,64 @@ the **symbol-depletion test** of row A9's untested *trans* limb. |
    events $\le10$). Threshold-independent claims that survive: the 118–2,522× null comparison,
    $q\le1.9\times10^{-4}$ per event, $\hat\pi$ median 1.000 vs expected 0.11–0.41. Full audit in
    README "How events are actually called".
-0-CURRENT. **⭐⭐ 2026-09-14 — ⭐ THE SILENCING EVIDENCE IS SUFFICIENT (Justin's call). FIGURE
+0-CURRENT. **⭐⭐ 2026-09-15/17 — THE SIMULATOR THREAD IS OPEN. Tree model SETTLED, editing
+   layer MEASURED, nothing built yet.** New directory `analyses/2026-09_simulator` (its CLAUDE.md is
+   the full design); theory in `notes/sciphy_notes.md` **§S3**; running record `analysis_log.md`
+   session 13. **`src/` is deliberately empty — no script has cleared the approval gate.**
+   **Purposes I and IV lead** (Justin's call): *adjudication* — quantify the consequence of what is
+   already established — and *design*, the $(p,\lambda,m,k,j,\ell)$ sweep.
+   ⚠⚠ **TWO SCOPE CORRECTIONS, both narrowing.** (i) I proposed compute for a **dead question** — an
+   Initial compatibility rerun and a Subclone pricing — serving the max-compatible-set route that
+   died in the 2026-09-01 pivot. **Both withdrawn.** Compatibility survives only as a free end-stage
+   check, since Mouse3 is complete on disk. (ii) **The homoplasy null is narrower than framed**: the
+   mouse arms are already measured as near-homoplasy-free (0.03–0.11 recurrences per level-0 prefix
+   node, 0.4–1.1% of nodes with any), so it is load-bearing only for **Subclone** — where the
+   strongest dropout signals also live, so the two processes are entangled — and for the design
+   sweep. ⇒ **fig 5 to be renamed and rescoped**; incompatibility is a perfect-phylogeny quantity and
+   the likelihood route wants *reconstruction accuracy*.
+   **✅ SciPhy Session 3 read** (the validation methods, queued since session 2a). They simulate 100
+   birth–death trees, draw clock rate $\sim\mathrm{LogNormal}(-2,0.5)$ and $\xi\sim\mathrm{Dir}(1.5)$,
+   decorate 10 tapes, and infer with the *same* distributions as priors (that is SBC — it tests the
+   implementation, not realism, so **do not inherit it**: our null needs parameters *fitted* to Park).
+   ⭐ **They already simulate both our dropout axes by name** — heritable silencing + sequencing
+   dropout — but **filter to a complete submatrix rather than modelling it**, which is exactly the
+   row-A6 gap. ⚑ Reusable: **PI distance is "particularly sensitive" to tape loss; wRF rises only
+   weakly** — tells us which metric will show the effect.
+   **⇒ Language: PYTHON.** Their simulator is 260 lines of Java and takes the tree as an *input*;
+   all the optimisation (caching 3.5×, threading, 8× overall) is in the **likelihood**, a different
+   workload. Drive BEAST externally only if SciPhy *inference* is wanted.
+   **⭐⭐ TREE MODEL, both parts verified.** (a) **Shape and time factorise** — conditional on tip
+   count the topology is independent of $b,\delta$ (checked at turnover 0 / 0.14 / 0.75; root splits
+   match Yule–Harding to ≤2.0 se). Shape is parameter-free; $b,\delta,\rho$ act only on the branching
+   *times*. ⚠⚠ "Random binary tree" is ambiguous: PDA ≠ Yule, PDA is far more imbalanced, and clade
+   sizes set $m$. (b) **Clone sizes CANNOT come from one homogeneous birth–death** — its geometric
+   tail predicts $2.8\times10^{-14}$ (Mouse3) to underflow (Mouse2) clones as large as the largest
+   observed; one is observed in every arm. ⇒ **do not simulate clone sizes; take them from the data
+   and condition the within-clone tree on observed size.** ⚠ $(b,\delta,\rho)$ are not separately
+   identifiable — **fit two effective parameters, not three**; with shape free the tree contributes
+   essentially **one number**, how deep the coalescences sit.
+   **⭐ The BDS branching-time density is closed-form and analytically invertible**:
+   $G(x)=[h(x)-\rho]/[h(t_{or})-\rho]$ with $h=1-p_0$, because $p_1=h'/K$. Both $p_0$ and $p_1$ fall
+   out of the generating function at $s=1-\rho$ — no new machinery. ⇒ exact $O(n)$ sampling, which is
+   what makes a 10,997-tip clone feasible. ⚠ Verified to $\sup|{\rm emp}-G|=0.0080$ over 7,867 trees;
+   **not yet settled** because within-tree dependence makes the naive KS critical value inapplicable.
+   **⭐ EDITING LAYER MEASURED (all five arms, cached matrices).** ⚠ **Depth 0 is censored** —
+   "recovered but unedited" is indistinguishable from dropout, so fits must be zero-truncated; at
+   Initial's $\hat\Lambda\approx2.82$ that is up to **a quarter of its apparent dropout**. **A single
+   rate is rejected**, $\chi^2/\mathrm{df}$ = 15,836–86,154. **Per-tape rates are real** (mean depth
+   1.33–5.54 sites on Mouse3; $\mathrm{corr}$ with dropout −0.33 to −0.63, **unchanged** in the
+   best-captured decile, so not a capture artefact — and SciPhy fits per-tape clock rates too).
+   ⭐ **Site 6 is mechanistically different and survives the per-tape fit** (obs/exp at depth 5/6 =
+   2.09/0.82 on Mouse3), matching the independently-measured elevated $q$ at site 6 in 5/5 arms.
+   ⚑ **Initial vs the mice is a natural two-timepoint experiment** ($\Lambda$ 2.87 vs 5.39–5.69).
+   ⚠⚠ **Editing and dropout are NOT separately fittable** — missingness is informative for depth, so
+   fitting $\Lambda$ on clean reads conditions on a depth-dependent selection and is biased upward.
+   This **revises** the "calibrate editing first, then dropout" ordering proposed earlier the same day.
+   **⇒ NEXT:** (1) self-calibrate the density check by splitting the existing 7,867 trees — no new
+   forward replicates; (2) build the Option C sampler, validating density and sampler *separately*;
+   (3) the joint editing/dropout fit. ⚠ Each needs a proposal under the approval gate.
+
+0-PREV4. **⭐⭐ 2026-09-14 — ⭐ THE SILENCING EVIDENCE IS SUFFICIENT (Justin's call). FIGURE
    PROGRAMME CLOSED; THE SIMULATOR IS NEXT.** `2026-08_park-compatibility`, README and its CLAUDE.md.
    **Four figures carry it**, five arms each: `fig6a` the ladder (held-out gain vs parameters spent),
    `fig6b` $Q$ (the lineage share of what the technical model left), `fig6c` per-tape unanimity

@@ -476,8 +476,26 @@ reports 63.56% and would have condemned the perfect-phylogeny route outright.
 conflict graph had ~58% of characters carrying at least one conflict, with the top 10% holding only
 ~46% of edges — against homoplasy's top 1% holding 65%. If that holds, it is the *"spread thin"*
 world of §D.4b step 5, where maximal-compatible-set is genuinely hard. **These degree numbers were
-printed but never written to disk and are lost**; `src/14` now persists them
-(`results/conflict_degrees_{table}.npz`) and Mouse3 must be rerun to recover them.
+printed but never written to disk and are lost** — ~~`src/14` now persists them and Mouse3 must
+be rerun to recover them.~~
+
+✅ **RESOLVED 2026-09-17 — no rerun was needed, and this note was stale.** `src/14` persists
+both conventions and the files have been on disk since 2026-08-31
+(`conflict_degrees_{as_absent,excluded}_Mouse3.npz`). Recomputed. *Reading rule:* **characters
+conflicting** = share of the 55,875 characters with ≥1 incompatible partner (higher = conflict
+more widespread); **top 10%** = share of all conflict edges carried by the 10% most-conflicted
+characters (higher = more concentrated, hence more removable by deleting few characters).
+
+| convention | characters conflicting | edges | top 1% | top 10% |
+|---|---|---|---|---|
+| missing-excluded | 58.0% | 1,462,105 | 10.0% | 45.9% |
+| **missing-as-absent** | **91.3%** | 9,972,354 | **4.3%** | **27.1%** |
+
+The excluded row reproduces the numbers above exactly, so the lost figures are recovered. The
+as-absent row is **new** and strengthens the reading: on the only convention that licenses a
+skeleton, conflict is *more* diffuse still. Against homoplasy's top 1% of prefix nodes carrying
+65–73% of all recurrences, the two have opposite fingerprints — **homoplasy is concentrated and
+removable; the observed conflict is not.**
 
 **Caveat on all of the above:** Mouse3 is the smallest table — median clone 4 cells, largest 210.
 The size trend suggests larger clones will score lower. Mouse1, Mouse2, Initial, Subclone not yet run.
@@ -490,7 +508,8 @@ $C/(n-1)=\mathbf{2.107}$ — impossible — with laminarity failing on 37,737 pa
 $D_1\cap D_2$), so it does not compose into the single laminar family a tree requires.
 
 ⇒ $C$ must come from the **missing-as-absent** graph, where compatibility does imply laminarity.
-`src/14` currently saves degrees only for the excluded convention; it needs to save both, then rerun.
+~~`src/14` currently saves degrees only for the excluded convention; it needs to save both,
+then rerun.~~ ✅ **Stale as of 2026-09-17** — it saves both, and has done since 2026-08-31.
 `src/16_skeleton_C.py` is correct machinery pointed at the wrong input.
 
 ⇒ Reframes the spread: 94.66% is what we *would* see with complete data; **63.56% is what a skeleton
@@ -519,6 +538,18 @@ at 3–4 cells → 93.52% at 21–300), and its largest clone is 210 cells again
 Initial's clones are tiny (median 6 cells, max 127), which is why its as-absent number is much
 higher and its spread much smaller — fewer cells means fewer chances for a dropped-out cell to fake
 a witness. The spread scaling with clone size, established within Mouse3, holds across tables.
+
+⚠⚠ **CORRECTION (2026-09-17) — Initial's row above is budget-truncated and biased; do not quote
+it.** `src/14` orders clones by ascending character count and breaks on a wall-clock budget.
+Initial covered 1,780 of 2,137 eligible clones (83%) but only **534,328 of 1,006,226 characters
+(53%)**, and the **largest clone processed held 41 cells against 127 eligible**. Compatibility
+falls monotonically with clone size and the spread widens with it, so Initial's true
+compatibility is *lower* and its spread *wider* than the 80.60% / 91.91% / +11.31 points
+recorded. ⇒ the reading below — that Initial's spread is smaller because its clones are tiny —
+is partly an artefact of **which** clones ran, not of the clone-size distribution.
+**Mouse3 (91/91 eligible clones, all 55,875 characters) is complete and unaffected**, and is the
+only arm whose compatibility numbers should be quoted. Not being fixed: the compatibility
+statistic was retired as a deliverable — see this analysis's CLAUDE.md.
 
 **Mouse1 and Mouse2 never completed** — five OOM failures between them (128 G, 96 G, 48 G, 32 G),
 all on their single largest clone. See the strategic note below: this is now moot, because the
