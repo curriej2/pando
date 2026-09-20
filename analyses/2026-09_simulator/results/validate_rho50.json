@@ -1,0 +1,307 @@
+{
+  "params": {
+    "reps": 20000,
+    "tree_reps": 4000,
+    "rho": 0.5,
+    "seed": 20260920,
+    "skip_naive": false,
+    "tag": "rho50",
+    "out": "/data1/choij10/justin/pando/analyses/2026-09_simulator/results/validate_rho50.json"
+  },
+  "checks": {
+    "A_count_law": [
+      {
+        "reps": 20000,
+        "rows": [
+          {
+            "what": "P(extinct by T)",
+            "obs": 0.0,
+            "exp": 0.0,
+            "se_dev": NaN
+          },
+          {
+            "what": "E[N(T)]",
+            "obs": 129.24525,
+            "exp": 127.99999999999996,
+            "se_dev": 1.3596494777255592
+          },
+          {
+            "what": "P(N(T)=1)",
+            "obs": 0.009,
+            "exp": 0.007812499999999889,
+            "se_dev": 1.9074656476201926
+          },
+          {
+            "what": "P(N(T)=2)",
+            "obs": 0.0076,
+            "exp": 0.007751464843749891,
+            "se_dev": -0.2442444561790801
+          },
+          {
+            "what": "P(N(T)=3)",
+            "obs": 0.0084,
+            "exp": 0.007690906524658096,
+            "se_dev": 1.1479057597321183
+          },
+          {
+            "what": "P(N(T)=5)",
+            "obs": 0.00745,
+            "exp": 0.007571205525891751,
+            "se_dev": -0.19774486837120187
+          },
+          {
+            "what": "P(N(T)=8)",
+            "obs": 0.0078,
+            "exp": 0.00739513811528336,
+            "se_dev": 0.6682832046627951
+          }
+        ],
+        "worst_se": 1.9074656476201926,
+        "turnover": 0.0
+      },
+      {
+        "reps": 20000,
+        "rows": [
+          {
+            "what": "P(extinct by T)",
+            "obs": 0.2995,
+            "exp": 0.2983555207517619,
+            "se_dev": 0.35375071380140194
+          },
+          {
+            "what": "E[N(T)]",
+            "obs": 129.79805,
+            "exp": 128.00000000000009,
+            "se_dev": 1.4412854687945234
+          },
+          {
+            "what": "P(N(T)=1)",
+            "obs": 0.00365,
+            "exp": 0.0038461326192151236,
+            "se_dev": -0.44811500424515965
+          },
+          {
+            "what": "P(N(T)=2)",
+            "obs": 0.0038,
+            "exp": 0.0038250496682875543,
+            "se_dev": -0.05738926058293739
+          },
+          {
+            "what": "P(N(T)=3)",
+            "obs": 0.00355,
+            "exp": 0.0038040822856109584,
+            "se_dev": -0.5837031744209731
+          },
+          {
+            "what": "P(N(T)=5)",
+            "obs": 0.00365,
+            "exp": 0.003762491694488731,
+            "se_dev": -0.25984612046755096
+          },
+          {
+            "what": "P(N(T)=8)",
+            "obs": 0.00405,
+            "exp": 0.0037009568446818024,
+            "se_dev": 0.8129096081366134
+          }
+        ],
+        "worst_se": 1.4412854687945234,
+        "turnover": 0.3
+      },
+      {
+        "reps": 20000,
+        "rows": [
+          {
+            "what": "P(extinct by T)",
+            "obs": 0.7431,
+            "exp": 0.7485265225933203,
+            "se_dev": -1.7688333707849555
+          },
+          {
+            "what": "E[N(T)]",
+            "obs": 131.3916,
+            "exp": 127.99999999999984,
+            "se_dev": 1.4013040400258967
+          },
+          {
+            "what": "P(N(T)=1)",
+            "obs": 0.00055,
+            "exp": 0.0004940539831172428,
+            "se_dev": 0.35604449588324155
+          },
+          {
+            "what": "P(N(T)=2)",
+            "obs": 0.0006,
+            "exp": 0.0004930833466081716,
+            "se_dev": 0.6810943613725079
+          },
+          {
+            "what": "P(N(T)=3)",
+            "obs": 0.0004,
+            "exp": 0.0004921146170470554,
+            "se_dev": -0.5873774965862343
+          },
+          {
+            "what": "P(N(T)=5)",
+            "obs": 0.00055,
+            "exp": 0.0004901828637902096,
+            "se_dev": 0.3821800566113642
+          },
+          {
+            "what": "P(N(T)=8)",
+            "obs": 0.00055,
+            "exp": 0.0004872994425920229,
+            "se_dev": 0.40178552247564764
+          }
+        ],
+        "worst_se": 1.7688333707849555,
+        "turnover": 0.75
+      }
+    ],
+    "BCD": [
+      {
+        "structure_faults": [],
+        "n_structure_faults": 0,
+        "root_split": [
+          {
+            "k": 1,
+            "obs": 0.6595,
+            "exp": 0.6666666666666666,
+            "se_dev": -0.961509230324908
+          },
+          {
+            "k": 2,
+            "obs": 0.3405,
+            "exp": 0.3333333333333333,
+            "se_dev": 0.9615092303249154
+          }
+        ],
+        "root_split_worst_se": 0.9615092303249154,
+        "pruning_load_nodes_per_branchpoint": 3.78325,
+        "histories_seen": 18,
+        "histories_expected": 18,
+        "history_tested": true,
+        "history_worst_se": 1.810037373679793,
+        "n": 4,
+        "n_trees": 4000,
+        "mean_attempts": 15.185
+      },
+      {
+        "structure_faults": [],
+        "n_structure_faults": 0,
+        "root_split": [
+          {
+            "k": 1,
+            "obs": 0.496,
+            "exp": 0.5,
+            "se_dev": -0.5059644256269412
+          },
+          {
+            "k": 2,
+            "obs": 0.504,
+            "exp": 0.5,
+            "se_dev": 0.5059644256269412
+          }
+        ],
+        "root_split_worst_se": 0.5059644256269412,
+        "pruning_load_nodes_per_branchpoint": 3.678375,
+        "histories_seen": 180,
+        "histories_expected": 180,
+        "history_tested": true,
+        "history_worst_se": 2.8126807825200397,
+        "n": 5,
+        "n_trees": 4000,
+        "mean_attempts": 19.648
+      },
+      {
+        "structure_faults": [],
+        "n_structure_faults": 0,
+        "root_split": [
+          {
+            "k": 1,
+            "obs": 0.298,
+            "exp": 0.2857142857142857,
+            "se_dev": 1.7200000000000004
+          },
+          {
+            "k": 2,
+            "obs": 0.27925,
+            "exp": 0.2857142857142857,
+            "se_dev": -0.904999999999998
+          },
+          {
+            "k": 3,
+            "obs": 0.285,
+            "exp": 0.2857142857142857,
+            "se_dev": -0.1000000000000012
+          },
+          {
+            "k": 4,
+            "obs": 0.13775,
+            "exp": 0.14285714285714285,
+            "se_dev": -0.9230610308460976
+          }
+        ],
+        "root_split_worst_se": 1.7200000000000004,
+        "pruning_load_nodes_per_branchpoint": 3.5539642857142857,
+        "histories_seen": 0,
+        "histories_expected": 1587600,
+        "history_tested": false,
+        "history_worst_se": NaN,
+        "n": 8,
+        "n_trees": 4000,
+        "mean_attempts": 31.78575
+      }
+    ],
+    "E_naive_vs_fast": [
+      {
+        "n_naive": 2000,
+        "naive_attempts": 32343,
+        "naive_seconds": 2.2,
+        "root_split": [
+          {
+            "k": 1,
+            "fast": 0.6595,
+            "naive": 0.6545,
+            "se_dev": 0.3843825369511444
+          },
+          {
+            "k": 2,
+            "fast": 0.3405,
+            "naive": 0.3455,
+            "se_dev": -0.3843825369511401
+          }
+        ],
+        "root_split_worst_se": 0.3843825369511444,
+        "branching_time_sup_gap": 0.008666666666666711,
+        "sup_gap_ref_1.36sqrt": 0.0372451339103513,
+        "n": 4
+      },
+      {
+        "n_naive": 2000,
+        "naive_attempts": 39179,
+        "naive_seconds": 3.3,
+        "root_split": [
+          {
+            "k": 1,
+            "fast": 0.496,
+            "naive": 0.5025,
+            "se_dev": -0.4747019025929749
+          },
+          {
+            "k": 2,
+            "fast": 0.504,
+            "naive": 0.4975,
+            "se_dev": 0.474701902592979
+          }
+        ],
+        "root_split_worst_se": 0.474701902592979,
+        "branching_time_sup_gap": 0.012500000000000011,
+        "sup_gap_ref_1.36sqrt": 0.0372451339103513,
+        "n": 5
+      }
+    ]
+  },
+  "verdict": "PASS",
+  "worst_se_overall": 2.8126807825200397
+}

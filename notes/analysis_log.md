@@ -1196,3 +1196,60 @@ in full with the Riccati/pgf route. Everything verified by Monte Carlo.
 
 **⇒ NEXT:** derive and verify the conditional branching-time density (route (c) in §S3.3.5), checked
 against forward+reject at small $n$; then the joint editing/dropout fit.
+
+
+## 2026-09-20 — session 14: the forward tree simulator built and validated
+
+**Scope reversal, recorded.** §S3.3.5 made direct BDS-density sampling "the one to build" with
+forward+reject as validation only. On the stated priority — **purposes I and IV, IV leading** — that
+is backwards: the design sweep has $n$ and $\rho$ as *design variables*, so it needs no conditioning,
+no rejection and no density. The $n/\rho$ blow-up is entirely an artefact of Park's
+$\rho\approx8\times10^{-4}$. ⇒ build forward, **measure** the cost, reach for the density only where
+the measurement says so. Justin's call, after pushing back on why $P(\text{tree}\mid n)$ is needed at
+all — the answer being that conditioning on $n$ is how we avoid modelling clone-size heterogeneity
+(§S3.4), and that $T$ is not a free size knob because it is shared with the editing layer through
+$\Lambda=\lambda T$.
+
+**Built** (`analyses/2026-09_simulator/src/`): `01_bdtree.py` (Gillespie loop → genealogy →
+$\rho$-sampling → reconstruction, plus a naive oracle), `02_validate_tree.py` (five checks),
+`03_cost_curve.py` (cost measurement — **not yet run**).
+
+**⭐ The two-pass design, and why it is exact.** The lineage each event lands on is uniform and
+independent of everything else, so the law factorises as (count trajectory) × (lineage assignments |
+trajectory), and the acceptance test reads only $N(T)$ and a $\mathrm{Binomial}(N(T),\rho)$ draw.
+Pass 1 therefore gets $N(T)$ with no genealogy at all, vectorised; the $\approx2.7n$ rejected
+attempts never allocate a node. Pass 2 replays the identical trajectory from the same seed.
+
+**✅ VALIDATION PASSED at both $\rho=0.5$ and $\rho=8\times10^{-4}$** — 4,000 trees per $n\in\{4,5,8\}$,
+zero structure faults in 24,000 trees, worst statistic at 0.64 / 0.71 of its own p99 critical value.
+Pruning load (nodes traversed per branch point) **3.6–3.8 vs 22.0–25.4**, confirming the two runs
+exercised genuinely different regimes.
+
+**⚠⚠ THREE DEFECTS FOUND, ALL IN MY OWN TEST OR READING RULE, NONE IN THE SIMULATOR.**
+1. **`clade_sizes` accumulated in the wrong order.** Descending node id is right for the full tree
+   (children get larger ids) and exactly wrong for a `ReconTree` (slots are handed out from the root
+   down, so a child has a *smaller* id). Parents were totalled before their children and counted
+   only their direct leaf children. First run returned **FAIL at 63.25 se**. ⚑ Diagnosed by an
+   internal contradiction: the labelled-history check *passed* in the same run, and root split is a
+   function of the labelled history. ⚑ $n=4$ passed and masked it — the broken computation is
+   coincidentally right for both 4-tip shapes. Fixed by ordering on node **time**, correct under
+   either id convention. ⚠ **Check E saw nothing**, because it compares two implementations through
+   the *same* measurement function, so a bug in the shared instrument cancels.
+2. **The flat 3-se flag was miscalibrated.** Every check reports the MAXIMUM $|z|$ over its cells, so
+   the threshold must grow with cell count. Null p99 of $\max|z|$ at $N=4000$: **2.56 ($m$=2), 3.03
+   (4), 3.44 (18), 4.42 (180)**. The flat flag called `rho8e4` a FAILURE at 3.14 on a 180-cell check
+   whose statistic sat at the **62nd percentile** of its own null. Now calibrated per check by
+   multinomial Monte Carlo. ⚠ $\sqrt{2\ln 2m}$ is not an adequate substitute — it reads 2.04 where
+   the null mean is 1.38, because cell counts at these $N$ are skewed, not normal.
+3. **`03`'s cost null was turnover-blind** (caught before running). $2.7n^2/\rho$ is the $\theta=0$
+   case; the turnover factor $(1+\theta)/(1-\theta)^2$ is **1.0 / 2.65 / 28.0** at $\theta$ = 0 /
+   0.3 / 0.75, so the flat null would have printed a spurious VOID at high turnover. The exponent
+   $\gamma$, which is the load-bearing test, was never affected — the factor is $n$-independent.
+
+⚑ **Free check on the cost model**: analytic $P(k=n)$ gives 32.1 attempts per accepted tree at
+$n=8,\rho=0.5$ against the envelope's $2.7n/(1-\alpha)=30.3$. The *rejection* half of the cost model
+is confirmed; the population half is what `03` still has to measure.
+
+**⚠ Owed:** B/C/D/E run at one turnover only (0.3) — §S3.3.3's claim is that topology is
+turnover-*independent*, and one $\theta$ does not test that the simulator preserves it.
+**⇒ NEXT: the `03` cost pilot**, then $R$ from the measured timing.
