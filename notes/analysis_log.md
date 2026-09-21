@@ -1253,3 +1253,50 @@ is confirmed; the population half is what `03` still has to measure.
 **⚠ Owed:** B/C/D/E run at one turnover only (0.3) — §S3.3.3's claim is that topology is
 turnover-*independent*, and one $\theta$ does not test that the simulator preserves it.
 **⇒ NEXT: the `03` cost pilot**, then $R$ from the measured timing.
+
+
+## 2026-09-20/21 — session 14 (cont.): validation completed, cost measured, density dropped
+
+**✅ VALIDATION COMPLETE — PASS in every configuration.** 84,000 trees, **zero structure faults**,
+across 3 turnovers × 3 $n$ × 2 capture fractions plus four large-$n$ structural points ($n$ = 210,
+1,024, 3,387). Worst statistic 0.96× its own p99 critical value; all other runs 0.64–0.71×.
+⭐ Pruning load spans **3.4 to 65.2** nodes per branch point (19×, monotone in turnover), so the
+degree-2 suppression path is tested across the whole regime, not at one point.
+⚠ Per-**check** multiplicity is still unhandled (~15 checks per job each at p99 ⇒ ~14% of correct
+runs trip one); the 0.96 near-miss is exactly that rate, not evidence of a defect.
+
+**✅ COST MEASURED ⇒ ⭐⭐ THE BDS DENSITY IS DROPPED.** Nothing in this project exceeds one Slurm
+task. The decision quantity is **not** total core-hours (embarrassingly parallel over clones and
+replicates) but the **atomic unit**: one tree of the arm's largest clone. Worst case in the whole
+project is Subclone at Park $\rho$, **70.7 h**, inside the 7-day cap — and that is on an inflated
+clone size (≈12 h on the recorded 10,997). ⇒ §S3.3.5 route (c) and the owed branching-time density
+verification are **no longer needed**.
+⭐ **The cost model validated OUT OF SAMPLE**: fitted on $n$ = 4, 32, 210, it predicted check F's
+independent $n$=1,024 point to 0.91× (seconds) and 1.00× (peak live lineages).
+
+**⚠⚠ FOUR MORE DEFECTS, ALL IN MY TEST / READING RULE / PROJECTION, NONE IN THE SIMULATOR.**
+4. **`--f-grid` was word-split by `submit.sh`** (`$*` inside `--wrap` drops quoting) — both pass-2
+   jobs died in 9 s. Separator changed to commas.
+5. **Clones were grouped by ORGAN, not arm.** `clone_sizes` stripped only a trailing `_<digit>`,
+   leaving M1_LL, M1_LN, M2_LV… Park clones span organs by construction (§D.4c), so this **split
+   single clones and understated their size**. Fixed to `Sample.split("_")[0]`.
+6. **A single mean $\tau$ was applied across the whole range.** Seconds per lineage-event ran
+   $6.9\times10^{-6}$ ($n$=4) to $4.4\times10^{-8}$ ($n$=3,387) — **155×** — because at small $n$ an
+   accepted tree is many cheap *attempts* (Python overhead) and at large $n$ the vectorised per-event
+   cost dominates. The mean, set by the small-$n$ points, inflated the $n$=27,224 projection **~36×,
+   enough to flip a verdict**. Replaced by a two-term fit, seconds = $c_1\cdot$attempts +
+   $c_2\cdot$events. ⭐ The fix validates itself: $c_2$ = 3.47e-8 vs 3.83e-8 s fitted independently
+   on regimes differing 625× in $\rho$.
+7. **The verdict thresholds compared core-hours to a WALLTIME cap.** Total core-hours is a budget
+   question; the atomic unit is the feasibility question. This is what changed the answer.
+
+**⚑ Storage, measured.** ~**12 bytes per tip** compressed, so a full Park-scale library at $R$=100 is
+~120 MB per configuration — a non-issue. Attempts are **independently seeded**, so an accepted tree
+replays from (seed, attempt index) in one attempt: verified **bit-identical**, 55× cheaper at
+$n$=1,024 and ~4,100× at Subclone scale. ⚠ Store **branch lengths, not node times**: float32 times
+differenced give ~9% error on the shortest measured branch ($1.4\times10^{-6}T$) by cancellation,
+while a branch length itself is safe in float32 to $3.6\times10^{-8}$.
+
+**⇒ NEXT:** $R$ (now that timing exists), the tree library (proposed, unapproved), then the editing
+layer. ⚠ Clone sizes still lack the paper's per-cell tape filter — quote the projection as an
+over-estimate until it is applied.

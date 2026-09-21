@@ -3,21 +3,59 @@
 **State 2026-09-20: the tree layer is BUILT and VALIDATED at both capture fractions. The cost
 pilot (`03`) has not been run.** Editing and dropout are separate later layers, not in scope here.
 
-## ✅ Validation result (`02`, 2026-09-20)
+## ✅ Validation COMPLETE (`02`, 2026-09-20/21) — PASS in every configuration
 
-**PASS at both $\rho = 0.5$ and $\rho = 8\times10^{-4}$**, 4,000 accepted trees per $n \in \{4,5,8\}$,
-turnover 0.3, against closed forms verified independently in §S3.3. **Zero structure faults** in
-24,000 trees — every tree had exactly $n-1$ branching times, $2n-1$ nodes, two children per internal
-node and all times inside $(0,T)$. The worst statistic in either run sat at **0.64** (`rho50`) and
-**0.71** (`rho8e4`) of its own p99 critical value. Cost: 37 s and 25 min, 0.07 / 0.14 GB peak RSS.
+**84,000 trees, zero structure faults.** Three turnovers × three $n$ × two capture fractions, plus
+four large-$n$ structural points. Worst statistic in any run sat at **0.96×** its own p99 critical
+value; every other run at 0.64–0.71×.
 
-⭐ **The two runs really did exercise different regimes.** Nodes traversed per branch point — how
-much work degree-2 suppression had to do — was **3.6–3.8 at $\rho=0.5$ against 22.0–25.4 at Park's
-$\rho$**, a 6.5× difference. The deep-pruning path that Park adjudication depends on is now tested,
-not assumed.
+| run | $\rho$ | $\theta$ swept | $n$ | large-$n$ (check F) | worst / crit |
+|---|---|---|---|---|---|
+| pass 1 | 0.5 · 8e-4 | 0.3 | 4, 5, 8 | — | 0.64 · 0.71 |
+| pass 2 | 0.5 | 0, 0.3, 0.75 | 4, 5, 8 | 1,024 · 3,387 | 0.96 |
+| pass 2 | 8e-4 | 0, 0.75 | 4, 5, 8 | 210 · 1,024 | 0.70 |
 
-See `CLAUDE.md` in this directory for the full design, and `notes/sciphy_notes.md` §S3 for the
-theory record.
+⭐ **Coverage is wide where it matters.** Nodes traversed per branch point — how hard degree-2
+suppression works — ran from **3.4** ($\rho$=0.5, low turnover) to **65.2** ($\rho$=8e-4,
+$\theta$=0.75), a **19× span**, monotone in turnover as it must be. Structure and topology held
+across all of it, and at $n$ up to 3,387 — closing the "validated at $n\le8$, used at $n\le10{,}997$"
+gap.
+
+⚠ **Remaining calibration subtlety: per-CHECK multiplicity is not handled.** Each check is flagged at
+its own p99 and a pass-2 job runs ~15 checks, so ~14% of correct runs will trip one. Per-*cell*
+multiplicity is handled; per-check is not. The 0.96 near-miss (root split, $n$=8, $\theta$=0.75:
+2.90 vs 3.03) is exactly what that rate predicts.
+
+## ✅ Cost measured (`03`, 2026-09-20) — forward simulation is feasible everywhere
+
+**⇒ THE BDS DENSITY CAN BE DROPPED.** §S3.3.5's route (c) and the owed branching-time verification
+are not needed: nothing in this project exceeds a single Slurm task.
+
+**The atomic unit** — wall-clock for one tree of each arm's largest clone, the thing that cannot be
+parallelised away (core-hours can be, by clone and by replicate):
+
+| arm | largest clone | $\rho=0.5$ | $\rho=8\times10^{-4}$ |
+|---|---|---|---|
+| Initial 157 · M3 373 | | 0.1–0.2 s | 9–48 s |
+| M1 1,847 | | 2.5 s | 19.6 min |
+| M2 4,443 | | 11.9 s | 1.9 h |
+| Subclone 27,224 | | 6.3 min | **70.7 h** (7-day cap) |
+
+Total core-hours at $R$=100: design regime **0.05–25**; Park regime **4.7–192** for four arms and
+**16,292** for Subclone alone.
+
+⭐ **The cost model validated OUT OF SAMPLE.** Fitted on $n$ = 4, 32, 210 only, it predicted check
+F's independent $n$=1,024 point at $\rho$=8e-4 to **0.91×** on seconds and **1.00×** on peak live
+lineages — a 4.9× extrapolation beyond the fitted range. Both halves of the model are now confirmed:
+rejection (analytic $P(k{=}n)$ = 32.1 attempts vs predicted 30.3) and population ($n/\rho$).
+
+**Memory is a non-issue**: peak RSS never exceeded **0.18 GB** anywhere. Ask for 4 G, not 16.
+
+⚠ **Caveats on the Park-regime projection.** (i) $\gamma$=1.76 fitted on three points, with Subclone
+a 27× further reach even after the $n$=1,024 confirmation. (ii) Clone sizes are **unfiltered** (the
+paper's ≥100/≥20-tape cell filter needs the edit tables), inflating cost by 1.3× (M1) to **6.1×**
+(Subclone) — so Subclone's 16,292 core-h is likely nearer 2,700. Direction is conservative.
+(iii) $R$=100 is still a placeholder.
 
 ## Scope change, recorded (2026-09-20)
 

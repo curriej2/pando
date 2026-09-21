@@ -140,30 +140,66 @@ def clone_sizes(path=CLONES):
     arms = collections.defaultdict(collections.Counter)
     with open(path, newline="") as fh:
         for row in csv.DictReader(fh):
-            sample = row["Sample"]
-            arm = sample.rsplit("_", 1)[0] if sample.rsplit("_", 1)[-1].isdigit() else sample
+            # ⚠⚠ FIX 2026-09-20.  This stripped only a trailing _<digit>, which left
+            # M1_LL, M1_LN, M2_LV ... -- ORGANS, not arms.  Park clones span organs by
+            # construction (the Metient migration subset is clones appearing in >=2
+            # organs, D.4c), so grouping by Sample SPLITS clones and understates their
+            # size.  The arm is the first token.
+            arm = row["Sample"].split("_")[0]
             bc = row["ClonalBC"]
             if bc and bc != "None":
                 arms[arm][bc] += 1
     return {a: np.array(sorted(c.values(), reverse=True)) for a, c in arms.items()}
 
 
-def project(cells, sizes, reps):
-    """Extrapolate measured cost to whole arms by log-log interpolation in n."""
+def project(cells, sizes, reps, rho):
+    """Extrapolate measured cost to whole arms.
+
+    ⚠⚠ FIX 2026-09-20.  The first version fitted a power law to EVENTS and multiplied
+    by a MEAN tau (seconds per lineage-event).  tau is not a constant: it ranged
+    6.9e-6 s/event at n=4 to 4.4e-8 at n=3,387 in the rho=0.5 pilot, a 155x spread,
+    because at small n (or large rho) each accepted tree is many cheap ATTEMPTS and
+    per-attempt Python overhead dominates, while at large n the vectorised per-event
+    cost does.  A single mean tau is set by the small-n points and then applied at
+    n = 27,224, inflating that projection ~36x -- enough to flip a verdict.
+
+    The cost genuinely has two terms, so fit two:
+
+        seconds per accepted tree  =  c1 * attempts  +  c2 * lineage-events
+
+    c1 is per-attempt overhead (s), c2 is the marginal per-event cost (s).  Fitted by
+    non-negative least squares across the grid, then evaluated per clone at the
+    PREDICTED attempts and events for that n.  The events power law is still reported,
+    because gamma is the check on the cost MODEL, but it no longer drives the hours.
+    """
     ok = [c for c in cells if c.get("accepted")]
     if len(ok) < 2:
         return {"note": "need >= 2 measured grid points to project"}
     x = np.log(np.array([c["n"] for c in ok], float))
     y = np.log(np.array([c["events_per_accept"] for c in ok], float))
     gamma, inter = np.polyfit(x, y, 1)
-    tau = float(np.mean([c["tau_sec_per_event"] for c in ok]))
+
+    A = np.array([[c["attempts_per_accept"], c["events_per_accept"]] for c in ok], float)
+    sec = np.array([c["sec_per_accept"] for c in ok], float)
+    (c1, c2), *_ = np.linalg.lstsq(A, sec, rcond=None)
+    c1, c2 = max(float(c1), 0.0), max(float(c2), 0.0)
+    resid = float(np.max(np.abs(A @ [c1, c2] - sec) / np.maximum(sec, 1e-12)))
+    turn = ok[0]["turnover"]
 
     out = {"fitted_gamma": float(gamma), "gamma_null": 2.0,
-           "tau_sec_per_event": tau,
+           "cost_c1_sec_per_attempt": c1, "cost_c2_sec_per_event": c2,
+           "cost_fit_worst_rel_resid": resid,
            "extrapolation_safe": bool(1.7 <= gamma <= 2.3), "arms": {}}
     for arm, s in sorted(sizes.items()):
         s = s[s >= 2]
-        hours = float(np.exp(inter + gamma * np.log(s)).sum() * reps * tau / SEC_PER_HOUR)
+        b_, d_, T_ = bd.rate_params(1, 1.0, turn), None, None       # placeholder, replaced below
+        hrs = 0.0
+        for n_c in s:
+            bb, dd, TT = bd.rate_params(int(n_c), rho, turn)
+            at = 2.7 * n_c / max(1 - bd.bd_alpha_beta(bb, dd, TT)[0], 1e-9)
+            ev = events_pred(int(n_c), rho, bb, dd, TT)
+            hrs += (c1 * at + c2 * ev)
+        hours = float(hrs * reps / SEC_PER_HOUR)
         out["arms"][arm] = {
             "clones": int(s.size), "median_cells": int(np.median(s)), "max_cells": int(s.max()),
             "core_hours_at_R": round(hours, 2), "R": reps,
@@ -231,7 +267,7 @@ def main():
     rep = {"params": vars(a), "cells": cells}
     try:
         rep["projection"] = project([c for c in cells if c["turnover"] == 0.3],
-                                    clone_sizes(), a.project_R)
+                                    clone_sizes(), a.project_R, a.rho)
     except Exception as exc:                                   # clone table absent or renamed
         rep["projection"] = {"note": f"projection skipped: {exc}"}
 
@@ -243,8 +279,10 @@ def main():
     p = rep["projection"]
     if "arms" in p:
         print(f"\nfitted gamma = {p['fitted_gamma']:.2f} (null 2.0), "
-              f"tau = {p['tau_sec_per_event']:.2e} s/event, "
-              f"extrapolation {'SAFE' if p['extrapolation_safe'] else 'VOID'}")
+              f"extrapolation {'SAFE' if p['extrapolation_safe'] else 'VOID'}\n"
+              f"cost model: {p['cost_c1_sec_per_attempt']:.3e} s/attempt + "
+              f"{p['cost_c2_sec_per_event']:.3e} s/event, "
+              f"worst relative residual {p['cost_fit_worst_rel_resid']:.1%}")
         for arm, v in p["arms"].items():
             print(f"  {arm:<12} {v['clones']:>5} clones  median {v['median_cells']:>5}  "
                   f"max {v['max_cells']:>6}  {v['core_hours_at_R']:>12.2f} core-h at R={v['R']}"

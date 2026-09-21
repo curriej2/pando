@@ -265,11 +265,53 @@ def check_E(n, turnover, rho, reps, seed, trees_fast, budget_s=600.0):
             "sup_gap_ref_1.36sqrt": float(1.36 * np.sqrt(1 / len(trees_fast) + 1 / len(naive)))}
 
 
+def check_F(n, rho, turnover, reps, budget_s, seed):
+    """Check B alone, at LARGE n.  No statistics -- structure is asserted per tree.
+
+    ⚠ C and D cannot scale: they need many trees per cell, and the cell count runs
+    away (1.6e6 labelled histories already at n=8).  B does scale, and it is the
+    check that would catch a slot-assignment, stack or ancestor-walk failure at the
+    sizes this simulator is actually FOR.  Park's largest clone is 10,997 cells;
+    everything validated so far was n <= 8.
+    """
+    b, delta, T = bd.rate_params(n, rho, turnover)
+    faults, got, t0 = [], [], time.perf_counter()
+    for i in range(reps):
+        if time.perf_counter() - t0 > budget_s:
+            break
+        tr, st = bd.simulate_tree(b, delta, T, rho, n, seed=seed + 7919 * i)
+        if tr is None:
+            continue
+        faults.extend(structural_faults(tr, n, T))
+        got.append((st.attempts, st.peak_live, tr.n_ancestors, st.seconds))
+    if not got:
+        return {"n": n, "rho": rho, "turnover": turnover, "trees": 0,
+                "note": f"no acceptance inside {budget_s:.0f} s"}
+    a = np.array(got, float)
+    return {"n": n, "rho": rho, "turnover": turnover, "trees": len(got),
+            "n_structure_faults": len(faults), "structure_faults": faults[:10],
+            "mean_attempts": float(a[:, 0].mean()), "mean_peak_live": float(a[:, 1].mean()),
+            "pruning_load_nodes_per_branchpoint": float((a[:, 2].mean() - 1) / (n - 1)),
+            "sec_per_accept": float(a[:, 3].mean())}
+
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--reps", type=int, default=20000, help="replicates for check A")
     ap.add_argument("--tree-reps", type=int, default=3000, help="accepted trees for B/C/D")
     ap.add_argument("--rho", type=float, default=0.5, help="capture fraction for the tree checks")
+    ap.add_argument("--turnover", type=float, nargs="+", default=[0.0, 0.3, 0.75],
+                    help="turnovers swept by B/C/D. S3.3.3 says topology is turnover-INDEPENDENT; "
+                         "one value tests the theory, not that the simulator honours it.")
+    ap.add_argument("--e-turnover", type=float, default=0.3,
+                    help="check E runs at this turnover only -- it tests implementation "
+                         "agreement, which is not a turnover question")
+    ap.add_argument("--skip-bcd", action="store_true")
+    ap.add_argument("--f-grid", default="", help='large-n structural points, COMMA separated: "n:rho,n:rho". '
+                         'No spaces -- submit.sh passes args through $* inside --wrap, '
+                         'which word-splits a quoted multi-token value.')
+    ap.add_argument("--f-reps", type=int, default=3)
+    ap.add_argument("--f-budget", type=float, default=900.0)
     ap.add_argument("--seed", type=int, default=20260920)
     ap.add_argument("--skip-naive", action="store_true",
                     help="skip check E. The naive oracle is a per-event Python loop, so at "
@@ -291,28 +333,44 @@ def main():
         report["checks"].setdefault("A_count_law", []).append(r)
         print(f"   turnover {turnover:<5} worst |dev| = {r['worst_se']:.2f} se", flush=True)
 
-    for n in (4, 5, 8):
-        print(f"B/C/D  n = {n}", flush=True)
-        trees, stats, (b, delta, T) = collect_fast(n, 0.3, a.rho, a.tree_reps, a.seed + n)
-        r = check_BCD(trees, n, T, a.seed)
-        r.update(n=n, n_trees=len(trees),
-                 mean_attempts=float(np.mean([s.attempts for s in stats])) if stats else 0.0)
-        report["checks"].setdefault("BCD", []).append(r)
-        print(f"   trees {len(trees)}  structure faults {r['n_structure_faults']}  "
-              f"root-split worst {r['root_split_worst_se']:.2f} se  "
-              f"histories {r['histories_seen']}/{r['histories_expected']} "
-              f"worst {r['history_worst_se']:.2f} se", flush=True)
+    for turn in ([] if a.skip_bcd else a.turnover):
+        for n in (4, 5, 8):
+            print(f"B/C/D  n = {n}  turnover = {turn}", flush=True)
+            trees, stats, (b, delta, T) = collect_fast(n, turn, a.rho, a.tree_reps, a.seed + n)
+            r = check_BCD(trees, n, T, a.seed)
+            r.update(n=n, turnover=turn, n_trees=len(trees),
+                     mean_attempts=float(np.mean([s.attempts for s in stats])) if stats else 0.0)
+            report["checks"].setdefault("BCD", []).append(r)
+            print(f"   trees {len(trees)}  structure faults {r['n_structure_faults']}  "
+                  f"root-split {r['root_split_worst_se']:.2f}/{r['root_split_crit99']:.2f}  "
+                  f"histories {r['histories_seen']}/{r['histories_expected']} "
+                  f"{r['history_worst_se']:.2f}/{r['history_crit99']:.2f}  "
+                  f"prune-load {r['pruning_load_nodes_per_branchpoint']:.1f}", flush=True)
 
-        if n <= 5 and not a.skip_naive:
-            e = check_E(n, 0.3, a.rho, min(a.tree_reps, 2000), a.seed + 100 + n, trees)
-            e["n"] = n
-            report["checks"].setdefault("E_naive_vs_fast", []).append(e)
-            if "note" in e:
-                print(f"   naive-vs-fast: {e['note']}", flush=True)
-            else:
-                print(f"   naive-vs-fast: root-split worst {e['root_split_worst_se']:.2f} se, "
-                      f"branching-time sup gap {e['branching_time_sup_gap']:.4f} "
-                      f"(ref {e['sup_gap_ref_1.36sqrt']:.4f})", flush=True)
+            if n <= 5 and not a.skip_naive and turn == a.e_turnover:
+                e = check_E(n, turn, a.rho, min(a.tree_reps, 2000), a.seed + 100 + n, trees,
+                            budget_s=300.0)
+                e.update(n=n, turnover=turn)
+                report["checks"].setdefault("E_naive_vs_fast", []).append(e)
+                if "note" in e:
+                    print(f"   naive-vs-fast: {e['note']}", flush=True)
+                else:
+                    print(f"   naive-vs-fast: root-split worst {e['root_split_worst_se']:.2f} se, "
+                          f"branching-time sup gap {e['branching_time_sup_gap']:.4f} "
+                          f"(ref {e['sup_gap_ref_1.36sqrt']:.4f})", flush=True)
+
+    for point in a.f_grid.replace(",", " ").split():
+        fn, frho = point.split(":")
+        print(f"F  structure at n = {fn}, rho = {frho}", flush=True)
+        f = check_F(int(fn), float(frho), a.e_turnover, a.f_reps, a.f_budget, a.seed)
+        report["checks"].setdefault("F_large_n", []).append(f)
+        if f["trees"]:
+            print(f"   {f['trees']} trees  faults {f['n_structure_faults']}  "
+                  f"attempts {f['mean_attempts']:.0f}  peak live {f['mean_peak_live']:.3g}  "
+                  f"prune-load {f['pruning_load_nodes_per_branchpoint']:.1f}  "
+                  f"{f['sec_per_accept']:.1f} s/tree", flush=True)
+        else:
+            print(f"   {f['note']}", flush=True)
 
     ratios = []          # each check's statistic as a FRACTION of its own critical value
     for r in report["checks"].get("A_count_law", []):
@@ -323,7 +381,10 @@ def main():
             ratios.append(r["history_worst_se"] / r["history_crit99"])
         if r["n_structure_faults"]:
             ratios.append(1e9)
-    report["worst_ratio_to_crit"] = float(np.nanmax(ratios))
+    for r in report["checks"].get("F_large_n", []):
+        if r.get("n_structure_faults"):
+            ratios.append(1e9)
+    report["worst_ratio_to_crit"] = float(np.nanmax(ratios)) if ratios else 0.0
     report["verdict"] = "PASS" if report["worst_ratio_to_crit"] < 1.0 else "FAIL"
 
     out = pathlib.Path(a.out)
