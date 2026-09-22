@@ -1347,3 +1347,45 @@ losing 12 of 1,490 cells. Backfilled via a new `--only` flag at 17× walltime ma
 high-turnover work generously; the caveat is recorded at the top of `04`.
 
 **⇒ NEXT:** the editing layer, then fit $\theta$ (and $\rho$) jointly against clade-size-by-depth.
+
+
+## 2026-09-22 — session 15 (cont.): library complete, TreeSim read, grid extended
+
+**✅ Base library COMPLETE**: 1,490/1,490 cells, **29,780 trees, ZERO structure faults**, 97 MB
+(gitignored). ⚠ Three cells under-filled at the most expensive corners — (3387, 0.002, 0.7) 18/20,
+(3387, 0.01, 0.6) 8/20, (6237, 0.1, 0.7) 14/20 — costing 20 trees of 29,800 (0.07%). All three sit
+at **high turnover, where the $\theta$ signal is largest**, so at $R$=8 the se on that cell is ~1.6×
+wider. Top-up is ~30 core-h and needs a `--rep-offset` to resume without duplicating.
+
+**⭐ TreeSim source read** — full write-up at `notes/sciphy_notes.md` **§S3.5**. It is route (c)
+exactly (iid times from the inverse CDF + uniform leaf joining); it uses the $\rho$-rescaling
+§S3.3.4 called unsimulable and lets $\mu_1$ go negative, which **vindicates that note's reasoning
+while correcting its caution**; and its *default* sampling path is a deterministic $n/\rho$
+approximation rather than true $\rho$-sampling.
+
+**⇒ GRID EXTENDED, two arrays in flight (launched 2026-09-22):**
+- `14228126` — **$\theta=0$** across the existing $\rho$ grid, 1,480 trees, 8.8 core-h. This is the
+  **Yule reference** that makes the differenced LTT computable.
+- `14228127` — $\rho$ extended downward to **{0.05, 0.02, 0.0005}**, all six $\theta$, 6,120 trees,
+  212 core-h. Motivated by SciPhy's own finding (§S3.5 / paper p.4) that a nominal
+  sequenced/population ratio **over-stated the effective sampling proportion by 4–16×** when tested
+  against data. ⇒ **treat every nominal $\rho$ as an upper bound**, including Park Initial's 0.24.
+
+⚠ **I trimmed job B rather than submit what I proposed.** The full version was **1,303 core-h**,
+~4× the whole library. Capping $\rho$=0.0005 at $n\le1{,}112$ and $\rho$=0.02 at $n\le3{,}387$ gives
+212 core-h, a 5× saving, justified by measurement not convenience: the $\theta$ effect **shrinks**
+with clone size (+0.094 at $n$=63 vs +0.051 at $n$=3,387), so the large-$n$/tiny-$\rho$ corner costs
+$n^2/\rho$ and buys the weakest signal.
+
+**Why the Yule difference.** Our LTT cannot show the pull of the present directly: conditioning pins
+$L(T)=n$, so the curve saturates and the tip slope reads 4.94 against a true $b$ of 13.59 (the deep
+slope recovers $r$ to 3%, so the theory's other half is confirmed). Differencing
+$\Delta(t)=\log L_\theta(t)-\log L_0(t)$ at matched $n$ and $\rho$ cancels the saturation, because
+both curves are pinned at the same endpoints. ⭐ Held at fixed $\rho$ it isolates $\theta$, so
+comparing $\Delta$ across $\rho$ answers the question that gates the editing layer: **does turnover
+survive at the mouse arms' capture fraction, or must $\theta$ be imported rather than fitted?**
+At $\rho$=0.002 the tip slope already collapses to ~0.1, so the provisional answer is "barely".
+
+**⇒ NEXT:** (1) read the two arrays; (2) compute the Yule-differenced LTT across all $\rho$;
+(3) the editing layer. ⚠ Still owed to Jihye Park: **total viable cells per dissociation, or tumour
+mass, per organ at day 45** — the only thing that collapses the mouse $\rho$ axis to a number.

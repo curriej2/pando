@@ -4842,3 +4842,45 @@ the across-lineage rate heterogeneity, leaving only the much weaker assumption o
 *within* a clone, testable against the prefix-clade-size-by-depth data (§D.4b, 1,567,321 nodes).
 ⇒ It also **removes** a $(b,\delta,\rho)$ fit: with shape parameter-free and $\rho$ collapsed, the
 tree contributes essentially **one effective number** — how deep the coalescences sit.
+
+
+## S3.5 ⭐ TreeSim source read (2026-09-22) — SciPhy's trees, and route (c) in the wild
+
+SciPhy does not simulate trees. Validation uses 100 trees under a BDS model (Supp. Table 1);
+the benchmark comparator uses **TreeSim v2.4** (Stadler's own R package), *"conditioning on the
+number of tips to match that of the dataset"* (Methods p. 13). Source read from CRAN.
+
+**⭐ `sim2.bd.fast.single.origin` IS route (c), and structurally identical to our design.** It draws
+the $n-1$ branching times **iid** from the closed-form inverse CDF, sorts them descending, then
+builds topology by **uniformly choosing which extant leaf splits** (`species <- sample(leaves,1)`).
+Shape by uniform random joining, times from the BDS density — §S3.3.5's route (c) exactly. Our
+forward sampler and TreeSim are two independent implementations of one distribution, so TreeSim is
+available as a third-party cross-check should the forward/density equivalence ever be wanted.
+
+**⭐⭐ TreeSim uses the $\rho$-rescaling §S3.3.4 called "not a simulable process" — and that is fine.**
+```r
+lamb1 = rho * lambda ;  mu1 = mu - lambda * (1 - rho)
+```
+is precisely $\delta\mapsto\delta-b(1-\rho)$, $b\mapsto b\rho$. §S3.3.4 noted that at Park-like $\rho$
+the equivalent $\delta$ goes **negative** ($-0.499$ at $\rho=8\times10^{-4}$) and concluded it is
+"a statement about the density, not a simulable process". **TreeSim lets `mu1` go negative and uses
+it anyway**, because it enters only the density, never a forward simulation. ⇒ the note was right
+about the *why* and over-cautious about the *consequence*: negative $\mu_1$ is the intended regime of
+that transformation, not a breakdown.
+
+**⚠ TreeSim's DEFAULT sampling is an approximation.** `sim.bd.taxa.loop` has three paths and the
+default is `stochsampling=FALSE`:
+```r
+phy2 <- sim2.bd.reverse(round(n/frac), ...)                 # FIXED tip count
+phy1 <- reconstructed.taxa(phy2[[1]], round(n/frac) - n)     # delete a FIXED number
+```
+That replaces genuine $\rho$-sampling — $\mathrm{Binomial}(N,\rho)$ with $N$ itself random — by a
+deterministic $n/\rho$ tips pruned by a fixed count. Only `stochsampling=TRUE` takes the analytic
+route. SciPhy's Methods do not say which they used. ⇒ do not treat their random-tree comparator as
+drawn from the same BDS model they fit, without checking.
+
+**⚑ Two smaller things.** `sim.bd.taxa` **samples the origin** from its conditional given $n$ (via
+$r^{1/n}$) rather than fixing it, so it could not serve our problem, where $T$ is pinned by
+$\Lambda=\lambda T$ — `sim.bd.taxa.age` is the one that fixes age. And `LTT.general` builds lineage
+counts as cumulative furcations against sorted branching times, the same construction as
+`04_tree_library.py`, so our LTT curves are directly comparable to theirs.

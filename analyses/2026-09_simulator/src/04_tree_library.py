@@ -215,6 +215,9 @@ def main():
                          "dense small-n pass: 97.1%% of Park clones are <=64 cells, and "
                          "stocking every integer there costs 1.6 core-h, making the "
                          "nearest-size substitution EXACT rather than <=34%% off.")
+    ap.add_argument("--thetas", default=None, help="comma list overriding THETAS")
+    ap.add_argument("--rhos", default=None,
+                    help='comma list of "rho:maxsize" overriding RHOS, e.g. "0.05:11081,0.02:3387"')
     ap.add_argument("--only", default=None,
                     help='explicit cells "n,rho,theta;n,rho,theta;..." bypassing the grid')
     ap.add_argument("--dry-run", action="store_true")
@@ -222,6 +225,11 @@ def main():
 
     outdir = pathlib.Path(a.outdir or (_HERE.parent / "results" / "tree_library"))
     outdir.mkdir(parents=True, exist_ok=True)
+    if a.thetas:
+        THETAS[:] = [float(x) for x in a.thetas.split(",")]
+    if a.rhos:
+        RHOS.clear()
+        RHOS.update({float(c.split(":")[0]): int(c.split(":")[1]) for c in a.rhos.split(",")})
     sizes = [int(x) for x in a.sizes.split(",")] if a.sizes else None
     only = ([tuple(float(v) for v in c.split(",")) for c in a.only.split(";")]
             if a.only else None)

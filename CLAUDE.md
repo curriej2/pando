@@ -240,7 +240,42 @@ the **symbol-depletion test** of row A9's untested *trans* limb. |
    events $\le10$). Threshold-independent claims that survive: the 118–2,522× null comparison,
    $q\le1.9\times10^{-4}$ per event, $\hat\pi$ median 1.000 vs expected 0.11–0.41. Full audit in
    README "How events are actually called".
-0-CURRENT. **⭐⭐ 2026-09-15/17 — THE SIMULATOR THREAD IS OPEN. Tree model SETTLED, editing
+0-CURRENT. **⭐⭐ 2026-09-20/22 — THE SIMULATOR IS BUILT, VALIDATED, AND THE TREE LIBRARY EXISTS.
+   ⭐⭐ THE BDS DENSITY IS DROPPED.** `analyses/2026-09_simulator/src/` holds `01_bdtree.py`
+   (Gillespie forward + reject → genealogy → $\rho$-sample → reconstruct, plus a naive oracle),
+   `02_validate_tree.py`, `03_cost_curve.py`, `04_tree_library.py`, `05_submit_library.sh`.
+   **✅ VALIDATION PASSES EVERYWHERE**: 84,000 trees, **zero structure faults**, 3 turnovers × 3 $n$
+   × 2 capture fractions plus structural checks at $n$ = 210/1,024/3,387. Pruning load spans
+   **3.4–65.2** nodes per branch point (19×), so degree-2 suppression is tested across the regime.
+   **✅ COST MEASURED ⇒ the decision quantity is the ATOMIC UNIT** (one tree of the arm's largest
+   clone), **not** core-hours, which parallelise over clones and replicates. Worst case in the whole
+   project is Subclone at Park-like $\rho$, **70.7 h**, inside the 7-day cap. ⇒ §S3.3.5 route (c) and
+   the owed branching-time density verification are **no longer needed**. ⭐ The cost model validated
+   **out of sample** (0.91× on seconds, 1.00× on peak live lineages at an $n$ not used to fit it).
+   **✅ TREE LIBRARY: 29,780 trees, zero faults, 97 MB** (gitignored). Stocks the **range** of clone
+   sizes, not Park's clone list — 20 log-spaced sizes pinning the five arm maxima plus every integer
+   2–64 (97.1% of Park clones, median 8). Stores `parent` + **branch lengths** (not node times) and
+   seed provenance; replay is **bit-identical**.
+   **⭐⭐ $\rho$ DOMINATES $\theta$ BY 3–5×** on coalescent depth (+0.27…0.34 over $\rho$ vs
+   +0.04…0.11 over $\theta$, monotone 20/20 and 5/5). ⇒ pinning the mouse capture fraction matters
+   more than pinning turnover.
+   ⚠⚠ **$\rho=8\times10^{-4}$ was SciPhy's HEK293T constant, never a Park measurement.** Corrected:
+   Initial ~0.24 (upper bound), Subclone 0.1–0.3, mice **unknown** — IVIS gives relative flux, not a
+   cell count. ⚠ SciPhy found a nominal sequenced/population ratio over-stated effective $\rho$ by
+   **4–16×**, so treat every nominal value as an upper bound. **⇒ ASK JIHYE PARK: total viable cells
+   per dissociation, or tumour mass, per organ at day 45.**
+   ⚑ $\theta$ from the pool's realised doubling (8,000→160,000 in 10 d = 55.5 h) against H1299's
+   intrinsic 22–30 h gives **0.46–0.60**, the only edit-independent handle; hence a grid, not a point.
+   ⚠⚠ **$\theta$ cannot be fitted before the editing layer exists** — every observation of
+   within-clone structure in Park is edit-mediated (ClonalBC gives membership, no internal structure).
+   ⚠ **EIGHT defects this thread, every one in a test, reading rule or projection, none in the
+   simulator** — see `analysis_log.md` sessions 14–15. The recurring shape: a statistic fitted or
+   calibrated in one regime and applied in another.
+   **⇒ NEXT:** read arrays `14228126` ($\theta=0$ Yule reference) and `14228127` ($\rho$ extended to
+   0.05/0.02/0.0005), compute the **Yule-differenced LTT** to decide whether turnover survives at the
+   mouse capture fraction, then **the editing layer**.
+
+0-PREV5. **⭐⭐ 2026-09-15/17 — THE SIMULATOR THREAD IS OPEN. Tree model SETTLED, editing
    layer MEASURED, nothing built yet.** New directory `analyses/2026-09_simulator` (its CLAUDE.md is
    the full design); theory in `notes/sciphy_notes.md` **§S3**; running record `analysis_log.md`
    session 13. **`src/` is deliberately empty — no script has cleared the approval gate.**

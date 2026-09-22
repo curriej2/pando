@@ -57,6 +57,55 @@ paper's ≥100/≥20-tape cell filter needs the edit tables), inflating cost by 
 (Subclone) — so Subclone's 16,292 core-h is likely nearer 2,700. Direction is conservative.
 (iii) $R$=100 is still a placeholder.
 
+## ✅ Tree library BUILT (`04`/`05`, 2026-09-21/22)
+
+**1,490/1,490 cells · 29,780 trees · ZERO structure faults · 97 MB** in
+`results/tree_library/` (gitignored — reproduce by rerunning `src/`). Check B runs on every stored
+tree, so any pruning or slot-assignment failure would surface.
+
+**Design: stock the RANGE of clone sizes, not Park's clone list.** 20 log-spaced sizes 2–11,081
+pinning the five observed arm maxima (133 · 210 · 1,607 · 3,387 · 11,081), **plus every integer
+2–64**, which is where 97.1% of Park clones sit (median 8) — so nearest-size substitution is exact
+there rather than up to 34% off. An arm is reassembled later by drawing at its **true size
+distribution**; range is what we stock, distribution is what we draw. ⚠ Not optional: the statistics
+this feeds are strongly clone-size dependent (best-$k$ inverts with clone size; the clone floor was
+monotone 4/4).
+
+**Per tree:** `parent` int32 + **branch lengths** float32 (not node times — float32 differencing
+costs ~9% on the shortest measured branch, $1.4\times10^{-6}T$), seed + accepting attempt index
+(replay verified **bit-identical**), a hash, and edit-free summaries (tree length, B1, LTT).
+⚠ Prefix-clade-size-by-depth is deliberately absent — prefix clades are defined by shared *edit*
+prefixes, so it needs the editing layer.
+
+**⭐⭐ Finding: $\rho$ dominates $\theta$ by 3–5× on coalescent depth.** Median coalescent depth
+(fraction of $T$ by which half the lineages exist) spans **+0.27 to +0.34** over $\rho$ 0.25→0.002
+against **+0.04 to +0.11** over $\theta$ 0.3→0.7, monotone in 20/20 $\theta$ rows and 5/5 $\rho$
+comparisons. ⇒ the unknown we could not get from the paper (mouse $\rho$) matters more than the one
+derived from growth arithmetic ($\theta$). ⚑ The $\theta$ effect also shrinks with clone size, so
+small clones are the informative ones about turnover.
+
+**In flight (2026-09-22):** `14228126` adds the **$\theta=0$ Yule reference** (8.8 core-h);
+`14228127` extends $\rho$ to **{0.05, 0.02, 0.0005}** (212 core-h), because SciPhy found a nominal
+sequenced/population ratio over-stated effective $\rho$ by **4–16×** — so treat every nominal
+$\rho$, including Park Initial's 0.24, as an upper bound.
+
+## ⚠⚠ $\rho$ per arm — two established, three not (2026-09-21)
+
+| arm | $\rho$ | basis |
+|---|---|---|
+| Initial / Pre-TX | **~0.24** (upper bound) | 37,810 edit-table cells from a stated ~160,000 pool |
+| Subclone | **0.1–0.3** (bounded) | 8 colonies from single founders, 295–11,081 cells each, vs ~35,000 expected after 35 d |
+| M1 · M2 · M3 | **unknown** | growth tracked by IVIS bioluminescence = relative flux, no cell count or tumour mass reported |
+
+⚠⚠ **$\rho=8\times10^{-4}$, used throughout this analysis before 2026-09-21, is SciPhy's fixed value
+for HEK293T** (`sciphy_notes.md` lines 899, 1742) — **not a Park measurement.** It is accidentally
+the right order for the mice and 2–3 orders off for Initial and Subclone.
+
+⚑ **$\theta$ from the only edit-independent handle:** the pool went ~8,000 → ~160,000 in 10 days
+(paper p.4) = a realised net doubling of **55.5 h**, against NCI-H1299's intrinsic 22–30 h, giving
+$\theta = 1-r/b =$ **0.46–0.60** — a *lower* bound, since the literature figure is itself net.
+⚠ Confounded: the deficit could be slower division rather than more death. Hence a grid, not a point.
+
 ## Scope change, recorded (2026-09-20)
 
 **Forward simulation is now the primary route, not the validator.** §S3.3.5 listed direct
