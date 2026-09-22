@@ -1300,3 +1300,50 @@ while a branch length itself is safe in float32 to $3.6\times10^{-8}$.
 **⇒ NEXT:** $R$ (now that timing exists), the tree library (proposed, unapproved), then the editing
 layer. ⚠ Clone sizes still lack the paper's per-cell tape filter — quote the projection as an
 over-estimate until it is applied.
+
+
+## 2026-09-21/22 — session 15: the tree library built
+
+**⭐ Design change, Justin's call: stock the RANGE of clone sizes, not Park's clone list.** Initial
+alone has 2,544 clones, nearly all tiny. An arm is reassembled later by drawing, for each real clone
+of size $n$, the stocked tree nearest to $n$. ⚠ Range is what we stock, **distribution is what we
+draw** — the statistics this feeds are strongly clone-size dependent (best-$k$ inverts with clone
+size; the clone floor was monotone 4/4), so averaging over the grid would destroy the comparison.
+⚑ Refinement the instruction implied: **97.1% of Park clones are $\le$64 cells** (median 8), and
+stocking every integer size there costs **1.6 core-h**, so substitution is now EXACT for 97% of
+clones rather than up to 34% off.
+
+**Built.** `04_tree_library.py` + `05_submit_library.sh`. Grid: 20 log-spaced sizes 2–11,081 pinning
+the five observed arm maxima, plus every integer 2–64 · $\theta\in\{0.3\ldots0.7\}$ ·
+$\rho\in\{0.25,0.10\}$ everywhere and $\{0.01,0.002\}$ capped at the mouse size range · $R$=20.
+**29,640 trees, ZERO structure faults, 94 MB.** Each tree stores `parent` int32 + **branch lengths**
+float32 (not node times — float32 differencing costs ~9% on the shortest branch), seed + accepting
+attempt index (replay verified **bit-identical**), a hash, and edit-free summaries (tree length, B1,
+LTT). ⚠ Prefix-clade-size-by-depth is deliberately NOT computed — it needs the editing layer.
+
+**⭐⭐ THE FINDING: $\rho$ dominates $\theta$ by 3–5× on coalescent depth.** Median coalescent
+depth (fraction of $T$ by which half the lineages exist; larger = shallower tree), at matched $n$:
+
+| | span over $\rho$ 0.25→0.002 | span over $\theta$ 0.3→0.7 |
+|---|---|---|
+| $n$=63 | **+0.338** | +0.082 to +0.111 |
+| $n$=3,387 | **+0.268** | +0.051 to +0.062 |
+
+Monotone in the predicted direction in **20/20** $\theta$ rows and **5/5** $\rho$ comparisons — the
+pull of the present, measured. ⇒ **The unknown I could not resolve from the paper (mouse $\rho$)
+matters several times more than the one I derived from growth arithmetic ($\theta$).** That sharpens
+the ask to Jihye Park: total viable cells per dissociation, or tumour mass, per organ at day 45.
+⚑ The $\theta$ effect also SHRINKS with clone size (0.094 → 0.051 from $n$=63 to 3,387), so small
+clones are the more informative ones about turnover. ⚠ On this one summary only; the real comparison
+runs through prefix clades and inherits the editing layer's noise.
+
+**⚠⚠ DEFECT 8 — the cost model was fitted at turnover 0.3 and applied to 0.7.** `03`'s `project()`
+filters on `turnover == 0.3`. Measured on this run, actual/predicted rises monotonically with
+turnover — **median 0.79 at $\theta$=0.3, 1.27 at 0.7, tail to 4.12×** — because total nodes
+$\approx 2N(T)/(1-\theta)$ is 2.9× $N(T)$ at 0.3 but 6.7× at 0.7, and those extra nodes go through
+the PYTHON genealogy loop (~1 µs/event) not the vectorised pass-1 (~38 ns/event). Aggregate was fine
+(396 core-h actual vs 339 predicted, 1.17×); the **tail** hit the 12 h walltime on **4 of 120 tasks**,
+losing 12 of 1,490 cells. Backfilled via a new `--only` flag at 17× walltime margin. ⇒ size
+high-turnover work generously; the caveat is recorded at the top of `04`.
+
+**⇒ NEXT:** the editing layer, then fit $\theta$ (and $\rho$) jointly against clade-size-by-depth.
