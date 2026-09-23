@@ -111,7 +111,7 @@ already back at $p=1/1001$ in 5/5 arms. ⚠ Two orthogonal follow-ups are specif
 `--lam 4` re-run with a size-stratified null (the floor, not $B$, is what hides weaker events), and
 the **symbol-depletion test** of row A9's untested *trans* limb. |
 
-| `2026-09_simulator` | Build the forward simulator (birth–death tree → sequential editing → dropout) for the homoplasy null and the design sweep. | **Design settled and verified; nothing built.** Tree model: shape/time factorise, clone sizes taken from data not simulated, two effective parameters not three. BDS branching-time CDF closed-form and invertible. Editing layer measured (per-tape rates real, site 6 anomalous, depth 0 censored). ⚠ Editing and dropout must be fitted jointly. |
+| `2026-09_simulator` | Build the forward simulator (birth–death tree → sequential editing → dropout) for the homoplasy null and the design sweep. | **Tree layer BUILT, validated, costed; library COMPLETE (1,870 cells, 37,380 trees, zero faults).** Figs S1 (method) and S3 (pull of the present) built; LaTeX write-up in `writeup/`. ⭐ $L(t)$ = independent records of time $t$ — tree shape sets which timepoints are recorded well, survivorship sets whose history is. Editing layer NOT started. ⚠ Editing and dropout must be fitted jointly. |
 
 ## Already settled — do not re-derive unless asked
 
@@ -240,7 +240,28 @@ the **symbol-depletion test** of row A9's untested *trans* limb. |
    events $\le10$). Threshold-independent claims that survive: the 118–2,522× null comparison,
    $q\le1.9\times10^{-4}$ per event, $\hat\pi$ median 1.000 vs expected 0.11–0.41. Full audit in
    README "How events are actually called".
-0-CURRENT. **⭐⭐ 2026-09-20/22 — THE SIMULATOR IS BUILT, VALIDATED, AND THE TREE LIBRARY EXISTS.
+0-CURRENT. **⭐⭐ 2026-09-22/23 — FIGURES S1/S3 AND A LATEX WRITE-UP; THE LIBRARY IS COMPLETE.**
+   `analyses/2026-09_simulator`, README "Session 16"; log session 16. Both extension arrays done,
+   **1,870 cells / 37,380 trees, zero faults**. Write-up `writeup/simulator_figures.tex` (pdflatex;
+   Justin edits it) holds every tree-layer equation. ⭐ New verified closed form: $K\mid K\ge1$ is
+   geometric, $\beta'=\rho\beta/[1-\beta(1-\rho)]$.
+   **Fig S3 (illustration, not a test):** turnover bends the LTT up near harvest (tip rate 4.0 →
+   7.5 → 10.2 at $\theta$ 0/0.5/0.7, $\rho$=1, $n$=63); capture reverses it (7.5 → 0.008 from
+   $\rho$=1 to 0.002). ⚠ My prediction that $\theta$ lines bunch at low $\rho$ was WRONG — they
+   shift later, the same direction as raising $\rho$.
+   **⭐⭐ Framing agreed with Justin: turnover inference is NOT a central aim.** $L(t)$ counts
+   independent records of time $t$, so the tree decides which timepoints of the signalling history
+   are recorded well (precision ∝ $L(t)$, not $n$), and survivorship decides whose history is
+   recorded (genuine bias if the signal affects fitness — not yet representable).
+   **Declined by Justin:** S2 validation figures; closed-form and matched-pair confounding tests.
+   **Deprioritised:** the Yule-differenced LTT.
+   ⚠ Corrections (no scientific number moves): 72,000 validation trees not 84,000; check A never ran
+   at Park scale; the attempts envelope $2.7n/(1-\alpha)$ is asymptotic and is 1.65× low at
+   $\theta$=0.7 — plausibly most of defect 8.
+   **⇒ NEXT: the editing layer**, then tape saturation vs $L(t)$. ⚠ Mouse $\rho$ ask to Jihye Park is
+   now a PI discussion item.
+
+0-PREV6. **⭐⭐ 2026-09-20/22 — THE SIMULATOR IS BUILT, VALIDATED, AND THE TREE LIBRARY EXISTS.
    ⭐⭐ THE BDS DENSITY IS DROPPED.** `analyses/2026-09_simulator/src/` holds `01_bdtree.py`
    (Gillespie forward + reject → genealogy → $\rho$-sample → reconstruct, plus a naive oracle),
    `02_validate_tree.py`, `03_cost_curve.py`, `04_tree_library.py`, `05_submit_library.sh`.

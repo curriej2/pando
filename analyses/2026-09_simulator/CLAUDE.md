@@ -8,8 +8,17 @@ outstanding debt in the project — and (ii) the **design sweep** over $(p,\lamb
 (SciPhy's own simulation design, the birth–death sampling model derived in full, both verifications).
 Running record: `notes/analysis_log.md`, session 13.
 
-**⭐⭐ STATE (2026-09-17): NOTHING BUILT YET. Design settled on paper and verified numerically;
-`src/` is empty by intent — the approval gate has not been cleared for any script.**
+**⭐⭐ STATE (2026-09-23): TREE LAYER BUILT, VALIDATED, COSTED; LIBRARY COMPLETE (1,870 cells,
+37,380 trees, zero faults). Figures S1 (method) and S3 (pull of the present) built; LaTeX write-up
+in `writeup/simulator_figures.tex`, which Justin edits directly. Editing and dropout layers NOT
+started.** README is the findings record; this file's design sections below are the 2026-09-17
+design and are partly superseded (the BDS-density route was dropped 2026-09-20 in favour of forward
+simulation + rejection — see README).
+
+⚑ **Framing agreed 2026-09-23:** turnover inference is NOT a central aim. Fig S3 matters because
+$L(t)$ = independent records of time $t$, so tree shape decides which timepoints of the signalling
+history are recorded well (precision), and survivorship decides whose history is recorded (bias).
+See README "Session 16".
 
 ---
 
@@ -154,17 +163,17 @@ dependent, so that $n$ is not the effective sample size; against 7,867 *trees* t
 0.0153 and 0.008 is comfortably inside. The five deviations also run $-,-,+,+,+$, a mild sign pattern
 that is either noise across correlated quantiles or a small systematic bias.
 
-## ⇒ NEXT, in order
+## ⇒ NEXT, in order (updated 2026-09-23; the 2026-09-17 list is superseded)
 
-1. **Self-calibration of the density check** (reuses the simulation already run, no new forward
-   replicates): split the 7,867 trees into halves, compute the same sup-distance between halves over
-   many splits → the null distribution of the statistic *with within-tree dependence intact*. Then
-   0.008 is inside it or not. **Needs a proposal under the approval gate.**
-2. Build the Option C sampler; validate against forward+reject at small $n$, and separately against
-   $G$ — the density and the sampler are two independent failure modes and $G$ being closed-form
-   lets each be tested without the other. Exact enumeration at $n=4$ (18 labelled histories) and
-   $n=5$ (180) catches a systematically wrong topology sampler.
-3. The joint editing/dropout fit (see the park-compatibility CLAUDE.md for what is measured).
+1. **The editing layer** — decorate library trees with sequential edits at measured per-tape
+   rates, site 6 handled separately, depth 0 censored; editing and dropout must be fitted
+   **jointly** (park-compatibility CLAUDE.md).
+2. Then, with edits: tape saturation vs $L(t)$ — the "best-recorded window" hypothesis (README
+   Session 16, point 4); a proposed figure is $L(t)/n$ with the tape-saturation profile overlaid.
+3. Survivorship bias needs signal-dependent $b$/$\delta$ — a model extension, not yet designed.
+4. Open, lower priority: check A at a Park-scale point; refit the attempts envelope with the exact
+   $1/P(K=n)$ (README correction 3); S2 validation figures were proposed and Justin declined them.
+5. ⚠ Owed to Jihye Park: total viable cells or tumour mass per organ at day 45 (mouse $\rho$).
 
 ## Verification policy for this analysis
 

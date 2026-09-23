@@ -1389,3 +1389,51 @@ At $\rho$=0.002 the tip slope already collapses to ~0.1, so the provisional answ
 **⇒ NEXT:** (1) read the two arrays; (2) compute the Yule-differenced LTT across all $\rho$;
 (3) the editing layer. ⚠ Still owed to Jihye Park: **total viable cells per dissociation, or tumour
 mass, per organ at day 45** — the only thing that collapses the mouse $\rho$ axis to a number.
+
+
+## 2026-09-22/23 — session 16: figures, a LaTeX write-up, and what the trees record
+
+**Both extension arrays COMPLETE, zero structure faults:** `14228126` ($\theta=0$ reference,
+24/24) and `14228127` ($\rho\in\{0.05,0.02,0.0005\}$, 140/140; tail tasks 1.4–2.6× over
+prediction). Library now **1,870 cells / 37,380 trees**, only the three known high-turnover
+under-fills.
+
+**Built:** `src/10_fig_method.py` (Fig S1 — one tree through full process → capture →
+reconstruction; conditioning by rejection; library inventory) and `src/11_fig_pull_present.py`
+(Fig S3 — the pull of the present). **Write-up** `analyses/2026-09_simulator/writeup/simulator_figures.tex`
+holds every defining equation of the tree layer, one section per figure; Justin edits it directly.
+⭐ **New closed form, verified against 40,000 attempts:** given $K\ge1$ the capture count is
+geometric with $\beta'=\rho\beta/[1-\beta(1-\rho)]$ (worst of 59 cells 2.6 se; reproduces the
+recorded 32.1 attempts/tree).
+
+**Scope decisions (Justin's):** validation figures (S2) not needed. A closed-form-vs-library test
+and a matched-pair test of $\theta$–$\rho$ confounding (16 matched cell pairs exist in the library)
+were proposed and **declined** in favour of a plain illustration. The Yule-differenced LTT (S5)
+is **deprioritised**: turnover inference is not a central aim.
+
+**Fig S3, descriptive only** ($n$=63, 20 trees/line; tip rate = $d\ln L/dt$ over the last 10% of
+$T$, per lineage per unit $T$, baseline 4.0 at $\theta$=0, $\rho$=1): turnover raises it to 7.5
+($\theta$=0.5) and 10.2 (0.7) at complete capture — the pull of the present; capture reverses it,
+7.5 → 3.2 → 0.49 → 0.008 at $\rho$ = 1 / 0.25 / 0.02 / 0.002 ($\theta$=0.5).
+⚠ **My reading-rule prediction for panel (c) was wrong**: the $\theta$ lines do not bunch at low
+$\rho$ — turnover changes the curve's *shape* at $\rho$=1 and *shifts it later* at $\rho$=0.002, the
+same direction as raising $\rho$. ⚠ Fixed $n$ and $T$ mean lowering $\rho$ also raises $b$ (8.3 →
+20.7), so (b) compares the same observed clone under different capture, not capture at fixed rates.
+
+**⭐ Framing (agreed): $L(t)$ = independent records of time $t$.** The LTT curve is the recorder's
+sampling depth over time. Precision of any $\xi_i(t)$ estimate follows $L(t)$ not $n$; naive
+pooling weights lineages by clade size; and **survivorship** — deep time seen only through survivors
+— becomes genuine bias if the signal affects fitness (not representable in the current simulator).
+Hypothesis for the editing layer: tape saturation biases the recorder towards early events, so the
+best-recorded window sits between the tree's thin early stretch and the tape's full late one.
+
+**⚠ Corrections to the record (none moves a scientific number):** (1) 72,000 distinct validation
+trees, not 84,000 (a seed-identical configuration counted twice); (2) check A ran only at $n$=64,
+$\rho$=0.5, so the count law is untested at Park scale; (3) the attempts envelope $2.7n/(1-\alpha)$
+is asymptotic — exact $\approx ne^{s}/s^2$, 1.65× higher at $\theta$=0.7, which plausibly explains
+most of defect 8's turnover trend (untested); (4) my in-discussion claim that the textbook upturn is
+never visible in the library was wrong for trees conditioned on $n$; (5) pruning-load range is
+2.9–65.2, not 3.4–65.2. Full list in the simulator README "Session 16".
+
+**⇒ NEXT:** the editing layer. ⚠ Still owed to Jihye Park: total viable cells or tumour mass per
+organ at day 45 — now also a discussion item for the PI (Fig S3c).

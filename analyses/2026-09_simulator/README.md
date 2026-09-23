@@ -1,7 +1,91 @@
 # simulator — findings
 
-**State 2026-09-20: the tree layer is BUILT and VALIDATED at both capture fractions. The cost
-pilot (`03`) has not been run.** Editing and dropout are separate later layers, not in scope here.
+**State 2026-09-23: the tree layer is BUILT, VALIDATED, COSTED, and the library is COMPLETE
+(1,870 cells, 37,380 trees, zero structure faults). Figures S1 (method) and S3 (pull of the
+present) are built, with a LaTeX write-up in `writeup/`.** Editing and dropout are separate later
+layers, not yet started.
+
+## ⭐ Session 16 (2026-09-22/23) — figures, write-up, and what the trees record
+
+**Write-up:** `writeup/simulator_figures.tex` (pdflatex; `% !TEX program` magic comment, and a
+pdflatex×2 recipe in the gitignored `.vscode/settings.json` because iris has no `latexmk`).
+One section per figure, with every defining equation of the tree layer. Justin edits it directly.
+Figure PDFs and the compiled document are **not committed** (the repo ignores `*.pdf`); the
+PNGs, `.tex` and scripts are. Rebuild the figures with `src/10` and `src/11`.
+
+**Fig S1 (`src/10_fig_method.py`, three standalone panels).** (a) One tree through three stages:
+full process → Binomial capture → reconstructed tree, with the spliced divisions marked (21 of
+them at $n$=8, $\rho$=0.25, $\theta$=0.5; 77 genealogy nodes → 15). (b) Conditioning by
+rejection: 60 attempts, 4 accepted, 30 extinct; beside it the law of $K$. (c) Library inventory.
+⭐ **New closed form, verified:** given $K\ge1$, the capture count is geometric,
+$P(K=k)=s(1-\beta')\beta'^{k-1}$ with $\beta'=\rho\beta/c$, $c=1-\beta(1-\rho)$,
+$s=P(K\ge1)=(1-\alpha)\rho/c$. Against 40,000 attempts: $P(K=8)$ 0.0190 exact vs 0.0183 simulated,
+$P(K=0)$ 0.515 vs 0.518, worst of 59 cells 2.6 se. Reproduces the log's 32.1 attempts per accepted
+tree (32.0). ⚠ The first draft of `10` (never committed) drew an unconnected panel 3 and
+captured exactly $n$ of the survivors instead of Binomial($N,\rho$); both fixed.
+
+**Fig S3 (`src/11_fig_pull_present.py`) — an ILLUSTRATION, not a test** (Justin's call; a
+closed-form-vs-library test and a matched-pair confounding test were proposed and **declined** in
+favour of this). Mean $\ln L(t)$ over 20 trees at $n$=63, from stored branch lengths on a
+400-point grid; $\rho$=1 trees simulated fresh (not in the library). Tip rate = $d\ln L/dt$ over
+the last 10% of $T$, per lineage per unit $T$; baseline $\theta$=0, $\rho$=1 is **4.0**.
+- **(a) the pull of the present exists:** at $\rho$=1 the tip rate is 4.0 / **7.5** / **10.2** at
+  $\theta$ = 0 / 0.5 / 0.7 — 1.9× and 2.6× the baseline.
+- **(b) capture reverses it:** at $\theta$=0.5, 7.5 → 3.2 → 0.49 → **0.008** at $\rho$ = 1 / 0.25
+  / 0.02 / 0.002. At mouse-like $\rho$ nothing branches in the last tenth of $T$.
+- **(c) ⚠ MY PREDICTION WAS WRONG.** I predicted the $\theta$ lines would bunch together at low
+  $\rho$; they do not. Turnover changes the curve's **shape** at $\rho$=1 and **shifts it later**
+  (~0.05–0.1 $T$) at $\rho$=0.002. Raising $\rho$ also shifts it later, so at low capture higher
+  turnover and higher capture move the tree the same way — a qualitative, untested reading.
+- ⚠ **What is held fixed:** same $n$ and $T$, so lowering $\rho$ also raises the rates (the clone
+  must grow $1/\rho$ larger): $b$ = 8.3 at $\rho$=1 vs 20.7 at $\rho$=0.002 ($\theta$=0.5). Panel
+  (b) compares the same observed clone under different capture, not capture at fixed rates.
+
+**⭐ Why it matters — the framing agreed with Justin: turnover inference is NOT a central aim;
+the point is which timepoints are recorded well.** $L(t)$ is the number of **independent records
+of time $t$** — captured cells descending from one lineage share its tape — so the LTT curve is the
+recorder's sampling depth over time, and $n/L(t)$ the redundancy. Four consequences, the first two
+about precision and the last two about bias:
+1. Precision of any $\xi_i(t)$ estimate follows $L(t)$, not $n$. Early windows are always thin
+   within a clone; at low $\rho$, late windows have lineages but almost no branch points, so late
+   edits sit on long terminal branches and are poorly timed. ⚑ Sparse capture *decorrelates* cells:
+   $L(0.5)\approx40$ at $\rho$=0.002 vs $\approx3$–4 at $\rho$=1, $\theta$=0.7 (read off the figure).
+2. Pooling cells without the tree weights lineages by clade size — random and parameter-dependent.
+   The pruning likelihood removes this if the tree is right.
+3. **Survivorship bias (genuine bias):** deep time is seen only through lineages that survived and
+   were captured. If the signal affects survival or division (metastatic fitness in Park), the
+   recorded history over-represents the winners. **Not visible in the current simulator** (rates
+   are signal-independent); needs signal-dependent $b$/$\delta$.
+4. Hypothesis, needs the editing layer: tape saturation (≈4.5–5 of 6 sites) is the recorder's own
+   bias towards early events, so the best-recorded window sits between the tree's thin early
+   stretch and the tape's full late one — a design result for purpose IV.
+⚠ Assumes clones start recording together; if so, early windows are replicated across clones
+(149–2,946 per arm). Not checked against the Park protocol.
+
+**⚠ Corrections to the record found this session (none moves a scientific number):**
+1. **72,000 distinct validation trees, not 84,000** — pass 1 and pass 2 reran $\rho$=0.5,
+   $\theta$=0.3 with the same seed (identical statistics), so 12,000 were counted twice.
+2. **Check A (count law) never ran at the Park regime.** It is hard-coded to $n$=64, $\rho$=0.5
+   ($E[N(T)]$=128); all four result files hold the identical check-A numbers. B–F at
+   $\rho=8\times10^{-4}$ exercise the batched count path but test shape, not the count law, at
+   $N(T)\sim10^6$. "Validated at both capture fractions" holds for B–F only.
+3. **The attempts envelope in `04`/`03` is only asymptotic.** $2.7n/(1-\alpha)$ vs exact
+   $1/P(K=n)\approx n e^{s}/s^2$, ratio $\approx e^{s-1}/s$ with $s\approx1-\theta$: 1.06× at
+   $\theta$=0.3, **1.65× at 0.7** (1.24× at the S1 settings, 42.5 vs 52.7). The ratio across
+   turnovers (1.56×) matches defect 8's measured actual/predicted trend (0.79→1.27, 1.61×), which
+   the log attributed to the Python genealogy loop. **Plausibly most of defect 8; untested against
+   per-task timings.** Affects job sizing only.
+4. ⚠ In discussion I claimed the textbook upturn is never visible in our library ($\rho<1-\theta$
+   everywhere). That criterion is for the unconditioned per-lineage rate; for trees conditioned
+   on $n$ the branching-time density piles up at the present when $(1-\theta)/\rho\le2$, which
+   includes $\rho$=0.25, $\theta\ge0.5$. Fig S3's $\rho$=0.25 panel is consistent with that.
+5. `results/validate_rho8e4.json` still says FAIL — the pass-1 verdict under the old flat 3-se rule,
+   superseded by `validate_pass2_rho8e4.json` (PASS, 0.70).
+6. The recorded pruning-load range "3.4–65.2" is **2.9–65.2** in the pass-2 JSON.
+
+⚑ **For the PI / Jihye Park:** the mouse capture fraction is the one number that decides how the
+mouse trees' timing is read (Fig S3c). Ask: total viable cells per dissociation, or tumour mass,
+per organ at day 45.
 
 ## ✅ Validation COMPLETE (`02`, 2026-09-20/21) — PASS in every configuration
 
@@ -84,8 +168,9 @@ comparisons. ⇒ the unknown we could not get from the paper (mouse $\rho$) matt
 derived from growth arithmetic ($\theta$). ⚑ The $\theta$ effect also shrinks with clone size, so
 small clones are the informative ones about turnover.
 
-**In flight (2026-09-22):** `14228126` adds the **$\theta=0$ Yule reference** (8.8 core-h);
-`14228127` extends $\rho$ to **{0.05, 0.02, 0.0005}** (212 core-h), because SciPhy found a nominal
+**✅ Both COMPLETE (2026-09-23), zero structure faults:** `14228126` added the **$\theta=0$ Yule
+reference** (24/24 tasks); `14228127` extended $\rho$ to **{0.05, 0.02, 0.0005}** (140/140; its
+tail tasks ran 1.4–2.6× over prediction — see correction 3 above). Motivated because SciPhy found a nominal
 sequenced/population ratio over-stated effective $\rho$ by **4–16×** — so treat every nominal
 $\rho$, including Park Initial's 0.24, as an upper bound.
 
