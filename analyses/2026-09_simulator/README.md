@@ -1,9 +1,140 @@
 # simulator — findings
 
-**State 2026-09-23: the tree layer is BUILT, VALIDATED, COSTED, and the library is COMPLETE
-(1,870 cells, 37,380 trees, zero structure faults). Figures S1 (method) and S3 (pull of the
-present) are built, with a LaTeX write-up in `writeup/`.** Editing and dropout are separate later
-layers, not yet started.
+**State 2026-09-24: the tree layer is BUILT, VALIDATED, COSTED, and the library is COMPLETE
+(1,870 cells, 37,380 trees, zero structure faults). Figures S1 (method), S3 (pull of the present)
+and S4 (switch detectability) are built, with a LaTeX write-up of S1/S3 in `writeup/`.** Editing
+and dropout are separate later layers, not yet started.
+
+## ⭐⭐ Session 17 (cont., 2026-09-24) — how far can a lineage-specific switch be detected?
+
+**Question.** At $k\approx30$ tapes per cell, which switches in a lineage's signalling state are
+detectable, and is the limit set by tape count or by timing? Scripts `src/12_switch_evidence.py`
+(job 14592174, 6 min 21 s, 0.37 GB) and `src/13_fig_switch_evidence.py`; results
+`results/switch_evidence.json`, plotted numbers `results/figS4_numbers.json`.
+
+**⚠⚠ Supersedes the information-budget pair (CLAUDE.md, "PROPOSAL (2026-09-24)"), which was never
+run.** Reviewed before running, it had four defects:
+1. **(b)'s mock never stated $p_0,p_1$.** Back-solving its own entries: $p_1=0.20$ in the 2× and 10×
+   columns but $0.24$ in the 24× column. At $k=30$, 24× that is **3.36 vs 2.80 nats** — either side
+   of the 3-nat decision line, so the decisive row was set by an unstated, inconsistent parameter.
+2. **(b) scored one branch in isolation**, which is not a bound: a state persists across branches and
+   every sublineage records it independently, so evidence accumulates. "Only a negative is decisive"
+   did not hold for it.
+3. **(a) was called a lower bound (bigrams excluded) in its §2 and an upper bound in its §3** — both
+   true, so neither outcome was decisive; and it addressed population $\xi(t)$, which §S4.7 had
+   already called over-determined.
+4. **(a)'s kernel rows were normalised to sum 1**, so singular values scale as $1/\sqrt G$ while the
+   noise bar does not — $R$ would move with the grid $G$ by construction, tripping its own abandon
+   criterion for a definitional reason.
+⚠ Two corrections to my own reasoning in the review, recorded: (i) "the lower of $\kappa_{\rm on}$,
+$\kappa_{\rm off}$ controls the call" is **wrong for detection** — power comes from the on-direction;
+the off-direction governs affirming *no* switch. (ii) "a single-lineage short switch at $k=30$ sits
+right on the line" was measured against 3 nats, not the searched bar (7–13 nats); it is well below.
+
+### The design (approved by Justin; he added $n=8$ and $\rho$ up to 0.8, and a $p_1$ scan)
+
+A **switch**: at a point (branch $x_0$, time $s_0$) a cell turns a pathway on; every descendant
+inherits it; all turn off at $s_1=\min(s_0+D,1)$, $D=\Lambda_e/\Lambda_T$. Switch locations are
+**uniform along the tree's total length, stem included** (a constant per-lineage switch rate).
+Expected evidence in favour of the switch, nats:
+
+$$\mathcal I=k(1-d)\sum_b W_b\,\mathrm{KL}(\bar p_b\|p_0),\quad W_b=E(e_b)-E(a_b),\quad
+E(s)=\mathbb E[\min(\mathrm{Poisson}(\Lambda_Ts),N)]=\sum_{j=1}^{N}P(j,\Lambda_Ts)$$
+
+- $s=t/T\in[0,1]$; branch $b$ spans $[a_b,e_b]$; $W_b$ = expected edits per tape written on it.
+- $\bar p_b=p_0+(W^{\rm on}_b/W_b)(p_1-p_0)$ — the signal share of an edit known only to lie on $b$
+  (**branch-only**, the realistic mode). **Timing-known** (upper bound):
+  $\mathcal I=k(1-d)\,\mathrm{KL}(p_1\|p_0)\sum_bW^{\rm on}_b$.
+- KL is Bernoulli per edit (signal symbol or not): ENGRAM moves $\xi$, not $\lambda$, so the edit
+  count on a branch carries no state information. $p_0=p_1/F$, $F$ the fold change.
+- **Callable** ⇔ $\mathcal I\ge3+\ln H$, $H=(2n-1)\times4$ candidate switches: **7.09 nats at $n=8$,
+  12.67 at $n=1{,}976$**. The pseudo-LR has $\mathbb E_{H_0}[\mathrm{LR}]=1$ exactly, so the tail
+  bound holds; "callable" means expected evidence clears the bar (~50% power).
+- Fixed: $\Lambda_T=5.5$ edits/tape, $N=6$, $d=0.44$, $\theta=0.5$. Scanned: $n\in\{8,25,64,210,626,
+  1976\}$ × $\rho\in\{0.002,0.1,0.25$ (library)$,0.5,0.8$ (simulated fresh by `04.run_cell`, into
+  `results/tree_library_hi_rho/`, gitignored)$\}$ × $\Lambda_e\in\{0.25,0.5,1,2\}$ edits/tape (4.5,
+  9.1, 18.2, 36.4% of the experiment) × $F\in\{2,5,15,24\}$ × $p_1\in\{0.05,0.1,0.2,0.3,0.4\}$; 20
+  trees × 1,000 systematic switch locations per cell; $k$ evaluated afterwards, since $\mathcal I$ is
+  linear in it.
+- ⚠ Library trees store the root's own branch as 0, so absolute times are rebuilt from the tips
+  (all at $s=1$); the stem $0\to t_{\rm root}$ is recovered and included.
+
+**✅ Verification, run before any result.** $E(s)$ vs $10^6$-draw Monte Carlo at four times:
+$|z|\le1.24$. Closed-form $\mathcal I$ vs the mean realised LLR over 40,000 simulated tapes on a real
+$n=25$ tree (stem, internal and terminal switches × two durations × three $(F,p_1)$ × both modes):
+**worst $|z|=2.43$ over 36 comparisons**, what 36 draws give by chance. Branch-only ≤ timing-known
+asserted on every switch (KL is convex in its first argument). Tree-to-tree SD of the callable
+fraction is at most 0.10 in any cell, so the abandon criterion (conclusions changing between
+replicate trees) was not tripped.
+
+### Result 1 — the agreed headline: fraction of ALL switch locations callable (Fig S4a)
+
+*Reading rule:* each entry is the fraction of switch locations callable at $k=30$, $p_1=0.3$,
+branch-only timing, as a **range over the 30 $(n,\rho)$ settings**. No effect = 0; the pre-set
+positive bar was 50%; the pre-set decisive negative was "<10% at every $n$ even with timing known, at
+24×, $\Lambda_e=2$".
+
+| duration $\Lambda_e$ (edits/tape · % of experiment) | 2× | 5× | 15× | 24× |
+|---|---|---|---|---|
+| 0.25 · 4.5% | 0 | 0 | 0 | 0 |
+| 0.5 · 9.1% | 0 | 0 | 0.1–0.4% | 0.5–1.4% |
+| 1 · 18.2% | ≤6% | 0.7–2.3% | 5–19% | 9–36% |
+| 2 · 36.4% | ≤6% | 8–27% | 20–58% | 23–63% |
+
+⇒ **Decisive negative NOT triggered** (timing-known at 24×, $\Lambda_e=2$: 23–75%). **Positive bar met
+only partly** (2-edit switches in some settings; never at 1 edit). **Marginal, and duration-driven**:
+switches of ≤0.5 edits/tape, and 2-fold switches of any duration, are effectively invisible.
+
+### Result 2 — ⚠ the same result read by start time (Fig S4b). Found AFTER the run.
+
+⚠ **The headline metric is dominated by late switches.** Uniform-along-length puts **46–82% of switch
+locations on terminal branches** and **43–92% in the last 30% of the experiment** — where almost
+nothing is callable. The by-time breakdown was in the pre-specified output but **not** in the mock or
+the reading rule; the statistic was not changed, and both readings are recorded. Which question is
+the right one is Justin's call.
+
+At 2-edit switches, $F\ge15$, branch-only: switches starting in the **first 60%** of the experiment
+are callable in **≥89% of locations in every one of the 30 settings** (100% at 24×); those starting
+in the **last 20%** in **at most 22% (15×) / 31% (24×)**. At 1-edit, 24×, callable falls steadily
+with start time: median over settings **0.82** in the first decile, 0.50 at 0.5–0.6, 0.37 at
+0.7–0.8, 0.00 in the last. ⚠ The saved output cannot
+apportion the late failure between truncation at harvest, single-lineage terminal branches, and
+tape saturation.
+
+### The other findings
+
+- **Clade size barely matters:** a 2-edit, ≥15× switch needs only **2–5 sampled descendants** ($m^*$ at
+  $k=30$) — ~2 at $\rho=0.002$, ~5 at $\rho=0.8$ (at high capture small clades are young). Terminal
+  (single-cell) switches rarely clear the bar.
+- **Timing precision matters little:** branch-only keeps **83–97%** of the timing-known fraction at
+  2-edit switches; only at 1 edit does it cost much (**24–88%** kept), mostly at low $\rho$.
+  ⇒ **the tree side is not the bottleneck.**
+- **Tapes:** $k$ at which half of switch locations are callable (24×, $p_1=0.3$, branch-only):
+  **88–176** at $\Lambda_e=0.5$, **34–120** at 1, **18–120** at 2 (251–503 at 0.25). Park has 166.
+- **$p_1$ is a ~10× lever:** 2-edit, 24× switches go from **2–5%** callable at $p_1=0.05$ to
+  **23–63%** at $p_1=0.3$. The ~30% shared-tape ceiling (§I.7) binds.
+- **The search penalty is large:** against a flat 3 nats (location known in advance), 1-edit, 24×
+  switches are callable at **51–77%**, not 9–36%. Knowing which clade to test — e.g. from a
+  transcriptomic readout on the tips — would recover much of it.
+- **$\rho$ and $n$ are second-order.** Larger clones score lower mainly because $\ln H$ rises and more
+  of their length is late terminal branch; in absolute terms they hold more callable switches.
+
+### What it means for building (recommendation, 2026-09-24)
+
+1. **Build the state layer after the editing layer**, with fitness-neutral states painted onto library
+   trees; validate against the regime the closed form says is recoverable — long ($\ge$1–2
+   edits/tape), strong ($\ge$15×), early switches in clades of $\ge$2–5 cells — to see whether tree
+   error and homoplasy erase it. The multi-type birth–death can wait.
+2. **Deprioritise tree-side timing refinement**; branch-level timing costs little.
+3. **Short and late switches are design limits (purpose IV)**, not modelling targets: short switches
+   need ~90–180 tapes and high $p_1$; the last ~20–30% of the experiment is out of reach at this
+   editing depth at any capture fraction.
+
+**Caveats, by direction.** Optimistic: the tree is known and homoplasy-free (the one serious one).
+Conservative: Bonferroni over correlated switch positions; $(1-d)$ for internal branches (an edit is
+seen if *any* descendant keeps the tape — at most $1/(1-d)\approx1.8\times$); site order unused.
+Simplified: one $\Lambda_T$ with no per-tape rate spread; a fixed-length switch ending everywhere at
+once, truncated at harvest.
 
 ## ⭐ Session 16 (2026-09-22/23) — figures, write-up, and what the trees record
 

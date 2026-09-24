@@ -111,7 +111,7 @@ already back at $p=1/1001$ in 5/5 arms. ⚠ Two orthogonal follow-ups are specif
 `--lam 4` re-run with a size-stratified null (the floor, not $B$, is what hides weaker events), and
 the **symbol-depletion test** of row A9's untested *trans* limb. |
 
-| `2026-09_simulator` | Build the forward simulator (birth–death tree → sequential editing → dropout) for the homoplasy null and the design sweep. | **Tree layer BUILT, validated, costed; library COMPLETE (1,870 cells, 37,380 trees, zero faults).** Figs S1 (method) and S3 (pull of the present) built; LaTeX write-up in `writeup/`. ⭐ $L(t)$ = independent records of time $t$ — tree shape sets which timepoints are recorded well, survivorship sets whose history is. Editing layer NOT started. ⚠ Editing and dropout must be fitted jointly. |
+| `2026-09_simulator` | Build the forward simulator (birth–death tree → sequential editing → dropout) for the homoplasy null and the design sweep. | **Tree layer BUILT, validated, costed; library COMPLETE (1,870 cells, 37,380 trees, zero faults).** ⭐⭐ **Editing layer DERIVED, not built (§S4).** ⭐⭐ **Switch detectability MEASURED (2026-09-24, Fig S4): at $k=30$ a lineage-specific switch is callable only if long ($\ge$1–2 edits/tape), strong ($\ge$15×) and early (first ~60% of $T$), in clades of 2–5 cells; branch-level timing costs little ⇒ tree side not the bottleneck.** Figs S1 (method), S3 (pull of the present) and S4 built; LaTeX write-up in `writeup/`. ⭐ $L(t)$ = independent records of time $t$ — tree shape sets which timepoints are recorded well, survivorship sets whose history is. Editing layer NOT started. ⚠ Editing and dropout must be fitted jointly. |
 
 ## Already settled — do not re-derive unless asked
 
@@ -240,7 +240,72 @@ the **symbol-depletion test** of row A9's untested *trans* limb. |
    events $\le10$). Threshold-independent claims that survive: the 118–2,522× null comparison,
    $q\le1.9\times10^{-4}$ per event, $\hat\pi$ median 1.000 vs expected 0.11–0.41. Full audit in
    README "How events are actually called".
-0-CURRENT. **⭐⭐ 2026-09-22/23 — FIGURES S1/S3 AND A LATEX WRITE-UP; THE LIBRARY IS COMPLETE.**
+0-CURRENT. **⭐⭐ 2026-09-24 — SWITCH DETECTABILITY MEASURED; BACK TO BUILDING THE SIMULATOR.**
+   `analyses/2026-09_simulator`, README "Session 17 (cont.)"; `src/12`, `src/13`, Fig S4a/b; notes
+   §S4.8; log session 17 (cont.). ⚠⚠ **The information-budget proposal below was reviewed and NEVER
+   RUN** — its Table 2 used an unstated, inconsistent $p_1$ (0.20 vs 0.24) that moved the $k=30$, 24×
+   call across the 3-nat line; per-branch evidence is not a bound; the temporal rank was called both
+   lower and upper bound and was grid-dependent by construction.
+   **Replacement (approved):** expected evidence for an inherited switch lasting $\Lambda_e$ edits/tape,
+   $\mathcal I=k(1-d)\sum_bW_b\,\mathrm{KL}(\bar p_b\|p_0)$ nats, edits placed only to their branch;
+   callable ⇔ $\ge3+\ln H$ (7.1–12.7 nats). ✅ Closed form vs simulated-tape LLR: worst $|z|=2.43$/36.
+   **At $k=30$, $p_1=0.3$ (ranges over 30 $(n,
+ho)$ settings), fraction of all switch locations
+   callable:** 0 at 0.25 edits/tape, ≤1.4% at 0.5, 9–36% at 1 (24×), 23–63% at 2 (24×); 2-fold ≤6%.
+   ⚠ **Found after the run: that metric is dominated by late switches** (43–92% of tree length in the
+   last 30% of $T$). **By start time: 2-edit ≥15× switches in the first 60% are callable in ≥89% of
+   locations in every setting.** $m^*$ = 2–5 cells; branch-only keeps 83–97% of timing-known at 2
+   edits; half-callable needs $k$ = 88–176 at 0.5 edits/tape; $p_1$ is a ~10× lever.
+   **⇒ NEXT: the editing layer (route ii), then a fitness-neutral state layer validated on the
+   regime Fig S4 calls recoverable.**
+
+0-PREV8. **⭐⭐ 2026-09-23/24 — THE TIME-VARYING RECORDER IS DERIVED; A PROPOSAL AWAITS APPROVAL.**
+   *(superseded 2026-09-24 — the proposal was reviewed, replaced and answered; see 0-CURRENT)*
+   Theory: `notes/sciphy_notes.md` **§S4** (new). Proposal: `analyses/2026-09_simulator/CLAUDE.md`,
+   "PROPOSAL (2026-09-24)". Log: session 17. **No compute run this session.**
+   ⭐⭐ **In $\Lambda$-time $\tau=\Lambda(t)=\int_0^t\lambda$, the recorder is EXACTLY SciPhy's model** —
+   so epochs, cell-state transitions and branch endpoints are all just knots in $\Lambda$, a
+   time-varying **composition** $\xi(t)$ is free (count and time laws unchanged), and a time-varying
+   **rate** costs one extra knot. ⭐ **The likelihood survives**: an $O(N^2K)$ forward recursion over
+   epochs, with the prefix/lcp structure and the Eq. 9 intersection untouched.
+   ⭐ **Build route (ii)** — the first $c=N-|a|\le6$ jump times are partial sums of iid Exp(1), so the
+   sampler draws exactly $c$, is sorted by construction and wastes nothing at the wall. ⚠ This
+   corrects my own call of route (i) ("count → uniforms → sort → truncate") as the fast one.
+   ⚠⚠ **Painting cell states onto the tree library is exact only if the state is fitness-neutral.**
+   Proliferative states need a multi-type birth–death in the *tree* layer; the library then becomes a
+   stepping stone. ⭐ The two-pass optimisation survives (count trajectory becomes a vector; the
+   lineage an event lands on is uniform *within its type*).
+   ⚠⚠ **Two confounds named for $\lambda(t)$:** (i) fixed $T$ + ultrametricity kills a *global*
+   rescaling but not a *local* trade, and since both higher $\theta$ and higher $\rho$ push branchings
+   later, **the early shape of $\hat\lambda_0(t)$ is confounded with $(\theta,\rho)$** — testable on
+   the existing library; (ii) a state changing proliferation plausibly changes editing rate through
+   the same mechanism (dNTP supply is cell-cycle linked), so $\lambda$ and $b$ may be coupled by
+   biology. Underlying question: **is editing per unit time or per division?**
+   ⚠⚠ **FOUR CORRECTIONS to §S3.1–S3.2 from reading BOTH repos' source** (`azwaans/SciPhy`,
+   `seidels/sciphy-materials`): the **tape-loss simulation is in neither repo** (so row A6 has no
+   released implementation); their simulator **cannot vary rates across branches** (no
+   `branchRateModel` input — the element in their own XML is inert); one tape per simulation object;
+   validation trees come from `bdmmprime` at **$\rho=3\times10^{-5}$**, 27× below the value we
+   inherited. ⭐ And **skyline + OU is already in their stack**, pointed at $b,\delta$ rather than the
+   clock — so moving it onto $\lambda(t)$ is precedented.
+   ⭐ **Derived, NOT verified:** with $\xi$ time-varying the homoplasy quantity is
+   $\langle\xi(t_1),\xi(t_2)\rangle$; for independent write times this is $\bar q$ (so pooled
+   $q\approx0.0170$ is right), but collisions occur at the *same site index* and same-index writes
+   happened at similar times ⇒ **the per-site $q$ is the correct input.** ⚠ Jensen needs the
+   *edit-weighted* site mean; only the unweighted direction has been checked (5/5). **Do not quote.**
+   ⭐⭐ **Justin's information worry — $k\approx30$, $N=6$ — splits in two.** Population $\xi(t)$ is
+   over-determined ($\sim1.4\times10^6$ draws). **Per-lineage** state paths are budget-limited: a
+   branch carries $k$ independent records, not $mk$. Hard ceiling: **a cell records $\le kN=180$
+   symbols ever, of which $\le$30% may be signal ⇒ ~50 signal symbols per cell, total.**
+   **⇒ PROPOSAL (awaiting approval): the information-budget pair**, two closed-form calculations that
+   use **no simulator and no tree** — (a) *temporal rank*, the SVD of the $N\times G$ Beta/Gamma kernel
+   taking the signal history in $\Lambda$-time to the $N$ observed per-site compositions; (b)
+   *per-branch evidence*, the Poisson KL $m[p_1\ln(p_1/p_0)-(p_1-p_0)]$ nats at
+   $m=k(1-d)\Delta U$. ⚠ Both are **upper bounds** — they never ask whether $\Lambda$-time converts to
+   calendar time — so **only a negative result is decisive**. `src/12`, `src/13`; seconds, one core.
+   **⇒ THEN the editing layer**, in $\Lambda$-time, route (ii), edit times carried from the start.
+
+0-PREV7. **⭐⭐ 2026-09-22/23 — FIGURES S1/S3 AND A LATEX WRITE-UP; THE LIBRARY IS COMPLETE.**
    `analyses/2026-09_simulator`, README "Session 16"; log session 16. Both extension arrays done,
    **1,870 cells / 37,380 trees, zero faults**. Write-up `writeup/simulator_figures.tex` (pdflatex;
    Justin edits it) holds every tree-layer equation. ⭐ New verified closed form: $K\mid K\ge1$ is

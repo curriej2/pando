@@ -4691,6 +4691,13 @@ fitted for the null, drawn for the design sweep (§I.7.7) and for any SBC later.
 
 ## S3.2 The repository (`github.com/azwaans/SciPhy`)
 
+⚠⚠ **CORRECTED AND EXTENDED by §S4.0 (2026-09-24), from reading the source of BOTH repos.**
+The paper names two: `azwaans/SciPhy` (the package) and `seidels/sciphy-materials` (the
+analysis). Four things below are incomplete or wrong — the tape-loss simulation is in **neither**
+repo, their simulator cannot vary rates across branches, validation trees come from `bdmmprime`
+at $\rho=3\times10^{-5}$ rather than TreeSim, and they already run a skyline+OU prior on $b$ and
+$\delta$. See §S4.0.
+
 `src/sciphy/evolution/simulation/SimulatedSciPhyAlignment.java`, **260 lines**, and the tree is an
 **input** (`examples/single_bcode/simulation/simulate_alignment_fixed_tree.xml`). SciPhy does not
 simulate trees at all — they come from BEAST's birth–death simulators or R's TreeSim. The core is
@@ -4884,3 +4891,332 @@ $r^{1/n}$) rather than fixing it, so it could not serve our problem, where $T$ i
 $\Lambda=\lambda T$ — `sim.bd.taxa.age` is the one that fixes age. And `LTT.general` builds lineage
 counts as cumulative furcations against sorted branching times, the same construction as
 `04_tree_library.py`, so our LTT curves are directly comparable to theirs.
+
+
+---
+
+# Session S4 — The time- and state-varying recorder (2026-09-23/24)
+
+*Derived in discussion with Justin over two sessions, after reading the SciPhy simulator source
+directly. This section is the theory record for the editing layer. Nothing here has been run;
+the associated proposal is in `analyses/2026-09_simulator/CLAUDE.md` under "PROPOSAL (2026-09-24)".*
+
+## S4.0 ⚠⚠ Corrections to §S3.1–§S3.2, from reading the source
+
+Both repos named in the paper were cloned and read (session scratchpad, not committed):
+`azwaans/SciPhy` (the BEAST package) and `seidels/sciphy-materials` (the analysis repo).
+
+1. **⚠ The tape-loss simulation is in NEITHER repo.** `src/sciphy/evolution/simulation/` contains
+   exactly one class, `SimulatedSciPhyAlignment.java`, and it has no loss of any kind; a
+   case-insensitive search for silencing/dropout/loss across both trees returns nothing relevant.
+   `sciphy-materials/supplemental_figures/` holds scripts for supp. figs 1–14 and data for 2, 6,
+   11, 20, 21 — the **sparsity figures are 23–26** and neither script nor data is present.
+   ⇒ **The row-A6 result has no released implementation and we have no reference to check against.**
+2. **⚠ Their simulator cannot vary rates across branches.** `SimulatedSciPhyAlignment` declares no
+   `branchRateModel` input; it reads the rate only from `siteModel.getRateForCategory(0, child)`.
+   The `<branchRateModel id="StrictClock">` element in their own
+   `examples/single_bcode/simulation/simulate_alignment_fixed_tree.xml` is **inert**. By contrast
+   `SciPhyTreeLikelihood` *does* honour a `BranchRateModel`. ⇒ a relaxed clock is inferrable in
+   their framework but not simulable; rows A1/A2/A8 are unreachable by construction.
+3. **⚠ One tape per simulation object.** `numberOfTargets = 1; //TODO rewrite for arbitrary
+   #targets`. Their 10 (or 20) tapes are 10 separate `simulationObject` blocks, each with its own
+   clock. Tape independence (row A5) is structural in their simulator, not an assumption they could
+   relax.
+4. **⚑ Validation trees come from BEAST, not TreeSim.** `sciphy-materials/figure_2/
+   simulate_alignment_and_tree.xml` uses `bdmmprime.trajectories.simulation.SimulatedTree` at
+   $b=0.8$, $\delta=0.2$ ($\theta=0.25$), process length $T=25$, and $\rho=3\times10^{-5}$ — a
+   capture fraction **27× smaller** than the $8\times10^{-4}$ we inherited from their HEK293T
+   constant. TreeSim is only the random-tree comparator (§S3.5 stands).
+5. **⭐ The machinery for time-varying rates is already in their stack, pointed at the tree.**
+   `figure_3/inference_output/2-typewriter_SKY_OU_clockPerSite_...xml` runs
+   `BirthDeathSkylineModel` with `bdsky.OUPrior` on piecewise-constant $b$ and $\delta$ over
+   `changeTimes` — a skyline with an Ornstein–Uhlenbeck smoothing prior, i.e. §G.2's object. The
+   clock meanwhile stays 13 independent `StrictClockModel`s, one per tape (`clockPerSite` in their
+   filenames means **per tape**). ⇒ moving that same prior onto $\lambda(t)$ is precedented.
+
+## S4.1 The time-inhomogeneous chain, and why $\Lambda$-time is the right coordinate
+
+Let $\lambda_z(t)$ be the editing rate of tape $z$ — units edits · tape$^{-1}$ · day$^{-1}$ — and
+
+$$\Lambda_z(s,t)=\int_s^t\lambda_z(u)\,du,\qquad \Lambda_z(t)\equiv\Lambda_z(0,t)$$
+
+the **integrated editing rate**, units edits per tape (dimensionless). This is the same $\Lambda$
+the project already uses as a scalar ($\hat\Lambda$ = 2.87 Initial, 4.69 Subclone, 5.39/5.52/5.69
+Mouse1/2/3, §log session 13); it is now a function, with $\Lambda_z(T)$ the old number.
+
+The generator of §1a.3 becomes $q_{a,\,a\oplus\gamma_i}(t)=\lambda_z(t)\,\xi_i(t)$ for $|a|<N$. The
+exit rate from every non-absorbing state is $\lambda_z(t)$, **independent of the state** — the one
+property every piece of SciPhy's tractability rested on. Substituting $\tau=\Lambda_z(t)$ turns the
+process into the homogeneous unit-rate chain:
+
+> ⭐⭐ **In $\Lambda$-time the recorder is exactly SciPhy's model.** All time variation is absorbed
+> into the clock change $t\mapsto\Lambda_z(t)$, plus $\xi$ evaluated at the pre-image
+> $\Lambda_z^{-1}(\tau)$. Epoch boundaries, cell-state transitions and branch endpoints are then all
+> the same kind of object — **knots in $\Lambda$**.
+
+## S4.2 The conditional-uniformity theorem, derived
+
+*(Why the simulation draws uniforms, and what generalises when $\lambda$ varies.)*
+
+Take a constant-rate Poisson process on $[0,L]$. The probability of exactly one event in each of
+$n$ infinitesimal windows at $u_1<\dots<u_n$ and none elsewhere factorises by independent
+increments:
+
+$$\prod_{j}\big(\lambda\,du_j\,e^{-\lambda du_j}\big)\times e^{-\lambda(L-\sum_j du_j)}\;\longrightarrow\;\lambda^{n}e^{-\lambda L}\,du_1\cdots du_n$$
+
+Dividing by $P(N(L)=n)=e^{-\lambda L}(\lambda L)^n/n!$ gives
+
+$$f(u_1,\dots,u_n\mid N=n)=\frac{n!}{L^{n}},\qquad 0<u_1<\cdots<u_n<L$$
+
+**$\lambda$ cancels.** The rate sets *how many* edits there are; conditional on how many, it says
+nothing about *where*, because a constant rate has no preferred moment. And $n!/L^n$ on the ordered
+region is exactly the density of the order statistics of $n$ iid $\mathrm{Uniform}(0,L)$ — the $n!$
+is the number of orderings collapsing onto one sorted tuple.
+
+Redo with $\lambda(u)$: the numerator becomes $\big[\prod_j\lambda(u_j)\big]e^{-\mu}$ with
+$\mu=\int_s^t\lambda$, the denominator $e^{-\mu}\mu^n/n!$, so
+
+$$f(u_1,\dots,u_n\mid N=n)=n!\prod_{j=1}^{n}\frac{\lambda(u_j)}{\mu}$$
+
+Now $\lambda$ survives as the **normalised intensity** $p(u)=\lambda(u)/\mu$, a density on $[s,t]$.
+⇒ the times are order statistics of $n$ iid draws from $p$, uniform iff $\lambda$ is constant.
+Inverse-CDF sampling: $F(u)=[\Lambda(u)-\Lambda(s)]/\mu$, so $u=\Lambda^{-1}(\Lambda(s)+V\mu)$ with
+$V\sim U(0,1)$. **$V$ is the edit's position as a fraction of the branch's integrated editing
+budget; $u$ is its calendar time; $\Lambda^{-1}$ is the dial between them.** Constant-rate check:
+$\Lambda^{-1}(y)=y/\lambda$ recovers $u=s+V(t-s)$. ✓
+
+**Why the truncation "keep the earliest" is exact.** The true process is a Poisson process
+*stopped* at the $(N-|a|)$-th jump. Stopping does not move earlier jumps, so the true edit times are
+the first $\min(n,N-|a|)$ order statistics of the unstopped process. The discarded draws are events
+of a hypothetical unstopped process used as a sampling device, not edits that happened and were
+lost. This is §1a.4's View A extended from counts to times.
+
+**Why the sort is needed at all.** Under constant $\xi$ the symbols are exchangeable, so SciPhy may
+write them into consecutive slots in any order — which is what it does. Under $\xi(t)$ they are not:
+(i) the map (time order) → (slot index) *is* the temporal signal, the structure Chen et al. read as
+bigram asymmetry; and (ii) when more events occur than there are open sites, the survivors are the
+**earliest**, so a saturating tape records only early composition — the recorder's own bias toward
+early events, and the late edge of the best-recorded window. **A tape is a queue, not a bag;** under
+constant $\xi$ the two are indistinguishable.
+
+## S4.3 The forward algorithm — two exact routes, and which to build
+
+**Route (i), count-then-place** (SciPhy's, generalised): $n\sim\mathrm{Poisson}(\mu)$; draw $n$
+uniforms; map by $\Lambda^{-1}$; sort; keep the first $n_{\rm eff}=\min(n,N-|a|)$; draw symbols from
+$\xi(u_j)$.
+
+**⭐ Route (ii), partial sums** — the CTMC written directly, and strictly better. The first $c$ jump
+times of a unit-rate Poisson process are the partial sums of $c$ iid $\mathrm{Exp}(1)$, and the tape
+can never need more than $c=N-|a|\le6$ of them:
+
+1. draw $E_1..E_c\sim\mathrm{Exp}(1)$; $S_m=\sum_{l\le m}E_l$;
+2. $n_{\rm eff}=\#\{m:S_m\le\mu\}$ by `searchsorted` ($S$ increasing by construction);
+3. $u_m=\Lambda^{-1}(\Lambda(s)+S_m)$; write Categorical$(\xi(u_m))$ into slot $|a|+m$.
+
+| | route (i) | **route (ii)** |
+|---|---|---|
+| draws per tape per branch | $\mathrm{Poisson}(\mu)$, unbounded | **exactly $c\le N$** |
+| sort | required | **none — sorted by construction** |
+| wasted draws at the wall | ~20% at $\Lambda\approx5.5$ | **none** |
+| $\Lambda^{-1}$ evaluations | all $n$ drawn | only the $n_{\rm eff}$ kept |
+| vectorises over tapes | yes | **yes** (array (tapes, $N$), `cumsum` on axis 1) |
+
+⇒ **build route (ii); keep route (i) as the independent second implementation for cross-checking**,
+which is the use the verification policy wants. ⚠ Sub-branches created by epoch boundaries or state
+transitions must be processed forward in time, carrying $|a|$ across, because saturation couples
+them.
+
+## S4.4 ⭐ The likelihood survives, at $O(N^2K)$ per branch
+
+With $\lambda,\xi$ piecewise constant on $K$ epochs crossing a branch (integrated rates $\mu_k$,
+compositions $\xi^{(k)}$), edits in distinct epochs are independent Poissons and time orders them,
+so an observed suffix $c=(c_1..c_j)$ is cut into **contiguous blocks**, one per epoch:
+
+$$P(c,|c|=j)=\sum_{j_1+\cdots+j_K=j}\ \prod_{k=1}^{K}\Big[e^{-\mu_k}\frac{\mu_k^{\,j_k}}{j_k!}\prod_{m\in\text{block }k}\xi^{(k)}_{c_m}\Big]$$
+
+which is a convolution, evaluated by the forward recursion
+
+$$F_k(m)=\sum_{i=0}^{m}F_{k-1}(i)\,e^{-\mu_k}\frac{\mu_k^{\,m-i}}{(m-i)!}\prod_{l=i+1}^{m}\xi^{(k)}_{c_l},\qquad F_0(m)=\mathbf 1(m=0)$$
+
+with the last slot absorbing all further mass exactly as Eq. 4 does. $O(N^2K)$ at $N=6$ — negligible.
+**Preserved:** $P_{a,b}$ still depends on $a$ only through $|a|$ and the suffix $c$, so the prefix/lcp
+machinery and the Eq. 9 intersection are untouched, and the pruning recursion is unchanged.
+**Lost:** time-homogeneity — $P_{a,b}$ depends on $(s,t)$, not $t-s$ — so caching keyed on branch
+length must be rekeyed on the interval.
+
+## S4.5 State-dependent rates, and the condition for reusing the tree library
+
+Give each lineage a latent state $\sigma_c(t)\in\{1..S\}$ evolving as a CTMC with generator $G$
+(units transitions · cell$^{-1}$ · day$^{-1}$), inherited by both daughters at division. Then
+
+$$\lambda_{z,c}(t)=\underbrace{r_z}_{\text{per-tape, }cis}\times\underbrace{\lambda_{\sigma_c(t)}}_{\text{per-state}}\times\underbrace{\lambda_0(t)}_{\text{global}}$$
+
+with $r_z>0$ dimensionless (mean 1, = SciPhy's per-tape clock), $\lambda_\sigma$ in edits · tape$^{-1}$
+· day$^{-1}$, $\lambda_0$ dimensionless (mean 1). Simulation is two-pass: **paint** the tree with a
+state path (Gillespie along each branch, copy at nodes), then **edit**, treating state transitions as
+extra knots. No change to §S4.3.
+
+⚠⚠ **Painting states onto the existing tree library is exact only if the state is fitness-neutral.**
+If the state changes $b$ or $\delta$, the reconstructed tree is conditioned on survival and on
+$\rho$-capture and its lineages are enriched for the states that won; drawing a path from the
+*forward* CTMC and laying it on a single-type tree gives a state distribution no experiment would
+show. This is Session 16's survivorship bias, now blocking. ⇒ proliferative states require a
+**multi-type birth–death in the tree layer**, and the library is then a stepping stone.
+⭐ The expensive optimisation survives: with types the count trajectory becomes a *vector* and the
+lineage an event lands on is uniform *within its type*, so the two-pass split of `01_bdtree.py`
+(trajectory, then genealogy only on acceptance) is unchanged — bookkeeping, not complexity class.
+
+**Inference cost.** A global $\lambda_0(t)$ keeps tapes conditionally independent given the tree, so
+pruning factorises as now. A state-dependent $\lambda_\sigma$ does **not** — all $k$ tapes in a cell
+share $\sigma_c$ (row A5/A8) — and is exact only conditional on the state path. ⇒ **augment, don't
+marginalise** (§E.3): sample state paths, then tapes factorise and §S4.4 applies unchanged.
+⭐ If the state is **measured** (transcriptome alongside the tape) the coupling disappears entirely.
+
+## S4.6 Time- and state-dependent composition
+
+Keep $\xi$ on the simplex with a multinomial logit. With $x_p(t,\sigma)$ the activity of pathway $p$
+(units: normalised pathway activity, 0 = unstimulated),
+
+$$\xi_i(t,\sigma)=\frac{\exp\big(\alpha_i+\sum_p w_{ip}x_p(t,\sigma)\big)}{\sum_j\exp\big(\alpha_j+\sum_p w_{jp}x_p(t,\sigma)\big)}$$
+
+$\alpha_i$ = barcode-intrinsic bias in log-odds — §I.7.4's $\beta_i$, measured, spanning several
+$\log_2$ units, predicted to Pearson 0.907 from pegRNA folding energy, and **designable**.
+$w_{ip}$ = coupling; the clean design is $w_{ip}=w_p\mathbf 1(i=s(p))$, one recorder per pathway,
+which reproduces §I.7.4's measured factorisation $\xi_i\propto\beta_i\,\sigma(\text{signal})$ exactly.
+**Build the two-channel partition in from the start** (§I.6.4/§I.7.5): signal set $\mathcal S$ at
+share $p$, constitutive set $\mathcal L$ of diversity $j$ at share $1-p$ with $w=0$. The
+constitutive channel pins the clock and the tree; the signal channel carries the history.
+
+⚠ **Assumption to state explicitly, with its failure mode.** Induction raises the induced channel's
+pegRNA abundance. §0.2b says this changes $\xi$ and not $\lambda$, because PE is limiting
+($[\text{writer for }i]\approx[\text{PE}]\times\text{pegRNA}_i/\sum_j\text{pegRNA}_j$ — the "two
+cleanly separated knobs"). **If PE is not limiting, $\lambda$ and $\xi$ couple and a strong signal
+looks partly like a rate burst.** Build the knobs separate with a switch that couples them.
+
+### ⭐ A homoplasy consequence, DERIVED BUT NOT YET VERIFIED
+
+Homoplasy is a collision between two independent writes at the same prefix position. With $\xi$
+constant it is $q=\sum_i\xi_i^2$. With $\xi$ time-varying, two writes at times $t_1,t_2$ collide with
+probability $\langle\xi(t_1),\xi(t_2)\rangle=\sum_i\xi_i(t_1)\xi_i(t_2)\le\sqrt{q(t_1)q(t_2)}$
+(Cauchy–Schwarz, equality iff $\xi(t_1)=\xi(t_2)$). Two consequences in opposite directions:
+
+- **Independent write times:** $\mathbb E\langle\xi(t_1),\xi(t_2)\rangle=\langle\bar\xi,\bar\xi\rangle=\bar q$,
+  the $q$ of the *time-averaged* composition — exactly what a **pooled** estimate measures. So Park's
+  pooled $q\approx0.0170$ is the right homoplasy input despite $\xi$ moving. Meanwhile
+  $\mathbb E[q(t)]\ge\bar q$ by Jensen, so averaging *instantaneous* skew over-states homoplasy.
+- **Correlated write times:** collisions happen at the same site index, and writes at the same index
+  happened at similar times, pushing the quantity from $\bar q$ up toward $\mathbb E[q(t)]$.
+  ⇒ **the per-site $q$ is the correct homoplasy input, not the pooled $q$** — which the
+  park-compatibility README already recommends, now derived rather than asserted.
+
+⚠ **Prediction, not yet properly tested:** Jensen requires the *edit-weighted* mean over sites to
+exceed pooled $q$. The direction holds in 5/5 arms on the recorded per-site table using an
+**unweighted** mean (gap $+0.00015$ Mouse3, $+0.00035$ Initial, $+0.00067$ Subclone, $+0.00096$
+Mouse1, $+0.00224$ Mouse2 — 0.9%–13.0% of pooled $q$), but edit counts fall monotonically
+$n_1>\dots>n_6$, so the weighted version is the one that must hold and it has **not** been computed.
+Do not quote these numbers as a result.
+
+## S4.7 ⚠⚠ What is identifiable, and the information budget
+
+**The editing data alone cannot see calendar time.** For a tape with $n$ edits, the $j$-th edit
+satisfies $\Lambda(u_{(j)})/\Lambda(T)\sim\mathrm{Beta}(j,n+1-j)$ — **the site index is a clock that
+reads $\Lambda$, not $t$.** Every marginal feature of the edit data (depths, bigrams, per-site $\xi$)
+is a statement in $\Lambda$-time, and $\lambda(t)$ *is* the map between $\Lambda$-time and calendar
+time. ⇒ $\lambda(t)$ and $\xi(t)$ are identified **only** through something carrying calendar time:
+the branching times, or an externally timed intervention (which is why Dox-gated windows, §I.6.5
+revision 3, are so valuable). Scale: at $n=6$ on $N=6$, $\mathrm{sd}[u_{(j)}]$ runs $0.124T$–$0.175T$
+across $j$ — $\pm15$–21 h in a 5-day run, against ENGRAM's $\ell_{\min}\approx6$ h.
+
+**How much the tree can supply.** With $L(t)$ the reconstructed lineages-through-time, $k$ tapes per
+cell and $U(t)$ the expected fraction of tapes not yet saturated, define the **exposure**
+
+$$A(t)=k\,L(t)\,U(t)\qquad\text{[open tape-lineages; one unit = one unsaturated tape on one independent lineage]}$$
+
+Expected edits in $[t,t+dt]$ anywhere in the tree is $\lambda(t)A(t)dt$, and if edit times were
+observed, $\mathrm{sd}(\hat\lambda_B)/\lambda_B=1/\sqrt{\int_B\lambda A}=1/\sqrt{\mathbb E[\#\text{edits in }B]}$.
+⭐ This is the quantitative form of Session 16's framing, and it sharpens it: **$L(t)$ sets how many
+independent records exist at $t$ (precision); $L'(t)$ sets how finely time is cut at $t$
+(resolution)**, since the knots partitioning $[0,T]$ into estimable intervals *are* the branching
+times, and $L'/L$ is exactly Fig S3's tip rate. ⚠ At the mouse capture fraction Fig S3(b) found
+essentially no branch points in the last tenth of $T$ ⇒ $\lambda(t)$ is unresolvable there no matter
+how many cells are sequenced.
+
+**Nonparametric identifiability.** With node times $0=t_0<\dots<t_J=T$ and $\Delta_j=\int_{I_j}\lambda$,
+every branch spans a contiguous run of intervals and its count is
+$\mathrm{Poisson}(r_z\sum_{j\in S_e}\Delta_j)$. Every knot is by construction a branch boundary, so
+the incidence matrix is generically full rank and all $\Delta_j$ are identified. ⚠ But the finest
+bin's separation rests on the one lineage that splits there, so its effective sample size is $O(k)$,
+not $O(kL)$, and adjacent $\hat\Delta_j$ are strongly negatively correlated. **Binning and smoothing
+are what buy back the factor $L$** — which is why the skyline with an OU prior (§S4.0 item 5) is the
+right model class, not merely a convenient one. *Heuristic; to be checked numerically.*
+
+**⚠⚠ The dangerous confound.** §2a.3 argues rate–time confounding is broken by fixed $T$ plus
+ultrametricity. That kills a *global* rescaling, **not a local trade**: "few edits early" reads
+equally as "$\lambda_0$ low early" or "coalescences sit later than assumed" — and Fig S3 established
+that raising either $\theta$ or $\rho$ pushes branching times later. ⇒ **the early-time shape of
+$\hat\lambda_0(t)$ is confounded with $(\theta,\rho)$**, and mouse $\rho$ is the number we do not
+have. Testable on the existing library.
+
+**⚠⚠ And the one specific to Justin's application.** A state that changes proliferation plausibly
+changes editing rate through the same mechanism — the mouse paper's hematopoietic slowdown is
+explicitly confounded between PEmax silencing and SAMHD1/dNTP-supply limits on prime editing, and
+dNTP supply is cell-cycle linked. So $\lambda$ and $b$ may be coupled by **biology**, not merely
+correlated in the posterior; and $b$ is what the tree measures, and the tree is what supplies
+calendar time to $\lambda$. The clean underlying question is empirical: **is editing per unit time,
+or per division?** §1a.3 records Typewriter's claim that it is per time. If that holds exactly, a
+measured $\lambda$–proliferation correlation is real signal; if only approximately, a proliferative
+burst and a rate burst are the same observation.
+
+### ⭐⭐ Two targets with completely different budgets — the dilemma, stated
+
+- **(A) Population signal history $\xi(t)$**: every edit in every cell is an independent draw. At
+  $n_{\rm cells}=10^4$, $k=30$, mean fill $\approx4.5$ of 6 ($=\mathbb E[\min(\mathrm{Poisson}(\Lambda),N)]$
+  at $\Lambda=5$; Park observes 5.02 on *recovered* tapes, biased up by the $-0.63$ depth–recovery
+  correlation), that is $\approx1.4\times10^6$ draws — a channel at share 0.05 measured to ~1%
+  relative in each of ten windows. **Over-determined.**
+- **(B) Per-lineage state path $\sigma_c(t)$**: cells sharing an ancestor share its edits, so a
+  branch has $k$ independent records, not $mk$. Budget $m=k(1-d)\Delta U$ edits, $\Delta$ the
+  branch's integrated rate. **This is where $k\approx30$ bites.**
+
+Evidence per branch (Poisson discrimination, expected log-LR in favour of the truth):
+
+$$\mathcal I_{\rm on}=m\big[p_1\ln(p_1/p_0)-(p_1-p_0)\big],\qquad \mathcal I_{\rm off}=m\big[p_0\ln(p_0/p_1)-(p_0-p_1)\big]\ \text{nats}$$
+
+⇒ **the worry is entirely about (B); (A) is over-determined by orders of magnitude.**
+⭐ **Hard ceiling worth carrying into the design sweep:** a cell can record at most $kN$ symbols
+ever — 180 at $k=30,N=6$ — of which at most ~30% may go to signal without swamping the lineage
+channel (§I.6.4). **A cell has roughly fifty signal symbols to spend on its entire history.**
+
+⇒ Both bullets of (B) and the temporal-resolution question are answerable **in closed form, without
+a simulator**. See the proposal in `analyses/2026-09_simulator/CLAUDE.md`.
+
+## S4.8 ⭐ The per-lineage budget, answered (2026-09-24)
+
+*Supersedes the closing pointer of §S4.7. Full record: `analyses/2026-09_simulator/README.md`,
+"Session 17 (cont.)".*
+
+⚠⚠ **Correction to §S4.7's plan.** The per-branch KL there is the right *per-edit* quantity but the
+wrong *unit*: a state persists across branches and each sublineage records it independently, so a
+per-branch number is neither an upper nor a lower bound on what a lineage-level call can use. The
+temporal-rank half was dropped: it addressed target (A), already over-determined, and its
+row-normalised kernel made the rank grid-dependent by construction.
+
+**The object that replaced it.** A switch at $(x_0,s_0)$, inherited, lasting $\Lambda_e$; its expected
+evidence is
+
+$$\mathcal I=k(1-d)\sum_b W_b\,\mathrm{KL}_{\rm Bern}(\bar p_b\|p_0),\qquad
+W_b=E(e_b)-E(a_b),\qquad E(s)=\textstyle\sum_{j=1}^{N}P(j,\Lambda_T s)=\mathbb E[\min(\mathrm{Poisson}(\Lambda_Ts),N)]$$
+
+with $\bar p_b$ the on-fraction-weighted share on branch $b$. Three things fall out: (i) the per-edit
+KL is **Bernoulli**, not Poisson, because ENGRAM moves $\xi$ and not $\lambda$, so a branch's edit
+count is uninformative; (ii) branch-only ≤ timing-known always, by convexity of KL in its first
+argument; (iii) $E_{H_0}[\mathrm{LR}]=1$ per edit exactly, so the $e^{-c}$ tail bound holds for the
+branch-only pseudo-LR. $E(s)$ and $\mathcal I$ verified against Monte Carlo (§ README).
+
+**⭐ Answer to Justin's worry ($k\approx30$, $N=6$).** Per-lineage history is recoverable only for
+**long ($\ge$1–2 edits/tape), strong ($\ge$15×), early (first ~60% of $T$)** switches — and then in
+clades as small as **2–5 cells**, with branch-level timing costing little (83–97% kept at 2 edits).
+Short ($\le$0.5 edits/tape), 2-fold, and late switches are out of reach. So the §S4.7 dilemma resolves
+neither way cleanly: (B) is not dead, but it is confined to a regime, and the regime is set by
+**duration and start time**, not by $\rho$, $n$ or tree timing. ⚠ Upper-bound caveat: the tree is
+taken as known and homoplasy-free.

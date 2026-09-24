@@ -15,6 +15,15 @@ started.** README is the findings record; this file's design sections below are 
 design and are partly superseded (the BDS-density route was dropped 2026-09-20 in favour of forward
 simulation + rejection — see README).
 
+⭐⭐ **2026-09-24: switch detectability MEASURED in closed form (`src/12`, Fig S4, README "Session 17
+(cont.)").** At $k=30$ a lineage-specific switch is callable when it is **long ($\ge$1–2 edits/tape),
+strong ($\ge$15×) and early (first ~60% of the experiment)**, in clades of only **2–5 cells**; short
+($\le$0.5 edits/tape), weak (2×) and late (last ~20–30%) switches are out of reach. Branch-level
+timing costs little ⇒ **the tree side is not the bottleneck; build the editing layer, then a
+fitness-neutral state layer.** The information-budget pair it replaced ("PROPOSAL (2026-09-24)"
+below) was never run — four defects found in review. Theory in `notes/sciphy_notes.md` **§S4**
+(§S4.8 records the answer).
+
 ⚑ **Framing agreed 2026-09-23:** turnover inference is NOT a central aim. Fig S3 matters because
 $L(t)$ = independent records of time $t$, so tree shape decides which timepoints of the signalling
 history are recorded well (precision), and survivorship decides whose history is recorded (bias).
@@ -163,17 +172,189 @@ dependent, so that $n$ is not the effective sample size; against 7,867 *trees* t
 0.0153 and 0.008 is comfortably inside. The five deviations also run $-,-,+,+,+$, a mild sign pattern
 that is either noise across correlated quantiles or a small systematic bias.
 
-## ⇒ NEXT, in order (updated 2026-09-23; the 2026-09-17 list is superseded)
+## PROPOSAL (2026-09-24b) — how far can a lineage-specific switch be detected? ✅ APPROVED, RUN
 
+Approved by Justin 2026-09-24 with three additions (a $p_1$ scan, $n=8$, $\rho$ up to 0.8). Ran as job
+14592174. Full design, verification and results: README "Session 17 (cont.)". In one paragraph: a
+switch turns on at a point on the tree, is inherited, and lasts $\Lambda_e$ edits/tape; expected
+evidence is $k(1-d)\sum_bW_b\,\mathrm{KL}(\bar p_b\|p_0)$ nats with edits placed only to their branch
+(or timing known, as the upper bound); callable ⇔ $\ge3+\ln H$. Scanned over $n$ (6) × $\rho$ (5) ×
+$\Lambda_e$ (4) × $F$ (4) × $p_1$ (5) on 20 trees per cell. ⚠ The agreed headline (fraction of all
+switch locations) turned out to be dominated by late switches; the by-start-time reading is recorded
+alongside it, flagged as found after the run.
+
+## PROPOSAL (2026-09-24) — the information budget, in closed form, before the editing layer
+
+**⚠⚠ SUPERSEDED 2026-09-24, NEVER RUN — replaced by (2026-09-24b) above.** Kept as the record. Four
+defects found in review (README "Session 17 (cont.)"): Table 2 never stated $p_0,p_1$ and used
+$p_1=0.20$ in two columns but 0.24 in the third, which moved the $k=30$, 24× call across the 3-nat
+line (3.36 vs 2.80); (b) scored a branch in isolation, which is not a bound; (a) was called both a
+lower and an upper bound; and (a)'s row-normalised kernel makes $\sigma_i\propto1/\sqrt G$, so $R$
+moves with $G$ by construction. `src/12` and `src/13` are now the switch-evidence scripts, not these.
+Theory behind it: `notes/sciphy_notes.md` §S4 (derived 2026-09-23/24). Placed *ahead* of the editing
+layer at Justin's request, because it decides that layer's specification for a fraction of the cost.
+
+### 1. The question
+
+Can the regime Justin expects to work in — **$k\approx30$ tapes, $N=6$ sites** — carry *per-lineage*
+signal history at all? If yes, the editing layer must represent and be validated against
+lineage-resolved $\xi(t,\sigma)$. If no, the modelling target narrows to a **population-level**
+$\xi(t)$ plus high-contrast on/off calls, and the design sweep's headline becomes "what $k$ and
+$\lambda$ would be needed" — a recommendation to the experimentalist rather than an inference method.
+Either answer changes what we build, so it is worth answering first. ⚑ A negative answer is itself
+the §I.7.7 thesis question answered with numbers attached, i.e. purpose IV, not a failure.
+
+### 2. The math — every symbol defined
+
+Two independent closed forms. **Neither uses the tree.**
+
+**(a) Temporal rank $R$ — how many independent temporal features a tape can carry.**
+Work in $\Lambda$-time $\tau=\Lambda(t)/\Lambda(T)\in[0,1]$, the fraction of the experiment's total
+integrated editing rate spent by time $t$ ($\tau=t/T$ if the rate is constant); $\Lambda$ is in edits
+per tape, $\tau$ dimensionless. Let $g(\tau)\in[0,1]$ be the **signal symbol's share of insertions**
+at $\tau$ — the quantity ENGRAM modulates; no-signal value is $g$ constant. Let
+$D=\min(N(T),N)$ be a tape's observed depth (sites filled, 0–6). The $\Lambda$-time of that tape's
+$j$-th edit has a closed-form density $K_j(\tau)$:
+
+- $D=d<N$ (unsaturated): $K_j=\mathrm{Beta}(j,\,d{+}1{-}j)$, from the order-statistics result (§S4.2);
+- $D=N$ (saturated): $K_j(\tau)\propto f_{\Gamma(j,1)}(\Lambda\tau)\,F_{\Gamma(N-j,1)}\big(\Lambda(1-\tau)\big)$,
+  the $j$-th jump of a unit-rate process conditioned on the $N$-th landing inside the experiment.
+
+The mean share observed at site $j$ is then a **linear smoothing of the whole history**,
+$\bar g_j=\int_0^1 K_j(\tau)\,g(\tau)\,d\tau$. Discretise $\tau$ on $G$ grid points (rows normalised
+to sum to 1) to get $\bar g=Kg$ with $K$ of size $N\times G$, and take its singular values
+$\sigma_1\ge\cdots\ge\sigma_N$ (dimensionless). With $n_B$ edits observed at a site, measurement
+noise is $\sigma_\varepsilon=\sqrt{\bar g(1-\bar g)/n_B}$, and mode $i$ is **resolvable** iff
+$\sigma_i>\sigma_\varepsilon/A$, where $A$ is the signal amplitude (peak-to-trough swing in $g$,
+dimensionless). $R$ = the number of modes clearing that bar. $R=1$ means only the experiment-average
+signal is recoverable — no history at all.
+*Assumptions:* site index observed without error; edits at a site treated as independent draws; only
+the $N$ **linear** (marginal) functionals used. Bigrams are *quadratic* in $g$ and are excluded, so
+$R$ is a **lower bound** on what the full likelihood could extract.
+
+**(b) Per-branch evidence $\mathcal I$ — whether one lineage's state is callable.**
+For one branch: $k$ = tapes per cell (count); $\Delta$ = the branch's integrated editing rate (edits
+per tape); $d$ = per-tape dropout probability; $U$ = fraction of tapes not yet saturated. Expected
+edits recorded on that branch is $m=k(1-d)\Delta U$ (edits). Signal symbols number
+$\mathrm{Poisson}(mp)$ with share $p=p_0$ (off) or $p_1$ (on). The expected log-likelihood ratio in
+favour of the truth — the Kullback–Leibler divergence between the two Poissons — is
+
+$$\mathcal I_{\rm on}=m\big[p_1\ln(p_1/p_0)-(p_1-p_0)\big],\qquad
+  \mathcal I_{\rm off}=m\big[p_0\ln(p_0/p_1)-(p_0-p_1)\big]\quad\text{nats}$$
+
+**No-effect value 0 nats** (at $p_1=p_0$). One nat = one $e$-fold of odds. Both directions are
+reported because they are asymmetric: $p_0$ small means few symbols, so "off" is the weaker call.
+
+### 3. What could make it wrong
+
+**The confound both defeat:** neither uses relatedness, so neither can be contaminated by the
+project's recurring circularity — relatedness read from the same edits whose readability dropout
+controls. Every input is a design parameter or a directly measured marginal, not an estimate.
+
+**The confound neither defeats, and it is the important one:** both are **upper bounds on achievable
+resolution**. They credit the site index with locating edits in $\Lambda$-time and never ask whether
+$\Lambda$-time can be converted to *calendar* time — which needs the tree, and which Fig S3(b) already
+shows fails over the last tenth of $T$ at the mouse capture fraction (§S4.7). They also treat the $N$
+site estimates as independent when they come from the same tapes, which is optimistic again.
+⇒ **Only a negative result is decisive. A positive one licenses building, not claiming.**
+
+**Abandon the approach if:** $R$ moves materially with the grid size $G$ or with the depth mixture.
+That would mean the rank is a discretisation artefact rather than a property of the recorder, and the
+right response is to go to simulation, not to reinterpret the number.
+
+### 4. Output — the mock, and the reading rule
+
+**Table 1 (`src/12_temporal_rank.py` → `results/temporal_rank.json`).** Six rows, one per singular
+mode, at $N=6$ and a stated $\Lambda$. **Placeholder numbers — the spectrum cannot be done by hand.**
+
+> *Reading rule:* mode $i$ is resolvable when your per-site edit count $n_B$ exceeds column 3. The
+> **temporal rank $R$** is the number of rows your experiment meets. $R=1$ = only the time-average
+> of the signal; $R=2$ = average plus a monotone trend; $R\ge3$ = a genuine shape. **Decisive:**
+> $R\le2$ at $k=30$ kills per-lineage *graded* history. **Marginal:** $R=3$.
+
+```
+  Lambda = 5.0,  N = 6,  tau-grid G = 200,  depth mixture from Poisson(Lambda) truncated at N
+  i    sigma_i / sigma_1     n_B needed to resolve mode i at amplitude A = 0.10
+  1          1.000                        9
+  2          0.31                        94
+  3          0.08                      1400
+  4          0.02                     23000
+  5          0.004                   580000
+  6          0.0009                 1.1e+07
+```
+
+**Table 2 (`src/13_branch_evidence.py` → `results/branch_evidence.json`).** Four rows, indexed by
+tapes per cell $k$ (11 = mouse-embryo DTT, 30 = Justin's expected regime, 100, 166 = Park).
+
+> *Reading rule:* no-effect value 0 nats. **$\ge3$ nats ($\approx$ 20:1) = a branch call worth
+> making; 1–3 nats = usable only pooled over several branches; $<1$ nat = not callable.** Decisive
+> question: does the row for *your* $k$ clear 3 nats at the fold-change your recorder delivers?
+> (ENGRAM measures 15–24× swings: 23.8× for 3' FT ±TNF, 15.1× for a high/low CRE pair.)
+
+```
+  Delta = 0.5 edits/tape/branch,  d = 0.44 (Park per-tape dropout),  U = 0.75
+                            2-fold          10-fold         24-fold
+    k       m = k(1-d)DU   on    off      on    off      on    off
+   11           2.3       0.09  0.07     0.65  0.31     1.23  0.46
+   30           6.3       0.24  0.19     1.77  0.84     3.36  1.25
+  100          21.0       0.81  0.64     5.89  2.81    11.2   4.16
+  166          34.9       1.35  1.07     9.79  4.68    18.6   6.91
+```
+⚠ These Table-2 entries are the formula evaluated by hand at the stated assumptions, shown so the
+reading rule can be judged — **not results.** The run replaces the assumed $\Delta$ with the branch
+-length distribution measured from the tree library, $U$ with the saturation profile at the arm's
+$\hat\Lambda$, and $d$ with each arm's measured per-tape dropout, and sweeps all three.
+⚑ Note what the hand arithmetic already hints: **dropout and saturation roughly halve the effective
+tape count**, dropping the 10-fold call at $k=30$ from 4.2 nats (raw $k\Delta$) to 1.8 — callable to
+marginal. That is the swing the run has to pin down.
+
+### Cost, and where it runs
+
+Numpy SVD on a $6\times200$ matrix and closed-form arithmetic: **seconds, one core**. Per the
+standing rule ("run every analysis as a Slurm batch job"), submit anyway via
+`scripts/submit.sh src/12_temporal_rank.py --mem 4G --time 00:10:00 --cpus 1`, and likewise `13`.
+Right-sized: 4 G, 10 min, partition `cpu`.
+
+---
+
+## ⇒ NEXT, in order (updated 2026-09-24; the 2026-09-23 list is superseded)
+
+0. ✅ **Switch detectability** (PROPOSAL 2026-09-24b) — DONE. ⇒ editing layer first, then a
+   fitness-neutral state layer validated on long, strong, early switches; tree-side timing
+   refinement deprioritised (item 3 is about rate inference and stands on its own).
 1. **The editing layer** — decorate library trees with sequential edits at measured per-tape
    rates, site 6 handled separately, depth 0 censored; editing and dropout must be fitted
-   **jointly** (park-compatibility CLAUDE.md).
+   **jointly** (park-compatibility CLAUDE.md). ⭐ Build **route (ii)**, the partial-sum sampler of
+   §S4.3 — bounded at $N$ draws per tape-branch, sorted by construction, no waste — and keep route
+   (i) as the cross-check. Carry **edit times** and $\Lambda$-time from the start (§S4.1): a
+   time-varying *composition* is then free, and a time-varying *rate* is one extra knot.
 2. Then, with edits: tape saturation vs $L(t)$ — the "best-recorded window" hypothesis (README
    Session 16, point 4); a proposed figure is $L(t)/n$ with the tape-saturation profile overlaid.
-3. Survivorship bias needs signal-dependent $b$/$\delta$ — a model extension, not yet designed.
-4. Open, lower priority: check A at a Park-scale point; refit the attempts envelope with the exact
+   ⭐ §S4.7 sharpens it: $L(t)$ sets precision, $L'(t)$ sets temporal resolution.
+3. **$\lambda(t)$ vs $(\theta,\rho)$ confounding** — §S4.7's named confound, testable on the existing
+   library by putting a known $\lambda_0(t)$ on trees across the $\theta$/$\rho$ grid.
+3b. ⭐ **The state layer (fitness-neutral)** — paint a two-state CTMC path onto library trees
+   (§S4.5, two-pass), then check with the §S4.4 likelihood whether the switches Fig S4 calls
+   recoverable survive tree error and homoplasy. Target regime: $\Lambda_e\ge1$–2, $F\ge15$, start
+   in the first ~60%, clades $\ge$2–5 cells.
+4. Survivorship bias needs signal-dependent $b$/$\delta$. ⚠⚠ §S4.5: **painting states onto library
+   trees is exact only if the state is fitness-neutral.** Proliferative states require a multi-type
+   birth–death in the *tree* layer, and the library becomes a stepping stone.
+5. Open, lower priority: check A at a Park-scale point; refit the attempts envelope with the exact
    $1/P(K=n)$ (README correction 3); S2 validation figures were proposed and Justin declined them.
-5. ⚠ Owed to Jihye Park: total viable cells or tumour mass per organ at day 45 (mouse $\rho$).
+6. ⚠ Owed to Jihye Park: total viable cells or tumour mass per organ at day 45 (mouse $\rho$).
+
+### Decisions taken with Justin, 2026-09-23/24
+
+- ✅ **Time-varying composition $\xi(t)$ in from the start** — even though it will not be varied yet.
+- ✅ **Time-varying rate $\lambda(t)$ too** — Justin's experiments will span states of differing
+  proliferation, and inferring time-varying rates from trees is a stated goal.
+- ✅ **Route (ii)** (partial sums) as the production sampler. ⚠ This corrects my own earlier
+  recommendation of route (i) as "the fast one" — in partial-sum form route (ii) vectorises equally
+  well and has a *bounded* draw count, so it dominates.
+- 🕐 Still open: piecewise-constant vs spline $\lambda_0(t)$; whether the first build includes
+  $\lambda_\sigma$; whether edit times are persisted or replayed from a seed; Park vs design-sweep
+  first; whether the two-channel symbol partition is in the first build.
 
 ## Verification policy for this analysis
 

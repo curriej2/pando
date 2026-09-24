@@ -1437,3 +1437,129 @@ never visible in the library was wrong for trees conditioned on $n$; (5) pruning
 
 **⇒ NEXT:** the editing layer. ⚠ Still owed to Jihye Park: total viable cells or tumour mass per
 organ at day 45 — now also a discussion item for the PI (Fig S3c).
+
+
+## 2026-09-23/24 — session 17: the SciPhy simulator read at source; the time-varying model derived; a proposal that precedes the editing layer
+
+**No compute. Reading, derivation, and one proposal awaiting approval.** Full theory in
+`notes/sciphy_notes.md` **§S4**; the proposal itself in `analyses/2026-09_simulator/CLAUDE.md`
+under "PROPOSAL (2026-09-24)".
+
+**Both SciPhy repos cloned and read** (scratchpad, not committed): `azwaans/SciPhy` (package) and
+`seidels/sciphy-materials` (analysis). Four corrections to §S3.1–S3.2, all recorded as §S4.0:
+1. ⚠ **The tape-loss simulation is in NEITHER repo.** One simulation class, no loss of any kind;
+   `supplemental_figures/` covers supp. figs 1–14 while the sparsity figures are 23–26. ⇒ the row-A6
+   result has no released implementation and no reference for us to check against.
+2. ⚠ **Their simulator cannot vary rates across branches** — no `branchRateModel` input; the
+   `<branchRateModel>` element in their own simulation XML is inert. Their *likelihood* does honour
+   one. Rows A1/A2/A8 are unreachable in their framework by construction.
+3. ⚠ **One tape per simulation object** (`numberOfTargets = 1; //TODO`). Tape independence is
+   structural in their simulator, not a relaxable assumption.
+4. ⚑ Validation trees come from `bdmmprime` at $b$=0.8, $\delta$=0.2, $T$=25, **$\rho=3\times10^{-5}$**
+   — 27× smaller than the $8\times10^{-4}$ we inherited from their HEK293T constant. TreeSim is only
+   the comparator.
+5. ⭐ **The skyline+OU machinery is already in their stack, pointed at the tree**
+   (`BirthDeathSkylineModel` + `bdsky.OUPrior` on piecewise-constant $b,\delta$) while the clock stays
+   13 strict per-tape clocks. Moving that prior onto $\lambda(t)$ is precedented, not novel.
+
+**⭐⭐ The time-varying model derived and recorded (§S4.1–S4.6).** In $\Lambda$-time
+$\tau=\Lambda(t)$ the recorder is *exactly* SciPhy's model, so epochs, cell-state transitions and
+branch endpoints are all just knots in $\Lambda$. The conditional-uniformity theorem derived from
+scratch ($\lambda$ cancels under a constant rate; under $\lambda(t)$ it survives as the normalised
+intensity, so times are order statistics of draws from $\lambda(u)/\mu$). ⭐ The likelihood survives:
+with piecewise-constant $(\lambda,\xi)$ an observed suffix is cut into contiguous per-epoch blocks
+and the transition probability is an $O(N^2K)$ forward recursion, with the prefix/lcp structure and
+the Eq. 9 intersection untouched. Lost: time-homogeneity, so caching must rekey on the interval.
+
+**⭐ Route (ii) beats route (i), correcting my own recommendation of the previous day.** The first
+$c=N-|a|\le6$ jump times are partial sums of iid Exp(1), so the sampler draws **exactly $c$**
+variates, comes out sorted by construction, wastes nothing at the saturation wall, and still
+vectorises over tapes. Route (i) (Poisson count → uniforms → sort → truncate) has an unbounded draw
+count. Keep (i) only as the independent cross-check. ⚠ I had called (i) "the fast one".
+
+**⚠⚠ Painting states onto the tree library is exact only if the state is fitness-neutral.** If a
+state changes $b$ or $\delta$, the reconstructed tree is conditioned on survival and capture and its
+lineages are enriched for winners, so a forward-drawn state path on a single-type tree is wrong.
+Proliferative states — Justin's actual case — need a multi-type birth–death in the *tree* layer.
+⭐ The two-pass optimisation survives: the count trajectory becomes a vector and the lineage an event
+lands on is uniform *within its type*.
+
+**⭐ Derived but NOT verified: the homoplasy quantity under time-varying $\xi$** is
+$\langle\xi(t_1),\xi(t_2)\rangle$, not $q$. For independent write times this averages to $\bar q$, the
+$q$ of the time-averaged composition — i.e. **the pooled $q\approx0.0170$ is the right input** — while
+$\mathbb E[q(t)]\ge\bar q$ by Jensen, so averaging instantaneous skew over-states homoplasy. But
+collisions happen at the *same site index*, and same-index writes happened at similar times, pushing
+the quantity up toward $\mathbb E[q(t)]$ ⇒ **the per-site $q$ is correct, not the pooled $q$**, which
+derives the README's existing recommendation instead of asserting it. ⚠ Jensen needs the
+**edit-weighted** mean over sites; the direction holds 5/5 on an *unweighted* mean of the recorded
+per-site table (gaps 0.9–13.0% of pooled $q$) but the weighted version has not been computed. **Do
+not quote.**
+
+**⚠⚠ Two confounds named for $\lambda(t)$ inference (§S4.7).** (i) §2a.3's fixed-$T$ + ultrametricity
+argument kills a *global* rescaling but not a *local* trade: "few edits early" reads equally as
+"$\lambda_0$ low early" or "coalescences later than assumed", and Fig S3 showed both higher $\theta$
+and higher $\rho$ push branchings later ⇒ **the early shape of $\hat\lambda_0(t)$ is confounded with
+$(\theta,\rho)$**, and mouse $\rho$ is the number we lack. Testable on the existing library.
+(ii) A state that changes proliferation plausibly changes editing rate through the same mechanism
+(SAMHD1/dNTP supply is cell-cycle linked), so $\lambda$ and $b$ may be coupled by **biology**. The
+underlying empirical question: **is editing per unit time or per division?**
+
+**⭐⭐ Justin raised the information worry — ~30 tapes, 6 sites — and it splits in two.**
+(A) *Population* $\xi(t)$ is over-determined: every edit in every cell is an independent draw,
+$\approx1.4\times10^6$ draws at $n_{\rm cells}=10^4$, $k=30$, mean fill 4.5/6. (B) *Per-lineage* state
+paths are budget-limited: a branch carries $k$ independent records, not $mk$, so
+$m=k(1-d)\Delta U$ edits, and evidence is the Poisson KL
+$m[p_1\ln(p_1/p_0)-(p_1-p_0)]$ nats. **The worry is entirely about (B).**
+⭐ Hard ceiling for the design sweep: a cell records at most $kN$ symbols ever — 180 at $k$=30, $N$=6 —
+of which $\le$30% may go to signal without swamping lineage. **~50 signal symbols per cell, total.**
+
+**⇒ PROPOSAL, awaiting approval (Justin asked for it written up before building).** Two closed-form
+calculations, no simulator, no tree: **(a) temporal rank** — SVD of the $N\times G$ Beta/Gamma kernel
+mapping the signal history in $\Lambda$-time to the $N$ observed per-site compositions, giving the
+number of independent temporal features the recorder can carry; **(b) per-branch evidence** — the
+Poisson KL above, over a grid of $k$, $\Delta$, dropout and fold-change. Both are **upper bounds**
+(they credit the site index with $\Lambda$-time localisation and never ask whether $\Lambda$-time can
+be converted to calendar time), so **only a negative result is decisive**. Scripts `src/12`, `src/13`;
+seconds on one core. Tables, reading rules and the abandon criterion are in the analysis CLAUDE.md.
+
+**⇒ NEXT:** Justin's decision on the proposal; then the editing layer, built on route (ii) in
+$\Lambda$-time with edit times carried from the start. ⚠ Still owed to Jihye Park: total viable cells
+or tumour mass per organ at day 45.
+
+## 2026-09-24 — session 17 (cont.): the information-budget proposal reviewed and replaced; switch detectability measured
+
+`analyses/2026-09_simulator`, README "Session 17 (cont.)"; `src/12_switch_evidence.py` (job
+14592174, 6 min 21 s, 0.37 GB), `src/13_fig_switch_evidence.py`, Fig S4a/b.
+
+**⚠⚠ The 2026-09-24 information-budget proposal was reviewed at Justin's request and NEVER RUN.**
+Four defects: (b)'s mock never stated $p_0,p_1$ and back-solves to $p_1=0.20$ in two columns but
+0.24 in the third, which moves the $k=30$, 24× call across the 3-nat line (3.36 vs 2.80 nats);
+(b) scored a branch in isolation, which is not a bound, so "only a negative is decisive" failed for
+it; (a) was called a lower bound in one section and an upper bound in the next; and (a)'s
+row-normalised kernel gives $\sigma_i\propto1/\sqrt G$, so $R$ would move with the grid by
+construction. Two slips of mine in the review, corrected on the record: the on-direction KL, not the
+lower of the two, governs detection; and a single-lineage short switch is well below the *searched*
+bar, not "on the line".
+
+**Replacement, approved (Justin added a $p_1$ scan, $n=8$, and $\rho$ to 0.8):** a switch turns on at
+a point on the tree, is inherited, lasts $\Lambda_e$ edits/tape; expected evidence
+$\mathcal I=k(1-d)\sum_bW_b\,\mathrm{KL}(\bar p_b\|p_0)$ nats with edits placed only to their branch
+(timing-known as the upper bound); callable ⇔ $\mathcal I\ge3+\ln H$ (7.1–12.7 nats). 30 $(n,\rho)$
+settings × 20 trees × 1,000 switch locations. ✅ Closed form matches the realised LLR on simulated
+tapes, worst $|z|=2.43$ over 36 comparisons.
+
+**Result (k = 30, p₁ = 0.3, branch-only; ranges over the 30 settings).** Fraction of all switch
+locations callable: **0** at 0.25 edits/tape; **≤1.4%** at 0.5; **9–36%** (24×) at 1; **23–63%** (24×)
+and 20–58% (15×) at 2; **≤6%** for 2-fold at any duration. Decisive negative not triggered; positive
+bar (50%) met only for 2-edit switches in some settings. ⇒ **marginal, duration-driven.**
+⚠ **Found after the run:** the metric weights switch locations by tree length, and 43–92% of that
+length sits in the last 30% of the experiment, where almost nothing is callable. Read by start time,
+2-edit ≥15× switches starting in the **first 60%** are callable in **≥89% of locations in every
+setting**; those in the last 20% in ≤22–31%. Both readings recorded; the statistic was not changed.
+Also: $m^*$ = **2–5 descendant cells**; branch-only keeps **83–97%** of timing-known at 2 edits (tree
+side not the bottleneck); $k$ for half callable is **88–176** at 0.5 edits/tape; $p_1$ 0.05→0.3 is a
+~10× lever; knowing the clade in advance (3 nats, no search) lifts 1-edit 24× from 9–36% to 51–77%.
+
+**⇒ NEXT (Justin, 2026-09-24): back to building the simulator** — the editing layer (route ii,
+$\Lambda$-time, edit times carried), then a fitness-neutral state layer validated on the regime Fig S4
+calls recoverable.
