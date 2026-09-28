@@ -25,6 +25,17 @@ over the simulated points (notes §S4.9.5), so each panel shows the layer workin
        ⚠ Constant rate, unlike the validation's TV set-up with its zero-rate window, so the slot
        percentages differ from the 3.2 / ... / 15.6% quoted there.
 
+  S5d  (added 2026-09-28 at Justin's request) the editing rate programmed over time, with the
+       validation's pause-and-burst schedule (levels 1.2 / 0 / 1.6 / 0.8 on knots 0, .25, .35, .6,
+       1, normalised; x Lam_T): top, the realised rate -- edits in a time bin / tape-time spent
+       OPEN (not yet full) in it, summed over every lineage alive -- against the programmed step,
+       plus the same edits / ALL tape-time, which sags as tapes fill; bottom, filled slots per tape
+       along lineages against E[min(Poisson(Lam(t)), N)], with the constant-rate curve faint.
+       Rate bins are 0.025 wide so every knot is a bin edge; the realised rate is a ratio of sums
+       over trees, se with trees as clusters.  ⚠ Uses the simulator's TRUE edit times: it shows
+       the rate can be IMPOSED, not that it can be RECOVERED from sequenced tapes (§S4.7).
+       (The deferred homoplasy curve moves to the homoplasy figure rather than keep the letter d.)
+
 Standard errors are across TREES (200 at n = 210, the validation's spread over rho and theta).
 """
 from __future__ import annotations
@@ -56,6 +67,8 @@ N_TIPS = 210
 TREE_CELLS = [(rho, th) for rho in (0.0005, 0.002, 0.02, 0.1, 0.25) for th in (0.3, 0.7)]
 CARTOON = dict(n=8, rho=0.25, theta=0.5, rep=0, k=3)
 PULSE = dict(comp_knots=(0.0, 0.4, 0.7, 1.0), shares=((0.02,), (0.30,), (0.02,)))
+RATE = dict(rate_knots=(0.0, 0.25, 0.35, 0.6, 1.0), rate_levels=(1.2, 0.0, 1.6, 0.8))
+RATE_BIN = 0.025
 N_BINS_B = 20
 
 INK, INK2, MUTED = "#0b0b0b", "#52514e", "#898781"
@@ -362,6 +375,114 @@ def panel_c(trees, numbers):
                     "z": np.round((mean - pred) / se, 2).tolist()}
 
 
+def panel_d(trees, numbers):
+    rec = ed.Recorder(k=30, shares=((0.0,),), **RATE)
+    N, k = rec.N, rec.k
+    edges = np.arange(0.0, 1.0 + RATE_BIN / 2, RATE_BIN)
+    B = edges.size - 1
+    lo, hi = edges[:-1], edges[1:]
+    tg = np.linspace(0.0, 1.0, 41)
+    E_t = np.zeros((len(trees), B)); O_t = np.zeros((len(trees), B)); X_t = np.zeros((len(trees), B))
+    depth_t = np.zeros((len(trees), tg.size))
+    ss = np.random.SeedSequence([SEED, 7]).spawn(len(trees))
+    for ti, (parent, branch) in enumerate(trees):
+        out = ed.decorate(parent, branch, N_TIPS, rec, np.random.default_rng(ss[ti]))
+        t0, t1 = out["t0"], out["t"]
+        d0 = out["bslot0"].astype(int)                                 # depth on arrival (nn, k)
+        ne = out["bcount"].astype(int)
+        bt = out["btime"].astype(float)
+        last = np.take_along_axis(bt, np.maximum(ne - 1, 0)[..., None], axis=2)[..., 0]
+        start = np.broadcast_to(t0[:, None], d0.shape)
+        close = np.where(d0 >= N, start,                               # arrived full: never open
+                         np.where(d0 + ne >= N, last, t1[:, None]))    # filled here: closes then
+        a, b = start.ravel(), close.ravel()
+        O_t[ti] = np.clip(np.minimum(b[:, None], hi) - np.maximum(a[:, None], lo), 0, None).sum(0)
+        a2 = start.ravel(); b2 = np.broadcast_to(t1[:, None], d0.shape).ravel()
+        X_t[ti] = np.clip(np.minimum(b2[:, None], hi) - np.maximum(a2[:, None], lo), 0, None).sum(0)
+        E_t[ti] = np.histogram(bt[np.isfinite(bt)], bins=edges)[0]
+        for g, tt in enumerate(tg):                                    # filled slots at time tt
+            span = (t0 <= tt) & ((t1 > tt) | ((tt >= 1.0) & (t1 >= 1.0)))
+            dep = d0[span] + np.sum(bt[span] <= tt, axis=-1)
+            depth_t[ti, g] = dep.mean()
+
+    def ratio(E, D):
+        R = E.sum(0) / D.sum(0)
+        se = np.sqrt(np.sum((E - R * D) ** 2, 0)) / D.sum(0)          # trees as clusters
+        return R, se
+
+    r_open, se_open = ratio(E_t, O_t)
+    r_all, _ = ratio(E_t, X_t)
+    mid = 0.5 * (lo + hi)
+    programmed = rec.Lam_T * rec.omega[np.clip(np.searchsorted(rec.kappa, mid, side="right"), 1,
+                                                rec.omega.size) - 1]
+    dmean = depth_t.mean(0)
+    dse = depth_t.std(0, ddof=1) / np.sqrt(len(trees))
+    tf = np.linspace(0, 1, 801)
+
+    def mean_depth(mu):
+        return (np.minimum(np.arange(60), N)[None, :] *
+                poisson.pmf(np.arange(60)[None, :], np.asarray(mu)[:, None])).sum(1)
+
+    pred = mean_depth(rec.Lam_T * rec.W_of(tf))
+    pred_const = mean_depth(rec.Lam_T * tf)
+    pred_g = mean_depth(rec.Lam_T * rec.W_of(tg))
+
+    fig, (top, ax) = plt.subplots(2, 1, figsize=(5.8, 6.6), sharex=True,
+                                  gridspec_kw={"height_ratios": [1.0, 1.0], "hspace": 0.18})
+    for axx in (top, ax):
+        axx.axvspan(0.25, 0.35, color=BAND, lw=0, zorder=0)
+    top.text(0.30, 1.01, "pause", transform=top.get_xaxis_transform(), ha="center", va="bottom",
+             color=INK2, fontsize=8.5)
+    top.text(0.475, 1.01, "burst", transform=top.get_xaxis_transform(), ha="center", va="bottom",
+             color=INK2, fontsize=8.5)
+    kx = np.repeat(rec.kappa, 2)[1:-1]
+    ky = np.repeat(rec.Lam_T * rec.omega, 2)
+    top.plot(kx, ky, color=LINE, lw=2, zorder=3, label="programmed rate")
+    top.errorbar(mid, r_open, yerr=se_open, fmt="o", ms=4.5, color=RAMP6[2], ecolor=RAMP6[2],
+                 elinewidth=1, mec="white", mew=0.7, zorder=4, label="realised, per open tape")
+    top.scatter(mid, r_all, s=16, facecolors="white", edgecolors=MUTED, lw=1, zorder=4,
+                label="realised, per tape (open or full)")
+    top.set_ylabel("editing rate\n(edits per tape per experiment)", fontsize=9)
+    top.set_ylim(0, max(ky.max(), r_open.max()) * 1.5)
+    top.legend(frameon=False, loc="upper right", fontsize=8, bbox_to_anchor=(1.0, 1.0))
+    style(top)
+    top.set_title("d   The editing rate can be programmed over time", loc="left", fontsize=10.5,
+                  pad=16)
+
+    ax.axhline(N, color=MUTED, lw=1, ls=(0, (4, 3)), zorder=1)
+    ax.text(0.01, N + 0.08, f"tape full ({N} slots)", color=MUTED, fontsize=8.5)
+    ax.plot(tf, pred_const, color=MUTED, lw=1.2, ls=(0, (2, 2)), zorder=2,
+            label="constant rate, same total")
+    ax.plot(tf, pred, color=LINE, lw=2, zorder=3, label="prediction")
+    ax.errorbar(tg, dmean, yerr=dse, fmt="o", ms=4.5, color=RAMP6[2], ecolor=RAMP6[2],
+                elinewidth=1, mec="white", mew=0.7, zorder=4, label="simulated (mean ± se)")
+    ax.set_xlim(0, 1)
+    ax.set_ylim(0, N + 0.5)
+    ax.set_xlabel("time (fraction of the experiment)")
+    ax.set_ylabel("filled slots per tape\n(average along lineages)", fontsize=9)
+    ax.legend(frameon=False, loc="lower right", fontsize=8)
+    style(ax)
+    fig.text(0.0, -0.25, f"200 library trees of {N_TIPS} cells, 30 tapes, lineage symbols only; "
+             f"$\\Lambda_T$ = {rec.Lam_T} edits per tape; rate bins {RATE_BIN} wide\n"
+             f"⚠ uses the simulator's true edit times: shows the rate can be imposed, not that it "
+             f"can be recovered from sequenced tapes (notes §S4.7)",
+             color=MUTED, fontsize=8, ha="left", va="top", transform=ax.transAxes)
+    save(fig, "figS5d_programmed_rate")
+    live = se_open > 0
+    numbers["d"] = {"schedule": {"knots": rec.kappa.tolist(),
+                                 "rate_edits_per_tape": (rec.Lam_T * rec.omega).round(4).tolist()},
+                    "bin_mid": mid.round(4).tolist(), "programmed": programmed.round(4).tolist(),
+                    "realised_open": r_open.round(4).tolist(), "se_open": se_open.round(4).tolist(),
+                    "realised_all": r_all.round(4).tolist(),
+                    "z_open": np.where(live, (r_open - programmed) / np.where(live, se_open, 1),
+                                       0.0).round(2).tolist(),
+                    "pause_edits": int(E_t[:, (mid > 0.25) & (mid < 0.35)].sum()),
+                    "depth_time": tg.round(3).tolist(), "depth_sim": dmean.round(4).tolist(),
+                    "depth_se": dse.round(4).tolist(), "depth_pred": pred_g.round(4).tolist(),
+                    "z_depth": np.where(dse > 0, (dmean - pred_g) / np.where(dse > 0, dse, 1),
+                                        0.0).round(2).tolist()}
+
+
 def main():
     trees = []
     for rho, th in TREE_CELLS:
@@ -370,6 +491,7 @@ def main():
     panel_a(numbers)
     panel_b(trees, numbers)
     panel_c(trees, numbers)
+    panel_d(trees, numbers)
     (RES / "figS5_numbers.json").write_text(json.dumps(numbers, indent=1, default=float))
     print(json.dumps({k: numbers[k] for k in ("b", "c")}, default=float)[:1500])
 

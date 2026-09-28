@@ -1689,3 +1689,14 @@ late collapse it accounts for, against truncation and terminal branches, remains
 
 **⇒ NEXT (Justin's call on order):** the fitness-neutral state layer and the dropout layer, each as
 its own proposal; panel d with the homoplasy test.
+
+**Session 19, cont. — S5d added at Justin's request: the editing rate programmed over time.** The
+validation's pause-and-burst schedule (6.47 / 0 / 8.63 / 4.31 edits per tape per experiment on
+0–0.25 / 0.25–0.35 / 0.35–0.6 / 0.6–1). The realised rate — edits per bin divided by tape-time spent
+*open* — sits on the programmed step: 0 edits in the pause; over the 36 bins with editing $z$ has
+mean 0.17, SD 1.00, worst 2.83 (chance ~16% for a maximum that large). Divided by *all* tape-time it
+sags as tapes fill though the rate holds (8.48 → 7.17 in the burst, 3.48 → 2.31 late). Filled slots
+along lineages stay within $|z|\le1.1$ of $\mathbb E[\min(\mathrm{Poisson}(\Lambda(t)),6)]$, flat at
+1.62 through the pause. ⚠ True edit times are used: the panel shows the rate can be *imposed*, not
+*recovered* from sequenced tapes — that is item 3, with §S4.7's $(\theta,\rho)$ confound. The
+collision-vs-signal-share curve keeps its deferral to the homoplasy figure.

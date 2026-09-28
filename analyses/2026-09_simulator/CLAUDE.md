@@ -457,11 +457,14 @@ Right-sized: 4 G, 10 min, partition `cpu`.
    "Session 18"), spec in §S4.9, `src/14` + `src/15`. ⇒ **NEXT (order is Justin's call): the
    fitness-neutral state layer (3b), which Fig S4 recommended after editing, and the dropout layer
    (rung 1); each returns as its own proposal.**
-1b. ✅ **Fig S5 a–c built 2026-09-28** (`src/16`, README "Session 19"): inheritance cartoon, shared
-   slots vs split time, a signal pulse written into slot order — each against its closed form
-   (b: 20 bins within $|z|\le1.04$; c: 6 slots within $|z|\le1.21$). ⏸ **Panel d — collision
-   probability vs signal share, $p^2q_S+(1-p)^2q_L$ — DEFERRED by Justin to a fuller homoplasy test**,
-   which belongs with the homoplasy null (rung 0) and the design sweep's $(p,j)$ axis.
+1b. ✅ **Fig S5 a–d built 2026-09-28** (`src/16`, README "Session 19"): inheritance cartoon, shared
+   slots vs split time, a signal pulse written into slot order, and a programmed pause-and-burst
+   editing rate — each against its closed form (b: 20 bins within $|z|\le1.04$; c: 6 slots within
+   $|z|\le1.21$; d: realised rate per open tape on the programmed step, 0 edits in the pause, $z$
+   SD 1.00 over 36 bins; depth within $|z|\le1.1$). ⚠ d uses true edit times: the rate can be
+   imposed, recovery is item 3. ⏸ **The collision-vs-signal-share curve, $p^2q_S+(1-p)^2q_L$ — first
+   offered as "d" — is DEFERRED by Justin to a fuller homoplasy test**, which belongs with the
+   homoplasy null (rung 0) and the design sweep's $(p,j)$ axis.
    ⚠ Recorded there: my claim that shared slots "hit the 6-slot ceiling past ~0.7" was wrong — the
    curve bends (slope 5.5 → 2.9 slots per unit time by harvest), it does not saturate. Decorate library trees with sequential edits; ⭐ **route (ii)**, the
    partial-sum sampler of §S4.3 (bounded at $N$ draws per tape-branch, sorted by construction, no

@@ -1,15 +1,16 @@
 # simulator — findings
 
-**State 2026-09-28: the tree layer and the EDITING LAYER are BUILT and VALIDATED; the editing layer is illustrated in Fig S5 (a–c).** Tree library
+**State 2026-09-28: the tree layer and the EDITING LAYER are BUILT and VALIDATED; the editing layer is illustrated in Fig S5 (a–d).** Tree library
 complete (1,870 cells, 37,380 trees, zero structure faults); editing layer `src/14_editing.py`
 passes all 219 closed-form cells and every hard assertion (`src/15`). Figures S1, S3, S4 built,
 LaTeX write-up of S1/S3 in `writeup/`. **Dropout is the next layer; not started.**
 
 ## ⭐ Session 19 (2026-09-28) — Fig S5: the editing layer, illustrated
 
-`src/16_fig_editing.py` → `figures/figS5{a,b,c}_*.png` (+pdf), numbers `results/figS5_numbers.json`.
-Justin chose panels a, b, c; **d (the homoplasy cost of a signal channel, collision probability vs
-signal share) is DEFERRED to a fuller homoplasy test.** Illustrations, not tests: where a closed form
+`src/16_fig_editing.py` → `figures/figS5{a,b,c,d}_*.png` (+pdf), numbers `results/figS5_numbers.json`.
+Justin chose panels a, b, c, then asked for d (a programmed editing rate). **The homoplasy cost of a
+signal channel — collision probability vs signal share, first offered as "d" — is DEFERRED to a
+fuller homoplasy test** and will live in that figure. Illustrations, not tests: where a closed form
 exists it is drawn as a line over the simulated points; the formal record stays Session 18. 200
 library trees of 210 cells (the validation's $\rho\times\theta$ spread), 30 tapes, $\Lambda_T=5.5$,
 tapes empty at the clone founder; standard errors across trees.
@@ -47,6 +48,23 @@ tapes empty at the clone founder; standard errors across trees.
   2.8 / 6.1 / 12.0 / 16.7 / 16.4 / 11.9% predicted, **all within $|z|\le1.21$**. Every slot averages
   the signal over its write window, so a 30% pulse returns as at most ~17%: the recorder blurs
   time, it does not lose it. Per tip, not deduplicated — the closed form is stated per tip.
+- **S5d — the editing rate can be programmed over time.** The validation's pause-and-burst schedule:
+  **6.47 / 0 / 8.63 / 4.31 edits per tape per experiment** on 0–0.25 / 0.25–0.35 / 0.35–0.6 / 0.6–1.
+  *Top:* the realised rate — edits in a 0.025-wide bin divided by the tape-time spent **open** (not
+  yet full) in it, over every lineage alive — sits on the programmed step: **exactly 0 edits in the
+  pause**, and over the 36 bins with editing $z$ has mean 0.17 and SD 1.00 (22 of 36 positive), worst
+  $|z|=2.83$ (a maximum that large among 36 bins happens by chance ~16% of the time; the three
+  beyond $|z|=2$ are two adjacent early bins, +2.2/+2.8, where trees have few lineages, and one late
+  bin at −2.2). The same edits divided by **all** tape-time, open or full, sag as tapes fill though
+  the rate holds: **8.48 → 7.17** across the burst, **3.48 → 2.31** across the last phase — the
+  distinction between *the rate changed* and *the tapes filled* that panel b's corrected claim turned
+  on. *Bottom:* filled slots per tape along lineages, within $|z|\le1.1$ of
+  $\mathbb E[\min(\mathrm{Poisson}(\Lambda(t)),6)]$ at all 41 time points: **flat at 1.62 slots
+  through the pause**, steeper through the burst, bending as tapes fill, and ending at 4.80 — the
+  same as the faint constant-rate curve, since both spend the same total.
+  ⚠ **Uses the simulator's true edit times**: it shows the rate can be *imposed*, not that it can be
+  *recovered* from sequenced tapes. Recovery goes through branching times and meets §S4.7's confound
+  with $(\theta,\rho)$ — NEXT item 3, its own proposal.
 
 ## ⭐⭐ Session 18 (2026-09-27) — the editing layer, built and validated
 

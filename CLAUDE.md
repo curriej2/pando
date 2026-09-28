@@ -111,7 +111,7 @@ already back at $p=1/1001$ in 5/5 arms. ⚠ Two orthogonal follow-ups are specif
 `--lam 4` re-run with a size-stratified null (the floor, not $B$, is what hides weaker events), and
 the **symbol-depletion test** of row A9's untested *trans* limb. |
 
-| `2026-09_simulator` | Build the forward simulator (birth–death tree → sequential editing → dropout) for the homoplasy null and the design sweep. | **Tree layer BUILT, validated, costed; library COMPLETE (1,870 cells, 37,380 trees, zero faults).** ⭐⭐ **Editing layer DERIVED, not built (§S4).** ⭐⭐ **Switch detectability MEASURED (2026-09-24, Fig S4): at $k=30$ a lineage-specific switch is callable only if long ($\ge$1–2 edits/tape), strong ($\ge$15×) and early (first ~60% of $T$), in clades of 2–5 cells; branch-level timing costs little ⇒ tree side not the bottleneck.** Figs S1 (method), S3 (pull of the present), S4 and **S5 a–c (editing layer illustrated, 2026-09-28; panel d deferred to the homoplasy test)** built; LaTeX write-up of S1/S3 in `writeup/`. ⭐ $L(t)$ = independent records of time $t$ — tree shape sets which timepoints are recorded well, survivorship sets whose history is. ✅ **Editing layer BUILT and VALIDATED (2026-09-27, `src/14`/`src/15`): PASS, 219 closed-form cells, worst $|z|=2.67$, 0 of $1.9\times10^8$ hard-assertion violations; tapes empty at the clone founder ($\Lambda_{\rm pre}=0$).** Dropout and state layers not started. ⚠ Editing and dropout must be fitted jointly, which is why no Park-calibrated run has been made. |
+| `2026-09_simulator` | Build the forward simulator (birth–death tree → sequential editing → dropout) for the homoplasy null and the design sweep. | **Tree layer BUILT, validated, costed; library COMPLETE (1,870 cells, 37,380 trees, zero faults).** ⭐⭐ **Editing layer DERIVED, not built (§S4).** ⭐⭐ **Switch detectability MEASURED (2026-09-24, Fig S4): at $k=30$ a lineage-specific switch is callable only if long ($\ge$1–2 edits/tape), strong ($\ge$15×) and early (first ~60% of $T$), in clades of 2–5 cells; branch-level timing costs little ⇒ tree side not the bottleneck.** Figs S1 (method), S3 (pull of the present), S4 and **S5 a–d (editing layer illustrated, 2026-09-28; the collision-vs-signal-share curve deferred to the homoplasy test)** built; LaTeX write-up of S1/S3 in `writeup/`. ⭐ $L(t)$ = independent records of time $t$ — tree shape sets which timepoints are recorded well, survivorship sets whose history is. ✅ **Editing layer BUILT and VALIDATED (2026-09-27, `src/14`/`src/15`): PASS, 219 closed-form cells, worst $|z|=2.67$, 0 of $1.9\times10^8$ hard-assertion violations; tapes empty at the clone founder ($\Lambda_{\rm pre}=0$).** Dropout and state layers not started. ⚠ Editing and dropout must be fitted jointly, which is why no Park-calibrated run has been made. |
 
 ## Already settled — do not re-derive unless asked
 
@@ -263,7 +263,10 @@ the **symbol-depletion test** of row A9's untested *trans* limb. |
    ⭐ **2026-09-28 — Fig S5 a–c built** (`src/16`, README "Session 19"): inheritance cartoon; shared
    slots vs split time (20 bins within $|z|\le1.04$ of the full expectation); a signal pulse written
    into slot order (6 slots within $|z|\le1.21$; a 30% pulse returns as ≤17% — blurred, not lost).
-   Panel d (collision vs signal share) deferred to the homoplasy test. ⚠⚠ **My claim that shared
+   **S5d** (added): a programmed pause-and-burst rate — realised rate per open tape on the step, 0
+   edits in the pause, $z$ SD 1.00 over 36 bins; ⚠ true edit times, so *imposed* not *recovered*
+   (recovery = item 3). The collision-vs-signal-share curve is deferred to the homoplasy test.
+   ⚠⚠ **My claim that shared
    slots hit the 6-slot ceiling past ~0.7 was WRONG**: the curve bends, slope 5.5 → 2.9 slots per
    unit time by harvest — saturation halves late recording, it does not stop it.
    **⇒ NEXT (Justin's call on order): the fitness-neutral state layer (Fig S4's recommendation) and
