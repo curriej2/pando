@@ -1711,3 +1711,17 @@ closed forms A/B/D/E with their blind spots), then validation, then Fig S5 a–d
 ⚠ Kept modular so the tree-layer document is untouched apart from three preamble lines and the
 `\input`. ⚠ An earlier attempt at this write-up was interrupted mid-edit and the file was reverted to
 its committed state first, so nothing from that attempt survives.
+
+**Session 19, cont. 3 — write-up clarifications (Justin's questions).** Two confusions worth
+recording because both are easy to repeat. (i) "$\lambda_0$ averages to 1" and "$\lambda_0$
+integrates to 1" are the same condition **only because time runs over $[0,1]$**; at $T\ne1$ they
+differ by a factor $T$ and the integral is the binding one. (ii) **$\lambda_0$ is not bounded by 1** —
+it is a relative rate, and the normalisation fixes the area, not the height: the Fig S5d burst runs at
+$\lambda_0=1.57$ (fast but short) against a final phase at $0.78$ (slow but long). The quantity that
+does run 0 → 1 is $W(t)$, the fraction of total editing spent by time $t$. Also stated explicitly:
+**$\Lambda_T$ is an input**, fixed before a run at 5.5 from the mouse arms' measured 5.39–5.69 edits
+per tape, and never inferred by the simulator; $\Lambda_T$ sets how much editing happens, $\lambda_0$
+sets when, $r_z$ sets how one tape compares with the average.
+⚠ `figures/figA_method.png` is left UNTRACKED: it is the output of the never-committed first draft of
+`src/10` (README Session 16 — unconnected panel 3, wrong capture rule), superseded by
+`figS1a_forward.png` and referenced by nothing.

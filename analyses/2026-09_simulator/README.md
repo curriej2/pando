@@ -16,6 +16,12 @@ construction and its budget, the collision formula, what is stored, and the four
 disclosed changes (E$_u$ and A$_r$); **§6 Fig S5** — the four panels with full captions. Intuition
 first, then the equation, throughout; every symbol is in the section's own notation table.
 ⚠ Written for Justin to edit directly, like the tree-layer sections.
+⚑ **Added after Justin's questions:** the rate subsection now states that "$\lambda_0$ averages 1"
+and "$\lambda_0$ integrates to 1" are the same condition *only because time runs over $[0,1]$*; that
+**$\lambda_0$ is a relative rate with no upper bound** (the constraint fixes the area, not the
+height — the Fig S5d burst runs at 1.57), against **$W(t)$, which is the quantity running 0 → 1**;
+and that **$\Lambda_T$ is an input** fixed before a run (5.5, from the Park mouse arms' 5.39–5.69
+edits per tape), never inferred.
 
 ## ⭐ Session 19 (2026-09-28) — Fig S5: the editing layer, illustrated
 

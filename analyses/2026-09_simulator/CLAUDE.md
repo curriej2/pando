@@ -11,7 +11,10 @@ Running record: `notes/analysis_log.md`, session 13.
 **⭐⭐ STATE (2026-09-23): TREE LAYER BUILT, VALIDATED, COSTED; LIBRARY COMPLETE (1,870 cells,
 37,380 trees, zero faults). Figures S1 (method) and S3 (pull of the present) built; LaTeX write-up
 in `writeup/simulator_figures.tex`, which Justin edits directly. Editing and dropout layers NOT
-started.** README is the findings record; this file's design sections below are the 2026-09-17
+started.** ⚠ *That banner is the state on 2026-09-23 and is superseded below: the editing layer was
+built and validated 2026-09-27, illustrated as Fig S5 a–d and written up in
+`writeup/editing_layer.tex` 2026-09-28. Only DROPOUT and the state layer remain unstarted.*
+README is the findings record; this file's design sections below are the 2026-09-17
 design and are partly superseded (the BDS-density route was dropped 2026-09-20 in favour of forward
 simulation + rejection — see README).
 
