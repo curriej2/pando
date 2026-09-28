@@ -1,9 +1,52 @@
 # simulator — findings
 
-**State 2026-09-27: the tree layer and the EDITING LAYER are BUILT and VALIDATED.** Tree library
+**State 2026-09-28: the tree layer and the EDITING LAYER are BUILT and VALIDATED; the editing layer is illustrated in Fig S5 (a–c).** Tree library
 complete (1,870 cells, 37,380 trees, zero structure faults); editing layer `src/14_editing.py`
 passes all 219 closed-form cells and every hard assertion (`src/15`). Figures S1, S3, S4 built,
 LaTeX write-up of S1/S3 in `writeup/`. **Dropout is the next layer; not started.**
+
+## ⭐ Session 19 (2026-09-28) — Fig S5: the editing layer, illustrated
+
+`src/16_fig_editing.py` → `figures/figS5{a,b,c}_*.png` (+pdf), numbers `results/figS5_numbers.json`.
+Justin chose panels a, b, c; **d (the homoplasy cost of a signal channel, collision probability vs
+signal share) is DEFERRED to a fuller homoplasy test.** Illustrations, not tests: where a closed form
+exists it is drawn as a line over the simulated points; the formal record stays Session 18. 200
+library trees of 210 cells (the validation's $\rho\times\theta$ spread), 30 tapes, $\Lambda_T=5.5$,
+tapes empty at the clone founder; standard errors across trees.
+
+- **S5a — cells inherit their ancestors' edits as a shared prefix.** One 8-cell library tree
+  ($\rho$=0.25, $\theta$=0.5), 3 tapes per cell drawn as rows of 6 slots; every edit shaded by how
+  many cells share it (a magnitude, so one sequential ramp — no per-branch colours). The stem's edits
+  shade slots 1–2 dark in every cell; later branches add lighter, private suffixes.
+- **S5b — the later two lineages split, the more slots their cells share.** One comparison per
+  (internal node, tape), one cell from each side — never random cell pairs, which mostly re-compare
+  the same edits (Session 18). The line is the **full** expectation: slots filled before the split,
+  $\mathbb E[\min(\mathrm{Poisson}(\Lambda_Tt),6)]$, plus chance matches after it,
+  $\sum_m q^m P(\text{both lineages write}\ge m)^2$ with $q=q_L=0.01664$ (lineage symbols only). All
+  20 time bins sit within **$|z|\le1.04$** of it, mixed signs; chance matches add at most **0.017**
+  slots.
+  ⚠ **Corrected after the first render, disclosed:** drawing only the inherited depth, at bin
+  centres, put the points above the line in **19 of 20 bins** (~0.03 slots early, ~0.01 late). Two
+  causes, both in the drawing, not the generator: splits bunch late within a bin, where the line
+  climbs ~5.5 slots per unit time; and the line omitted the chance matches the points include. Now
+  plotted at the mean split time in each bin, against the full expectation.
+  ⚠⚠ **A prediction of mine was WRONG.** Recommending this panel, I said the line "hits the 6-slot
+  ceiling past roughly 0.7 of the experiment". It does not: cells that split at harvest share **4.8**
+  slots on average. Saturation *bends* the curve: its slope (new shared slots per unit time) is
+  $\Lambda_T\,P(\mathrm{Poisson}(\Lambda_Tt)\le5)$, falling from **5.5 to 2.9 by harvest**, when 47% of
+  tapes are full. So a late split leaves about half as many distinguishing edits per unit time as an
+  early one — fewer, not none: saturation halves the recording rate near harvest, it does not stop
+  it. How much of Fig S4b's late collapse it explains, against truncation at harvest and
+  single-lineage terminal branches, is still **unapportioned** (Session 17 cont.).
+- **S5c — a signal pulse is written into slot order.** Share 0.02 → 0.30 → 0.02 (on from $t$=0.4 to
+  0.7) at a **constant** editing rate — unlike the validation's TV set-up with its zero-rate window,
+  chosen so slot order reads as time order. Read from tapes that filled all 6 slots (47% of tapes).
+  Top: when each slot was written ($K_{j,6}$ of §S4.9.5 in calendar time) under the shaded
+  on-window — mean write times 0.12 / 0.24 / 0.36 / 0.48 / 0.61 / 0.73, with wide, overlapping
+  windows. Bottom: signal share by slot, **2.8 / 6.3 / 12.2 / 16.8 / 16.2 / 11.8%** simulated against
+  2.8 / 6.1 / 12.0 / 16.7 / 16.4 / 11.9% predicted, **all within $|z|\le1.21$**. Every slot averages
+  the signal over its write window, so a 30% pulse returns as at most ~17%: the recorder blurs
+  time, it does not lose it. Per tip, not deduplicated — the closed form is stated per tip.
 
 ## ⭐⭐ Session 18 (2026-09-27) — the editing layer, built and validated
 

@@ -456,7 +456,14 @@ Right-sized: 4 G, 10 min, partition `cpu`.
 1. ✅ **The editing layer — BUILT AND VALIDATED 2026-09-27** ("PROPOSAL (2026-09-24c)", README
    "Session 18"), spec in §S4.9, `src/14` + `src/15`. ⇒ **NEXT (order is Justin's call): the
    fitness-neutral state layer (3b), which Fig S4 recommended after editing, and the dropout layer
-   (rung 1); each returns as its own proposal.** Decorate library trees with sequential edits; ⭐ **route (ii)**, the
+   (rung 1); each returns as its own proposal.**
+1b. ✅ **Fig S5 a–c built 2026-09-28** (`src/16`, README "Session 19"): inheritance cartoon, shared
+   slots vs split time, a signal pulse written into slot order — each against its closed form
+   (b: 20 bins within $|z|\le1.04$; c: 6 slots within $|z|\le1.21$). ⏸ **Panel d — collision
+   probability vs signal share, $p^2q_S+(1-p)^2q_L$ — DEFERRED by Justin to a fuller homoplasy test**,
+   which belongs with the homoplasy null (rung 0) and the design sweep's $(p,j)$ axis.
+   ⚠ Recorded there: my claim that shared slots "hit the 6-slot ceiling past ~0.7" was wrong — the
+   curve bends (slope 5.5 → 2.9 slots per unit time by harvest), it does not saturate. Decorate library trees with sequential edits; ⭐ **route (ii)**, the
    partial-sum sampler of §S4.3 (bounded at $N$ draws per tape-branch, sorted by construction, no
    waste), route (i) as the cross-check. Carry **edit times** and $\Lambda$-time from the start
    (§S4.1): a time-varying *composition* is then free, a time-varying *rate* is one extra knot.

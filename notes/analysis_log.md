@@ -1662,3 +1662,30 @@ not the expensive layer.
 **⇒ NEXT (order is Justin's call):** the fitness-neutral state layer — Fig S4's recommendation — and
 the dropout layer (rung 1); each returns as its own proposal. No scientific run has been made off the
 editing layer yet.
+
+## 2026-09-28 — session 19: Fig S5, the editing layer illustrated
+
+`analyses/2026-09_simulator`, README "Session 19"; `src/16_fig_editing.py`, `figures/figS5{a,b,c}`,
+`results/figS5_numbers.json`. Justin chose panels a–c; **d (collision probability against signal
+share) is deferred to a fuller homoplasy test.** Illustrations with the closed form drawn over the
+simulated points, not tests; 200 library trees of 210 cells, 30 tapes, $\Lambda_T=5.5$.
+
+- **S5a** — one 8-cell tree, 3 tapes per cell, each edit shaded by how many cells share it: the
+  stem's edits fill slots 1–2 in every cell, later branches add private suffixes.
+- **S5b** — shared slots against split time, one comparison per (internal node, tape). All 20 bins
+  within $|z|\le1.04$ of the full expectation (inherited depth plus chance matches, the latter at
+  most 0.017 slots). ⚠ **Corrected after the first render:** the inherited depth alone, drawn at
+  bin centres, sat below the points in 19 of 20 bins (by ~0.01–0.03 slots) — late-skewed splits
+  within a bin plus the omitted chance matches; a drawing fix, not a generator defect.
+- **S5c** — a pulse (0.02 → 0.30 → 0.02, on 0.4–0.7) at constant rate, read from full tapes (47%):
+  signal share by slot 2.8 → 16.8 → 11.8%, within $|z|\le1.21$ of the prediction. Each slot averages
+  the signal over a wide write window, so a 30% pulse returns as at most ~17% — blurred, not lost.
+
+⚠⚠ **A prediction of mine was WRONG and is recorded:** I said the shared-slot curve hits the 6-slot
+ceiling past ~0.7 of the experiment. It does not — cells splitting at harvest share 4.8 slots; the
+curve's slope $\Lambda_T P(\mathrm{Poisson}(\Lambda_Tt)\le5)$ falls from 5.5 to 2.9 slots per unit time
+by harvest. Saturation halves the late recording rate; it does not stop it. How much of Fig S4b's
+late collapse it accounts for, against truncation and terminal branches, remains unapportioned.
+
+**⇒ NEXT (Justin's call on order):** the fitness-neutral state layer and the dropout layer, each as
+its own proposal; panel d with the homoplasy test.
