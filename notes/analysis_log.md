@@ -1700,3 +1700,14 @@ along lineages stay within $|z|\le1.1$ of $\mathbb E[\min(\mathrm{Poisson}(\Lamb
 1.62 through the pause. ⚠ True edit times are used: the panel shows the rate can be *imposed*, not
 *recovered* from sequenced tapes — that is item 3, with §S4.7's $(\theta,\rho)$ confound. The
 collision-vs-signal-share curve keeps its deferral to the homoplasy figure.
+
+**Session 19, cont. 2 — the editing layer written up.** `writeup/editing_layer.tex`, `\input` from
+`simulator_figures.tex` (now "The tree and editing layers…", 24 pages, clean `pdflatex` ×2). Model and
+equations (recorder; the three-factor rate and $\Lambda$-time; the exact inverse of a
+piecewise-constant $\lambda_0$, with a zero-rate pause needing no special case; the route-(ii) sampler
+step by step, including why $c\le6$ draws suffice and why $\mu$ is an expectation and not a ceiling;
+channels and the $\sum_a p_a\lesssim0.3$ budget; eq. for the collision probability; storage; the four
+closed forms A/B/D/E with their blind spots), then validation, then Fig S5 a–d with full captions.
+⚠ Kept modular so the tree-layer document is untouched apart from three preamble lines and the
+`\input`. ⚠ An earlier attempt at this write-up was interrupted mid-edit and the file was reverted to
+its committed state first, so nothing from that attempt survives.

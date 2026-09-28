@@ -1,0 +1,599 @@
+% ---------------------------------------------------------------------------
+% editing_layer.tex -- the editing layer: equations, checks, and Figure S5.
+% \input from simulator_figures.tex.  Code: src/14_editing.py (generator),
+% src/15_validate_editing.py (checks), src/16_fig_editing.py (figures).
+% Numbers: ../results/validate_editing.json and ../results/figS5_numbers.json.
+% Theory record: notes/sciphy_notes.md S4, in particular S4.9.
+% ---------------------------------------------------------------------------
+
+% ===========================================================================
+\section{The editing layer: what it simulates}\label{sec:edit}
+% ===========================================================================
+
+The tree layer says who descended from whom, and when. The editing layer says what each cell's tapes
+read. It takes a stored tree from the library (\S\ref{sec:S1}) and writes edits along every branch.
+
+\subsection*{Notation}
+
+\begin{center}\small
+\begin{tabular}{@{}lp{0.52\textwidth}l@{}}
+\toprule
+symbol & meaning & units / range \\
+\midrule
+$N$ & slots (sites) on one tape & $6$ \\
+$k$, $z$ & tapes per cell; $z=1,\dots,k$ indexes them & count \\
+$i$ & indexes symbols of the alphabet & --- \\
+$t$ & calendar time as a fraction of the experiment ($T=1$ in the library) & $[0,1]$ \\
+$e$ & a branch, from its parent's division at $t_e^0$ to its own division or
+      harvest at $t_e^1$ (written $e$, since $b$ is the birth rate) & --- \\
+$\lamz(t)$ & editing rate of tape $z$ & edits / tape / experiment \\
+$\LamT$ & edits an average tape would receive over the whole experiment, if it never
+          filled & edits / tape; $5.5$ \\
+$r_z$ & speed of tape $z$ relative to the average & dimensionless, mean $1$ \\
+$\lambda_0(t)$ & shape of the rate over time & dimensionless, mean $1$ \\
+$\Lambda_z(t)$ & $\Lambda$-time: edits tape $z$ would have received by $t$ & edits / tape \\
+$\mu_{e,z}$ & length of branch $e$ in $\Lambda$-time & edits / tape \\
+$d$, $c$ & slots filled when a tape enters a branch; $c=N-d$ slots still open & $0$--$N$ \\
+$j$ & slot index, $1$ written first; also ``the $j$-th edit on a tape'' & $1$--$N$ \\
+$\nu$ & the $\nu$-th new edit on the current branch; it lands in slot $d+\nu$ & $1$--$c$ \\
+$\kappa_g,\omega_g,W_g$ & knots, levels and cumulative weights of a piecewise-constant
+      $\lambda_0$; epoch $g=1,\dots,G$ & dimensionless \\
+$p_a(t)$ & share of edits going to signal channel $a$ & probability \\
+$\xi^{(a)},\xi^{L}$ & symbol mix within signal channel $a$, and within the lineage
+      channel; each sums to $1$ & probabilities \\
+$\xi_i(t)$ & probability that an edit at time $t$ writes symbol $i$ & probability \\
+$q_a$, $q_L$ & $\sum_i(\xi^{(a)}_i)^2$, $\sum_i(\xi^{L}_i)^2$: chance two independent writes
+      inside one channel coincide & probability \\
+$D$, $D_A$ & slots filled on a tape; at a common ancestor $A$ of two cells & $0$--$N$ \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\subsection{The model}\label{sec:edit-model}
+
+A tape is a row of $N=6$ empty slots. Edits arrive at random times and fill the slots \emph{left to
+right}, each writing one symbol. A full tape records nothing more. At a division both daughters
+inherit a copy of the parent's tapes, and afterwards each fills its remaining slots independently.
+Cells sharing an ancestor therefore share the edits written before they split: that is how tapes
+record lineage. If the symbol mix changes over time, the slot a symbol sits in also says roughly
+\emph{when} it was written. A tape is a queue, not a bag.
+
+Formally this is SciPhy's recorder (\texttt{sciphy\_notes.md} \S1a), with the rate and the symbol mix
+allowed to vary in time:
+\begin{enumerate}
+  \item \textbf{When.} While a tape has an open slot ($d<N$) it is edited as a Poisson process of
+        rate $\lamz(t)$: edits arrive independently of one another and of what is already written.
+  \item \textbf{What.} An edit writes symbol $i$ with probability $\xi_i(t)$ into slot $d+1$, and the
+        depth becomes $d+1$.
+  \item \textbf{Saturation.} At $d=N$ the tape is full and stops recording.
+  \item \textbf{Inheritance.} At a division both daughters start from an exact copy of the parent's
+        tapes: same symbols, same depth.
+  \item \textbf{Independence.} Given the tree, different tapes evolve independently (SciPhy's
+        assumption, row A5).
+\end{enumerate}
+Everything below rests on the property in item~1: \emph{how fast an open tape is edited depends only
+on the time, not on what is written on it.}
+
+\paragraph{Tapes start empty at the clone founder.} Editing before the founding cell would leave a
+prefix shared by every cell in the clone: it would consume slots while carrying no information
+\emph{within} the clone. The simulator exposes it as $\Lambda_{\rm pre}$, the edits per tape spent
+before $t=0$, set to $0$ throughout here. For a design study this is a definition rather than an
+assumption --- the start of recording \emph{is} the start of the simulated experiment. For Park's data
+it remains to be checked against the protocol.
+
+\paragraph{Deliberately absent from this layer:} dropout (the next layer), heritable silencing
+(row~A9), the separate mechanism at site~6, artefact symbols, and any coupling between the tapes of
+one cell beyond the tree they share. A state-dependent rate is not built; the sampler only carries a
+hook for it.
+
+\subsection{The rate, and \texorpdfstring{$\Lambda$}{Lambda}-time}\label{sec:lambdatime}
+
+\paragraph{Why a second clock.} When the rate varies, drawing edit times directly in calendar time is
+awkward. Measuring time in \emph{expected edits} instead removes the difficulty: on that clock
+editing always runs at exactly one expected edit per unit, however the real rate moves. We simulate
+on the simple clock and convert each edit back afterwards.
+
+\paragraph{The rate splits into three factors.}
+\begin{equation}
+  \lamz(t) \;=\; \underbrace{r_z}_{\text{this tape's speed}}\;\times\;
+                 \underbrace{\LamT}_{\text{experiment total}}\;\times\;
+                 \underbrace{\lambda_0(t)}_{\text{shape in time}},
+  \qquad \int_0^1\!\lambda_0(u)\,du=1,\qquad \frac1k\sum_z r_z=1 .
+  \label{eq:rate}
+\end{equation}
+$r_z$ carries the fact that tapes at different genomic sites edit at different speeds --- on Park's
+Mouse3 the mean depth per tape runs from $1.33$ to $5.54$ slots. $\lambda_0$ carries any change over
+time, such as a pause or a burst. Since $\lambda_0$ averages $1$, a tape with $r_z=1$ receives $\LamT$
+expected edits over the experiment whatever the shape, so changing the shape never smuggles in a
+change of total. Only $\lambda_0$ is varied in Fig.~\ref{fig:S5d}; $r_z=1$ everywhere in Fig.~S5.
+
+\paragraph{$\Lambda$-time} is the running total of the rate:
+\begin{equation}
+  \Lambda_z(t)=\int_0^t\!\lamz(u)\,du = r_z\LamT\,W(t),
+  \qquad W(t)=\int_0^t\!\lambda_0(u)\,du .
+  \label{eq:Lambda}
+\end{equation}
+Read $\Lambda_z(t)$ as ``how many edits tape $z$ would have taken by time $t$ had it never filled
+up''; it only increases. Substituting $\tau=\Lambda_z(t)$ turns a Poisson process of rate $\lamz(t)$
+in $t$ into one of rate exactly $1$ in $\tau$, because $d\Lambda_z=\lamz\,dt$ makes the expected
+number of edits in a stretch equal to that stretch's length in $\tau$. A branch $e$ then has a length
+in $\Lambda$-time,
+\begin{equation}
+  \mu_{e,z}=\Lambda_z(t_e^1)-\Lambda_z(t_e^0)
+  \qquad\text{(expected edits per tape during $e$, before saturation is applied).}
+  \label{eq:mu}
+\end{equation}
+Every source of time variation --- an epoch boundary, a change of cell state, the end of a branch ---
+then becomes the same kind of object: a point where the conversion between the two clocks changes
+slope. One sampler handles them all, and the time-varying likelihood
+(\texttt{sciphy\_notes.md} \S S4.4) is assembled from the same pieces.
+
+\subsection{A rate that changes over time}\label{sec:piecewise}
+
+\paragraph{The construction.} Give $\lambda_0$ a constant level inside each of a few epochs. Then
+$\Lambda$ is a straight line within each epoch and converting back to calendar time is exact.
+Take knots $0=\kappa_0<\kappa_1<\dots<\kappa_G=1$ and levels $\omega_g\ge0$ on
+$[\kappa_{g-1},\kappa_g)$, rescaled so that $\sum_g\omega_g(\kappa_g-\kappa_{g-1})=1$ as
+eq.~\eqref{eq:rate} requires. With cumulative weights
+$W_g=\sum_{g'\le g}\omega_{g'}(\kappa_{g'}-\kappa_{g'-1})$, so $W_0=0$ and $W_G=1$, for $t$ in epoch
+$g$:
+\begin{equation}
+  W(t)=W_{g-1}+\omega_g\,(t-\kappa_{g-1}),
+  \qquad
+  W^{-1}(w)=\kappa_{g-1}+\frac{w-W_{g-1}}{\omega_g}
+  \quad\text{for } W_{g-1}\le w<W_g ,
+  \label{eq:Winv}
+\end{equation}
+and $\Lambda_z^{-1}(\tau)=W^{-1}\!\big(\tau/(r_z\LamT)\big)$. The inverse is two steps: find which
+epoch's interval $[W_{g-1},W_g)$ contains $w$ by comparing against the stored knot values, then invert
+that epoch's straight line. No numerical root-finding.
+\emph{Check.} At $G=1$, $\omega_1=1$: $\Lambda_z^{-1}(\tau)=\tau/(r_z\LamT)$, so a constant rate makes
+$\Lambda$-time a rescaled calendar time.
+
+\paragraph{A pause needs no special case.} A zero-rate epoch ($\omega_g=0$, for instance a Dox-gated
+pause) has $W_{g-1}=W_g$. It occupies an empty interval of $\Lambda$-time, so the lookup can never
+land inside it and no edit is ever placed there. Fig.~\ref{fig:S5d} shows exactly that.
+
+\paragraph{What the construction would mean for inference.} Should the inference use the same
+construction --- a skyline of epoch rates under a smoothing prior --- each $\omega_g$ is estimated as
+an \emph{average} over its epoch. Resolution is then set by where the knots are put, not by the data,
+and a sharp change returns as a ramp. A validation whose simulated truth shared the inference's knots
+would flatter it, so later tests should plant change points that fall between them. Finely stepped
+$\lambda_0$ approximates any smooth curve, so the generator itself does not restrict which truths can
+be planted.
+
+\subsection{Writing edits onto one branch}\label{sec:sampler}
+
+\paragraph{The idea.} A tape enters branch $e$ with $d$ slots filled, so at most $c=N-d$ further edits
+can be recorded there. On the $\Lambda$-clock the waits between successive edits are independent and
+average one unit each. So draw $c$ waits, add them up into arrival times, and keep those that land
+before the branch ends. Each kept arrival is an edit: convert its time back, draw its symbol, write it
+into the next open slot.
+
+\paragraph{The algorithm} (\texttt{decorate} in \texttt{14\_editing.py}), for one tape $z$ on one
+branch $e$, branches taken parents before children:
+\begin{enumerate}
+  \item \textbf{Start.} The tape arrives at depth $d$, inherited from the end of the parent branch;
+        the stem starts empty. Set $c=N-d$; if $c=0$ nothing happens here.
+  \item \textbf{Waits.} Draw $E_1,\dots,E_c\sim\Exp(1)$, independently, in $\Lambda$-time units.
+  \item \textbf{Arrivals.} $S_\nu=E_1+\dots+E_\nu$ for $\nu=1,\dots,c$: the $\Lambda$-time of the
+        $\nu$-th new edit, measured from the start of the branch. These increase by construction, so
+        no sorting is needed.
+  \item \textbf{Which happened.} Keep those $\nu$ with $S_\nu\le\mu_{e,z}$ (eq.~\ref{eq:mu}); let
+        $n_{\rm eff}$ be how many.
+  \item \textbf{Back to calendar time.}
+        $t_\nu=\Lambda_z^{-1}\big(\Lambda_z(t_e^0)+S_\nu\big)$, by eq.~\eqref{eq:Winv}.
+  \item \textbf{Symbols.} Draw each edit's symbol from $\xi(t_\nu)$ (\S\ref{sec:channels}) and write
+        it into slot $d+\nu$.
+  \item \textbf{Hand-off.} The branch ends at depth $d+n_{\rm eff}$; both daughters inherit it.
+\end{enumerate}
+
+\paragraph{Why each step is right.}
+\emph{Step 2:} in a Poisson process of rate $1$ the gaps between arrivals are independent exponentials
+of mean $1$ --- this is what ``memoryless'' means. The draws are in $\Lambda$-time units precisely
+because the process has rate $1$ there (\S\ref{sec:lambdatime}). At a constant calendar rate $\lambda$
+the waits would be $\Exp(\lambda)$, mean $1/\lambda$; stretching time by $\lambda$ makes them $\Exp(1)$.
+\emph{Step 4, and why $c$ draws are enough:} the real tape stops at its $c$-th edit, and stopping never
+moves the arrivals before it, so the edits that occur are exactly the first $\min(\text{arrivals},c)$.
+Drawing more would be a device, not extra biology.
+\emph{Step 7:} depth has to be carried across branches because saturation couples a branch to
+everything above it --- a tape that filled early has nothing left to record later.
+
+\paragraph{$\mu$ is an expectation, not a ceiling.} The number of $S_\nu$ landing below $\mu_{e,z}$ is
+$\Poisson(\mu_{e,z})$, limited only by the $c$ open slots. Several short waits fit easily inside one
+branch: at $\mu=0.5$ edits per tape, a branch carries no edit with probability $e^{-0.5}=0.61$, one
+with probability $0.30$, and two or more with probability $0.09$.
+
+\paragraph{A worked conversion.} With a constant rate, $r_z=1$ and $\LamT=5.5$, we have
+$\Lambda_z(t)=5.5\,t$. A branch beginning at $t_e^0=0.4$ starts at $\Lambda_z(0.4)=2.2$, so an edit at
+$S_\nu=0.7$ happened at $t_\nu=(2.2+0.7)/5.5=0.527$. Under a piecewise-constant rate the same step runs
+through eq.~\eqref{eq:Winv}: fast epochs are stretched on the $\Lambda$-clock, so edits landing in them
+map back into a narrower calendar window, and slow epochs the reverse.
+
+\paragraph{A second, independent implementation.} Route~(i) draws the count first,
+$n\sim\Poisson(\mu_{e,z})$, scatters $n$ points $\Uniform(0,\mu_{e,z})$, sorts them and keeps the first
+$\min(n,c)$. It is exact by conditional uniformity: given how many arrivals a Poisson process produced
+in an interval, their times are uniformly scattered over it (\texttt{sciphy\_notes.md} \S S4.2). It
+samples the same law by a different route, which is what makes it a useful cross-check
+(\S\ref{sec:editval}). The production route above never draws more than $c\le6$ numbers per tape per
+branch and needs no sort.
+
+\subsection{Which symbol gets written: channels}\label{sec:channels}
+
+\paragraph{The idea.} Symbols fall into groups. \emph{Lineage} symbols are many and diverse; their job
+is to tell lineages apart. \emph{Signal} symbols, one or a few per recorder, are the ones whose share
+rises when a pathway is on. The signal changes the \emph{share} of edits going to its own channel, not
+how often tapes are edited, because ENGRAM raises a pegRNA's abundance rather than the prime editor's
+activity (\texttt{sciphy\_notes.md} \S0.2b).
+
+\paragraph{The construction.} Every symbol belongs to exactly one channel. With $A$ signal channels,
+\begin{equation}
+  \xi_i(t)=
+  \begin{cases}
+    p_a(t)\,\xi^{(a)}_i, & i \text{ in signal channel } a,\\[3pt]
+    \Big(1-\sum_a p_a(t)\Big)\,\xi^{L}_i, & i \text{ a lineage symbol,}
+  \end{cases}
+  \qquad \sum_i \xi_i(t)=1 .
+  \label{eq:channels}
+\end{equation}
+These are two cases, not a sum: for a given symbol only one line applies. What they say together is
+that the channels compete for the same edits. Raising $p_a$ from $0.02$ to $0.30$ multiplies every
+lineage symbol's probability by the same factor, $0.98\to0.70$, without altering the lineage mix
+$\xi^L$ itself. So ``$30\%$ of edits'' means precisely this: while the signal is on, each edit writes
+the signal symbol with probability $0.30$ and some lineage symbol with probability $0.70$. It is a
+probability per edit, not an amount per slot.
+
+\paragraph{Sampling} goes in two steps: first the channel, with probabilities $p_1(t),\dots,p_A(t)$
+and $1-\sum_a p_a(t)$; then the symbol from that channel's own mix. The within-channel mixes each sum
+to $1$ because they are \emph{conditional} on the channel; multiplying the two steps reproduces
+eq.~\eqref{eq:channels} exactly. The factored form is the one that is built, because it keeps the knob
+the signal moves ($p_a$) separate from the designed, fixed mixes.
+
+\paragraph{The budget couples recorders.} Every edit is one write, so $\sum_a p_a(t)\le1$ always, and
+in practice $\lesssim0.3$, the shared-tape ceiling (\texttt{sciphy\_notes.md} \S I.7.5). A second
+recorder does not receive capacity of its own: it either splits the same share or eats into the lineage
+channel. This is the design-sweep statement of the $(p,j)$ trade-off, and it is why the partition is
+built into the data structure before it is ever varied.
+
+\paragraph{The lineage mix used here} is Park's measured one --- the three mouse arms' symbol
+frequencies pooled by edit count, $113$ symbols with $q_L=0.01664$, an effective alphabet
+$1/q_L=60$. Only frequency values are read; the sequences themselves never leave the cluster.
+
+\subsection{What a signal channel costs the lineage record}\label{sec:collision}
+
+Two unrelated cells look related at a slot when they happen to write the same symbol there. A frequent
+signal symbol makes that far more likely, and that is the price the lineage record pays for carrying a
+signal. Two independent writes at times $t_1,t_2$ coincide with probability
+$\langle\xi(t_1),\xi(t_2)\rangle=\sum_i\xi_i(t_1)\xi_i(t_2)$. Under eq.~\eqref{eq:channels}, with the
+within-channel mixes fixed and only the shares moving, the sum splits by channel because the channels
+hold disjoint symbols:
+\begin{equation}
+  \langle\xi(t_1),\xi(t_2)\rangle
+  =\sum_a p_a(t_1)p_a(t_2)\,q_a
+  +\Big(1-\sum_a p_a(t_1)\Big)\Big(1-\sum_a p_a(t_2)\Big)q_L .
+  \label{eq:collision}
+\end{equation}
+The signal channel contributes $p_a(t_1)p_a(t_2)q_a$, largest when \emph{both} writes fall while it is
+induced. With a single signal symbol ($q_a=1$) at $p=0.3$ against Park's $q_L$, the collision
+probability is $0.09+0.49\times0.01664=0.0982$, which is $5.9$ times $q_L$: the effective alphabet drops
+from $60$ to $10$. Validation reproduced this on simulated tapes, $0.0976$ observed against $0.0982$
+predicted (\S\ref{sec:editval}). It is a property of the model, not a measurement on ENGRAM data.
+
+\subsection{What is stored}\label{sec:storage}
+
+An edit happens on exactly one branch and is inherited by every cell below it, so edits are stored
+\emph{per branch}, once. For each branch and tape the record holds how many edits were written there,
+which slot the first went into, and their symbols and calendar times --- at most $N$ of each. A cell's
+tape is read by walking root to cell and joining the branch records in order. That walk uses only the
+stored record, never the sampler's own hand-off bookkeeping, so a hand-off error surfaces as a mismatch
+instead of being copied silently. The walk also notes which branch wrote each slot: two cells whose slot
+shares an origin share that edit, which is what \S\ref{sec:editval} needs to avoid counting the same
+comparison many times. Storage is at most $6nk$ edits per tree, about $360{,}000$ at $n=1{,}976$,
+$k=30$.
+
+\subsection{The closed forms the layer is checked against}\label{sec:editcf}
+
+\paragraph{A --- depth anywhere on a lineage.} Along one root-to-cell path a tape sees a single Poisson
+process in $\Lambda$-time, stopped at $N$; branches merely cut that path into pieces. So at time $t$,
+writing $\mu=\Lambda_z(t)$,
+\begin{equation}
+  \Prob(D=d)=e^{-\mu}\frac{\mu^{d}}{d!}\ \ (d<N),\qquad
+  \Prob(D=N)=1-\sum_{d<N}e^{-\mu}\frac{\mu^{d}}{d!},\qquad
+  \E[D]=\sum_{j=1}^{N}\Prob\big(\Poisson(\mu)\ge j\big).
+  \label{eq:depth}
+\end{equation}
+Differentiating the mean gives the rate at which a lineage accumulates filled slots,
+\begin{equation}
+  \frac{d}{dt}\,\E[D(t)] \;=\; \lamz(t)\,\Prob\big(\Poisson(\Lambda_z(t))\le N-1\big):
+  \label{eq:depthslope}
+\end{equation}
+the editing rate times the chance the tape is still open. At a constant rate with $\LamT=5.5$ this
+falls from $5.5$ slots per unit time at $t=0$ to $2.9$ at harvest, where $47\%$ of tapes are full.
+\emph{Its blind spot:} eq.~\eqref{eq:depth} contains no tree at all, only elapsed $\Lambda$. It
+therefore cannot notice an edit attached to the wrong lineage, which is why checks D and E below are
+needed.
+
+\paragraph{B --- which slot holds what.} Slot~1 is written first and slot~6 last, but each over a wide
+window of times, so this is the only closed form that sees edit \emph{order}. Given that a tape ends at
+depth $d$ with $\mu=\Lambda_z(1)$ elapsed, the $\Lambda$-time $x$ of its $j$-th edit has density
+$K_{j,d}$:
+\begin{itemize}
+  \item \textbf{not full, $d<N$:} exactly $d$ edits fell in $[0,\mu]$, so by conditional uniformity
+        their times are the order statistics of $d$ independent $\Uniform(0,\mu)$ draws, giving
+        $x/\mu\sim\BetaDist(j,\,d+1-j)$;
+  \item \textbf{full, $d=N$:} the $N$-th edit landed at or before $\mu$, so
+        $K_{j,N}(x)\propto \gamma_j(x)\,\Gamma_{N-j}(\mu-x)$ on $0<x<\mu$, where $\gamma_j$ is the
+        density of the $j$-th arrival (Gamma, shape $j$, rate $1$) and $\Gamma_{N-j}$ is the
+        probability that the remaining $N-j$ arrivals still fit into what is left. At $j=N$ the second
+        factor is $1$ and this is a Gamma of shape $N$ truncated to $(0,\mu)$.
+\end{itemize}
+Writing $\tilde\xi_i(x)=\xi_i\big(\Lambda_z^{-1}(x)\big)$ for the mix as a function of $\Lambda$-time,
+the expected share of symbol $i$ at slot $j$ among tapes of final depth $d$ is
+\begin{equation}
+  \E\big[\text{share of } i \text{ at slot } j \mid d\big]
+  = \int_0^{\mu} K_{j,d}(x)\,\tilde\xi_i(x)\,dx .
+  \label{eq:slotshare}
+\end{equation}
+Under a constant mix this collapses to ``every slot shows $\xi$'', which is why only a time-varying
+mix gives the check teeth. The kernel conditions on $(\mu,d)$, so it must be applied within strata of
+$r_z$ and final depth; pooling across tape speeds mixes kernels and makes it uninterpretable.
+
+\paragraph{D --- the inherited prefix is exact.} Let two cells have last common ancestor $A$, whose
+tape sat at depth $D_A$. Every edit on the path down to $A$ is shared by construction, and edits after
+$A$ are independent between the two lineages. So the two tapes agree \emph{exactly} in slots
+$1,\dots,D_A$. This is an assertion with zero tolerance, not a statistic.
+
+\paragraph{E --- collisions past the divergence.} At slot $D_A+1$, if both lineages filled it, the two
+writes are independent draws at their own times $t_1,t_2>t_A$, so they match with probability
+$\langle\xi(t_1),\xi(t_2)\rangle$ of eq.~\eqref{eq:collision}. Because edit times are stored, the
+expectation can be evaluated on the \emph{realised} pairs rather than assumed, which is what turns
+eq.~\eqref{eq:collision} from a derivation into a checked result.
+
+% ===========================================================================
+\section{Validation: does the code produce that model?}\label{sec:editval}
+% ===========================================================================
+
+Section~\ref{sec:edit} defines a process; validation (\texttt{15\_validate\_editing.py}) asks whether
+the code generates it. A failure here is a bug, not a finding. Every entry is a deviation from a
+closed form of \S\ref{sec:editcf} measured in standard errors, in the sense of eq.~\eqref{eq:z}, with
+one difference that matters: \textbf{the standard error is taken across trees}, never across cells or
+pairs, because cells within one tree share ancestry and are not independent.
+
+\paragraph{Three configurations}, all at $n=210$, $k=30$, $N=6$, $\LamT=5.5$, tapes empty at the
+founder, 200 library trees spread over $\capt\in\{0.0005,0.002,0.02,0.1,0.25\}$ and
+$\turn\in\{0.3,0.7\}$:
+\begin{center}\small
+\begin{tabular}{@{}lp{0.68\textwidth}@{}}
+\toprule
+name & what it sets \\
+\midrule
+\textsc{const} & constant rate; one signal channel at a fixed share $p=0.05$ \\
+\textsc{tv}    & rate levels $1.2/0/1.6/0.8$ on knots $0,0.25,0.35,0.6,1$ --- including a
+                 \emph{zero-rate window} --- and share $0.02/0.30/0.02$ on knots $0,0.4,0.7,1$,
+                 deliberately not aligned with the rate's knots \\
+\textsc{rhet}  & \textsc{const} with per-tape speeds $r_z$ lognormal (sd $0.5$), rescaled to mean $1$ \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\paragraph{The reading rule, fixed before the run.} No-effect value is $|z|=0$. \textbf{Pass} means
+the worst $|z|$ over every tested cell is at most $3.0$ \emph{and} there are no violations of the hard
+assertions. A cell is tested only when its expected positive and negative counts each reach 100, so
+that its standard error is estimable; excluded cells are reported rather than hidden. With about 220
+cells, one $|z|$ above $3$ is expected roughly $0.6$ times by chance, so a single excursion is re-run
+at a fresh seed before it counts as a defect; two, or a systematic pattern of signs within one check,
+would be a defect.
+
+\begin{center}\small
+\begin{tabular}{@{}l p{0.58\textwidth} r r@{}}
+\toprule
+check & what it tests & cells & worst $|z|$ \\
+\midrule
+A    & tip depth against eq.~\eqref{eq:depth} \emph{(tree-blind)}                 & 21 & 1.48 \\
+A$'$ & internal-node depth at $\Lambda_z(t_{\rm node})$, in three time bins       & 63 & 1.81 \\
+A$_r$& per-tape mean depth under spread $r_z$ \emph{(added)}                      & 5  & 1.61 \\
+B    & signal share by slot given final depth, eq.~\eqref{eq:slotshare}
+       \emph{(the only order check)}                                              & 42 & 2.03 \\
+B$_L$& lineage mix pooled over slots, in ten equal-mass groups                    & 20 & 2.26 \\
+C    & route (i) against route (ii), paired per tree                              & 38 & 2.67 \\
+E    & collisions past the ancestor, random cell pairs                            & 15 & 1.58 \\
+E$_u$& the same over unique comparisons \emph{(added)}                            & 15 & 1.65 \\
+D    & hand-off slot equals the recomputed depth; depth $\le N$; edit times inside their branch;
+       times ordered along each tape; valid symbol ids; prefix identical to the ancestor's depth
+       & --- & $0$ of $1.9{\times}10^{8}$ \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\paragraph{Result: pass.} 219 cells tested, none excluded, worst $|z|=2.67$, none above $3$; zero
+violations in $1.9\times10^{8}$ hard-assertion comparisons; the stored record reloads identically.
+
+\paragraph{Two results worth more than the pass itself.}
+\begin{itemize}
+  \item \textbf{The order check had something to catch, and held.} Under \textsc{tv}, depth-6 tapes
+        carry the signal symbol in $3.2/7.2/14.0/19.9/20.6/15.6\%$ of slots 1--6 --- the on-window
+        rising and falling along the queue --- and eq.~\eqref{eq:slotshare} tracks it to about
+        $0.001$. Passing under both a time-varying and a constant mix is what rules out the failure
+        mode that would have mattered: symbols written into slots in the wrong order, which check A
+        cannot see at all.
+  \item \textbf{Eq.~\eqref{eq:collision} is verified.} When both writes fall in the on-window
+        ($p=0.30$, one signal symbol) two lineages collide at $0.0976$ against $0.0982$ predicted;
+        with one write in the window, $0.0176$ against $0.0174$; with neither, $0.0165$ against
+        $0.0164$.
+\end{itemize}
+
+\paragraph{Two changes to the validation, both disclosed.} Check~E as first written compared randomly
+chosen pairs of cells. Most such pairs compare \emph{the same two edits}, because a slot written just
+below the common ancestor is shared by every cell beneath it. Per tree the statistic then rests on a
+handful of independent comparisons of a rare event (a match has probability about $0.018$), and its
+$t$-statistic is not calibrated: on a 20-tree trial run it reached $|z|=4.30$, and its
+minimum-count rule overstated the information about elevenfold ($115{,}828$ expected matches against
+$10{,}111$ unique comparisons). E$_u$ counts each (origin branch of edit 1, origin branch of edit 2,
+tape) once. Both are unbiased, since the weighting never depends on the symbols, and the verdict's
+scope was widened to include E$_u$ \emph{before} the 200-tree run; E as first written also passes at
+200 trees. The general lesson --- \emph{comparisons between cells are redundant wherever the cells
+share the edit} --- applies to any later statistic built on simulated tapes, but not to check~B, whose
+closed form is stated per cell and would be biased by deduplication. A$_r$ was added so that the
+per-tape speeds, a code path the $r_z\equiv1$ runs never touch, is exercised at all.
+
+\paragraph{The yardstick is about $10\%$ generous.} A null built by splitting the trees into two random
+halves and comparing gives a spread of $0.90$ rather than $1$ over the 219 cells, worst $2.25$. The
+across-tree standard error is therefore slightly over-estimated, so every $|z|$ above is if anything
+$\sim10\%$ small: the checks are marginally less sensitive than nominal, not more permissive.
+
+\paragraph{Cost.} $0.05$~s per tree at $n=210$, $k=30$; $0.45$~s (production route) and $0.53$~s
+(route~i) at $n=1{,}976$, plus $0.09$~s to assemble tapes; peak memory $0.11$~GB. Editing is not the
+expensive layer --- the tree layer is.
+
+\paragraph{What passing does not establish.} A and A$'$ are tree-blind and B, B$_L$ are marginals;
+only D and E see the joint structure. And a simulator is also a model: passing means the code
+generates SciPhy's recorder, not that the recorder is right for Park. Dropout, heritable silencing and
+the site-6 mechanism are absent by design, and no Park-calibrated run has been made --- per-tape rates
+cannot be read off Park while depth~0 is censored and dropout correlates with depth, so editing and
+dropout will have to be fitted jointly.
+
+% ===========================================================================
+\section{Figure S5 --- the editing layer, illustrated}\label{sec:S5}
+% ===========================================================================
+
+\emph{Illustrations, not tests.} The formal record is \S\ref{sec:editval}; here each panel shows one
+thing the layer does, with the closed form drawn as a line over the simulated points. Script
+\texttt{16\_fig\_editing.py}; numbers in \texttt{../results/figS5\_numbers.json}. Unless a panel says
+otherwise: 200 library trees of $n=210$ cells over the same $\capt$ and $\turn$ spread as
+\S\ref{sec:editval}, $k=30$ tapes, $\LamT=5.5$, tapes empty at the founder, standard errors across
+trees.
+
+\subsection{What each panel shows}
+
+\paragraph{(a) Inheritance.} One 8-cell tree with three tapes per cell drawn as rows of six slots,
+every edit shaded by how many cells share it. Edits written on the stem fill the first slots of every
+cell; later branches add lighter, private endings. This is the whole lineage-recording mechanism in
+one picture, and it is the panel to show first.
+
+\paragraph{(b) Relatedness is read off the shared prefix.} How many slots two cells share, against the
+time their lineages split. The line is the \emph{full} expectation: the slots filled before the split,
+eq.~\eqref{eq:depth}, plus the matches that happen by chance afterwards. Slot $D_A+m$ can only match by
+chance if every earlier one did, so
+\begin{equation}
+  \E[\text{shared}] = \E[D_A] + \sum_{m\ge1} q^{\,m}\,
+     \Prob\big(\text{both lineages write}\ge m\text{ more}\big)^2 ,
+  \label{eq:shared}
+\end{equation}
+with $q=q_L$ here since no signal channel is switched on in (a) or (b). The chance term contributes at
+most $0.017$ slots. Comparisons are taken one per (split, tape) --- one cell drawn from each side of
+the split --- following the lesson of \S\ref{sec:editval}.
+
+\paragraph{(c) Time is written into slot order.} A signal pulse, share $0.02\to0.30\to0.02$, on between
+$t=0.4$ and $0.7$, at a \emph{constant} editing rate so that slot order reads directly as time order.
+Read from tapes that filled all six slots. The top row is $K_{j,6}$ of eq.~\eqref{eq:slotshare}
+expressed in calendar time --- when each slot was written --- and the bottom row is the resulting
+signal share per slot against eq.~\eqref{eq:slotshare}.
+
+\paragraph{(d) The rate can be programmed.} The rate schedule of \textsc{tv}, with its pause and burst.
+The top row recovers the rate that the tapes actually experienced; the bottom row shows what that does
+to the tape's depth. Note what the top row requires: dividing edits by the tape-time spent
+\emph{open}. Dividing instead by all tape-time, open or full, produces a curve that sags although the
+rate is flat, which is the distinction eq.~\eqref{eq:depthslope} makes between the rate and the tape
+filling up.
+
+\begin{figure}[p]
+  \centering
+  \includegraphics[width=\textwidth]{figS5a_inheritance}
+  \caption{\textbf{Cells inherit their ancestors' edits as a shared prefix.} One library tree, $n=8$
+  captured cells at $\capt=0.25$, $\turn=0.5$, with $k=3$ tapes drawn per cell. Horizontal axis is time
+  since the founding cell. Dots are edits, placed at the time they were written and on the branch that
+  wrote them; boxes to the right are each cell's three tapes at harvest, slot~1 leftmost. Shading is
+  the same in both: how many of the eight cells carry that edit, from one cell (lightest) to all eight
+  (darkest); white boxes are slots that were never filled. 33 edits were written on this tree.
+  \emph{How to read it:} the dark edits on the stem appear in the same early slots of every cell,
+  because every cell descends from the branch that wrote them. Reading a tape left to right is reading
+  down the tree: shared ancestry first, private history last. The tapes stop where they run out of
+  slots --- several here reach six --- which is the saturation of eq.~\eqref{eq:depth}.}
+  \label{fig:S5a}
+\end{figure}
+
+\begin{figure}[p]
+  \centering
+  \includegraphics[width=\textwidth]{figS5b_shared_prefix}
+  \caption{\textbf{The later two lineages split, the more slots their cells share.} One comparison per
+  (internal node, tape): one cell drawn from each side of the split, over 200 trees. Points are the
+  mean within a time bin, at the mean split time of that bin; bars are standard errors across trees;
+  the line is eq.~\eqref{eq:shared}. All 20 bins sit within $1.04$ standard errors of it, with mixed
+  signs.
+  \emph{What it says:} the shared prefix is the clock the tree is read from, and it is coarse ---
+  cells that split at harvest still share only $4.8$ of 6 slots on average.
+  \emph{Two things the shape shows.} The curve \emph{bends} but does not reach the ceiling: by
+  eq.~\eqref{eq:depthslope} its slope falls from $5.5$ to $2.9$ slots per unit time, since $47\%$ of
+  tapes are full by harvest. So a late split leaves about half as many distinguishing edits per unit
+  time as an early one --- fewer, not none. (A prediction that the curve would saturate past $t\approx0.7$
+  was wrong, and how much of the late-history limit of Fig.~S4 is saturation rather than simply the
+  time remaining before harvest is not yet apportioned.)}
+  \label{fig:S5b}
+\end{figure}
+
+\begin{figure}[p]
+  \centering
+  \includegraphics[width=0.86\textwidth]{figS5c_signal_in_slot_order}
+  \caption{\textbf{A signal pulse is written into slot order.} Constant editing rate; signal share
+  $0.02$ outside the shaded window and $0.30$ inside it ($0.4\le t<0.7$); tapes that filled all six
+  slots, $47\%$ of them.
+  \textbf{Top:} when each slot was written --- the density $K_{j,6}$ of eq.~\eqref{eq:slotshare}, in
+  calendar time. Mean write times run $0.12,0.24,0.36,0.48,0.61,0.73$, and the windows are wide and
+  heavily overlapping.
+  \textbf{Bottom:} the share of tapes whose slot $j$ holds the signal symbol: simulated
+  $2.8,6.3,12.2,16.8,16.2,11.8\%$ against eq.~\eqref{eq:slotshare}'s
+  $2.8,6.1,12.0,16.7,16.4,11.9\%$, all within $1.21$ standard errors.
+  \emph{How the rows connect:} each dot's height is set by how much of that slot's curve lies inside
+  the shaded band. Slot~4's curve lies about half inside, so its share sits about half way between
+  $2\%$ and $30\%$. Only $3,15,36,52,51,35\%$ of writes to slots 1--6 fell inside the window, which is
+  why a $30\%$ pulse returns as at most $\sim17\%$: \textbf{each slot averages the signal over its own
+  write window, so the recorder blurs time rather than losing it.} The share does not fall back to
+  zero at slot~6 for three reasons --- the off-share is $0.02$, not $0$; the axis is slot, not time,
+  and $35\%$ of slot-6 writes still happened during the pulse; and a full tape stops recording, so the
+  late off-period is barely written on these tapes at all.}
+  \label{fig:S5c}
+\end{figure}
+
+\begin{figure}[p]
+  \centering
+  \includegraphics[width=0.86\textwidth]{figS5d_programmed_rate}
+  \caption{\textbf{The editing rate can be programmed over time.} The \textsc{tv} schedule of
+  \S\ref{sec:editval}: $6.47$, $0$, $8.63$, $4.31$ edits per tape per experiment on
+  $0$--$0.25$, $0.25$--$0.35$ (the pause, shaded), $0.35$--$0.6$ (the burst) and $0.6$--$1$. No signal
+  channel.
+  \textbf{Top:} the realised rate, edits falling in a bin $0.025$ wide divided by the tape-time spent
+  \emph{open} in that bin, summed over every lineage alive. It sits on the programmed step:
+  \emph{exactly zero} edits during the pause, as \S\ref{sec:piecewise} requires, and over the 36 bins
+  with editing the deviations have mean $0.17$ and spread $1.00$ standard errors, worst $2.83$ (a
+  maximum that large among 36 bins arises by chance about $16\%$ of the time). Open circles divide the
+  same edits by \emph{all} tape-time, open or full: they sag --- $8.48\to7.17$ across the burst,
+  $3.48\to2.31$ over the last phase --- although the rate is constant within each phase, because tapes
+  are filling. That is eq.~\eqref{eq:depthslope}'s two factors pulled apart, and the same distinction
+  that panel (b) turns on.
+  \textbf{Bottom:} filled slots per tape along lineages, against eq.~\eqref{eq:depth}, within $1.1$
+  standard errors at all 41 time points: flat at $1.62$ slots through the pause, steeper through the
+  burst, bending as tapes fill, ending at $4.80$ --- the same as the faint constant-rate curve, since
+  both schedules spend the same total $\LamT$.
+  \emph{What this does not show.} Both rows use the simulator's true edit times, which real data do
+  not have. The panel shows the rate can be \emph{imposed}, not that it can be \emph{recovered} from
+  sequenced tapes. Recovery runs through the branching times and meets the confound named in
+  \texttt{sciphy\_notes.md} \S S4.7: a low early rate and coalescences sitting later --- which higher
+  turnover or higher capture both produce --- look alike.}
+  \label{fig:S5d}
+\end{figure}
+
+\subsection{Why these four}
+
+Taken together the panels cover what the layer has to get right before anything is built on top of it.
+Panel~(a) shows the mechanism, and (b) turns it into the quantity every lineage statistic depends on:
+how much two cells share, and how coarsely. Panel~(c) is the one that matters for signalling history
+--- it shows that a pulse in time survives as a pattern across slots, which is the property the
+inference will exploit, and it quantifies the blurring, which is the price. Panel~(d) shows the clock
+of \S\ref{sec:lambdatime} working in both directions, including a zero-rate window that needs no
+special handling.
+
+Two limits are visible in the figures rather than argued: the shared prefix is only $4.8$ of 6 slots
+even for cells that split at harvest (b), and a $30\%$ pulse returns as at most $\sim17\%$ in any slot
+(c). Both are recorder limits, not inference limits; what they cost a lineage-resolved signalling
+history is the subject of the switch-detectability figure, and what they cost through dropout is the
+next layer.

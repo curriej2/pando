@@ -1,9 +1,21 @@
 # simulator — findings
 
-**State 2026-09-28: the tree layer and the EDITING LAYER are BUILT and VALIDATED; the editing layer is illustrated in Fig S5 (a–d).** Tree library
+**State 2026-09-28: the tree layer and the EDITING LAYER are BUILT and VALIDATED; the editing layer is illustrated in Fig S5 (a–d) and written up in `writeup/editing_layer.tex`.** Tree library
 complete (1,870 cells, 37,380 trees, zero structure faults); editing layer `src/14_editing.py`
 passes all 219 closed-form cells and every hard assertion (`src/15`). Figures S1, S3, S4 built,
 LaTeX write-up of S1/S3 in `writeup/`. **Dropout is the next layer; not started.**
+
+## ⭐ Session 19 (cont., 2026-09-28) — the editing layer written up in LaTeX
+
+`writeup/editing_layer.tex` (new, `\input` from `simulator_figures.tex`, which now covers both
+layers; 24 pages, builds clean with `pdflatex` ×2). Three sections: **§4 the model and its equations**
+— the recorder, the three-factor rate and $\Lambda$-time, the exact inverse of a piecewise-constant
+$\lambda_0$, the route-(ii) sampler step by step with why each step is right, the channel
+construction and its budget, the collision formula, what is stored, and the four closed forms;
+**§5 validation** — the three configurations, the pre-fixed reading rule, the check table, and both
+disclosed changes (E$_u$ and A$_r$); **§6 Fig S5** — the four panels with full captions. Intuition
+first, then the equation, throughout; every symbol is in the section's own notation table.
+⚠ Written for Justin to edit directly, like the tree-layer sections.
 
 ## ⭐ Session 19 (2026-09-28) — Fig S5: the editing layer, illustrated
 

@@ -38,8 +38,13 @@
 \newcommand{\Prob}{\mathbb{P}}
 \DeclareMathOperator{\Binomial}{Binomial}
 \DeclareMathOperator{\Exp}{Exp}
+\DeclareMathOperator{\Poisson}{Poisson}
+\DeclareMathOperator{\BetaDist}{Beta}
+\DeclareMathOperator{\Uniform}{Uniform}
+\newcommand{\LamT}{\Lambda_T}    % integrated editing rate of an average tape, whole experiment
+\newcommand{\lamz}{\lambda_z}    % editing rate of tape z
 
-\title{The tree layer of the SciPhy/ENGRAM simulator:\\ figures and defining equations}
+\title{The tree and editing layers of the SciPhy/ENGRAM simulator:\\ figures and defining equations}
 \author{Justin}  % edit
 \date{Draft, \today}
 
@@ -47,9 +52,11 @@
 \maketitle
 
 \noindent This document goes with the simulator in
-\texttt{analyses/2026-09\_simulator/}, and has one section per figure. Section~\ref{sec:S1} covers the
-\emph{tree layer} only: how a lineage tree is generated for one clone. Editing and dropout are
-separate layers, added on top of these trees later, and are not described here.
+\texttt{analyses/2026-09\_simulator/}. Sections~\ref{sec:S1}--\ref{sec:S3} are the \emph{tree layer},
+one section per figure: how a lineage tree is generated for one clone.
+Sections~\ref{sec:edit}--\ref{sec:S5} are the \emph{editing layer}, which writes DNA Typewriter edits
+onto those trees --- its equations, how it was checked, and the figures that illustrate it. Dropout
+is a separate later layer and is not described here.
 
 % ===========================================================================
 \section*{Notation}
@@ -537,5 +544,8 @@ $\capt$, changing $\turn$ leaves $\net$ unchanged and raises $\bdrate$ and $\dth
         At mouse-like capture it moves into the first half of the experiment. That decides when a
         recorder most needs to be writing edits, which is the design question.
 \end{enumerate}
+
+\clearpage
+\input{editing_layer}
 
 \end{document}

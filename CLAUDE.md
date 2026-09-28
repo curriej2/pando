@@ -263,6 +263,8 @@ the **symbol-depletion test** of row A9's untested *trans* limb. |
    ⭐ **2026-09-28 — Fig S5 a–c built** (`src/16`, README "Session 19"): inheritance cartoon; shared
    slots vs split time (20 bins within $|z|\le1.04$ of the full expectation); a signal pulse written
    into slot order (6 slots within $|z|\le1.21$; a 30% pulse returns as ≤17% — blurred, not lost).
+   ⭐ **LaTeX write-up of the editing layer: `writeup/editing_layer.tex`** (`\input` from
+   `simulator_figures.tex`, now both layers, 24 pp) — model and equations, validation, Fig S5 captions.
    **S5d** (added): a programmed pause-and-burst rate — realised rate per open tape on the step, 0
    edits in the pause, $z$ SD 1.00 over 36 bins; ⚠ true edit times, so *imposed* not *recovered*
    (recovery = item 3). The collision-vs-signal-share curve is deferred to the homoplasy test.
