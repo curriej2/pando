@@ -111,7 +111,7 @@ already back at $p=1/1001$ in 5/5 arms. ⚠ Two orthogonal follow-ups are specif
 `--lam 4` re-run with a size-stratified null (the floor, not $B$, is what hides weaker events), and
 the **symbol-depletion test** of row A9's untested *trans* limb. |
 
-| `2026-09_simulator` | Build the forward simulator (birth–death tree → sequential editing → dropout) for the homoplasy null and the design sweep. | **Tree layer BUILT, validated, costed; library COMPLETE (1,870 cells, 37,380 trees, zero faults).** ⭐⭐ **Editing layer DERIVED, not built (§S4).** ⭐⭐ **Switch detectability MEASURED (2026-09-24, Fig S4): at $k=30$ a lineage-specific switch is callable only if long ($\ge$1–2 edits/tape), strong ($\ge$15×) and early (first ~60% of $T$), in clades of 2–5 cells; branch-level timing costs little ⇒ tree side not the bottleneck.** Figs S1 (method), S3 (pull of the present) and S4 built; LaTeX write-up in `writeup/`. ⭐ $L(t)$ = independent records of time $t$ — tree shape sets which timepoints are recorded well, survivorship sets whose history is. Editing layer NOT started. ⚠ Editing and dropout must be fitted jointly. |
+| `2026-09_simulator` | Build the forward simulator (birth–death tree → sequential editing → dropout) for the homoplasy null and the design sweep. | **Tree layer BUILT, validated, costed; library COMPLETE (1,870 cells, 37,380 trees, zero faults).** ⭐⭐ **Editing layer DERIVED, not built (§S4).** ⭐⭐ **Switch detectability MEASURED (2026-09-24, Fig S4): at $k=30$ a lineage-specific switch is callable only if long ($\ge$1–2 edits/tape), strong ($\ge$15×) and early (first ~60% of $T$), in clades of 2–5 cells; branch-level timing costs little ⇒ tree side not the bottleneck.** Figs S1 (method), S3 (pull of the present) and S4 built; LaTeX write-up in `writeup/`. ⭐ $L(t)$ = independent records of time $t$ — tree shape sets which timepoints are recorded well, survivorship sets whose history is. ✅ **Editing layer BUILT and VALIDATED (2026-09-27, `src/14`/`src/15`): PASS, 219 closed-form cells, worst $|z|=2.67$, 0 of $1.9\times10^8$ hard-assertion violations; tapes empty at the clone founder ($\Lambda_{\rm pre}=0$).** Dropout and state layers not started. ⚠ Editing and dropout must be fitted jointly, which is why no Park-calibrated run has been made. |
 
 ## Already settled — do not re-derive unless asked
 
@@ -240,7 +240,31 @@ the **symbol-depletion test** of row A9's untested *trans* limb. |
    events $\le10$). Threshold-independent claims that survive: the 118–2,522× null comparison,
    $q\le1.9\times10^{-4}$ per event, $\hat\pi$ median 1.000 vs expected 0.11–0.41. Full audit in
    README "How events are actually called".
-0-CURRENT. **⭐⭐ 2026-09-24 — SWITCH DETECTABILITY MEASURED; BACK TO BUILDING THE SIMULATOR.**
+0-CURRENT. **⭐⭐ 2026-09-27 — THE EDITING LAYER IS BUILT AND VALIDATED.** `analyses/2026-09_simulator`,
+   README "Session 18"; `src/14_editing.py` + `src/15_validate_editing.py`; notes §S4.9 (updated);
+   log session 18. Approved with **$\Lambda_{\rm pre}=0$ — tapes empty at the clone founder; Park
+   revisited later.**
+   **✅ PASS against the pre-fixed rule: 219 cells, 0 excluded, worst $|z|=2.67$, none > 3; 0 of
+   $1.9\times10^8$ hard-assertion violations; storage round trip identical.** 200 trees ($n=210$,
+   $\rho$ 0.0005–0.25, $\theta$ 0.3/0.7) × {constant; time-varying with a zero-rate window and a
+   switching signal share; spread per-tape speeds}.
+   ⭐ **The order check passed with teeth** (signal share 3.2 → 20.6 → 15.6% across slots, tracked to
+   ~0.001) ⇒ §S4.2's ordering holds. ⭐ **§S4.9.4 VERIFIED**: in-window collision 0.0976 vs 0.0982
+   predicted — with one signal symbol at $p=0.3$, $q$ is **5.9× $q_L$** and $1/q$ falls **60 → 10**
+   ($q_L=0.01664$, Park mice pooled). A property of the model, not of ENGRAM data.
+   ⚠⚠ **A defect in my validation design, caught in the smoke run:** collision check E over random tip
+   pairs is redundant — most pairs compare the *same two edits* — so its t-statistic was uncalibrated
+   at 20 trees ($|z|=4.30$) and its count rule overstated the information ~11×. **E_u** (unique
+   comparisons) was added and brought into the verdict **before** the full run; E as proposed passed
+   at 200 trees too. ⚑ Lesson for every later tape statistic: *cell-level comparisons of edits are
+   redundant wherever the cells share the edit* — but per-tip closed forms (check B) must not be
+   deduplicated. ⚠ Half-split null SD 0.90: the yardstick is ~10% generous.
+   Cost: 0.05 s/tree at $n=210$, 0.45 s at $n=1{,}976$.
+   **⇒ NEXT (Justin's call on order): the fitness-neutral state layer (Fig S4's recommendation) and
+   the dropout layer (rung 1), each as its own proposal.**
+
+0-PREV9. **⭐⭐ 2026-09-24 — SWITCH DETECTABILITY MEASURED; BACK TO BUILDING THE SIMULATOR.**
+   *(superseded 2026-09-27 — the editing layer it pointed to is now built; see 0-CURRENT)*
    `analyses/2026-09_simulator`, README "Session 17 (cont.)"; `src/12`, `src/13`, Fig S4a/b; notes
    §S4.8; log session 17 (cont.). ⚠⚠ **The information-budget proposal below was reviewed and NEVER
    RUN** — its Table 2 used an unstated, inconsistent $p_1$ (0.20 vs 0.24) that moved the $k=30$, 24×
@@ -256,8 +280,24 @@ ho)$ settings), fraction of all switch locations
    last 30% of $T$). **By start time: 2-edit ≥15× switches in the first 60% are callable in ≥89% of
    locations in every setting.** $m^*$ = 2–5 cells; branch-only keeps 83–97% of timing-known at 2
    edits; half-callable needs $k$ = 88–176 at 0.5 edits/tape; $p_1$ is a ~10× lever.
-   **⇒ NEXT: the editing layer (route ii), then a fitness-neutral state layer validated on the
-   regime Fig S4 calls recoverable.**
+   **⏳ THE EDITING LAYER IS NOW SPECIFIED AND AWAITS APPROVAL** — "PROPOSAL (2026-09-24c)" in the
+   analysis CLAUDE.md, theory `notes/sciphy_notes.md` **§S4.9** (new), deliverables `src/14` +
+   `src/15`; **build and validation only**, the first scientific run returns as its own proposal.
+   ⭐ New in §S4.9: the **exact inverse of a piecewise-constant $\Lambda$** (one `searchsorted`, no
+   root-finding; a zero-rate Dox window needs no special case); the **channel budget**
+   $\sum_a p_a\lesssim0.3$, so a second recorder splits the same share rather than gaining capacity;
+   and ⭐ **homoplasy with a signal channel**,
+   $\langle\xi(t_1),\xi(t_2)\rangle=\sum_ap_a(t_1)p_a(t_2)q_a+(1-\sum_ap_a(t_1))(1-\sum_ap_a(t_2))q_L$
+   — at one signal symbol and $p=0.3$ the instantaneous $q\approx0.098$, **~6× Park's 0.0170**
+   ($1/q$: 57 → 10). ⚠ **DERIVED, NOT VERIFIED — do not quote** until check E runs.
+   ⚠ The validation's depth law is **tree-blind** and the per-slot check is the **only** one that
+   sees edit order, so the abandon criterion is "order check fails under time-varying $\xi$ while
+   passing under constant $\xi$" ⇒ re-derive §S4.2, do not patch the sampler.
+   ⚠ **One decision genuinely open: $\Lambda_{\rm pre}$** — whether Park's tapes were already
+   editing before the clone founder. Not in the notes, not checked against the paper; irrelevant to
+   the design sweep, material for Park adjudication.
+   **⇒ NEXT: Justin's decision; then `src/14`/`src/15`, then the fitness-neutral state layer
+   validated on the regime Fig S4 calls recoverable.**
 
 0-PREV8. **⭐⭐ 2026-09-23/24 — THE TIME-VARYING RECORDER IS DERIVED; A PROPOSAL AWAITS APPROVAL.**
    *(superseded 2026-09-24 — the proposal was reviewed, replaced and answered; see 0-CURRENT)*

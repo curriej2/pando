@@ -24,6 +24,14 @@ fitness-neutral state layer.** The information-budget pair it replaced ("PROPOSA
 below) was never run — four defects found in review. Theory in `notes/sciphy_notes.md` **§S4**
 (§S4.8 records the answer).
 
+✅ **2026-09-27: the EDITING LAYER is BUILT and VALIDATED** — "PROPOSAL (2026-09-24c)" below, approved
+by Justin with **$\Lambda_{\rm pre}=0$ (tapes empty at the clone founder; Park revisited later)**.
+`src/14_editing.py` (generator) + `src/15_validate_editing.py` (validation): **PASS, 219 cells, worst
+$|z|=2.67$, 0 of $1.9\times10^8$ hard-assertion violations** (README "Session 18"). ⭐ The order check
+passed under a time-varying $\xi$, so §S4.2's ordering holds; ⭐ §S4.9.4's channel homoplasy formula
+is **verified** (0.0976 observed vs 0.0982 predicted). ⚠ One check (E_u) was added after the smoke
+run, disclosed. **No scientific run yet** — the first one returns as its own proposal.
+
 ⚑ **Framing agreed 2026-09-23:** turnover inference is NOT a central aim. Fig S3 matters because
 $L(t)$ = independent records of time $t$, so tree shape decides which timepoints of the signalling
 history are recorded well (precision), and survivorship decides whose history is recorded (bias).
@@ -171,6 +179,129 @@ $1.36/\sqrt n=0.0077$, so 0.00800 sits fractionally above it — but the four ti
 dependent, so that $n$ is not the effective sample size; against 7,867 *trees* the critical value is
 0.0153 and 0.008 is comfortably inside. The five deviations also run $-,-,+,+,+$, a mild sign pattern
 that is either noise across correlated quantiles or a small systematic bias.
+
+## PROPOSAL (2026-09-24c) — the editing layer. ✅ APPROVED 2026-09-27, BUILT, VALIDATED (PASS)
+
+**Outcome (README "Session 18"):** PASS — 219 cells, worst $|z|=2.67$, 0 hard-assertion violations,
+storage round trip identical. Approved with $\Lambda_{\rm pre}=0$. ⚠ **Two departures from the text
+below, both disclosed:** (i) **E_u added after the 20-tree smoke run** — E over random tip pairs rests
+on a handful of independent comparisons per tree (a slot written below the LCA is shared by every tip
+beneath it; 115,828 "expected matches" vs 10,111 unique comparisons), so its t-statistic was not
+calibrated at 20 trees; E_u counts each comparison once, and the verdict's scope was widened to
+include it **before** the 200-tree run; E as proposed passed at 200 trees too. (ii) **A_r added** to
+exercise per-tape speeds $r_z$, which the $r\equiv1$ runs never touch. ~219 cells rather than ~120;
+the reading rule is unchanged. The text below is the proposal as approved.
+
+Theory: `notes/sciphy_notes.md` **§S4.9** (written 2026-09-24, with §S4 as its basis).
+Deliverable: `src/14_editing.py` (the generator) + `src/15_validate_editing.py` (its validation).
+**This proposal covers the build and its validation ONLY — no scientific run.** The first run off it
+(rung 0's homoplasy floor, or the state layer) returns as its own proposal.
+
+### 1. The question
+
+Does a forward editing layer built to SciPhy's recorder in $\Lambda$-time — with a time-varying
+composition $\xi(t)$ and rate $\lambda_0(t)$ in from the start — reproduce the recorder's closed-form
+marginals to Monte Carlo error, and at what cost? **A failed check is a bug, not a finding.** What
+turns on it: the homoplasy null, the fitness-neutral state layer Fig S4 licensed, and the
+$(p,\lambda,m,k,j,\ell)$ design sweep all consume this generator and none can start without it.
+⚑ One outcome *would* change the design rather than the code — see the abandon criterion in §3.
+
+### 2. The math — every symbol defined
+
+⚠ Per §S4.9, **$j$ indexes sites/slots and the $j$-th edit on a tape** (not the design sweep's $j$);
+a branch is **$e$**, never $b$ ($b$ is the birth rate in the house register).
+
+- $t$ = calendar time as a fraction of the experiment, $t\in[0,1]$ ($T=1$ in the library);
+  branch $e$ spans $[t_e^0,t_e^1]$. $z=1..k$ tape, $i=1..M$ symbol, $j=1..N$ slot, $N=6$.
+- $\lambda_z(t)=r_z\Lambda_T\lambda_0(t)$ edits·tape⁻¹·experiment⁻¹: $r_z$ = tape speed
+  (dimensionless, mean 1), $\Lambda_T$ = an average tape's integrated rate over the whole experiment
+  (edits/tape; 5.39–5.69 mice), $\lambda_0$ = rate shape (dimensionless, $\int_0^1\lambda_0=1$).
+- $\Lambda_z(t)=r_z\Lambda_T\int_0^t\lambda_0$ edits/tape = **$\Lambda$-time**, the clock on which an
+  open tape is edited at exactly one expected edit per unit. $\mu_{e,z}=\Lambda_z(t_e^1)-\Lambda_z(t_e^0)$
+  = the branch's length in edits/tape. $\Lambda_{\rm pre}$ = edits/tape spent before the clone founder.
+- $d$ = slots filled on arrival at $e$, $c=N-d$ = open slots.
+- Channels (§S4.9.3): signal channel $a$ has share $p_a(t)$ and composition $\xi^{(a)}$; the lineage
+  channel takes $1-\sum_ap_a(t)$ with $\xi^L$. Each symbol is in exactly one channel;
+  $\sum_i\xi_i(t)=1$; the budget $\sum_ap_a\lesssim0.3$ (§I.7.5) is the coupling between recorders.
+
+**Generator — route (ii), one tape on one branch, parents before children (§S4.3).** Draw
+$E_1..E_c\sim\mathrm{Exp}(1)$; $S_\nu=\sum_{l\le\nu}E_l$; keep $n_{\rm eff}=\#\{\nu:S_\nu\le\mu_{e,z}\}$;
+map $t_\nu=\Lambda_z^{-1}(\Lambda_z(t_e^0)+S_\nu)$ by §S4.9.2's exact two-step inverse; draw channel
+then symbol from $\xi(t_\nu)$ into slot $d+\nu$; hand $d+n_{\rm eff}$ to both daughters. Route (i)
+(Poisson count → uniforms → sort → truncate) is built as the **independent** cross-check.
+
+**The closed forms it is tested against** (derived in §S4.9.5): **A** depth at any node is
+$\min(\mathrm{Poisson}(\Lambda_{\rm pre}+\Lambda_z(t)),N)$ — *tree-blind, so it cannot see lineage
+assignment*; **B** the share of symbol $i$ at slot $j$ given final depth $d$ is
+$\int K_{j,d}(x)\tilde\xi_i(x)dx$, with $K_{j,d}$ Beta (unsaturated) or the Gamma form (saturated) —
+*the only check that sees edit ORDER*; **D** two cells agree **exactly** in the slots filled by their
+last common ancestor (an assertion, checked as "every node's tape extends its parent's"); **E** beyond
+that, writes collide with probability $\langle\xi(t_1),\xi(t_2)\rangle=\sum_ap_a(t_1)p_a(t_2)q_a+
+(1-\sum_ap_a(t_1))(1-\sum_ap_a(t_2))q_L$ — ⭐ new in §S4.9.4, **derived not verified**, evaluated on
+the realised $(t_1,t_2)$ pairs because edit times are stored.
+
+### 3. What could make it wrong
+
+**Defeated.** No Park data enters except $\Lambda_T$ and $\xi^L$ as *inputs*, so the project's
+recurring circularity — relatedness read from the same edits whose readability dropout controls —
+cannot reach this build. A/B/D/E are closed forms, not self-comparisons, and route (i) vs route (ii)
+is a second implementation of the same law.
+**NOT defeated, and it is the important one.** ⚠ **The checks are marginals.** A and B would pass a
+bug that corrupted *which lineage* an edit landed on; only D and E see the joint, and only through
+the shared-prefix and collision structure. ⚠ **A simulator is also a model (§H.6.12):** passing means
+it generates SciPhy's recorder, not that the recorder is right for Park — dropout, heritable
+silencing (A9) and the site-6 mechanism are **deliberately absent** and arrive as switchable layers.
+⚠ **Park-calibrated runs are NOT in this build**: depth 0 is censored and dropout correlates with
+depth (−0.33…−0.63), so $r_z$ cannot be read off Park and editing/dropout must be fitted jointly.
+**Abandon the approach if:** B fails under time-varying $\xi$ while A and B both pass under constant
+$\xi$. That is the queue-vs-bag semantics of §S4.2 being wrong — re-derive the ordering result before
+writing more code, rather than patching the sampler.
+
+### 4. Output — the mock, and the reading rule
+
+`results/validate_editing.json`, printed as one table. Every entry is a deviation from the closed
+form in **standard errors**, the se **self-calibrated** by splitting a correct-by-construction sample
+in half (this analysis's verification policy: raw p-values saturate here). ⚠ se across **trees**,
+never across pairs or cells — within a tree they share ancestry.
+
+> *Reading rule.* No-effect value $|z|=0$; larger = further from the closed form. **PASS = worst
+> $|z|\le3.0$ over every cell of every check AND zero hard-assertion violations.** At ~120 cells one
+> $|z|>3$ is expected 0.3 times by chance, so **a single trip is re-run at a new seed before it
+> counts**; two trips, or a systematic sign pattern within one check, is a defect.
+> **Decisive failure:** any D violation (the inherited prefix is exact by construction), or **B
+> failing while A passes** — counts right, order wrong.
+
+```
+  n = 210, k = 30, N = 6, Lam_T = 5.5, r_z = 1, one signal channel at p = 0.05 const,
+  200 trees, seed 24092026;  B and E re-run with lambda_0 and p(t) time-varying
+  check                          compared against                  cells  worst |z|  verdict
+  A  depth, tips                 Poisson(mu) truncated at N           7      1.8     PASS
+  A' depth, internal nodes       same at the node's Lambda_z(t)      21      2.1     PASS
+  B  composition by slot         integral of K_{j,d} against xi      60      2.4     PASS
+  C  route (i) vs route (ii)     depth, slot shares, edit times      18      1.6     PASS
+  D  inherited prefix            extends parent's, every node x tape  -   0 of 2.5e6 PASS
+  E  collision beyond the LCA    <xi(t1),xi(t2)> on realised pairs   12      2.0     PASS
+```
+
+**Cost.** One tree at $n=1{,}976$, $k=30$ is $(2n-1)k=1.2\times10^5$ tape-branches at $\le6$ draws
+each — milliseconds vectorised over tapes; the whole validation is **seconds to a few minutes on one
+core**, stored edits $\le4$ MB/tree. ⇒ `scripts/submit.sh --part cpu --mem 4G --time 00:30:00 --cpus 1`.
+Stored edits are gitignored (`*.npz`); only the JSON summary is committed.
+
+### Decisions this proposal locks in — all reversible, ⚠ one genuinely open
+
+| decision | proposed | why |
+|---|---|---|
+| $\lambda_0(t)$ | piecewise-constant, $G$ epochs; **first build $G=1$** | exact $\Lambda^{-1}$ (§S4.9.2), epochs *are* §S4.4's epochs, and skyline+OU is precedented in their stack |
+| $\lambda_\sigma$ (state) | **not built**; a per-segment rate-multiplier hook | it is what breaks tape independence given the tree (§S4.5); belongs with the state layer |
+| $r_z$ | input array; $r\equiv1$ for validation, lognormal$(s_r)$ for sweeps | check B's kernel conditions on $(\mu,d)$, so pooling over $r_z$ makes it uninterpretable |
+| channel partition | in the data structure now, $A$ channels, $p_a$ constant at first | the state layer plugs straight in; makes the homoplasy price visible |
+| $\xi^L$ | Park pooled ($q\approx0.0170$); **site 6 deferred** | site 6 is a separate mechanism (obs/exp 2.09/0.82), switchable later |
+| edit times | **stored** per branch | validation and state-layer ground truth need them; $\le4$ MB/tree |
+| $\Lambda_{\rm pre}$ | **0 — DECIDED by Justin 2026-09-27** (tapes empty at the clone founder; Park revisited later) | was open when written: Whether Park's tapes were already editing before clone founding is not in the notes and I have not checked the paper. Irrelevant to the design sweep (the start of recording *defines* the simulated experiment); it matters for Park adjudication, where a pre-clone prefix consumes slots while carrying no within-clone information |
+| first target | design sweep, not Park calibration | Park needs the joint editing/dropout fit that does not exist yet |
+
+---
 
 ## PROPOSAL (2026-09-24b) — how far can a lineage-specific switch be detected? ✅ APPROVED, RUN
 
@@ -322,12 +453,15 @@ Right-sized: 4 G, 10 min, partition `cpu`.
 0. ✅ **Switch detectability** (PROPOSAL 2026-09-24b) — DONE. ⇒ editing layer first, then a
    fitness-neutral state layer validated on long, strong, early switches; tree-side timing
    refinement deprioritised (item 3 is about rate inference and stands on its own).
-1. **The editing layer** — decorate library trees with sequential edits at measured per-tape
-   rates, site 6 handled separately, depth 0 censored; editing and dropout must be fitted
-   **jointly** (park-compatibility CLAUDE.md). ⭐ Build **route (ii)**, the partial-sum sampler of
-   §S4.3 — bounded at $N$ draws per tape-branch, sorted by construction, no waste — and keep route
-   (i) as the cross-check. Carry **edit times** and $\Lambda$-time from the start (§S4.1): a
-   time-varying *composition* is then free, and a time-varying *rate* is one extra knot.
+1. ✅ **The editing layer — BUILT AND VALIDATED 2026-09-27** ("PROPOSAL (2026-09-24c)", README
+   "Session 18"), spec in §S4.9, `src/14` + `src/15`. ⇒ **NEXT (order is Justin's call): the
+   fitness-neutral state layer (3b), which Fig S4 recommended after editing, and the dropout layer
+   (rung 1); each returns as its own proposal.** Decorate library trees with sequential edits; ⭐ **route (ii)**, the
+   partial-sum sampler of §S4.3 (bounded at $N$ draws per tape-branch, sorted by construction, no
+   waste), route (i) as the cross-check. Carry **edit times** and $\Lambda$-time from the start
+   (§S4.1): a time-varying *composition* is then free, a time-varying *rate* is one extra knot.
+   ⚠ Site 6 deferred; depth 0 censored and editing/dropout fitted **jointly** belong to the Park
+   calibration, which this build deliberately excludes (park-compatibility CLAUDE.md).
 2. Then, with edits: tape saturation vs $L(t)$ — the "best-recorded window" hypothesis (README
    Session 16, point 4); a proposed figure is $L(t)/n$ with the tape-saturation profile overlaid.
    ⭐ §S4.7 sharpens it: $L(t)$ sets precision, $L'(t)$ sets temporal resolution.

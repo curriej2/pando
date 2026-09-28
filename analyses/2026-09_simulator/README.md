@@ -1,9 +1,88 @@
 # simulator — findings
 
-**State 2026-09-24: the tree layer is BUILT, VALIDATED, COSTED, and the library is COMPLETE
-(1,870 cells, 37,380 trees, zero structure faults). Figures S1 (method), S3 (pull of the present)
-and S4 (switch detectability) are built, with a LaTeX write-up of S1/S3 in `writeup/`.** Editing
-and dropout are separate later layers, not yet started.
+**State 2026-09-27: the tree layer and the EDITING LAYER are BUILT and VALIDATED.** Tree library
+complete (1,870 cells, 37,380 trees, zero structure faults); editing layer `src/14_editing.py`
+passes all 219 closed-form cells and every hard assertion (`src/15`). Figures S1, S3, S4 built,
+LaTeX write-up of S1/S3 in `writeup/`. **Dropout is the next layer; not started.**
+
+## ⭐⭐ Session 18 (2026-09-27) — the editing layer, built and validated
+
+Approved by Justin ("PROPOSAL (2026-09-24c)", CLAUDE.md) with **$\Lambda_{\rm pre}=0$: tapes empty
+at the clone founder** (Park revisited later). Theory `notes/sciphy_notes.md` §S4.9.
+`src/14_editing.py` is the generator; `src/15_validate_editing.py` its validation (job 15236481,
+1 min 56 s, 0.11 GB); results `results/validate_editing.json`.
+
+**What was built.** Route (ii) of §S4.3 on library trees, parents before children, vectorised over
+tapes; route (i) as the independent second implementation. $\Lambda$-time throughout, with the
+exact two-step inverse of a piecewise-constant $\lambda_0$ (§S4.9.2); the channel partition
+(§S4.9.3) with $A$ signal channels on their own share schedule, drawn channel-then-symbol;
+per-tape speeds $r_z$; edits **stored per branch** (count, hand-off slot, symbols, times), and a
+cell's tape assembled from that record alone. $\xi^L$ = Park's three mouse arms pooled by edit count
+— **113 symbols, $q_L=0.01664$** (per-arm 0.0163–0.0169; the recorded "0.0170" is a rounding of these
+and nothing moves). Only frequency values are read, never sequences.
+
+**Validation — reading rule, fixed before the run.** Every cell is a deviation from a closed form
+in standard errors, the se taken across **trees** (200 at $n=210$, spread over $\rho\in\{0.0005,
+0.002,0.02,0.1,0.25\}\times\theta\in\{0.3,0.7\}$). No-effect value $|z|=0$. **PASS = worst
+$|z|\le3.0$ over every tested cell (added checks included) AND zero hard-assertion violations.**
+Three configurations: **CONST** (constant rate, signal share $p=0.05$), **TV** (a rate with a
+**zero-rate window** at $t$ 0.25–0.35, and $p$ = 0.02/0.30/0.02 switching at 0.4 and 0.7 on knots
+deliberately not aligned with the rate's), **RHET** (CONST with $r_z\sim$ lognormal, sd 0.5).
+
+⇒ **PASS: 219 cells tested, 0 excluded, worst $|z|=2.67$, none above 3 (0.59 expected by chance);
+0 violations in $1.9\times10^8$ hard-assertion comparisons; storage round trip identical.**
+
+| check (what it proves) | cells | worst \|z\| |
+|---|---|---|
+| A — tip depth $=\min(\mathrm{Poisson}(r_z\Lambda_T),N)$ *(tree-blind)* | 21 | 1.48 |
+| A′ — internal-node depth at $\Lambda_z(t_{\rm node})$, 3 time bins | 63 | 1.81 |
+| A_r — per-tape mean depth under spread $r_z$ ⚠ *added* | 5 | 1.61 |
+| B — signal share by slot given final depth, vs $\int K_{j,d}\,p$ *(the only order check)* | 42 | 2.03 |
+| B_L — within-lineage composition, 10 equal-mass groups | 20 | 2.26 |
+| C — route (i) vs route (ii), paired per tree | 38 | 2.67 |
+| E — collision past the LCA, random tip pairs *(as proposed)* | 15 | 1.58 |
+| E_u — the same over unique comparisons ⚠ *added* | 15 | 1.65 |
+| D — hand-off slot = recomputed depth; depth ≤ N; times inside branch; queue order; symbol ids; prefix identical to the LCA | — | **0 of $1.9\times10^8$** |
+
+⭐ **B has teeth, and passes.** Under TV, depth-6 tapes carry the signal symbol in **3.2 / 7.2 / 14.0 /
+19.9 / 20.6 / 15.6%** of slots 1–6 — the on-window rising and falling along the queue — and the
+closed form tracks it to ~0.001 (slot 3: 0.1404 observed vs 0.1411). B passing under both TV and
+CONST means **the abandon criterion was not triggered**: §S4.2's queue-vs-bag ordering holds.
+
+⭐ **§S4.9.4 is VERIFIED.** When both writes fall in the on-window ($p=0.30$, one signal symbol), two
+lineages collide at **0.0976 against the predicted 0.0982** ($z=-0.66$); one write in the window,
+0.0176 vs 0.0174; neither, 0.0165 vs 0.0164. So with one signal symbol at $p=0.3$ the collision
+probability is **~5.9× the lineage channel's $q_L$**, and the effective alphabet $1/q$ falls from
+**60 to 10**. This is now a quotable property of the model — ⚠ of the *model*: it says nothing
+about whether ENGRAM data behave this way.
+
+⚠ **Two changes to the validation, both disclosed.**
+1. **E_u added after the 20-tree smoke run**, because E as proposed tripped there ($|z|=4.30$).
+   Cause: most random tip pairs compare the *same two edits* — a slot written just below the LCA
+   is shared by every tip beneath it — so per tree E rests on a handful of independent rare events
+   (a match has probability ~0.018) and its t-statistic over 20 trees is not calibrated. The
+   minimum-count rule overstated E's information **~11×** (115,828 expected matches at LCA depth 0
+   in CONST, against 10,111 unique comparisons). E_u counts each (branch of edit 1, branch of
+   edit 2, tape) once. Both are unbiased (the weighting never depends on symbols); **E as proposed
+   passes at 200 trees too**, so the trip was a small-sample artefact, not a generator defect. The
+   verdict's scope was widened to include E_u **before** the 200-tree run.
+2. **A_r added** so the per-tape speed $r_z$, a code path the $r\equiv1$ runs never exercise, is
+   tested at all.
+
+⚠ **The yardstick is ~10% generous.** The half-split null (the same statistic between two random
+halves of the trees) has SD **0.90** over 219 cells rather than 1, worst 2.25. So the across-tree se
+is slightly over-estimated and every $|z|$ above is, if anything, ~10% small — the checks are
+marginally less sensitive than nominal, not more permissive of a real defect at the scale that
+matters.
+
+**Cost.** 0.05 s per tree at $n=210$, $k=30$; **0.45 s** (route ii) / 0.53 s (route i) at
+$n=1{,}976$, plus 0.09 s to assemble tapes; peak 0.11 GB. ⇒ decorating a whole library cell is
+seconds; the tree layer, not editing, remains the expensive one. Not measured beyond $n=1{,}976$.
+
+**What passing does NOT establish.** ⚠ A and A′ are tree-blind; B/B_L are marginals; only D and E
+see the joint. ⚠ A simulator is also a model (§H.6.12): passing means it generates SciPhy's
+recorder, not that the recorder is right for Park — dropout, heritable silencing (A9) and the site-6
+mechanism are absent by design, and **no Park-calibrated run was made**.
 
 ## ⭐⭐ Session 17 (cont., 2026-09-24) — how far can a lineage-specific switch be detected?
 

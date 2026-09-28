@@ -1563,3 +1563,102 @@ side not the bottleneck); $k$ for half callable is **88–176** at 0.5 edits/tap
 **⇒ NEXT (Justin, 2026-09-24): back to building the simulator** — the editing layer (route ii,
 $\Lambda$-time, edit times carried), then a fitness-neutral state layer validated on the regime Fig S4
 calls recoverable.
+
+## 2026-09-24 — session 17 (cont. 2): the editing layer specified; a proposal awaits approval
+
+`analyses/2026-09_simulator/CLAUDE.md`, "PROPOSAL (2026-09-24c)"; theory `notes/sciphy_notes.md`
+**§S4.9** (new). **No compute run in this part of the session; `src/14` and `src/15` do not exist.**
+Written after Justin asked for the mathematics of each piece to be explained — intuition first, then
+the equations — before any code, so that the remaining design decisions could be made with the
+reasoning finished rather than after the numbers arrived.
+
+**What the proposal covers.** The generator only: decorate library trees with sequential edits in
+$\Lambda$-time by route (ii), with a time-varying composition $\xi(t)$ and rate $\lambda_0(t)$ in
+from the start, plus its validation against four closed forms. The first scientific run off it
+(rung 0's homoplasy floor, or the state layer) returns as a separate proposal. Cost is seconds to
+minutes on one core, 4 G.
+
+**⭐ New in §S4.9, derived this session.**
+1. **The exact inverse of a piecewise-constant $\Lambda$.** With knots $\kappa_g$, levels $\omega_g$
+   and cumulative weights $W_g$, $\Lambda_z$ is a line inside each epoch, so
+   $\Lambda_z^{-1}(\tau)=\kappa_{g-1}+(\tau-r_z\Lambda_TW_{g-1})/(r_z\Lambda_T\omega_g)$ after one
+   `searchsorted` — no root-finding. ⚑ A zero-rate window ($\omega_g=0$, e.g. a Dox-gated pause)
+   needs **no special case**: it occupies an empty interval in $\Lambda$-time and the lookup can
+   never land inside it.
+2. **The channel construction and its budget.** Each symbol belongs to exactly one channel; sampling
+   factorises as channel-then-symbol; $\sum_ap_a(t)\lesssim0.3$ is the coupling, so **a second
+   recorder does not get its own capacity** — it splits the same share or eats the lineage channel.
+3. ⭐ **Homoplasy with a signal channel — DERIVED, NOT VERIFIED, do not quote.** With $\xi^{(a)}$ and
+   $\xi^L$ fixed and only the shares moving,
+   $\langle\xi(t_1),\xi(t_2)\rangle=\sum_ap_a(t_1)p_a(t_2)q_a+(1-\sum_ap_a(t_1))(1-\sum_ap_a(t_2))q_L$.
+   With one signal symbol ($q_a=1$) at $p=0.3$ against Park's $q_L\approx0.0170$ the instantaneous
+   $q$ is $\approx0.098$ — **~6× Park's measured $q$**, effective alphabet $1/q$ falling ~57 → ~10.
+   Check E of the proposal is what would verify it, on the realised $(t_1,t_2)$ pairs.
+4. **What the validation can and cannot see.** ⚠ The depth law is **tree-blind** (it depends only on
+   elapsed $\Lambda$), so it cannot detect an edit assigned to the wrong lineage; the per-slot
+   composition check is **the only one that sees edit order**, and only has teeth under a
+   time-varying $\xi$; the inherited prefix and the collision rate are the only checks on the joint.
+   ⇒ the abandon criterion is *B fails under time-varying $\xi$ while passing under constant $\xi$*,
+   which would mean §S4.2's queue-vs-bag ordering result is wrong and needs re-deriving, not patching.
+5. ⚠⚠ **Piecewise-constant $\lambda_0$ and an eventual posterior** (§S4.9.6): each $\omega_g$ is an
+   epoch *average*, so resolution is set by knot placement, not by the data; many epochs give weak,
+   anti-correlated estimates that need a smoothing prior, so a sharp change returns as a ramp; and
+   **validation can flatter us if the generator's knots match the inference's** — carry that into the
+   state layer's validation design.
+
+**⚠ One decision is genuinely open: $\Lambda_{\rm pre}$**, editing that happened before the clone
+founder. It is exposed with default 0 (tapes empty at founding). Whether Park's tapes were already
+editing before clone founding is **not settled in these notes and has not been checked against the
+paper**; it is irrelevant to the design sweep, where the start of recording defines the simulated
+experiment, but not to Park adjudication, where a pre-clone prefix consumes slots while carrying no
+within-clone lineage information.
+
+**⇒ NEXT:** Justin's decision on the proposal; then `src/14` + `src/15`, then the fitness-neutral
+state layer targeted at the regime Fig S4 calls recoverable.
+
+## 2026-09-27 — session 18: the editing layer built and validated
+
+`analyses/2026-09_simulator`, README "Session 18"; `src/14_editing.py` (generator),
+`src/15_validate_editing.py` (validation, job 15236481, 1 min 56 s, 0.11 GB),
+`results/validate_editing.json`. Approved by Justin ("PROPOSAL (2026-09-24c)") with
+**$\Lambda_{\rm pre}=0$ — tapes empty at the clone founder; Park revisited later.**
+
+**Built.** Route (ii) on library trees in $\Lambda$-time, parents before children, vectorised over
+tapes; route (i) as the second implementation; the exact inverse of a piecewise-constant
+$\lambda_0$; the channel partition, channel-then-symbol; per-tape speeds; edits stored per branch
+and tapes assembled from that record alone. $\xi^L$ = Park's three mouse arms pooled by edit count,
+113 symbols, $q_L=0.01664$ (values only, never sequences).
+
+**✅ PASS against the reading rule fixed in the proposal** (worst $|z|\le3$ over every tested cell,
+zero hard-assertion violations): **219 cells, 0 excluded, worst $|z|=2.67$, none above 3** (0.59
+expected by chance), **0 violations in $1.9\times10^8$ hard-assertion comparisons**, storage round
+trip identical. 200 trees at $n=210$ across $\rho$ 0.0005–0.25 and $\theta$ 0.3/0.7; three
+configurations (constant; time-varying with a zero-rate window and a switching signal share;
+spread per-tape speeds).
+⭐ **The order check had teeth and passed**: under the time-varying setting depth-6 tapes carry the
+signal symbol in 3.2 → 20.6 → 15.6% of slots, tracked to ~0.001 ⇒ §S4.2's ordering holds and the
+abandon criterion was not triggered.
+⭐ **§S4.9.4 is VERIFIED**: two writes in the on-window ($p=0.30$, one signal symbol) collide at
+**0.0976 vs 0.0982 predicted** — $q$ 5.9× $q_L$, effective alphabet 60 → 10. A property of the model,
+not of ENGRAM data.
+
+**⚠⚠ A defect in my own validation design, caught in the 20-tree smoke run and disclosed.** Check
+E over random tip pairs tripped at $|z|=4.30$. Cause: most tip pairs compare the *same two edits*
+(a slot written below the LCA is shared by every tip beneath it), so per tree E rests on a handful of
+independent rare events and its t-statistic is uncalibrated; its minimum-count rule overstated the
+information ~11× (115,828 vs 10,111). Fix: **E_u**, the same statistic over unique comparisons keyed
+by (origin branch of each edit, tape), added **with the verdict's scope widened to include it
+before the 200-tree run**. Both are unbiased; **E as proposed also passed at 200 trees** (worst
+1.58), so the trip was small-sample, not a generator defect. ⚑ General lesson recorded in §S4.9.5:
+*a cell-level comparison of edits is redundant wherever the cells share the edit* — but B must NOT be
+deduplicated, since its closed form is per tip. Also added: **A_r**, exercising per-tape speeds that
+the $r\equiv1$ runs never touch.
+⚠ The yardstick is ~10% generous: the half-split null has SD 0.90 over 219 cells (worst 2.25), so the
+$|z|$ values are if anything ~10% small.
+
+**Cost.** 0.05 s/tree at $n=210$, $k=30$; 0.45 s at $n=1{,}976$ (+0.09 s assembly); 0.11 GB. Editing is
+not the expensive layer.
+
+**⇒ NEXT (order is Justin's call):** the fitness-neutral state layer — Fig S4's recommendation — and
+the dropout layer (rung 1); each returns as its own proposal. No scientific run has been made off the
+editing layer yet.

@@ -5220,3 +5220,194 @@ Short ($\le$0.5 edits/tape), 2-fold, and late switches are out of reach. So the 
 neither way cleanly: (B) is not dead, but it is confined to a regime, and the regime is set by
 **duration and start time**, not by $\rho$, $n$ or tree timing. ⚠ Upper-bound caveat: the tree is
 taken as known and homoplasy-free.
+
+## S4.9 The editing layer, specified — the build this section licenses (2026-09-24)
+
+*Theory for the proposal in `analyses/2026-09_simulator/CLAUDE.md`, "PROPOSAL (2026-09-24c)".
+Nothing here has been built or run. Everything below is derived; what is derived and **not yet
+verified** is marked as such and must not be quoted until the validation in that proposal passes.*
+
+⚠ **Notation.** Following §S4.2/§S4.7, **$j$ indexes sites/slots and the $j$-th edit on a tape**.
+That is NOT the design sweep's $j$ (lineage-symbol diversity, §I.7.5). A branch is **$e$**, never
+$b$ — the house register reserves $b$ for the birth rate.
+
+### S4.9.1 The rate, in three factors
+
+$$\lambda_z(t)=\underbrace{r_z}_{\text{per-tape, }cis}\times\underbrace{\Lambda_T}_{\text{scale}}
+\times\underbrace{\lambda_0(t)}_{\text{shape}}\qquad[\text{edits}\cdot\text{tape}^{-1}\cdot\text{experiment}^{-1}]$$
+
+$r_z>0$ dimensionless with mean 1 over tapes (SciPhy's per-tape clock, and the measured 1.33–5.54
+spread in mean depth on Mouse3); $\Lambda_T$ in edits/tape is the integrated rate of an average tape
+over the whole experiment (5.39–5.69 measured on the mice, 2.87 on Initial); $\lambda_0(t)$
+dimensionless with $\int_0^1\lambda_0=1$, so $\Lambda_z(1)=r_z\Lambda_T$ by construction. The
+state factor $\lambda_{\sigma}$ of §S4.5 is **deliberately absent from the first build** and enters
+later as a per-segment multiplier — it is what breaks conditional independence of tapes given the
+tree, so it belongs with the state layer, not before it.
+
+$$\Lambda_z(t)=r_z\Lambda_T\int_0^t\lambda_0(u)\,du\qquad[\text{edits/tape}]$$
+
+is **$\Lambda$-time**: the clock on which an open tape is edited at exactly one expected edit per
+unit, whatever $\lambda_0$ does (§S4.1). A branch $e$ spanning $[t_e^0,t_e^1]$ has length
+$\mu_{e,z}=\Lambda_z(t_e^1)-\Lambda_z(t_e^0)$ edits/tape.
+
+⭐ **$\Lambda_{\rm pre}$ (new).** Editing that happened *before* the clone founder, in edits/tape.
+A tape then arrives at $t=0$ at depth $\mathrm{Poisson}(\Lambda_{\rm pre})$ truncated at $N$, with a
+prefix **identical in every cell of the clone** — it consumes slots but carries no within-clone
+lineage information. Default 0. ⚠ Whether Park's tapes were already editing before clone founding is
+**not settled in these notes and has not been checked against the paper**; it is irrelevant to the
+design sweep, where the start of recording *defines* the simulated experiment.
+
+### S4.9.2 Piecewise-constant $\lambda_0$, and why its inverse is exact
+
+Take knots $0=\kappa_0<\kappa_1<\dots<\kappa_G=1$ and levels $\omega_g>0$ on $[\kappa_{g-1},\kappa_g)$,
+normalised by $\sum_g\omega_g(\kappa_g-\kappa_{g-1})=1$. Write the cumulative weight
+$W_g=\sum_{g'\le g}\omega_{g'}(\kappa_{g'}-\kappa_{g'-1})$, so $W_0=0$ and $W_G=1$. For
+$t\in[\kappa_{g-1},\kappa_g)$,
+
+$$\Lambda_z(t)=r_z\Lambda_T\big[W_{g-1}+\omega_g(t-\kappa_{g-1})\big],\qquad
+\Lambda_z(\kappa_g)=r_z\Lambda_T\,W_g .$$
+
+$\Lambda_z$ is a straight line inside each epoch, so its inverse is two steps and no root-finding:
+**(i)** locate $\tau$ among the precomputed knot values $r_z\Lambda_T W_g$ (`searchsorted`);
+**(ii)** invert that epoch's line,
+
+$$\Lambda_z^{-1}(\tau)=\kappa_{g-1}+\frac{\tau-r_z\Lambda_T W_{g-1}}{r_z\Lambda_T\,\omega_g}.$$
+
+*Check, constant rate:* $G=1$, $\omega_1=1$, $W_0=0$ gives $\Lambda_z^{-1}(\tau)=\tau/(r_z\Lambda_T)$,
+i.e. $\Lambda$-time is calendar time rescaled. ✓
+⚑ **A zero-rate window ($\omega_g=0$, e.g. a Dox-gated pause) needs no special case**: it makes
+$W_{g-1}=W_g$, so the interval it occupies in $\Lambda$-time is empty and the lookup can never land
+inside it. The boundary tie has probability zero; the convention is to resolve it into the *next*
+active epoch (an edit "at" the boundary happened when editing resumed).
+⚠ The price of piecewise-constant is stated in §S4.9.6: it is a modelling choice about resolution,
+not a property of the data.
+
+### S4.9.3 Channels: what the signal competes with
+
+Let there be $A$ signal channels. Channel $a$ has share $p_a(t)$ of insertions and within-channel
+composition $\xi^{(a)}$; the lineage channel $\mathcal L$ takes the remainder with composition
+$\xi^{L}$. Each within-channel composition sums to 1 over its own symbols, and **each symbol belongs
+to exactly one channel**:
+
+$$\xi_i(t)=\begin{cases}p_a(t)\,\xi^{(a)}_i,& i\in\mathcal S_a\\[2pt]
+\big(1-\sum_a p_a(t)\big)\,\xi^{L}_i,& i\in\mathcal L\end{cases}
+\qquad\Rightarrow\qquad \sum_i\xi_i(t)=\sum_a p_a(t)+\big(1-\sum_a p_a(t)\big)=1 .$$
+
+Sampling factorises as **channel first, symbol second** — draw the channel with probabilities
+$\{p_a(t)\}$ and $1-\sum_a p_a$, then the symbol from that channel's own composition. The two forms
+are the same distribution; the factored one keeps the knob the signal moves ($p_a$) separate from the
+designed, fixed compositions ($\xi^{(a)}$, $\xi^{L}$).
+⭐ **The budget is the coupling.** Every edit is one write, so $\sum_a p_a(t)\le1$ always and
+$\lesssim0.3$ in practice (§I.7.5's shared-tape ceiling). A second recorder does not get its own
+capacity: it either splits the same ~30% or eats the lineage channel. **This is the design-sweep
+statement of $(p,j)$ and it is why the partition goes into the data structure before it is varied.**
+
+### S4.9.4 ⭐ Homoplasy with a signal channel — DERIVED 2026-09-24, ✅ VERIFIED 2026-09-27
+
+§S4.6 established that two independent writes at $t_1,t_2$ collide with probability
+$\langle\xi(t_1),\xi(t_2)\rangle$. Under the partition above, **assuming $\xi^{(a)}$ and $\xi^{L}$
+are constant in time and only the shares $p_a$ move**, the inner product splits by channel because
+the channels have disjoint symbol sets:
+
+$$\langle\xi(t_1),\xi(t_2)\rangle=\sum_a p_a(t_1)p_a(t_2)\,q_a\;+\;\Big(1-\sum_a p_a(t_1)\Big)\Big(1-\sum_a p_a(t_2)\Big)q_L,$$
+
+with $q_a=\sum_{i\in\mathcal S_a}(\xi^{(a)}_i)^2$ and $q_L=\sum_{i\in\mathcal L}(\xi^L_i)^2$.
+*Derivation:* $\sum_i\xi_i(t_1)\xi_i(t_2)$ splits into one sum per channel; within channel $a$ it is
+$p_a(t_1)p_a(t_2)\sum_i(\xi^{(a)}_i)^2$, and likewise for $\mathcal L$. At equal times this is
+$q(t)=\sum_ap_a(t)^2q_a+(1-\sum_ap_a(t))^2q_L$. ✓
+⭐ **What it says:** the signal channel's contribution to homoplasy is $p_a(t_1)p_a(t_2)q_a$, largest
+when **both** writes happen while that channel is induced. With a single signal symbol $q_a=1$, so at
+$p=0.3$ against Park's $q_L\approx0.0170$ the instantaneous $q$ is
+$0.09+0.49\times0.0170\approx0.098$ — **~6× Park's measured $q$**, i.e. the effective alphabet
+$1/q$ falls from ~57 to ~10. That is the signal-vs-lineage trade-off in one number, and it is the
+quantity the design sweep has to price.
+~~⚠ **Derived, not verified — do not quote** until check E of the proposal reproduces it.~~
+✅ **VERIFIED 2026-09-27** by checks E/E_u of `analyses/2026-09_simulator/src/15` (README "Session
+18"), on the realised write times, with one signal symbol and $\xi^L$ = the three Park mouse arms
+pooled by edit count (**$q_L=0.01664$**, 113 symbols): both writes in the on-window ($p=0.30$)
+**0.0976 observed vs 0.0982 predicted** ($z=-0.66$); one in the window, 0.0176 vs 0.0174; neither,
+0.0165 vs 0.0164. At that $q_L$ the exact figures are $q=0.0982$, **5.9×** $q_L$, and $1/q$ falls
+from **60 to 10** — the "~6×" and "~57 → ~10" above were computed at the rounded 0.0170 and do not
+move. ⚠ Verified as a property of the **model and the generator**, not of ENGRAM data.
+⚠ It still inherits §S4.6's open caveat: collisions occur at the *same site index*, and same-index
+writes happened at similar times, so the pooled $q$ understates and the per-site $q$ is the right
+input.
+
+### S4.9.5 The four closed forms the build must be validated against
+
+**A. Depth, at any node.** Along one root-to-node path a tape sees a single Poisson process in
+$\Lambda$-time, stopped at $N$; branches merely partition that path. With
+$\mu=\Lambda_{\rm pre}+\Lambda_z(t)$ elapsed at a node at time $t$,
+
+$$P(D=d)=e^{-\mu}\mu^{d}/d!\ \ (d<N),\qquad P(D=N)=1-\sum_{d<N}e^{-\mu}\mu^{d}/d! .$$
+
+⚑ **This does not involve the tree at all** — only elapsed $\Lambda$. So A tests the clock, the
+inverse and the sampler, and is *blind* to whether edits were assigned to the right lineage. That is
+precisely why D and E below are needed.
+
+**B. Composition by slot** — the only check that sees edit **order**. Conditional on a tape's final
+depth $d$ at $\Lambda$-elapsed $\mu$, the $j$-th edit's $\Lambda$-time $x$ has density $K_{j,d}$:
+
+- **unsaturated, $d<N$:** exactly $d$ events fell in $[0,\mu]$, so by conditional uniformity (§S4.2)
+  their times are the order statistics of $d$ iid $\mathrm{Uniform}(0,\mu)$ and
+  $x/\mu\sim\mathrm{Beta}(j,\,d+1-j)$;
+- **saturated, $d=N$:** the $N$-th jump landed at or before $\mu$, so
+  $K_{j,N}(x)\propto f_{\Gamma(j,1)}(x)\,F_{\Gamma(N-j,1)}(\mu-x)$ on $0<x<\mu$ — the density of the
+  $j$-th jump times the probability that the remaining $N-j$ jumps still fit. At $j=N$,
+  $F_{\Gamma(0)}\equiv1$ and this is $\Gamma(N)$ truncated to $(0,\mu)$. ✓
+
+Writing $\tilde\xi_i(x)=\xi_i(\Lambda_z^{-1}(x))$ for the composition as a function of
+$\Lambda$-time, the expected share of symbol $i$ at slot $j$ among tapes of final depth $d$ is
+
+$$\mathbb E\big[\text{share of }i\text{ at slot }j\,\big|\,d\big]=\int_0^{\mu}K_{j,d}(x)\,\tilde\xi_i(x)\,dx .$$
+
+⚠ The kernel conditions on $(\mu,d)$, so the check must be run **within strata of $(r_z,d)$** — at
+$r\equiv1$, grouped by final depth. Pooling over $r_z$ mixes kernels and the check becomes
+uninterpretable. ⚑ Under constant $\xi$ this collapses to "every slot shows $\xi$", which is why a
+time-varying $\xi$ is the only setting in which B has teeth.
+✅ **Passed 2026-09-27 under a time-varying $\xi$** (share 0.02 → 0.30 → 0.02, with a zero-rate
+window in $\lambda_0$): depth-6 tapes carry the signal symbol in 3.2 / 7.2 / 14.0 / 19.9 / 20.6 /
+15.6% of slots 1–6, tracked by the kernel to ~0.001, worst $|z|=2.03$ over 42 cells. ⇒ **§S4.2's
+queue-vs-bag ordering holds in the generator**; the abandon criterion was not triggered.
+
+**D. The inherited prefix is exact.** Let cells $c,c'$ have last common ancestor $A$ at depth $D_A$
+on tape $z$. Every edit on the root-to-$A$ path is shared by construction and edits after $A$ are
+independent between the two lineages, so the two tapes **agree exactly in slots $1..D_A$**. Zero
+tolerance: this is an assertion, not a statistic.
+
+**E. Collisions beyond the divergence.** At slot $D_A+1$, if both lineages filled it, the two writes
+are independent draws at their own times $t_1,t_2>t_A$, so they match with probability
+$\langle\xi(t_1),\xi(t_2)\rangle$ of §S4.9.4. Because edit times are stored, the expectation can be
+evaluated **on the realised $(t_1,t_2)$ pairs** rather than assumed — a sharp check, and the one that
+verifies §S4.9.4.
+⚠ Pairs within a tree share ancestry, so the standard error must be taken **across trees**, never
+across pairs — the same error the project already recorded for pooled $\rho$ (weighting by
+$n_C(n_C-1)$ hid the A9 signal).
+⚠⚠ **Correction to this specification, found in the 20-tree smoke run (2026-09-27): random TIP
+PAIRS are the wrong unit even with the se taken across trees.** A slot written just below the LCA
+is shared by every tip beneath it, so most tip pairs compare the *same two edits*; per tree the
+statistic rests on a handful of independent rare events (a match has probability ~0.018), and its
+t-statistic over 20 trees tripped at $|z|=4.30$. The minimum-count rule overstated the information
+**~11×** (115,828 expected matches at LCA depth 0, against 10,111 unique comparisons). The honest
+unit is the **unique comparison**, keyed by (branch that wrote edit 1, branch that wrote edit 2,
+tape). Both weightings are unbiased, because neither depends on the symbols; only the unique one
+has a calibrated se. At 200 trees both passed. ⚑ The general lesson — *a cell-level comparison of
+edits is redundant wherever the cells share the edit* — applies to every later statistic built on
+simulated tapes. It does NOT apply to B, whose closed form is stated per tip: deduplicating B
+would re-weight early edits (shared by many tips) against late ones and bias it under a
+time-varying $\xi$.
+
+### S4.9.6 ⚠ What piecewise-constant $\lambda_0$ does to an eventual posterior
+
+If inference uses the same construction — a skyline of epoch rates with a smoothing prior, as their
+stack already runs for $b,\delta$ (§S4.0 item 5) — three consequences follow, none of them bugs:
+1. **Each $\omega_g$ is an epoch average.** Variation inside an epoch is smeared across it, so
+   resolution is set by where knots are placed, which is a modelling choice, not a thing the data
+   decide.
+2. **Many epochs ⇒ weak, strongly anti-correlated estimates**, so a smoothing prior is needed
+   (§S4.7's $O(k)$-not-$O(kL)$ argument); a sharp change then returns as a gradual ramp.
+3. ⚠⚠ **Validation can flatter us.** If the simulated truth uses the *same* knots as the inference,
+   the model is correct by construction. To measure recovery of a real, off-grid change, the
+   generator's knots must differ from the inference's — finely stepped $\lambda_0$ approximates any
+   smooth curve, so the generator does not restrict which truths can be planted. **Carry this into
+   the state layer's validation design.**
