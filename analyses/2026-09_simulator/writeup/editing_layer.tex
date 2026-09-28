@@ -60,16 +60,16 @@ record lineage. If the symbol mix changes over time, the slot a symbol sits in a
 
 Formally this is SciPhy's recorder (\texttt{sciphy\_notes.md} \S1a), with the rate and the symbol mix
 allowed to vary in time:
+\clearpage
 \begin{enumerate}
-  \item \textbf{When.} While a tape has an open slot ($d<N$) it is edited as a Poisson process of
+  \item While a tape has an open slot ($d<N$) it is edited as a Poisson process of
         rate $\lamz(t)$: edits arrive independently of one another and of what is already written.
-  \item \textbf{What.} An edit writes symbol $i$ with probability $\xi_i(t)$ into slot $d+1$, and the
+  \item An edit writes symbol $i$ with probability $\xi_i(t)$ into slot $d+1$, and the
         depth becomes $d+1$.
-  \item \textbf{Saturation.} At $d=N$ the tape is full and stops recording.
-  \item \textbf{Inheritance.} At a division both daughters start from an exact copy of the parent's
+  \item At $d=N$ the tape is full and stops recording.
+  \item At a division both daughters start from an exact copy of the parent's
         tapes: same symbols, same depth.
-  \item \textbf{Independence.} Given the tree, different tapes evolve independently (SciPhy's
-        assumption, row A5).
+  \item Given the tree, different tapes evolve independently.
 \end{enumerate}
 Everything below rests on the property in item~1: \emph{how fast an open tape is edited depends only
 on the time, not on what is written on it.}
@@ -107,6 +107,32 @@ time, such as a pause or a burst. Since $\lambda_0$ averages $1$, a tape with $r
 expected edits over the experiment whatever the shape, so changing the shape never smuggles in a
 change of total. Only $\lambda_0$ is varied in Fig.~\ref{fig:S5d}; $r_z=1$ everywhere in Fig.~S5.
 
+\paragraph{``Averages to 1'' and ``integrates to 1'' are the same condition here.} The mean of a
+function over an interval is its integral divided by the interval's length, and time runs over
+$[0,1]$, so the two coincide. Were $T$ ever not $1$, they would differ by a factor $T$ and the
+\emph{integral} is the condition that matters.
+
+\paragraph{$\lambda_0$ is a relative rate, and is not bounded by $1$.} A value above $1$ means
+``faster than the experiment average''. What the constraint fixes is the area, not the height: each
+level is weighted by how long it lasts. In the schedule of Fig.~\ref{fig:S5d}, epochs of width
+$0.25,0.10,0.25,0.40$ carry levels
+\begin{equation}
+  \lambda_0 = 1.18,\; 0,\; 1.57,\; 0.78,
+  \qquad
+  1.18(0.25)+0(0.10)+1.57(0.25)+0.78(0.40) = 1 ,
+  \label{eq:lam0norm}
+\end{equation}
+so the burst runs at $1.57$, well above $1$: fast but short, against a last phase that is slow but
+long. Multiplying by $\LamT=5.5$ gives the rates the figure plots, $6.47,0,8.63,4.31$ edits per tape
+per experiment.
+
+\paragraph{What is set, and what follows.} $\LamT$ is an \emph{input}, fixed before a run: Park's
+three mouse arms measure $5.39$--$5.69$ edits per tape, so $\LamT=5.5$ here. The simulator never
+infers it. The division of labour across eq.~\eqref{eq:rate} is then: $\LamT$ sets \emph{how much}
+editing happens in total, $\lambda_0$ sets \emph{when} it happens and by its normalisation cannot
+change the total, and $r_z$ sets how one tape compares with the average. That is why the two schedules
+in Fig.~\ref{fig:S5d} end at the same depth: different $\lambda_0$, the same $\LamT$.
+
 \paragraph{$\Lambda$-time} is the running total of the rate:
 \begin{equation}
   \Lambda_z(t)=\int_0^t\!\lamz(u)\,du = r_z\LamT\,W(t),
@@ -114,7 +140,10 @@ change of total. Only $\lambda_0$ is varied in Fig.~\ref{fig:S5d}; $r_z=1$ every
   \label{eq:Lambda}
 \end{equation}
 Read $\Lambda_z(t)$ as ``how many edits tape $z$ would have taken by time $t$ had it never filled
-up''; it only increases. Substituting $\tau=\Lambda_z(t)$ turns a Poisson process of rate $\lamz(t)$
+up''; it only increases. \emph{$W$ is the quantity that runs from $0$ to $1$, not $\lambda_0$:} it is
+the fraction of the experiment's total editing spent by time $t$, with $W(0)=0$ and $W(1)=1$. The two
+are easy to confuse --- $\lambda_0(t)$ is the rate at an instant, mean $1$ and with no upper bound,
+while $W(t)$ is its running total, increasing from $0$ to $1$. Substituting $\tau=\Lambda_z(t)$ turns a Poisson process of rate $\lamz(t)$
 in $t$ into one of rate exactly $1$ in $\tau$, because $d\Lambda_z=\lamz\,dt$ makes the expected
 number of edits in a stretch equal to that stretch's length in $\tau$. A branch $e$ then has a length
 in $\Lambda$-time,
