@@ -5538,3 +5538,74 @@ lesson: *two statistics that coincide in a regime must not both count toward a v
   censoring and heritable loss, so feeding it in as the *technical* rate counts both twice. To be
   handled in the negative control's proposal.
 - ⚠ Editing and dropout must still be fitted **jointly** before any Park-calibrated claim.
+
+---
+
+# §S6 The dropout layer, rung 2 — heritable silencing as complete Dollo loss (2026-10-01)
+
+Specified in `analyses/2026-09_simulator/CLAUDE.md`, "PROPOSAL (2026-10-01, rev. 1)" (approved by
+Justin 2026-10-01); built as `src/22_silencing.py`, validated by `src/23` (README "Session 21", PASS).
+Rung 2 of the ladder: a tape silenced in a cell is unreadable in every descendant and never returns
+($\hat\pi\equiv1$). Decisions (Justin): knob = target silenced fraction; per-unit-time hazard with a
+timing shape; no pre-founder silencing (one tree = one clone); the same hazard on every tape.
+
+## S6.1 The model
+
+Notation as §S4.9/§S5; branch $e$ = edge into node $e$ on $[t_e^0,t_e^1]$, stem $[0,t_{\rm root}]$;
+$n_e$ tips below $e$; $x$ the LCA of tips $c,c'$. Silencing is a Poisson process per tape per lineage,
+$\zeta(t)=\Gamma_T\zeta_0(t)$ [events · tape⁻¹ · lineage⁻¹ · experiment⁻¹], $\int_0^1\zeta_0=1$,
+$\zeta_0$ piecewise constant on its own knots; exposure $\Gamma(t)=\Gamma_TW_\zeta(t)$,
+$W_\zeta=\int_0^t\zeta_0$ (the silencing analogue of $\Lambda$-time); branch hazard
+$\Gamma_e=\Gamma_T[W_\zeta(t_e^1)-W_\zeta(t_e^0)]$.
+- **Sampler** (route (ii) with one slot): $E_{e,z}\sim{\rm Exp}(1)$, $L_{e,z}=\mathbb 1[E\le\Gamma_e]$,
+  $t^*=W_\zeta^{-1}(W_\zeta(t_e^0)+E/\Gamma_T)$ with §S4.9.2's exact inverse. Exact by memorylessness,
+  branch independence and absorption. Monotone in $\Gamma_T$ ⇒ silenced sets **nested** across the
+  knob at fixed $\zeta_0$ (not across shapes).
+- **Dollo:** $H_e=H_{{\rm pa}(e)}\vee L_e$, nothing above the stem; a visible event tops a lineage's
+  first loss, $V_e=L_e\wedge\neg H_{{\rm pa}(e)}$. Clone-wide loss = a loss on the stem.
+- **Observation:** $Y=(1-X)(1-H)\mathbb 1[D\ge1]$. Editing is untouched (unobservable under complete
+  loss with no *trans* limb).
+
+## S6.2 The knob and its closed forms (✅ verified in the generator, `23`, 2026-10-01)
+
+Every tip's path carries exposure $\Gamma_T$ whatever the tree, so with $\bar H$ = expected fraction of
+tip × tape entries silenced at harvest (true state, before mask, censoring and filters),
+$$\bar H=1-e^{-\Gamma_T},\qquad\Gamma_T=-\ln(1-\bar H)$$
+— independent of the tree and of $\zeta_0$ ($\zeta_0$ moves *which* cells share a loss, not how many
+entries are lost). Solved on the expectation; the realised fraction fluctuates with
+$\mathrm{Var}(\hat H_z)=n^{-2}\sum_{c,c'}e^{-2\Gamma_T}(e^{\Gamma_TW_\zeta(t_x)}-1)$, larger when
+silencing is early (big clades). Forcing it per tree would condition the process and distort event
+sizes. In the knob:
+- **Pairs:** $P(H_c{=}0,H_{c'}{=}0\mid t_x)=(1-\bar H)^{2-W_\zeta(t_x)}$, so
+  $\mathrm{Corr}=\frac{(1-\bar H)[(1-\bar H)^{-W_\zeta(t_x)}-1]}{\bar H}\to W_\zeta(t_x)$ as $\bar H\to0$:
+  ⭐ **relatives' correlation in silencing = the share of the silencing hazard they lived through
+  together.**
+- **Visible events:** $P(V_e)=(1-\bar H)^{W_\zeta(t_e^0)}[1-(1-\bar H)^{\Delta W_\zeta}]$, and
+  $\sum_en_eP(V_e)=n\bar H$ exactly.
+- **Heritable share** (silenced entries in clades ≥ 2 cells, the part a relatedness statistic can
+  see): $\bar H_{\ge2}/\bar H\to1-\frac1n\sum_c[1-W_\zeta(t^0_{e(c)})]$ — one minus the mean share of a
+  cell's hazard spent on its own terminal branch. Fixtures at $\bar H$=0.25 (validation tree mix): 75%
+  constant, 86% early, 31% late. ⇒ **quote $\bar H$ with $\zeta_0$ and the heritable share, never alone.**
+- **Composed:** $P(Y=1)=(1-\pi)(1-\bar H)(1-e^{-\mu_z})$; the three causes are independent factors.
+
+## S6.3 ⚠ Silencing and depth-0 censoring are one object, mirrored — DERIVED, half verified
+
+Censoring = the *not-yet-hit* state of a first-event process (first edit), §S5.3; silencing = the
+*hit* state. Since $\mathrm{Cov}(H,H')=\mathrm{Cov}(1-H,1-H')$ the pair covariance is the same
+function $e^{-r(2-w)}-e^{-2r}$ with $(\Gamma_T,W_\zeta)$ for $(\mu_z,W)$. At a matched missing fraction
+$m_0$ (constant hazards):
+$\mathrm{Corr}_{\rm cens}(w)=m_0(m_0^{-w}-1)/(1-m_0)$ vs
+$\mathrm{Corr}_{\rm sil}(w)=(1-m_0)((1-m_0)^{-w}-1)/m_0$ — rare censoring is convex in split time
+(only very recent relatives), rare silencing about linear. Illustration only: $m_0=0.1$, $w=0.5$
+gives 0.24 vs 0.49. ⇒ candidate discriminators for the negative control: variogram convexity
+(⚠ a late $\zeta_0$ also makes silencing convex) and the depth of observed relatives on the same tape.
+Both halves of the covariance are now verified separately (§S5.3 censoring; `23` G2 silencing); the
+matched-$m_0$ comparison itself has not been run. No recorded number moves.
+
+## S6.4 What rung 2 does NOT represent
+
+Partial loss (Mouse3 partial fraction 29.9% by the rebuilt detector); the *trans* limb (symbol
+removal); per-division silencing; tape-to-tape propensity (⚠ unknowable from Park as it stands:
+Fig 3b's low recovery is read as integration expression, which fits both "prone to silencing" and
+"already silenced in the shared founder line", and a naive per-tape event count is biased because a
+high-baseline-missing tape gives a loss less contrast); silencing shared across clones of one line.

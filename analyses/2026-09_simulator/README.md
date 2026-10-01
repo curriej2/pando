@@ -1,5 +1,60 @@
 # simulator — findings
 
+## ⭐ Session 21 (2026-10-01) — dropout rung 2: heritable silencing as complete Dollo loss, built and validated
+
+Approved by Justin ("PROPOSAL (2026-10-01, rev. 1)", CLAUDE.md): the knob is the **target silenced
+fraction $\bar H$** (expected share of tip × tape entries silenced at harvest, the true state before
+mask, censoring and filters), solved in closed form as $\Gamma_T=-\ln(1-\bar H)$; silencing **per unit
+time** with its timing set by a piecewise-constant $\zeta_0(t)$; **no pre-founder silencing** (one tree =
+one clone); **the same hazard on every tape** (not knowable from Park). Theory `notes/sciphy_notes.md`
+**§S6**. `src/22_silencing.py` (generator: one Exp(1) per branch × tape from its own stream, Dollo OR
+down the tree, visible events, `observe` = $(1-X)(1-H)\mathbb 1[D\ge1]$; `17` untouched, its
+`export_arm` takes the rung-2 $Y$ unchanged) and `src/23_validate_silencing.py` (reuses `18`'s `Acc`
+and `split_pairs`, so the scoring is rung 1's).
+
+**Validation (200 trees, $n$=210, $k$=30; fixtures OFF / CONST / EARLY / LATE at $\bar H$=0.25 /
+COMPOSED = rung-1 SLOW + CONST; pre-fixed rule PASS = worst |z| ≤ 3 and 0 hard violations).**
+- Smoke run, 20 trees (not a verdict): 6 cells > 3, worst G1 EARLY 6.61; every hard assertion held.
+  Means on target (pooled over tapes −0.0099 / +0.0092 vs a tree-to-tree se ≈ 0.009); the per-tape z
+  spread tracked how heavy-tailed the per-tree silenced fraction is (SD 1.74 EARLY, 0.95 LATE). Read
+  as an uncalibrated t at 20 trees — the Session-18 situation — and the full run was launched with
+  **no change to checks or scoring**.
+- Seed 1102026 (job 15849181): 172 cells, **one trip** (G1 CONST tape 9, |z| 3.66; 0.46 expected),
+  0 hard violations ⇒ **RERUN by rule**. No sign pattern (17/30 tapes negative, mean z −0.14). Kept as
+  `validate_silencing_seed1102026.json`.
+- **Seed 3102026 (job 15849759): PASS — 172 verdict cells (3 excluded for too few expected events),
+  worst |z| 2.79, none > 3, 0 hard violations in 16 assertion families (~4×10⁷ comparisons),
+  split-null SD 1.04.** `validate_silencing.json` = the PASS.
+
+| check | what it tests | worst |z| (PASS seed) |
+|---|---|---|
+| G1 | silenced fraction per tape = $\bar H$ (tests the solve; tree-blind) | 2.79 |
+| G2 | relatives both silenced vs $1-2(1-\bar H)+(1-\bar H)^{2-W_\zeta(t_x)}$, pooled | 1.37 |
+| G3 | visible events by clade size vs $k\sum_e(1-\bar H)^{W_\zeta(t_0)}[1-(1-\bar H)^{\Delta W_\zeta}]$ — **where** losses land | 2.22 |
+| G4 | loss-time PIT inside its branch (tests $W_\zeta^{-1}$, incl. a zero-hazard window) | 1.78 |
+| G5 | composed $P(Y=1)$ and relatives' joint, three independent factors | 2.34 |
+
+Hard assertions, all 0 violations: OFF ($\bar H$=0) **bit-identical to rung 1** in $Y$ and in both
+exported caches; Dollo monotone; tip $H$ recomputed independently as "any loss on the path";
+$\sum_e n_eV_{ez}=\sum_cH_{cz}$ exactly; $t^*$ inside its branch and never in a zero-hazard window;
+**nested sets across $\bar H$ 0.02 < 0.10 < 0.25 < 0.33**; replay identical; exported `term` = ABSENT
+wherever silenced.
+⚑ Teeth (outside the verdict, both must miss): relatives' co-silencing vs independence misses by
+z = 34.0; EARLY's events scored with CONST's prediction miss by z = 45.7 — G2 and G3 can see
+inheritance and timing.
+⚠ Disclosed: at seed 1 the per-tape z SD was 1.28 (G1 CONST) and 1.35 (G5) against ≈1.0 ± 0.13; at the
+PASS seed 0.91 and 1.18. Per-tape cells rest on a few rare clone-wide events (~6–19 stem events per
+tape over 200 trees), so their t is near the edge of calibration; no bias seen at either seed.
+
+**Fixture descriptives (test cases, not science; $\bar H$=0.25, $n$=210, the validation's ρ×θ mix):**
+heritable share (expected fraction of silenced entries in clades ≥ 2 cells) **75% CONST, 86% EARLY,
+31% LATE**; visible events per tape per tree 17.6 / 9.0 / 41.8; realised $\bar H$ SD across trees
+0.036 / 0.059 / 0.008 — early silencing makes the realised fraction ~7× noisier than late, as §S6
+predicts. Validation cost 28–45 s on one core, 0.46 GB.
+
+**⇒ NEXT: the rung-2 library (§4b of the proposal) — needs Justin's separate go.** Then the
+negative control / dose–response.
+
 ## ⭐ Session 20 (2026-09-29/30) — dropout rung 1 built; validation FAILED once, follow-up says chance
 
 Approved by Justin ("PROPOSAL (2026-09-29)", CLAUDE.md, with amendments 1–7); theory in

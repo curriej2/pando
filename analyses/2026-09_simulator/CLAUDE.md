@@ -15,6 +15,7 @@ started.** ⚠ *That banner is the state on 2026-09-23 and is superseded below: 
 built and validated 2026-09-27, illustrated as Fig S5 a–d and written up in
 `writeup/editing_layer.tex` 2026-09-28. Only DROPOUT and the state layer remain unstarted.*
 ✅ **2026-09-30: DROPOUT RUNG 1 BUILT, VALIDATED (PASS after a disclosed FAIL and a scoring amendment), LIBRARY BUILT** (27,000 datasets, 0 violations) — README "Session 20"; theory `notes/sciphy_notes.md` §S5. Rung 2 and the state layer remain.
+✅ **2026-10-01: RUNG 2 BUILT AND VALIDATED** (heritable silencing, complete Dollo loss; knob = target silenced fraction $\bar H$, timing $\zeta_0$) — `src/22`/`23`, PASS at the re-run seed (README "Session 21", theory §S6). Rung-2 library specified, **awaits Justin's go**.
 README is the findings record; this file's design sections below are the 2026-09-17
 design and are partly superseded (the BDS-density route was dropped 2026-09-20 in favour of forward
 simulation + rejection — see README).
@@ -183,6 +184,442 @@ $1.36/\sqrt n=0.0077$, so 0.00800 sits fractionally above it — but the four ti
 dependent, so that $n$ is not the effective sample size; against 7,867 *trees* the critical value is
 0.0153 and 0.008 is comfortably inside. The five deviations also run $-,-,+,+,+$, a mild sign pattern
 that is either noise across correlated quantiles or a small systematic bias.
+
+## PROPOSAL (2026-10-01, rev. 1) — dropout rung 2: heritable silencing as complete Dollo loss, at a target silenced fraction. ✅ APPROVED 2026-10-01, BUILT, VALIDATED (PASS)
+
+**Outcome (README "Session 21"):** `src/22` + `src/23`. Seed 1102026 one trip (G1 CONST 3.66) ⇒ re-run by rule; **seed 3102026 PASS — 172 cells, worst |z| 2.79, 0 hard violations; OFF bit-identical to rung 1; sets nested across $\bar H$.** A 20-tree smoke run tripped 6 cells (t uncalibrated at 20 trees; disclosed), checks unchanged. The library (§4b) awaits Justin's separate go. The text below is the proposal as approved.
+
+**Revision 1 (Justin, 2026-10-01), replacing the first draft:**
+1. **The knob is the target silenced fraction $\bar H$**, and the rate is solved from it.
+2. **Silencing happens in time**, per unit time, and its timing is set by a shape $\zeta_0(t)$.
+3. **There is no pre-founder silencing.** One tree is one clone, and tapes are intact at its
+   founder.
+4. **There is no tape-to-tape difference in propensity.** It is not known from Park (§3).
+
+**What rung 2 is.** A tape silenced in a cell is unreadable in **every** descendant of that cell.
+It never returns, and no descendant escapes ("complete" Dollo loss, $\hat\pi\equiv1$).
+
+**Deliverables.**
+- `src/22_silencing.py`: the loss generator, plus a three-factor `observe()` hooked into `17`'s
+  export.
+- `src/23_validate_silencing.py`: its validation.
+- **Only after a PASS and Justin's separate go:** the rung-2 library (`src/24`/`25`, §4b).
+
+No scientific run is included. No Park quantity enters beyond what `14`/`17` already read.
+
+### 1. The question
+
+Does a heritable-loss layer set by one number, the silenced fraction $\bar H$, do three things?
+- Reproduce its closed forms (§2.6).
+- Compose with rung 1 so that **$\bar H=0$ is rung 1 bit for bit**.
+- Grow the silenced set **nested** as $\bar H$ rises, so differences between grid points are not
+  Monte Carlo noise.
+
+**What depends on it.** No statistic in this project has been run on data with silencing at a
+**known** level. Rung 2 supplies that, and three things need it:
+- a dose–response for `73`/`74`/`77` and the event caller (purpose II);
+- the price silencing exacts on reconstruction (purpose I);
+- separating silencing from depth-0 censoring, the open confound of §S5.3.
+
+A failed check is a bug, not a finding. ⚑ One result of the derivation is a design point rather
+than a code check: §2.7, silencing and censoring are the same object, mirrored.
+
+### 2. The math, with what each equation says
+
+**2.0 Symbols.**
+
+⚠ Three letters are avoided because they are taken:
+- $\gamma$ is park-compatibility's $\gamma_{C,z}$, which `77` fits on simulated data.
+- $G$ and $\omega_g$ are §S4.9.2's epochs.
+- $h$ is the BDS $1-p_0$.
+
+Tree and tape:
+- $t\in[0,1]$ is calendar time. The clone founder is at $t=0$ and every sampled tip is at $t=1$
+  (harvest).
+- Branch $e$ is the edge **into** node $e$ and spans $[t_e^0,t_e^1]$. The root's edge is the stem
+  $[0,t_{\rm root}]$, following `14`.
+- ${\rm pa}(e)$ is the parent branch, and $n_e$ is the number of tips below $e$ (its clade size $m$).
+- $z=1..k$ is a tape, $c$ is a tip, and $n$ is the tip count.
+- $x$ is the last common ancestor of tips $c,c'$, and $t_x$ is its time.
+
+Inherited from earlier sections:
+- From §S4.9.1, unchanged: $\mu_z=r_z\Lambda_T$ is tape $z$'s expected edit count, and $W(t)$ is
+  the editing-shape cumulative.
+- From §S5.1, rung 1: $X_{cz}$ is the technical mask, and $\pi_{cz}=\sigma(\alpha_c+\beta_z)$ is its
+  probability.
+
+**2.1 The loss process.** Silencing strikes each tape along each lineage as a Poisson process with
+hazard
+
+$$\zeta(t)=\Gamma_T\,\zeta_0(t)\qquad[\text{silencing events}\cdot\text{tape}^{-1}\cdot\text{lineage}^{-1}\cdot\text{experiment}^{-1}],\qquad \int_0^1\zeta_0=1 .$$
+
+- $\Gamma_T$ is the expected number of silencing events per tape along one root-to-tip lineage
+  over the whole experiment. It counts events as if each could strike, though only the first
+  matters. It is solved from $\bar H$ (§2.2).
+- $\zeta_0(t)\ge0$ is dimensionless and sets **when** silencing happens. It is piecewise constant
+  on its own knots, independent of $\lambda_0$'s.
+
+*In words:* $\Gamma_T$ sets how much silencing there is; $\zeta_0$ sets when. They are separate
+knobs, exactly as $\Lambda_T$ and $\lambda_0$ are for editing.
+Every tape has the same hazard, so the rate needs no tape subscript.
+
+The integrated hazard, a lineage's accumulated silencing exposure, is
+
+$$\Gamma(t)=\Gamma_T\,W_\zeta(t),\qquad W_\zeta(t)=\int_0^t\zeta_0 ,\qquad \Gamma_e=\Gamma(t_e^1)-\Gamma(t_e^0).$$
+
+- $W_\zeta(t)$ is the share of the experiment's silencing hazard spent by time $t$. $W_\zeta(0)=0$
+  and $W_\zeta(1)=1$.
+- $\Gamma_e$ is the hazard branch $e$ carries.
+
+*In words:* this is the silencing analogue of $\Lambda$-time. The tree only cuts one clock into
+branches.
+
+**2.2 The knob: $\bar H$, and the solve.**
+
+**Definition.** $\bar H$ is the expected fraction of tip × tape entries that are silenced at
+harvest. It is the **true** state $H$ at $t=1$, measured:
+- before the technical mask,
+- before depth-0 censoring,
+- before the cell filters.
+
+Every tip's root-to-tip path carries exposure $\Gamma(1)=\Gamma_T$, however the tree branches. So a
+tip's tape survives iff no event struck its path:
+
+$$\bar H=P(H_{cz}=1)=1-e^{-\Gamma_T}\qquad\Longrightarrow\qquad \Gamma_T=-\ln(1-\bar H).$$
+
+*In words:*
+- The solve is closed form, with no root-finding, and it **does not depend on the tree**. Every
+  tree in a dataset gets the same $\Gamma_T$.
+- It also does not depend on $\zeta_0$: moving silencing earlier or later changes *which* cells
+  share a loss, not how many entries are lost.
+
+| target $\bar H$ (fraction of entries silenced) | 0.02 | 0.05 | 0.10 | 0.20 | 0.33 |
+|---|---|---|---|---|---|
+| solved $\Gamma_T$ (events per tape per lineage) | 0.0202 | 0.0513 | 0.1054 | 0.2231 | 0.4005 |
+
+**⚠ Expected, not realised.** Silencing is shared by relatives, so the realised fraction in one
+tree fluctuates around $\bar H$. For tape $z$, write $\hat H_z=\frac1n\sum_cH_{cz}$:
+
+$$\mathrm{Var}(\hat H_z)=\frac1{n^2}\sum_{c,c'}\mathrm{Cov}(H_c,H_{c'}),\qquad
+\mathrm{Cov}(H_c,H_{c'})=e^{-2\Gamma_T}\big(e^{\Gamma_TW_\zeta(t_x)}-1\big),\quad t_x=1\text{ when }c=c'.$$
+
+*In words:*
+- Early silencing hits big clades, so one event moves many entries at once, and the realised
+  fraction is noisier.
+- At the extreme, a loss on the stem silences tape $z$ in the whole clone.
+
+⇒ **Solve on the expectation and report the realised value.** Forcing the realised fraction to hit
+$\bar H$ exactly in every tree would condition the Poisson process on its outcome. That changes the
+event-size law, which is what the downstream statistics read.
+
+**What $\bar H$ adds to observed missingness.** It is not added on top of observed missingness.
+The three causes overlap:
+
+$$P(O_{cz}=1)=1-(1-\pi_{cz})(1-\bar H)(1-e^{-\mu_z}).$$
+
+**2.3 The sampler: route (ii) with one slot.** Per (branch, tape), draw $E_{e,z}\sim{\rm Exp}(1)$.
+Then
+
+$$L_{e,z}=\mathbb 1[E_{e,z}\le\Gamma_e],\qquad
+t^*_{e,z}=W_\zeta^{-1}\!\Big(W_\zeta(t_e^0)+\frac{E_{e,z}}{\Gamma_T}\Big)\quad\text{if }L_{e,z}=1 .$$
+
+Here $L_{e,z}=1$ means a silencing event fires on branch $e$, and $t^*_{e,z}$ is the time of the
+first one.
+
+*Why exact.* The first event on a branch arrives an ${\rm Exp}(1)$ amount of hazard after the
+branch starts, because the process is memoryless. Disjoint branches are independent. Absorption
+means later events change nothing.
+
+$W_\zeta^{-1}$ is §S4.9.2's two-step inverse (a `searchsorted` on the knots, then a line), so a
+zero-hazard window needs no special case.
+
+*Nesting.* For fixed draws, $L_{e,z}$ is monotone in $\Gamma_T$, and $\Gamma_T$ is monotone in
+$\bar H$. So the silenced set at a lower $\bar H$ is a **subset** of the set at a higher one, and the
+sweep walks along one path. ⚠ Sets are nested across $\bar H$ at a fixed $\zeta_0$, **not** across
+shapes. Changing $\zeta_0$ moves hazard between branches.
+
+**2.4 Inheritance: the Dollo rule.**
+
+$$H_{e,z}=H_{{\rm pa}(e),z}\vee L_{e,z},\qquad H_{\text{above the stem},z}=0 .$$
+
+*In words:*
+- A lineage has lost the tape if it was lost on its own branch or anywhere above it.
+- $H$ can only switch on going down the tree. That one-way property **is** the Dollo character,
+  and it is a hard assertion.
+- Tapes are intact at the founder (revision 3). A **clone-wide** loss can still happen: it is a
+  loss on the stem, which has probability $1-e^{-\Gamma_TW_\zeta(t_{\rm root})}$.
+- Trees are independent. No silencing is shared between clones, even when they share a rung-1
+  panel.
+
+**2.5 Observation: three independent factors.**
+
+$$Y_{cz}=(1-X_{cz})\,(1-H_{cz})\,\mathbb 1[D_{cz}\ge1],\qquad O_{cz}=1-Y_{cz}.$$
+
+*In words:* a tape is read only if it was technically captured, **and** not silenced, **and** edited
+at least once.
+- Each cause has its own random-number stream, and the truth triple $(X,H,D)$ is stored, so every
+  simulated missing entry knows why it is missing.
+- **Editing is left untouched.** $D$ comes from `14` regardless of $H$. Under complete loss with no
+  reactivation and no *trans* limb, post-silencing edits are never observed. So the choice is
+  unobservable, and it keeps the rung-1 library's layers A–C reusable.
+- `export_arm` already writes $Y=0$ as `ABSENT`.
+
+**2.6 The closed forms it is tested against.** Each is written in the knob $\bar H$ as well, since
+$e^{-\Gamma_T}=1-\bar H$.
+
+**G1: marginal, tree-blind.**
+
+$$P(H_{cz}=1)=\bar H\quad\text{for every tape and every tip.}$$
+
+This is §2.2, and it tests the solve. Like check A, it cannot see *which* lineage a loss landed on.
+
+**G2: pairs.** Two tips both keep the tape iff three independent pieces carry no event: the shared
+path (exposure $\Gamma_TW_\zeta(t_x)$) and both private paths ($\Gamma_T[1-W_\zeta(t_x)]$ each). So
+
+$$P(H_c{=}0,H_{c'}{=}0\mid t_x)=(1-\bar H)^{\,2-W_\zeta(t_x)},\qquad
+\mathrm{Cov}(H_c,H_{c'}\mid t_x)=(1-\bar H)^{2-W_\zeta(t_x)}-(1-\bar H)^2,$$
+
+$$\mathrm{Corr}(H_c,H_{c'}\mid t_x)=\frac{(1-\bar H)\big[(1-\bar H)^{-W_\zeta(t_x)}-1\big]}{\bar H}\;\xrightarrow{\ \bar H\to0\ }\;W_\zeta(t_x).$$
+
+*In words:*
+- ⭐ When silencing is rare, **the correlation between two cells' silencing equals the share of the
+  silencing hazard they lived through together.**
+- The no-effect value is 0, which is a pair split at the founder before any hazard was spent.
+- The correlation rises with how late the pair split. Under a constant $\zeta_0$ it is close to
+  linear in split time.
+- Under a late-heavy $\zeta_0$ most pairs share almost nothing, and only very recent relatives
+  co-lose.
+
+**G3: where losses land.** This is the check that sees lineage assignment. Branch $e$ tops a
+*visible* event (the first loss on its lineage) iff nothing fired above it and something fired on it:
+
+$$P(V_{e,z}=1)=e^{-\Gamma(t_e^0)}\big(1-e^{-\Gamma_e}\big)=(1-\bar H)^{W_\zeta(t_e^0)}\Big[1-(1-\bar H)^{W_\zeta(t_e^1)-W_\zeta(t_e^0)}\Big],$$
+
+$$\mathbb E[\mathcal N_m]=k\sum_{e:\,n_e=m}P(V_{e,z}=1).$$
+
+$\mathcal N_m$ is the number of visible events of clade size $m$ in the tree, summed over tapes, in
+events.
+
+*In words:* an event of size $m$ needs a branch above $m$ tips, and that branch must still carry the
+tape when struck. At small $\bar H$, events land on branches in proportion to the share of hazard
+each branch carries.
+
+*Consistency:* $\sum_en_eP(V_{e,z})=n\bar H$, which is G1. Each silenced tip's first loss sits on
+exactly one branch of its path.
+
+**The heritable share**, the quantity to quote alongside $\bar H$:
+
+$$\frac{\bar H_{\ge2}}{\bar H}=\frac{\sum_{e:\,n_e\ge2}n_e\,P(V_{e,z}=1)}{n\bar H}\;\xrightarrow{\ \bar H\to0\ }\;1-\frac1n\sum_c\big[1-W_\zeta(t^0_{e(c)})\big].$$
+
+Here $e(c)$ is tip $c$'s terminal branch.
+*In words:* this is the fraction of silenced entries that sit in a clade of at least 2 cells, which
+is the only silencing a relatedness-based statistic can ever see. At small $\bar H$ it is one minus
+the average share of a cell's silencing hazard spent on its own terminal branch.
+
+**G4: loss time inside a branch.** Given $L_{e,z}=1$,
+
+$$\frac{1-e^{-\Gamma_T[W_\zeta(t^*)-W_\zeta(t_e^0)]}}{1-e^{-\Gamma_e}}\sim{\rm U}(0,1).$$
+
+*In words:* this is the probability-integral transform of the first-event time, truncated to the
+branch. It tests $W_\zeta^{-1}$ under a shaped $\zeta_0$. The stored $t^*$ is the ground truth for
+any later "when was it silenced" estimate.
+
+**G5: the composed view.** $X$, $H$ and $D$ are independent given the panel and the tree, so
+
+$$P(Y_{cz}=1)=(1-\pi_{cz})(1-\bar H)(1-e^{-\mu_z}),$$
+
+$$P(Y_c{=}1,Y_{c'}{=}1\mid t_x)=(1-\pi_{cz})(1-\pi_{c'z})\cdot(1-\bar H)^{2-W_\zeta(t_x)}\cdot\big(1-2e^{-\mu_z}+e^{-\mu_z(2-W(t_x))}\big).$$
+
+*In words:*
+- The middle factor is G2.
+- The last factor is §S5.3's both-edited probability.
+- The product says the three causes do not interact, which is what makes the stored truth an exact
+  decomposition of the missingness.
+
+**2.7 ⚠ Silencing and depth-0 censoring are the same object, mirrored. Derived, not verified.**
+
+*The parallel.*
+- **Censoring.** Missing is the *not-yet-hit* state of a first-event process (the first edit). Its
+  pair covariance is $e^{-\mu(2-W)}-e^{-2\mu}$ (§S5.3, verified 2026-09-30).
+- **Silencing.** Missing is the *hit* state. Since $\mathrm{Cov}(H,H')=\mathrm{Cov}(1-H,1-H')$, G2 is
+  the **same function** $e^{-r(2-w)}-e^{-2r}$, with $(r,w)=(\Gamma_T,W_\zeta)$ in place of $(\mu_z,W)$.
+
+*Where they differ.* At a matched *rate* the pair laws coincide. At a matched missing fraction
+$m_0$, the comparison data offer, they come apart. Both have variance $m_0(1-m_0)$. With both
+hazards constant:
+
+$$\mathrm{Corr}_{\rm cens}(w)=\frac{m_0(m_0^{-w}-1)}{1-m_0},\qquad\mathrm{Corr}_{\rm sil}(w)=\frac{(1-m_0)\big((1-m_0)^{-w}-1\big)}{m_0}.$$
+
+- *Hand arithmetic, illustration only:* at $m_0=0.1$ and $w=0.5$, the correlation is 0.24 for
+  censoring and 0.49 for silencing.
+- *In words:* rare censoring shows up only between very recently split relatives (convex in $w$).
+  Rare silencing rises roughly linearly.
+
+⇒ Two features are candidate discriminators for the negative control:
+- the variogram's **convexity**, already a named calibration target (0-PREV2);
+- the depth of a cell's observed relatives on the same tape, which is shallow under censoring and
+  ordinary under silencing.
+
+⚠ Caveat: a late-heavy $\zeta_0$ also makes silencing convex. So convexity separates them only
+together with a stated $\zeta_0$, which the rung-2 library supplies.
+
+**No recorded number moves.** This bears on how the negative control is designed. G2 verifies the
+silencing half.
+
+### 3. What could make it wrong
+
+**Defeated.**
+- Every rate is synthetic, so the circularity (relatedness read from the edits whose readability
+  dropout controls) cannot reach the build.
+- G1–G5 are closed forms, not self-comparisons.
+- The OFF fixture checks that the layer separates from rung 1.
+
+**NOT defeated: model choices, and §H.6.12 applies.**
+- ⚠ **Complete loss only.** The rebuilt detector put Mouse3's partial fraction at **29.9%** (0-NEW).
+  That superseded 8.9% and withdrew "graded losses are clade coarseness". So simulated data are
+  **cleaner than Park**, and $\hat\pi$ reads 1 by construction. Partial loss is a later switch.
+- ⚠ **No *trans* limb.** A silenced integration's pegRNA symbol keeps being written on other tapes.
+  That limb is untested on Park (thread 0b). ⇒ rung 2 cannot validate the symbol-depletion test.
+- ⚠ **Silencing per unit time** (revision 2). If silencing actually happens at replication, the
+  per-time hazard along a reconstructed branch is the lineage's division rate, which is not
+  constant. A shaped $\zeta_0$ approximates that but does not represent it.
+- ⚠ **Identical propensity on every tape** (revision 4). Park cannot tell us otherwise (see the
+  answer below the proposal). If propensity really varies, the simulated losses are spread too
+  evenly across tapes.
+- ⚠ **One tree, one clone, no shared ancestry** (revision 3). A Park-shaped multi-clone arm descends
+  from one engineered line, and Park's clone-wide layer is read as pre-bottleneck silencing. That
+  arm would need the pre-founder term back. This build cannot make a tape that is lost in several
+  clones for a shared reason.
+- ⚠ **The tree sets where events land.** Long terminal branches at low $\rho$ (Fig S3) push most
+  losses into **singletons**, which look exactly like technical dropout. ⇒ always quote a rung-2
+  setting with **$\bar H$, $\zeta_0$ and the heritable share $\bar H_{\ge2}/\bar H$**, never $\bar H$
+  alone.
+- ⚠ **Why sweep instead of fit.** Park's catalogue is detection-limited: zero events in clones under
+  20 cells, counts that depend on the threshold, and Pre-TX possibly inflated by censoring (§S5.3).
+  - Its numbers are 2.46–20.07% of missing entries at the budget criterion, plus a clone-wide layer
+    of 7–33% of missing at floor 10.
+  - A share of missing is at most a share of entries, so a grid reaching $\bar H=0.33$ covers them.
+  - This is orientation, **not calibration**. Calibration means pushing rung 2 through the same
+    caller, which is a later proposal.
+- ⚠ **QC selection.** Silencing lowers $R_c$, so $R_{\min}$ preferentially drops heavily silenced
+  cells. G1–G5 are scored **before** the filters, as in rung 1.
+
+**Abandon rather than patch if:**
+- **G1 and G4 pass but G2 or G3 fail in a consistent direction.** The per-branch hazard and the path
+  total are then right, so the inheritance and visibility rules of §2.4 are wrong. Re-derive before
+  writing more code.
+- **OFF is not bit-identical to rung 1.** The random-number streams then leak between layers, and the
+  nesting promise fails with them. Redesign the stream split first.
+
+### 4. Output: the mocks, and the reading rules
+
+**4a. `results/validate_silencing.json`.**
+
+Set-up:
+- $n=210$, $k=30$, 200 library trees (Session 18's $\rho\times\theta$ spread).
+- The se is taken across **trees**.
+
+Scoring:
+- G2 uses one tip from each side of every internal node, per tape. It never uses random tip pairs
+  (§S4.9.5 E).
+- G2 counts through **one pooled cell per fixture**, with its W-bins secondary. This is the amended
+  rung-1 scoring.
+- G5 counts only in COMPOSED, where it does not coincide with G1/G2.
+
+⚠ **Placeholder numbers.**
+
+> *Reading rule.* The no-effect value is $|z|=0$; larger means further from the closed form.
+> - **PASS** = worst $|z|\le3.0$ over every verdict cell AND zero hard violations.
+> - About 175 cells, so one $|z|>3$ is expected about 0.5 times by chance. A single trip is
+>   re-run at a new seed. Two trips, or a sign pattern within one check, is a defect.
+> - **Decisive failure:** any Dollo-monotonicity violation, OFF not bit-identical to rung 1, or G3
+>   failing while G1 passes (the right amount of silencing in the wrong place).
+
+```
+  OFF       Hbar 0, on rung-1 BASE                                    (separability only)
+  CONST     Hbar 0.25, zeta_0 constant
+  EARLY     Hbar 0.25, zeta_0 = 3 on [0,.25), 0 on [.25,.6), 0.625 on [.6,1)   (zero window; big clades)
+  LATE      Hbar 0.25, zeta_0 = 0 on [0,.7), 3.33 on [.7,1)                    (mostly singletons)
+  COMPOSED  rung-1 SLOW (Lam_T 2, pause-and-burst, pbar 0.3, CIS panel) + CONST silencing
+  check                                 compared against                                 cells  worst|z|
+  G1  P(H=1) per tape                    Hbar                                3 fixtures     90     2.1
+  G2  Cov(H_c,H_c') pooled (+10 W-bins)  (1-Hbar)^{2-W_zeta} - (1-Hbar)^2     3 fixtures      3     1.4
+  G3  visible events by clade size       sum_e (1-Hbar)^{W0}[1-(1-Hbar)^{dW}]  7 bins x 3    21     2.3
+  G4  loss-time PIT, deciles             Uniform(0,1)                        10 x 3         30     2.0
+  G5  P(Y=1) per tape + pooled pair      (1-pi)(1-Hbar)(1-e^{-mu}) ...       COMPOSED       31     1.8
+  H   Dollo monotone; t* inside its branch; Y = (1-X)(1-H)1[D>=1]; OFF == rung 1;
+      nested sets across Hbar; replay bit-identical                                    0 of ~3e7
+  teeth (outside verdict): G2 vs independence (Cov = 0) on CONST, z ~ 20;
+                           G3 on EARLY scored with CONST's prediction, z ~ 15 -- both should MISS
+```
+
+G3's size bins are 1 · 2 · 3–4 · 5–16 · 17–64 · 65–209 · 210 (the whole clone, i.e. the stem).
+
+**Cost.** One ${\rm Exp}(1)$ per (branch, tape) gives $(2n-1)k=1.3\times10^4$ draws per tree at
+$n=210$. The validation runs in minutes ⇒ `scripts/submit.sh --part cpu --mem 4G --time 00:30:00
+--cpus 1`. Only the JSON is committed.
+
+**4b. The rung-2 library: specified here, generated only after PASS and Justin's go.**
+
+*Layers.*
+- Layers A–C of the rung-1 library are reused unchanged: 30 tree cells, $\Lambda_T$, panels,
+  replicates, and the 30 masks composed at read time.
+- New layer D crosses two axes, giving 18 settings:
+  - $\bar H\in\{0,0.02,0.05,0.10,0.20,0.33\}$;
+  - $\zeta_0\in\{$constant; early $=2$ on $[0,0.4)$ and $\tfrac13$ after; late $=\tfrac13$ on
+    $[0,0.6)$ and $2$ after$\}$.
+- *Early* puts 80% of the hazard in the first 40% of the experiment, and *late* puts 80% in the last
+  40%.
+
+*Storage.* Nesting means **one record per tree per shape serves every $\bar H$**: every (branch,
+tape, $E$) with $E\le\Gamma_e$ at $\bar H=0.33$. A lower $\bar H$ is a filter on that record. This is
+kilobytes per tree, and composed matrices are never stored.
+
+*Manifest.* A sanity check only; no conclusions are drawn from it.
+
+> *Reading rule.*
+> - **Realised $\bar H$** is the share of tip × tape entries silenced. It should match the target to
+>   within finite-tree noise, which is larger under *early*.
+> - **Heritable share $\bar H_{\ge2}/\bar H$** is the fraction of silenced entries in a visible event
+>   of at least 2 cells, the part any relatedness-based statistic could ever see. Its floor is 0,
+>   where all silencing is singletons and looks like technical dropout. Higher means more of the
+>   silencing is detectable.
+> - **Placeholder numbers.**
+
+```
+  n = 210, theta 0.3, target Hbar 0.10
+  rho    zeta_0     Hbar realised (%)   heritable share (%)   visible events / tape / tree
+  0.002  constant         10.0                 12                       20
+  0.002  early            10.1                 45                        6
+  0.002  late              9.9                  3                       21
+  0.25   constant         10.0                 48                       11
+  0.25   early            10.2                 70                        4
+  0.25   late             10.0                 20                       17
+```
+
+### Decisions this proposal locks in
+
+| decision | locked in | why |
+|---|---|---|
+| knob | **target $\bar H$** (expected silenced fraction of tip × tape entries at harvest), $\Gamma_T=-\ln(1-\bar H)$ | Justin, rev. 1; closed form and tree-independent |
+| solve on | **the expectation**, realised value reported | forcing the realised value would condition the process and distort event sizes |
+| timing | **per unit time, shape $\zeta_0(t)$** swept as its own axis | Justin, rev. 1 |
+| pre-founder silencing | **none**; one tree = one clone, intact at the founder | Justin, rev. 1; clone-wide loss still arises on the stem |
+| tape heterogeneity | **none**; every tape has the same hazard | not known from Park (see below) |
+| editing after loss | untouched | unobservable under complete loss with no *trans* limb; keeps layers A–C reusable |
+| partial loss, *trans* limb | **not built** | §3; each is its own later switch |
+| RNG | a separate stream for the loss layer; one $E$ per (branch, tape) | separability (OFF == rung 1) and nesting across $\bar H$ |
+
+### 5. What comes next (NOT in this proposal)
+
+1. The rung-1 negative control (already next), extended to a **dose–response**: rung-2 data through
+   `73`/`74`/`77` and the event caller across $\bar H\times\zeta_0$.
+2. Do those statistics separate silencing from censoring (§2.7)?
+3. Calibrate $\bar H$ and $\zeta_0$ by matching the caller's output on simulated vs Park data.
+4. If wanted, a Park probe of per-tape silencing propensity, with its own power-controlled design
+   (see below).
+
+---
 
 ## PROPOSAL (2026-09-29) — the dropout layer, rung 1 (technical dropout). ✅ APPROVED 2026-09-30, AS AMENDED
 

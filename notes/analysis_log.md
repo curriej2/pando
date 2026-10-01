@@ -1769,3 +1769,20 @@ Library array 15683089 **complete**: 30/30 tasks, 180 files, 27,000 datasets, 1.
 $n$=25 → 0.0005 at 1,976). `73`/`74`/`77` run on an exported simulated arm via `--resdir`/`--thr`
 (smoke only, no numbers kept; ⚠ caches must live on `/data1`, `/tmp` is login-node-local).
 Theory written up as `notes/sciphy_notes.md` **§S5**. Committed `348d0ce`.
+
+## 2026-10-01 — session 21: dropout rung 2 (heritable silencing) proposed, revised, built, validated
+
+Proposal written (all math with intuitions), then revised by Justin: knob = **target silenced
+fraction $\bar H$** (solved $\Gamma_T=-\ln(1-\bar H)$, tree- and shape-independent); per-unit-time
+hazard with a timing shape $\zeta_0$; no pre-founder silencing; same hazard on every tape (Justin asked
+whether poorly read tapes are more silencing-prone — **not knowable from the record**: Fig 3b's low
+recovery fits both readings, the README lists $\beta_z$'s content as Open, and a naive per-tape event
+count is biased by power). Approved; `src/22_silencing.py`, `src/23_validate_silencing.py`; theory
+`notes/sciphy_notes.md` **§S6**.
+Validation: 20-tree smoke 6 trips (worst G1 EARLY 6.61; means on target, z spread tracking the
+heavy tail — uncalibrated t at 20 trees, as in session 18; checks unchanged). 200 trees seed 1102026:
+one trip (G1 CONST 3.66) ⇒ re-run by rule. **Seed 3102026: PASS**, 172 cells, worst |z| 2.79, 0 hard
+violations (OFF bit-identical to rung 1; Dollo monotone; nesting across $\bar H$). Teeth: independence
+misses by z 34, CONST's prediction on EARLY by z 46. ⚠ Per-tape z SD 1.28/1.35 at seed 1, 0.91/1.18 at
+seed 3 — per-tape cells sit near the edge of calibration (few clone-wide events). ⚑ Derived: silencing
+and depth-0 censoring are the same first-event object mirrored (§S6.3). Library awaits Justin's go.
