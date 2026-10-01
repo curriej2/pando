@@ -111,7 +111,7 @@ already back at $p=1/1001$ in 5/5 arms. ⚠ Two orthogonal follow-ups are specif
 `--lam 4` re-run with a size-stratified null (the floor, not $B$, is what hides weaker events), and
 the **symbol-depletion test** of row A9's untested *trans* limb. |
 
-| `2026-09_simulator` | Build the forward simulator (birth–death tree → sequential editing → dropout) for the homoplasy null and the design sweep. | **Tree layer BUILT, validated, costed; library COMPLETE (1,870 cells, 37,380 trees, zero faults).** Editing-layer theory in §S4/§S4.9. ⭐⭐ **Switch detectability MEASURED (2026-09-24, Fig S4): at $k=30$ a lineage-specific switch is callable only if long ($\ge$1–2 edits/tape), strong ($\ge$15×) and early (first ~60% of $T$), in clades of 2–5 cells; branch-level timing costs little ⇒ tree side not the bottleneck.** Figs S1 (method), S3 (pull of the present), S4 and **S5 a–d (editing layer illustrated, 2026-09-28; the collision-vs-signal-share curve deferred to the homoplasy test)** built; LaTeX write-up in `writeup/` covers **both layers** (`simulator_figures.tex` + `editing_layer.tex`, 24 pp). ⭐ $L(t)$ = independent records of time $t$ — tree shape sets which timepoints are recorded well, survivorship sets whose history is. ✅ **Editing layer BUILT and VALIDATED (2026-09-27, `src/14`/`src/15`): PASS, 219 closed-form cells, worst $|z|=2.67$, 0 of $1.9\times10^8$ hard-assertion violations; tapes empty at the clone founder ($\Lambda_{\rm pre}=0$).** Dropout and state layers not started. ⚠ Editing and dropout must be fitted jointly, which is why no Park-calibrated run has been made. |
+| `2026-09_simulator` | Build the forward simulator (birth–death tree → sequential editing → dropout) for the homoplasy null and the design sweep. | **Tree layer BUILT, validated, costed; library COMPLETE (1,870 cells, 37,380 trees, zero faults).** Editing-layer theory in §S4/§S4.9. ⭐⭐ **Switch detectability MEASURED (2026-09-24, Fig S4): at $k=30$ a lineage-specific switch is callable only if long ($\ge$1–2 edits/tape), strong ($\ge$15×) and early (first ~60% of $T$), in clades of 2–5 cells; branch-level timing costs little ⇒ tree side not the bottleneck.** Figs S1 (method), S3 (pull of the present), S4 and **S5 a–d (editing layer illustrated, 2026-09-28; the collision-vs-signal-share curve deferred to the homoplasy test)** built; LaTeX write-up in `writeup/` covers **both layers** (`simulator_figures.tex` + `editing_layer.tex`, 24 pp). ⭐ $L(t)$ = independent records of time $t$ — tree shape sets which timepoints are recorded well, survivorship sets whose history is. ✅ **Editing layer BUILT and VALIDATED (2026-09-27, `src/14`/`src/15`): PASS, 219 closed-form cells, worst $|z|=2.67$, 0 of $1.9\times10^8$ hard-assertion violations; tapes empty at the clone founder ($\Lambda_{\rm pre}=0$).** ✅ **Dropout rung 1 BUILT (2026-09-30, `src/17`–`21`): validation PASS (after a disclosed FAIL traced to my check set, not the generator), library of 27,000 datasets built.** ⚠⚠ Derived + verified in the model: depth-0 censoring makes observed missingness heritable — may inflate the Pre-TX silencing numbers; unmeasured on Park. State layer and rung 2 not started. ⚠ Editing and dropout must be fitted jointly, which is why no Park-calibrated run has been made. |
 
 ## Already settled — do not re-derive unless asked
 
@@ -240,6 +240,16 @@ the **symbol-depletion test** of row A9's untested *trans* limb. |
    events $\le10$). Threshold-independent claims that survive: the 118–2,522× null comparison,
    $q\le1.9\times10^{-4}$ per event, $\hat\pi$ median 1.000 vs expected 0.11–0.41. Full audit in
    README "How events are actually called".
+0-NOW. **⭐⭐ 2026-09-30 — DROPOUT RUNG 1 BUILT; LIBRARY BUILT.** `analyses/2026-09_simulator`,
+   README "Session 20"; log session 20. Technical dropout $\sigma(\alpha_c+\beta_z)$ + two-class
+   closed-locus latent (closed tapes poorly read AND slow) + depth-0 censoring + Park's filters,
+   exported in `23`/`44` cache formats. `18` FAILED by rule at seed 2 — two trips that were one
+   (F4o ≡ F4t where censoring is rare) plus a chance excess; follow-up `21` (840 trees × 5 panels,
+   pooled) **worst |z| 0.64, no defect**; re-run with Justin's amended scoring **PASS**.
+   ⚠⚠ **Depth-0 censoring alone makes observed missingness heritable** (relatives share unedited
+   tapes) — verified in the generator; may inflate Pre-TX's silencing numbers (variogram +0.26,
+   ladder +4.59, unanimity 9.77×, 2,019 events); **unmeasured on Park**.
+   **⇒ NEXT: the rung-1 negative control (censoring off vs on through `73`/`74`/`77`), own proposal.**
 0-CURRENT. **⭐⭐ 2026-09-27 — THE EDITING LAYER IS BUILT AND VALIDATED.** `analyses/2026-09_simulator`,
    README "Session 18"; `src/14_editing.py` + `src/15_validate_editing.py`; notes §S4.9 (updated);
    log session 18. Approved with **$\Lambda_{\rm pre}=0$ — tapes empty at the clone founder; Park

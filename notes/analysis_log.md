@@ -1725,3 +1725,42 @@ sets when, $r_z$ sets how one tape compares with the average.
 ⚠ `figures/figA_method.png` is left UNTRACKED: it is the output of the never-committed first draft of
 `src/10` (README Session 16 — unconnected panel 3, wrong capture rule), superseded by
 `figS1a_forward.png` and referenced by nothing.
+
+## 2026-09-29 — session 20: the dropout layer, rung 1, proposed (no compute)
+
+Justin chose **rung 1 before the state layer**. Proposal: `analyses/2026-09_simulator/CLAUDE.md`,
+"PROPOSAL (2026-09-29)" — build (`src/17_dropout.py`) and validation (`src/18`) only, all dropout
+parameters synthetic. Rung 1 = logit-additive technical missingness $\sigma(\alpha_c+\beta_z)$,
+independent of the tree given the tape; a **two-class shared-locus latent** coupling recovery to
+editing speed (the Fig 3d threshold: 15% of Mouse1 tapes, depth 3.58 vs 4.86); depth 0 folded into
+missing by `23`'s `ABSENT` rule; Park's QC and ClonalBC filters; caches written in `23`/`44`'s formats
+so `73`/`74`/`77` run on simulated data unchanged.
+
+⚠⚠ **A confound found while writing it — derived, NOT measured on Park.** Depth-0 censoring alone
+makes *observed* missingness heritable: an unedited tape is inherited, so for two tips splitting at
+$t_a$, $\mathrm{Cov}(O,O'\mid t_a)=(1-\bar p_z)^2[e^{-\mu_z(2-W(t_a))}-e^{-2\mu_z}]$, $\mu_z$ = the
+tape's total expected edits. Closed form checked by Monte Carlo on a two-tip toy ($|z|\le0.87$, 4
+settings). The session-13 note ("up to a quarter of Initial's apparent dropout may be unedited tape")
+treated censoring as a **marginal** bias for fitting; this is its **joint** consequence, and the
+disjoint tape split does not defeat it. Hand arithmetic (illustration, do not quote): sister
+covariance ≤0.004 at the mice's $\mu\approx5.5$, ≈0.035 at Initial's 2.87, more on slow tapes.
+**Bears on the Pre-TX heritable-silencing numbers** (variogram +0.2618, ladder +4.59 / $Q$ 7.1%,
+unanimity 9.77×, 2,019 events); direction = inflation only; magnitude unknown and conditional on
+$\Lambda_{\rm pre}$. Whether it moves or overturns anything is what the first run off rung 1 — the
+negative control, censoring off vs on — is for. Mice essentially unaffected except their slowest
+tapes.
+
+**Session 20, cont. (2026-09-30) — rung 1 built; validation failed by rule; follow-up says chance.**
+Approved with amendments (T3 dropped; `.npz` export; two-class latent with the AVERAGE tape's speed
+held at 1; $\bar p$ solved per panel; fixtures ≠ science grid; library gated on PASS). `src/17`–`21`.
+`18` at 200 trees: seed 1 one trip (RERUN), seed 2 two trips (**FAIL**); 0 hard violations both.
+⚠⚠ Defect in my check set, not the generator: F4o duplicates F4t where censoring is rare (z corr
+0.98–1.00), so the two trips were one; one unexplained excess (F4o SLOW 10/10 bins +). Follow-up
+`21` (approved): pooled cells, new F4d (both relatives unedited vs $e^{-\mu(2-W)}$), 840 trees × 5
+panels — **worst pooled |z| 0.64, NO DEFECT**; seed 2's panel replayed: z +1.29, excess 3× smaller ⇒
+chance. ⭐ The inherited-censoring covariance is now verified in the generator at pooled precision
+(SLOW F4d −0.00016 ± 0.00024 against 0.0986). NEXT: `18` at a third seed with F4o counted only in
+SLOW/CIS — Justin's call — then the library.
+`18` re-run at seed 2102026 with Justin's amended scoring (pooled F4 cells; F4o only in SLOW/CIS;
+validation code only): **PASS**, 216 cells, worst |z| 2.98, 0 hard violations; one secondary F4t
+CIS bin at 3.10 disclosed. Library array 15683089 launched.

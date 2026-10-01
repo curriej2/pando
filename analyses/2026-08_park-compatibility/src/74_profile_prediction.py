@@ -51,6 +51,11 @@ def arg(f, d, c=str):
 
 
 arm = sys.argv[1]
+# ⚠ added 2026-09-30 for simulated caches (2026-09_simulator/src/17_dropout.py): read AND
+# write under --resdir, and take the arm's tape threshold from --thr.  Defaults unchanged.
+RES = Path(arg("--resdir", str(RES)))
+if "--thr" in sys.argv:
+    THR[arm] = arg("--thr", 0, int)
 CL = arg("--clone", 76, int)
 POOLED = "--pooled" in sys.argv
 NSUB, NSPLIT = arg("--nsub", 1500, int), arg("--nsplit", 5, int)

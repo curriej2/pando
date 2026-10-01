@@ -1,9 +1,80 @@
 # simulator — findings
 
+## ⭐ Session 20 (2026-09-29/30) — dropout rung 1 built; validation FAILED once, follow-up says chance
+
+Approved by Justin ("PROPOSAL (2026-09-29)", CLAUDE.md, with amendments 1–7). `src/17_dropout.py`
+(panel → mask → depth-0 censoring → filters → export in `23`/`44`'s cache formats), `src/18`
+(validation), `src/19`/`20` (library, **not yet launched**), `src/21` (the follow-up below).
+`--resdir`/`--thr` added to park-compatibility `73`/`74`/`77` (paths only).
+
+**Validation (`18`, 200 trees, n = 210, pre-fixed rule PASS = worst |z| ≤ 3 and 0 hard violations).**
+- Seed 29092026: 289 cells, one trip (F2 BASE tape 11, z = 3.16; 0.78 expected) ⇒ RERUN by rule.
+- Seed 30092026: 288 cells, two trips (F4t BASE bin 3 −3.54, F4o BASE bin 3 −3.38) ⇒ **FAIL by rule.**
+- Both seeds: **0 hard-assertion violations** in ~2×10⁷ comparisons (encoding, term/depth/clone,
+  prefix-code bijection, replay); split-null SD 0.93 / 1.02.
+- ⭐ F4n (independence prediction for relatives' co-missingness) misses by z = 24–28 on SLOW, so
+  depth-0 censoring's inherited covariance is real in the generator and F4o's formula captures it.
+
+**⚠⚠ Diagnosis — a defect in MY CHECK SET, not the generator.** (i) F4o duplicates F4t wherever
+censoring is rare (0.4% of tapes unedited in BASE/FILTER): z correlation **+0.98 to +1.00** across
+bins, so the "two trips" were one fluctuation counted twice. (ii) F4t cannot be biased by
+construction (independent uniforms, tips from disjoint subtrees). (iii) One excess I could not
+explain from disk: F4o SLOW 10/10 bins positive at seed 2 (obs − exp +0.0004…+0.010).
+
+**Follow-up (`21`, approved; job 15660321, 10 min).** Pairs as in F4, but each check POOLED into one
+pre-declared cell per fixture; new check **F4d** = both relatives unedited vs $e^{-\mu_z(2-W_x)}$
+(censoring alone, no mask). 840 trees (all 42 stored ρ×θ cells at n = 210) × 5 fresh panels.
+Reading rule: |z| ≤ 3 on all six pooled cells ⇒ no defect.
+
+| fixture | check | obs | predicted | obs − pred | z |
+|---|---|---|---|---|---|
+| SLOW | F4d both unedited | 0.09848 | 0.09863 | −0.00016 | −0.64 |
+| SLOW | F4t both tech-missing | 0.12425 | 0.12422 | +0.00003 | +0.42 |
+| SLOW | F4o both observed-missing | 0.22661 | 0.22670 | −0.00009 | −0.36 |
+| CIS | F4d | 0.00505 | 0.00507 | −0.00002 | −0.49 |
+| CIS | F4t | 0.12851 | 0.12849 | +0.00002 | +0.31 |
+| CIS | F4o | 0.13545 | 0.13549 | −0.00003 | −0.37 |
+
+⇒ **NO DEFECT, worst pooled |z| = 0.64.** Power: the SLOW F4o se is 0.00026, so seed 2's average
+excess (~+0.0025) would have been ~10 se. Per-panel z ranges −2.0 … +1.4 over 10 panels.
+Diagnostic (disclosed before the run): seed 2's exact SLOW panel replayed on the 840 trees gives F4o
++0.0008 (z = +1.29), F4d z = +1.45 — the excess shrinks 3× on fresh trees and is not significant,
+so it did not belong to that panel. ⇒ **the seed-2 excess was chance.**
+⚑ Lesson for later tape statistics: bins of one check share their trees, so a sign pattern across
+bins tracks the pooled value and is not independent evidence; and two statistics that coincide in
+a regime must not both count toward a verdict there.
+
+**Re-run with the scoring amended by Justin (2026-09-30; validation code only, generator untouched):**
+F4 checks count through ONE pooled cell per fixture (W-bins secondary); F4o counts only in SLOW and
+CIS; F4d reported as a diagnostic. Seed 2102026 (job 15682651): **PASS — 216 verdict cells, worst
+|z| 2.98, none > 3 (0.58 expected), 0 hard violations, split-null SD 0.95.** ⚠ Disclosed: one
+*secondary* bin (F4t CIS) reached 3.10, which would have tripped under the old scoring; its pooled
+cell is +0.54. F4n (independence) misses by z = 26.8 pooled on SLOW. Earlier JSONs kept as
+`validate_dropout_seed29092026.json` / `_seed30092026.json`; `validate_dropout.json` = the PASS.
+⇒ library launched (array 15683089).
+
+**✅ The dropout library — BUILT (array 15683089, 30/30 tasks, longest 4 min 44 s, peak 0.56 GB).**
+`results/dropout_library/` (gitignored, 1.9 GB, regenerable from `src/19` — seeds stored): **180
+files, 27,000 datasets** = 30 tree cells ($n$ 25–1,976 × $\rho$ {0.002, 0.1, 0.25} × $\theta$ {0.3,
+0.7}, 20 trees each) × $\Lambda_T$ {2.9, 5.5} × panel {none, park, strong} × 5 panel replicates ×
+30 masks. **0 assertion violations in every task.** Manifest sanity check only
+(`results/dropout_library_summary.json`): realised − target technical missingness has mean ≈ 0 at
+every $n$, SD 0.0046 at $n$=25 falling to 0.0005 at 1,976 (finite cells, as expected); $\bar p=0$
+datasets carry exactly zero technical dropout. Closed tapes per panel replicate: park 2–4, strong
+7–12 of 30, nested as designed. ⚑ The unedited share exceeds $e^{-\Lambda_T}$ even with no closed
+tapes (0.079 vs 0.055 at $\Lambda_T$=2.9) because the $s_r$=0.3 speed spread makes slow tapes
+contribute more than fast ones — Jensen, expected, not a finding.
+**Smoke test (amendment 7):** one library dataset exported as a simulated arm; `73 --pooled`,
+`74 --pooled`, `77` all load it via `--resdir`/`--thr` and run to completion (3–5 s). No numbers kept;
+the arm was deleted. ⚠ Caches must live on `/data1`: `/tmp` is login-node-local and compute nodes
+cannot see it.
+**⇒ NEXT: the rung-1 negative control (its own proposal)** — Park-shaped parameters through
+`73`/`74`/`77` with censoring off vs on; then rung 2.
+
 **State 2026-09-28: the tree layer and the EDITING LAYER are BUILT and VALIDATED; the editing layer is illustrated in Fig S5 (a–d) and written up in `writeup/editing_layer.tex`.** Tree library
 complete (1,870 cells, 37,380 trees, zero structure faults); editing layer `src/14_editing.py`
 passes all 219 closed-form cells and every hard assertion (`src/15`). Figures S1, S3, S4 built,
-LaTeX write-up of S1/S3 in `writeup/`. **Dropout is the next layer; not started.**
+LaTeX write-up of S1/S3 in `writeup/`. ⚠ *Superseded 2026-09-30: dropout rung 1 is BUILT (Session 20, above); its validation re-run and the library are pending.*
 
 ## ⭐ Session 19 (cont., 2026-09-28) — the editing layer written up in LaTeX
 

@@ -14,6 +14,7 @@ in `writeup/simulator_figures.tex`, which Justin edits directly. Editing and dro
 started.** ⚠ *That banner is the state on 2026-09-23 and is superseded below: the editing layer was
 built and validated 2026-09-27, illustrated as Fig S5 a–d and written up in
 `writeup/editing_layer.tex` 2026-09-28. Only DROPOUT and the state layer remain unstarted.*
+✅ **2026-09-30: DROPOUT RUNG 1 BUILT, VALIDATED (PASS after a disclosed FAIL and a scoring amendment), LIBRARY BUILT** (27,000 datasets, 0 violations) — README "Session 20". Rung 2 and the state layer remain.
 README is the findings record; this file's design sections below are the 2026-09-17
 design and are partly superseded (the BDS-density route was dropped 2026-09-20 in favour of forward
 simulation + rejection — see README).
@@ -182,6 +183,255 @@ $1.36/\sqrt n=0.0077$, so 0.00800 sits fractionally above it — but the four ti
 dependent, so that $n$ is not the effective sample size; against 7,867 *trees* the critical value is
 0.0153 and 0.008 is comfortably inside. The five deviations also run $-,-,+,+,+$, a mild sign pattern
 that is either noise across correlated quantiles or a small systematic bias.
+
+## PROPOSAL (2026-09-29) — the dropout layer, rung 1 (technical dropout). ✅ APPROVED 2026-09-30, AS AMENDED
+
+### Amendments agreed with Justin 2026-09-29/30 — these override the text below where they differ
+
+1. **Clone-level capture (T3) is DROPPED**, not built even as a switch. (It is a *cell*-axis effect —
+   clone-mates sharing capture on every tape — not "some tapes uncaptured across the tree", which is
+   $\beta_z$ in rung 1, nor "a tape lost in one clone", which is rung 2's founder layer.)
+2. **Output: the `.npz` caches are written directly** (`dropout_matrix_*` + `prefix_codes6_*` formats).
+3. **Two-class closed-locus latent**, and $\bar r_0$ **holds the AVERAGE tape's speed at 1** (not
+   the open tapes'), so $\Lambda_T$ keeps its meaning as $\phi$ varies.
+4. **The latent, as explained to Justin (intuition first).** A closed integration site is both
+   poorly transcribed (Park reads tapes from RNA) and poorly reached by the prime editor; one
+   hidden per-tape switch $u_z$ drives both, which is how two quantities co-vary without one
+   causing the other. It is a fixed property of the TAPE — drawn once per simulated experiment,
+   identical in every cell of every tree (all Park clones share the 166 integrations) — and is
+   **not** inherited dropout. Each piece and why:
+   - $u_z=\mathbb 1[U_z<\phi]$, $U_z\sim$ Uniform — the class coin; $\phi$ = fraction closed. Drawn
+     through a uniform so the closed set is **nested** as $\phi$ rises (common random numbers).
+   - $\beta_z=\mu_\beta+\Delta_\beta u_z+s_\beta\varepsilon_z$ (logits of P(missing)): $\mu_\beta$ the
+     overall level, **set by solving for a target mean technical missingness $\bar p$** over the
+     panel's realised tapes (the knob swept); $\Delta_\beta$ the closed-tape read penalty
+     (2 logits: 30% → 76% missing); $s_\beta\varepsilon_z$ the scatter among same-class tapes.
+   - $r_z=\bar r_0\,r_{\rm cl}^{u_z}e^{s_rv_z-s_r^2/2}$: the exponent $u_z$ switches the closed
+     slowdown on; the lognormal factor has mean exactly 1 (hence $-s_r^2/2$); $\bar r_0=1/(1-\phi+\phi
+     r_{\rm cl})$ makes $\mathbb E[r]=1$ so coupling is not confounded with less editing.
+   - $\varepsilon_z\perp v_z$: within a class recovery and speed are unrelated (Park: $\rho=+0.119$
+     above the cut); the class is the only link, $\mathrm{Cov}(\beta,\ln r)=\Delta_\beta\ln r_{\rm cl}\,
+     \phi(1-\phi)$. The recovery-0.3 "threshold" is NOT a simulator parameter — it only enters when
+     choosing $(\phi,r_{\rm cl})$ to resemble Park; the step's sharpness is $\Delta_\beta$ vs $s_\beta$.
+5. **Validation settings are TEST FIXTURES**, not science: BASE / CIS / SLOW / FILTER, each chosen so
+   one check has something to detect. BASE now uses $\bar p=0.3$, $s_\beta=1$, $s_\alpha=0.7$ (the
+   solve replaces a fixed $\mu_\beta$); SLOW = CIS's panel at $\Lambda_T=2$ with the pause-and-burst
+   rate. Added: **F0** (the panel law over 20,000 panels — $\mathbb E[u]=\phi$, $\mathbb E[r]=1$, the
+   closed share of speed, $\mathbb E[\beta-\mu_\beta]$, $\mathbb E[(\beta-\mu_\beta)\ln r]$); F4t/F4o are
+   scored **conditional on the realised $\alpha_c$** (exact, not the $\alpha$-averaged covariance);
+   a **naive F4o** (independence prediction) is reported as a teeth diagnostic, outside the verdict.
+6. **Deliverable 2 — the dropout library (`src/19`, `src/20`), generated ONLY after validation
+   PASSES.** Three layers so costly work is reused: A trees (existing library, no new trees) → B tape
+   panel + editing → C masks (cheap). Grid: $n\in\{25,64,210,626,1976\}$ × $\rho\in\{0.002,0.1,
+   0.25\}$ × $\theta\in\{0.3,0.7\}$ (20 trees each) · $\Lambda_T\in\{2.9,5.5\}$ ·
+   $(\phi,r_{\rm cl})\in\{(0,1),(0.15,0.6),(0.3,0.4)\}$ · 5 panel replicates (a panel is shared by
+   every tree of an experiment) · $\bar p\in\{0,0.1,0.25,0.44,0.6\}$ × $s_\beta\in\{0,1,2\}$ ×
+   $s_\alpha\in\{0,0.7\}$. Fixed: $k=30$, $N=6$, $\xi^L$ only (no signal channel), constant rate,
+   $\Delta_\beta=2$, $s_r=0.3$. Censoring applied in the observed view, truth stored (so "off" is
+   free); filters applied at export, not stored. **No numbers are concluded from the library** —
+   only a manifest of realised vs target $\bar p$.
+7. `--resdir` / `--thr` added to `73`/`74`/`77` (input and output paths only), with a load-and-run
+   smoke test on a small simulated arm; no numbers kept.
+
+Rung 1 of the ladder above: dropout with **no lineage structure**, done in a way that is faithful
+to Park's readout. Rung 2 (heritable silencing) is out of scope and needs its own proposal; so does
+the state layer, which shares rung 2's per-branch $\xi$ hook. Deliverables: `src/17_dropout.py`
+(the generator and a cache writer) and `src/18_validate_dropout.py` (its validation). **This covers
+the build and its validation only. No scientific run is included, and no Park parameter enters
+beyond the $\xi^L$ that `14` already reads.** The first run (the negative control for the
+heritable-silencing statistics, §5 below) comes back as its own proposal.
+
+### 1. The question
+
+Does an observation layer made of four parts reproduce its closed forms, and write caches that the
+heritable-silencing scripts (`../2026-08_park-compatibility/src/73`, `74`, `77`) read without any
+change to their logic? The four parts:
+- per-entry technical missingness $\sigma(\alpha_c+\beta_z)$, independent of the tree given the tape;
+- a per-locus class that couples a tape's recovery to its editing speed;
+- depth 0 folded into "missing", exactly as Park's pipeline does it;
+- Park's cell filters.
+
+What depends on the answer: **no heritable-silencing statistic in this project has ever been run on
+data known to contain no silencing.** Rung 1 is that dataset, and it is also the first rung of the
+adjudication ladder. A failed check is a bug, not a finding. ⚑ One part of the output is a design
+result rather than a code check: the censoring covariance (§3). That is why this rung is not trivial.
+
+### 2. The math — every symbol defined
+
+- $c$ = a sampled cell (a tip), $z=1..k$ = a tape, $C$ = a clone, $N=6$ slots. $t\in[0,1]$ is
+  calendar time. $W(t)=\int_0^t\lambda_0$ is the fraction of the total editing spent by $t$, and
+  $\Lambda_z(t)=r_z\Lambda_TW(t)$ is in edits per tape. $r_z$ (tape speed, dimensionless, mean 1)
+  and $\Lambda_T$ are as in §S4.9 / `14`. $\Lambda_{\rm pre}=0$ and every tip sits at $t=1$.
+  Write $\mu_z=r_z\Lambda_T$ for a tape's total expected edits.
+- $X_{cz}\in\{0,1\}$ is **technical** missingness, 1 = missing. This is the ladder's convention
+  (`77`: `X = ~Y`). $P(X_{cz}=1)=\sigma(\eta_{cz})$, with $\eta_{cz}=\alpha_c+\beta_z$ and
+  $\sigma(x)=1/(1+e^{-x})$. $\alpha_c$ is the cell's capture offset and $\beta_z$ the tape's
+  recovery offset, both in logits; a larger value means a worse-captured cell or a worse-recovered
+  tape.
+- **The rung-1 assumption (the definition of the rung):** given $(\alpha,\beta)$, every $X_{cz}$ is
+  independent. $\alpha_c$ is iid over cells from $F_\alpha$ and independent of the tree (design
+  default $N(0,s_\alpha^2)$). $\bar p_z=\mathbb E_\alpha[\sigma(\alpha+\beta_z)]$ is tape $z$'s mean
+  technical-missing rate.
+- **The shared-locus latent (the *cis* coupling).** $u_z\in\{0,1\}$, where 1 = a closed locus, with
+  $P(u_z=1)=\phi$.
+  - Recovery: $\beta_z\mid u_z\sim N(\mu_{\beta,u},s_\beta^2)$.
+  - Speed: $r_z=\bar r_{u}\exp(s_rv_z-s_r^2/2)$ with $v_z\sim N(0,1)$. $\bar r_1/\bar r_0=r_{\rm cl}$
+    is how fast a closed locus edits relative to an open one. The normalisation
+    $\bar r_0=1/(1-\phi+\phi r_{\rm cl})$ keeps $\mathbb E[r]=1$.
+  - No-coupling value: $\phi=0$, or $r_{\rm cl}=1$ with $\mu_{\beta,1}=\mu_{\beta,0}$.
+  - ⚑ **Why two classes and not a smooth copula:** in Fig 3d the coupling is a **threshold**. The
+    15% of Mouse1 tapes with recovery below 0.3 sit at a mean depth of 3.58 sites, against 4.86 for
+    the rest, where $\rho$ within the rest is only +0.119 (park-compatibility README, panels d/e).
+    Nothing is fitted here: $(\phi,r_{\rm cl},\mu_{\beta,u})$ are inputs.
+- $D_{cz}\in\{0..N\}$ is the true depth from `14`. **Observed** recovery is
+  $Y_{cz}=(1-X_{cz})\,\mathbb 1[D_{cz}\ge1]$ and observed missingness is $O_{cz}=1-Y_{cz}$. This is
+  `23`'s rule verbatim: a tape whose first site is `None` is coded `ABSENT`, so a recovered but
+  unedited tape reads as missing. It is on by default, with a switch for isolating it; the truth is
+  always stored.
+- **Cell filters,** applied after the mask, as the Park pipeline does. $R_c=\sum_zY_{cz}$ is the
+  number of observed tapes. QC keeps a cell iff $R_c\ge R_{\min}$ (20 or 100 of 166 in Park; a
+  parameter at $k=30$). ClonalBC retention keeps a cell with probability $\psi(R_c)$, a step table
+  given as input (off by default, $\psi\equiv1$). A cell that fails it gets `clone = -1`, which is
+  how `23`/`44`/`77` already exclude it.
+
+**The closed forms it is tested against:**
+- **F1** $P(X=1\mid\eta)=\sigma(\eta)$.
+- **F2** $P(O_{cz}=1)=1-(1-\sigma(\eta_{cz}))(1-e^{-\mu_z})$.
+- **F3** $P(D=d\mid Y=1,z)=P(\min(\mathrm{Pois}(\mu_z),N)=d)/(1-e^{-\mu_z})$ for $d=1..N$. The mask is
+  blind to depth given the tape, so the closed-locus class looks shallower through $r_z$ alone.
+- **F4t** (the joint, technical part) — for two tips whose last common ancestor sits at $t_a$,
+  $\mathrm{Cov}(X_{cz},X_{c'z}\mid t_a)=0$ for every $t_a$.
+- **F4o** (the joint, observed part):
+
+$$\mathrm{Cov}(O_{cz},O_{c'z}\mid t_a)=(1-\bar p_z)^2\big[e^{-\mu_z(2-W(t_a))}-e^{-2\mu_z}\big]$$
+
+  This holds because both tips are unedited iff the shared path and both private paths all carry no
+  edit. ✅ **Checked against Monte Carlo on a two-tip toy (2026-09-29, 4 settings, $4\times10^6$
+  draws each): $|z|\le0.87$, and the technical-only covariance is zero to $10^{-4}$.**
+- **F5** $P(\text{kept}\mid R_c)=\mathbb 1[R_c\ge R_{\min}]\,\psi(R_c)$.
+
+⚠ F1–F4 are scored **before** the filters. After them the marginals are no longer $\sigma(\eta)$:
+keeping a cell conditions on $R_c$, and $R_c$ depends on $X$. That selection is the thing
+Park-comparable output has to have, not a defect.
+
+### 3. What could make it wrong
+
+**Defeated.**
+- The circularity (relatedness read from the same edits whose readability dropout controls) cannot
+  reach this build, because every dropout parameter is synthetic.
+- The checks are closed forms, not self-comparisons.
+- F4t directly tests that the mask never reads the tree.
+
+**NOT defeated.**
+- ⚠ **F1–F3 are marginals.** A mask aligned with lineage would pass them. Only F4t and F4o see the
+  joint.
+- ⚠ **Rung 1 is a model** (§H.6.12). It leaves out three things:
+  - **T3's clone-clustered capture** ($\rho_{\rm clone}$ on $R_c$: +0.15 Pre-TX, +0.09 Mouse1).
+    That is not yet callable as biology, and it is offered as a switch (below).
+  - **Heritable loss** (rung 2).
+  - **A smooth within-class recovery–depth correlation.**
+- ⚠ **A Park-shaped run inherits a double count.** The measured $\beta_z$ already contains depth-0
+  censoring and heritable loss, so feeding it in as the *technical* rate counts both twice. That is
+  why no Park parameterisation is in this build.
+
+**⚠⚠ The censoring prediction — found while writing this proposal, derived, NOT measured on Park.**
+- **What it is.** F4o says that depth-0 censoring alone makes **observed missingness heritable**:
+  an unedited tape is inherited, so cells that split late share it. At the sister limit
+  ($W(t_a)\to1$) the covariance is $(1-\bar p_z)^2e^{-\mu_z}(1-e^{-\mu_z})$. The relatedness split in
+  `73`/`74`/`77` does not defeat it, since this is a within-tape shared state and the relatives are
+  found correctly on the other half.
+- **Hand arithmetic, as illustration only — do not quote:**
+  - At the mice's $\mu\approx5.5$ this covariance is at most 0.004 (probability units).
+  - At Initial's fitted $\hat\Lambda=2.87$ it is $\approx0.035$. As a correlation that is ~0.2
+    against a variance of $0.25\times0.75$ (0.25 = Initial's `ABSENT` rate).
+  - It is larger on slow tapes, and slow tapes are the poorly recovered ones.
+- **What it depends on.** Whether any of it reaches Park depends on $\Lambda_{\rm pre}$ (a tape
+  already edited at the clone founder cannot be unedited within the clone) and on how deep the
+  within-clone splits sit. Neither is known.
+- **Which recorded numbers it bears on:** the Pre-TX heritable-silencing results, i.e. variogram top
+  bin +0.2618, ladder +4.59 nats/cell with $Q$ = 7.1%, unanimity 9.77× vs 1.22×, and the catalogue
+  of 2,019 events / 2.46%. Subclone less so ($\hat\Lambda=4.69$). The mice essentially not, except
+  on their slowest tapes.
+- **Direction:** it can only inflate the silencing reading. **Magnitude unknown. It could move those
+  numbers; whether it could overturn any of them is not known.** An all-unedited small subclade also
+  produces the Dollo test's "exactly all missing" excess.
+- ⇒ Measuring this is the job of the first run off this build.
+
+**Abandon the approach, rather than patch it, if** F2 and F3 pass while F4o fails. That would mean
+depth 0 is not inherited the way §S4.9 says, or that `23`'s `ABSENT` rule is not what I have read
+it to be. Re-read `23`/`44` and re-derive before writing more code.
+
+### 4. Output — the mock, and the reading rule
+
+`results/validate_dropout.json`, printed as one table. Every cell is a deviation from its closed
+form in standard errors, with the se taken across **trees**. F4t/F4o use one comparison per
+(internal node, tape), one tip from each side, as in Fig S5b, never random tip pairs (the lesson of
+Session 18's E_u). ⚠ **Placeholder numbers below.**
+
+> *Reading rule.* No-effect value $|z|=0$; larger means further from the closed form.
+> **PASS = worst $|z|\le3.0$ over every cell AND zero hard-assertion violations.** At ~240 cells, one
+> $|z|>3$ is expected ~0.7 times by chance. So a single trip is re-run at a new seed before it
+> counts; two trips, or a sign pattern within one check, is a defect.
+> **Decisive failure:** F4t not flat (the mask reads the tree), any encoding assertion, or F4o
+> failing while F2 passes.
+
+```
+  n = 210, k = 30, N = 6, 200 library trees (Session 18's rho x theta spread), seed 29092026
+  BASE   Lam_T 5.5, phi 0, beta ~ N(logit 0.3, 1.0^2), alpha ~ N(0, 0.7^2)
+  CIS    BASE + phi 0.15, r_cl 0.6, closed tapes' recovery ~ logit 0.15, s_r 0.3
+  SLOW   Lam_T 2.0 with Session 18's pause-and-burst lambda_0  (censoring large; exercises W(t_a))
+  FILTER BASE + R_min 12 of 30 + a 4-step psi(R_c)
+  check                                  compared against                             cells  worst|z|
+  F1  technical missing | eta            sigma(eta), 10 bins x 4 configs                  40     1.9
+  F2  observed missing, per tape         1-(1-sigma)(1-e^{-mu_z})                        120     2.2
+  F3  depth | recovered, by locus class  truncated min(Pois(mu_z),N), d=1..6              36     2.0
+  F4t technical cov vs W(t_a)            0 (flat), 10 bins                                20     1.7
+  F4o observed cov vs W(t_a)             (1-pbar)^2[e^{-mu(2-W)}-e^{-2mu}], 10 bins        20     2.4
+  F5  retention by R_c bin               1[R_c>=R_min] psi(R_c)                            8     1.1
+  H   encoding + round trip              23/44 rules; replay bit-identical            -  0 of 4e7
+```
+
+**H, the hard assertions:**
+- $Y=0$ wherever $D=0$, and $Y=(1-X)\mathbb 1[D\ge1]$ exactly.
+- `term` is `ABSENT` iff $Y=0$, `COMPLETE` iff $D=N$, `UNEDITED` otherwise.
+- Prefix codes are $-1$ past the depth and on unobserved tapes, and two cells share a code at depth
+  $j$ iff their first $j$ symbols agree.
+- The stored $R_c$ equals the recomputed $R_c$.
+- `clone = -1` exactly for the cells $\psi$ dropped, and QC-failed cells are absent from the
+  prefix cache (`44`'s alignment rule).
+- The same seed gives a bit-identical mask.
+
+F4o in SLOW has teeth: sister covariance ≈ 0.057 against 0 for unrelated tips at $\mu=2$,
+$\bar p=0.3$.
+
+**Cost.** Decorating is 0.05 s per tree at $n=210$ (Session 18); the mask is one $(n\times k)$
+Bernoulli block. Four configs × 200 trees takes minutes on one core.
+⇒ `scripts/submit.sh --part cpu --mem 4G --time 00:30:00 --cpus 1`. Caches are gitignored (`*.npz`);
+only the JSON is committed.
+
+### Decisions this proposal locks in — all reversible; ⚠ three for Justin
+
+| decision | proposed | why |
+|---|---|---|
+| mask granularity | **whole tape** | 0.02% internal gaps; the flat per-cell depth profile excludes 3′ truncation (Fig 3d/e) |
+| link | logit-additive $\alpha_c+\beta_z$, 1 = missing | the ladder's $M_3$ family, so at rung 1 the ladder fits the true model |
+| depth 0 | folded into missing, **on** by default, switchable | `23`'s `ABSENT` rule; it is what Park's scripts see |
+| parameters | synthetic in this build; Park-shaped ($\hat\beta_z$, resampled $\hat\alpha_c$) in the first run | the double count in §3 has to be dealt with there |
+| ⚠ clone-level capture (T3) | a switch $\alpha_c=a_C+e_c$, **off** | not callable as biology yet; if on, the rung is no longer "lineage-free" in capture |
+| ⚠ output format | write `dropout_matrix_*.npz` + `prefix_codes6_*.npz` directly, plus a truth file ($X$, $D$, $u_z$, $\alpha_c$) | alternative: write Park's wide CSV and run `23`/`44` untouched, which is stricter but needs synthetic symbol names and a matching `xi_vectors.json` entry |
+| ⚠ *cis* latent | two-class | from the threshold table; a Gaussian copula is a one-function swap |
+| downstream | add `--resdir` and `--thr` arguments to `73`/`74`/`77` (input paths only, no logic) | so simulated caches go through the identical code; a load-and-one-clone smoke test, no numbers kept |
+
+### 5. What comes next (NOT in this proposal)
+
+**The rung-1 negative control:** push rung-1 data at Park-shaped parameters through `73`/`74`/`77`
+with censoring off, then on.
+- **Off:** $Q$ should be ≈0 and the variogram flat. Anything else is a false positive in the
+  ladder itself.
+- **On:** it measures how much of the recorded heritable-silencing signal depth-0 censoring alone
+  would manufacture, arm by arm, as a function of $\Lambda_{\rm pre}$.
+
+---
 
 ## PROPOSAL (2026-09-24c) — the editing layer. ✅ APPROVED 2026-09-27, BUILT, VALIDATED (PASS)
 
@@ -460,6 +710,9 @@ Right-sized: 4 G, 10 min, partition `cpu`.
    "Session 18"), spec in §S4.9, `src/14` + `src/15`. ⇒ **NEXT (order is Justin's call): the
    fitness-neutral state layer (3b), which Fig S4 recommended after editing, and the dropout layer
    (rung 1); each returns as its own proposal.**
+   ✅ **2026-09-30: rung 1 BUILT + library (README Session 20). NEXT: the rung-1 negative control, own proposal.** ⏳ *(2026-09-29) Justin chose dropout rung 1 first.* "PROPOSAL (2026-09-29)" above: build and
+   validation only (`src/17`, `src/18`). ⚠⚠ It records a derived, unmeasured confound: **depth-0
+   censoring makes observed missingness heritable** (F4o), which bears on the Pre-TX silencing numbers.
 1b. ✅ **Fig S5 a–d built 2026-09-28** (`src/16`, README "Session 19"): inheritance cartoon, shared
    slots vs split time, a signal pulse written into slot order, and a programmed pause-and-burst
    editing rate — each against its closed form (b: 20 bins within $|z|\le1.04$; c: 6 slots within

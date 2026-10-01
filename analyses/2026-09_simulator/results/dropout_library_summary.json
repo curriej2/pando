@@ -1,0 +1,39 @@
+{
+ "job": 15683089,
+ "tasks": 30,
+ "files": 180,
+ "datasets": 27000,
+ "size_GB": 1.9,
+ "assertion_violations": 0,
+ "max_task_elapsed": "00:04:44",
+ "max_task_rss_GB": 0.56,
+ "realised_minus_target_technical_missing_by_n": {
+  "25": {
+   "mean": 0.0006559567901234605,
+   "sd": 0.004558637000987783,
+   "max_abs": 0.019733333333333325
+  },
+  "64": {
+   "mean": 0.0003661506558642012,
+   "sd": 0.0027614479824230316,
+   "max_abs": 0.012395833333333273
+  },
+  "210": {
+   "mean": 3.71178718400974e-05,
+   "sd": 0.0013517236523877413,
+   "max_abs": 0.005515873015872974
+  },
+  "626": {
+   "mean": 0.0001377438074389656,
+   "sd": 0.0007825034554325041,
+   "max_abs": 0.003072417465388777
+  },
+  "1976": {
+   "mean": -1.759110873693927e-05,
+   "sd": 0.0005074035876925652,
+   "max_abs": 0.0025539811066127016
+  }
+ },
+ "pbar0_datasets_with_any_technical_missing": 0,
+ "note": "manifest sanity check only; nothing concluded. Per-task manifests in dropout_library/ (gitignored)."
+}
