@@ -5588,6 +5588,13 @@ sizes. In the knob:
   constant, 86% early, 31% late. ⇒ **quote $\bar H$ with $\zeta_0$ and the heritable share, never alone.**
 - **Composed:** $P(Y=1)=(1-\pi)(1-\bar H)(1-e^{-\mu_z})$; the three causes are independent factors.
 
+**Library (`src/24`, 2026-10-01):** 21 settings ($\bar H$ {0, .01, .02, .05, .10, .20, .33} × constant /
+early / late) on the rung-1 library's trees and replicates. Expected heritable share at $\bar H$=0.10,
+$\theta$=0.3 runs **20% ($n$=25, $\rho$=0.002, late) to 97% ($n$=1,976, $\rho$=0.25, early)**; it rises
+with $\rho$, with $n$, and with earlier timing. ⚠ Under constant timing singletons are a minority even
+at $\rho$=0.002 (34–50%) — the proposal's "most losses are singletons at low $\rho$" held only for
+late timing.
+
 ## S6.3 ⚠ Silencing and depth-0 censoring are one object, mirrored — DERIVED, half verified
 
 Censoring = the *not-yet-hit* state of a first-event process (first edit), §S5.3; silencing = the

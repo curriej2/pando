@@ -63,4 +63,5 @@ analyses/*/results/preblock/
 
 # ---- simulator dropout library: regenerable from src/19 (seeds stored), ~2 GB ----
 analyses/2026-09_simulator/results/dropout_library/
+analyses/2026-09_simulator/results/silencing_library/
 analyses/2026-09_simulator/results/dropout_validation/

@@ -52,8 +52,39 @@ heritable share (expected fraction of silenced entries in clades ≥ 2 cells) **
 0.036 / 0.059 / 0.008 — early silencing makes the realised fraction ~7× noisier than late, as §S6
 predicts. Validation cost 28–45 s on one core, 0.46 GB.
 
-**⇒ NEXT: the rung-2 library (§4b of the proposal) — needs Justin's separate go.** Then the
-negative control / dose–response.
+**✅ The rung-2 library — BUILT (Justin's go 2026-10-01, with $\bar H$=0.01 added; array 15859189,
+30/30 tasks, longest 38 s, peak 0.15 GB).** `src/24_silencing_library.py` + `src/25_submit_silencing_library.sh`.
+`results/silencing_library/` (gitignored, 134 MB, regenerable — seed 1012026 stored): one file per tree
+cell (the rung-1 library's 30 cells, same task numbering), **21 settings** = $\bar H$ {0, 0.01, 0.02,
+0.05, 0.10, 0.20, 0.33} × $\zeta_0$ {constant; early = 80% of the hazard in the first 40%; late = 80%
+in the last 40%}, for each of the 20 trees × 5 rung-1 replicates $b$. Loss draws are per (tree, $b$)
+and shared by every $\Lambda_T$, panel, mask and setting (nested across $\bar H$ at fixed shape).
+Stored: packed tip $H$ per setting, plus a sparse loss record that rebuilds $H$ at any setting with
+$\bar H\le0.33$. **Compose with the rung-1 file at the same ($b$, tree): $Y=\neg X\wedge\neg H\wedge(D\ge1)$**
+(`24.compose`). **0 assertion violations** (solve exact; Dollo monotone; nesting; $\sum_en_eV=\sum_cH$;
+sparse record rebuilds every stored $H$ exactly; replay; $\bar H$=0 empty).
+**Manifest (`results/silencing_library_summary.json`, sanity check only):** realised − target $\bar H$
+averages +0.0002 to +0.0010 at every $n$ (worst single cell × setting 0.021, at $n$=210 — finite
+trees). Heritable share = silenced entries in clades ≥ 2 cells / all silenced entries, expected,
+at $\bar H$=0.10, $\theta$=0.3, constant / early / late:
+
+| $n$ | $\rho$=0.002 | $\rho$=0.1 | $\rho$=0.25 |
+|---|---|---|---|
+| 25 | 50 / 80 / 20% | 75 / 91 / 53% | 81 / 94 / 63% |
+| 210 | 59 / 86 / 27% | 81 / 94 / 63% | 87 / 96 / 74% |
+| 1,976 | 66 / 89 / 34% | 86 / 95 / 71% | 90 / 97 / 80% |
+
+Reading: 0% = all silencing in singletons (indistinguishable from technical dropout); higher = more of
+it visible to relatedness. ⚠⚠ **Correction to my proposal's §3**, which said long terminal branches at
+low $\rho$ "push **most** losses into singletons": under constant timing the singleton share at
+$\rho$=0.002 is 34–50%, a minority; it is the majority only under LATE timing (66–80%). Direction was
+right (heritable share falls with $\rho$ in every row), magnitude overstated. No recorded number moves.
+⚠ The realised heritable share (a per-tree ratio, averaged) sits 0.5–2.5 points below the expected
+one in all 9 $n$=210 rows — the expected form is a ratio of expectations and numerator and denominator
+co-vary (big events raise both); not tested by `23`, which checks the expectations (G3).
+
+**⇒ NEXT: the negative control as a dose–response** (rung-1 and rung-2 data through `73`/`74`/`77`
+and the caller), its own proposal.
 
 ## ⭐ Session 20 (2026-09-29/30) — dropout rung 1 built; validation FAILED once, follow-up says chance
 

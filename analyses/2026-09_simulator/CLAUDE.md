@@ -15,7 +15,7 @@ started.** ⚠ *That banner is the state on 2026-09-23 and is superseded below: 
 built and validated 2026-09-27, illustrated as Fig S5 a–d and written up in
 `writeup/editing_layer.tex` 2026-09-28. Only DROPOUT and the state layer remain unstarted.*
 ✅ **2026-09-30: DROPOUT RUNG 1 BUILT, VALIDATED (PASS after a disclosed FAIL and a scoring amendment), LIBRARY BUILT** (27,000 datasets, 0 violations) — README "Session 20"; theory `notes/sciphy_notes.md` §S5. Rung 2 and the state layer remain.
-✅ **2026-10-01: RUNG 2 BUILT AND VALIDATED** (heritable silencing, complete Dollo loss; knob = target silenced fraction $\bar H$, timing $\zeta_0$) — `src/22`/`23`, PASS at the re-run seed (README "Session 21", theory §S6). Rung-2 library specified, **awaits Justin's go**.
+✅ **2026-10-01: RUNG 2 BUILT AND VALIDATED** (heritable silencing, complete Dollo loss; knob = target silenced fraction $\bar H$, timing $\zeta_0$) — `src/22`/`23`, PASS at the re-run seed (README "Session 21", theory §S6). ✅ **Rung-2 library BUILT 2026-10-01** (array 15859189; 30 cells × 21 settings — $\bar H$ {0, .01, .02, .05, .10, .20, .33} × {constant, early, late} — × 20 trees × 5 replicates; 134 MB; 0 violations). NEXT: the dose–response negative control, own proposal.
 README is the findings record; this file's design sections below are the 2026-09-17
 design and are partly superseded (the BDS-density route was dropped 2026-09-20 in favour of forward
 simulation + rejection — see README).
@@ -187,7 +187,7 @@ that is either noise across correlated quantiles or a small systematic bias.
 
 ## PROPOSAL (2026-10-01, rev. 1) — dropout rung 2: heritable silencing as complete Dollo loss, at a target silenced fraction. ✅ APPROVED 2026-10-01, BUILT, VALIDATED (PASS)
 
-**Outcome (README "Session 21"):** `src/22` + `src/23`. Seed 1102026 one trip (G1 CONST 3.66) ⇒ re-run by rule; **seed 3102026 PASS — 172 cells, worst |z| 2.79, 0 hard violations; OFF bit-identical to rung 1; sets nested across $\bar H$.** A 20-tree smoke run tripped 6 cells (t uncalibrated at 20 trees; disclosed), checks unchanged. The library (§4b) awaits Justin's separate go. The text below is the proposal as approved.
+**Outcome (README "Session 21"):** `src/22` + `src/23`. Seed 1102026 one trip (G1 CONST 3.66) ⇒ re-run by rule; **seed 3102026 PASS — 172 cells, worst |z| 2.79, 0 hard violations; OFF bit-identical to rung 1; sets nested across $\bar H$.** A 20-tree smoke run tripped 6 cells (t uncalibrated at 20 trees; disclosed), checks unchanged. The library (§4b) was approved 2026-10-01 with $\bar H$=0.01 added and is BUILT (README "Session 21"). The text below is the proposal as approved.
 
 **Revision 1 (Justin, 2026-10-01), replacing the first draft:**
 1. **The knob is the target silenced fraction $\bar H$**, and the rate is solved from it.

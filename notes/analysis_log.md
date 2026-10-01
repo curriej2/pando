@@ -1786,3 +1786,8 @@ violations (OFF bit-identical to rung 1; Dollo monotone; nesting across $\bar H$
 misses by z 34, CONST's prediction on EARLY by z 46. ⚠ Per-tape z SD 1.28/1.35 at seed 1, 0.91/1.18 at
 seed 3 — per-tape cells sit near the edge of calibration (few clone-wide events). ⚑ Derived: silencing
 and depth-0 censoring are the same first-event object mirrored (§S6.3). Library awaits Justin's go.
+Library (Justin's go, $\bar H$=0.01 added): `src/24`/`25`, array 15859189, 30/30 tasks, 21 settings ×
+20 trees × 5 replicates per cell, 134 MB (gitignored), **0 assertion violations**; realised − target
+$\bar H$ mean +0.0002…+0.0010 by $n$. ⚠ Correction to my proposal §3: singletons are the majority of
+silenced entries only under late timing (66–80% at $\rho$=0.002); constant timing gives 34–50%. Next:
+dose–response negative control, own proposal.
