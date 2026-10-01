@@ -1764,3 +1764,8 @@ SLOW/CIS — Justin's call — then the library.
 `18` re-run at seed 2102026 with Justin's amended scoring (pooled F4 cells; F4o only in SLOW/CIS;
 validation code only): **PASS**, 216 cells, worst |z| 2.98, 0 hard violations; one secondary F4t
 CIS bin at 3.10 disclosed. Library array 15683089 launched.
+Library array 15683089 **complete**: 30/30 tasks, 180 files, 27,000 datasets, 1.9 GB (gitignored),
+0 assertion violations; realised − target technical missingness mean ≈ 0 at every $n$ (SD 0.0046 at
+$n$=25 → 0.0005 at 1,976). `73`/`74`/`77` run on an exported simulated arm via `--resdir`/`--thr`
+(smoke only, no numbers kept; ⚠ caches must live on `/data1`, `/tmp` is login-node-local).
+Theory written up as `notes/sciphy_notes.md` **§S5**. Committed `348d0ce`.

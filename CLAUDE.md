@@ -97,7 +97,8 @@ ENGRAM extension can write $\xi_i(t)$, $\xi_i(\text{signal})$. Swept through §0
 background · §1a–1c SciPhy model, transition probabilities, likelihood · §2/§D/§G inference
 background · §D.4/§D.4b perfect-phylogeny route and the Park compatibility protocol · §E–§F design
 notes · §H literature (§H.6 = full Mulberry & Stadler close read) · §I experimental design
-(§I.6 rate heterogeneity, §I.7 ENGRAM close read).
+(§I.6 rate heterogeneity, §I.7 ENGRAM close read) · §S3–§S5 the simulator (§S3 tree layer, §S4
+editing layer, §S5 dropout rung 1 incl. the inherited-censoring covariance).
 
 ## Analysis index
 
@@ -241,7 +242,7 @@ the **symbol-depletion test** of row A9's untested *trans* limb. |
    $q\le1.9\times10^{-4}$ per event, $\hat\pi$ median 1.000 vs expected 0.11–0.41. Full audit in
    README "How events are actually called".
 0-NOW. **⭐⭐ 2026-09-30 — DROPOUT RUNG 1 BUILT; LIBRARY BUILT.** `analyses/2026-09_simulator`,
-   README "Session 20"; log session 20. Technical dropout $\sigma(\alpha_c+\beta_z)$ + two-class
+   README "Session 20"; log session 20; theory `notes/sciphy_notes.md` **§S5**. Technical dropout $\sigma(\alpha_c+\beta_z)$ + two-class
    closed-locus latent (closed tapes poorly read AND slow) + depth-0 censoring + Park's filters,
    exported in `23`/`44` cache formats. `18` FAILED by rule at seed 2 — two trips that were one
    (F4o ≡ F4t where censoring is rare) plus a chance excess; follow-up `21` (840 trees × 5 panels,
@@ -250,7 +251,8 @@ the **symbol-depletion test** of row A9's untested *trans* limb. |
    tapes) — verified in the generator; may inflate Pre-TX's silencing numbers (variogram +0.26,
    ladder +4.59, unanimity 9.77×, 2,019 events); **unmeasured on Park**.
    **⇒ NEXT: the rung-1 negative control (censoring off vs on through `73`/`74`/`77`), own proposal.**
-0-CURRENT. **⭐⭐ 2026-09-27 — THE EDITING LAYER IS BUILT AND VALIDATED.** `analyses/2026-09_simulator`,
+0-PREV10. **⭐⭐ 2026-09-27 — THE EDITING LAYER IS BUILT AND VALIDATED.** *(superseded 2026-09-30 by
+   0-NOW — dropout rung 1 is built; its "NEXT" below is done for rung 1, the state layer remains)* `analyses/2026-09_simulator`,
    README "Session 18"; `src/14_editing.py` + `src/15_validate_editing.py`; notes §S4.9 (updated);
    log session 18. Approved with **$\Lambda_{\rm pre}=0$ — tapes empty at the clone founder; Park
    revisited later.**

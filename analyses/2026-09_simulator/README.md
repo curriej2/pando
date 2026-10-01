@@ -2,7 +2,8 @@
 
 ## ⭐ Session 20 (2026-09-29/30) — dropout rung 1 built; validation FAILED once, follow-up says chance
 
-Approved by Justin ("PROPOSAL (2026-09-29)", CLAUDE.md, with amendments 1–7). `src/17_dropout.py`
+Approved by Justin ("PROPOSAL (2026-09-29)", CLAUDE.md, with amendments 1–7); theory in
+`notes/sciphy_notes.md` **§S5** (model, closed-locus latent, the inherited-censoring derivation). `src/17_dropout.py`
 (panel → mask → depth-0 censoring → filters → export in `23`/`44`'s cache formats), `src/18`
 (validation), `src/19`/`20` (library, **not yet launched**), `src/21` (the follow-up below).
 `--resdir`/`--thr` added to park-compatibility `73`/`74`/`77` (paths only).

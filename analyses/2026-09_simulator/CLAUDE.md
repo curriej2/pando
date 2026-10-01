@@ -14,7 +14,7 @@ in `writeup/simulator_figures.tex`, which Justin edits directly. Editing and dro
 started.** ⚠ *That banner is the state on 2026-09-23 and is superseded below: the editing layer was
 built and validated 2026-09-27, illustrated as Fig S5 a–d and written up in
 `writeup/editing_layer.tex` 2026-09-28. Only DROPOUT and the state layer remain unstarted.*
-✅ **2026-09-30: DROPOUT RUNG 1 BUILT, VALIDATED (PASS after a disclosed FAIL and a scoring amendment), LIBRARY BUILT** (27,000 datasets, 0 violations) — README "Session 20". Rung 2 and the state layer remain.
+✅ **2026-09-30: DROPOUT RUNG 1 BUILT, VALIDATED (PASS after a disclosed FAIL and a scoring amendment), LIBRARY BUILT** (27,000 datasets, 0 violations) — README "Session 20"; theory `notes/sciphy_notes.md` §S5. Rung 2 and the state layer remain.
 README is the findings record; this file's design sections below are the 2026-09-17
 design and are partly superseded (the BDS-density route was dropped 2026-09-20 in favour of forward
 simulation + rejection — see README).

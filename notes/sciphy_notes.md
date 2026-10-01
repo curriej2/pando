@@ -5411,3 +5411,130 @@ stack already runs for $b,\delta$ (§S4.0 item 5) — three consequences follow,
    generator's knots must differ from the inference's — finely stepped $\lambda_0$ approximates any
    smooth curve, so the generator does not restrict which truths can be planted. **Carry this into
    the state layer's validation design.**
+
+---
+
+# §S5 The dropout layer, rung 1 — technical dropout with no lineage structure (2026-09-29/30)
+
+Specified in `analyses/2026-09_simulator/CLAUDE.md`, "PROPOSAL (2026-09-29)" and its amendments
+1–7 (approved by Justin 2026-09-30); built as `src/17_dropout.py`, validated by `src/18`/`src/21`;
+results README "Session 20". Rung 1 of the simulator's ladder: rung 0 = complete observation,
+**rung 1 = technical dropout only**, rung 2 = heritable Dollo loss (row A9, not built).
+
+## S5.1 The model, in four parts
+
+Notation as §S4.9: $c$ a tip, $z=1..k$ a tape, $N=6$, $W(t)=\int_0^t\lambda_0$, tape speed $r_z$
+(mean 1), $\mu_z=r_z\Lambda_T$ a tape's total expected edits; $\Lambda_{\rm pre}=0$, tips at $t=1$.
+
+1. **Technical mask.** $X_{cz}\in\{0,1\}$, 1 = missing,
+   $P(X_{cz}=1)=\pi_{cz}=\sigma(\alpha_c+\beta_z)$, $\sigma(x)=1/(1+e^{-x})$; the ladder's $M_3$
+   family, so at rung 1 the ladder fits the true model. $\alpha_c=s_\alpha a_c$, $a_c\sim N(0,1)$
+   iid over cells and **blind to the tree** — the definition of the rung. (T3's clone-clustered
+   capture is deliberately absent, Justin 2026-09-30.)
+2. **The tape panel** — §S5.2 — drawn once per simulated experiment, shared by every cell of every
+   tree in it (all Park clones share one founder line's integrations).
+3. **Depth-0 censoring.** Observed recovery $Y_{cz}=(1-X_{cz})\,\mathbb 1[D_{cz}\ge1]$, $O=1-Y$:
+   exactly `23_dropout_matrix.py`'s rule, which codes a tape whose first site is `None` as `ABSENT`.
+4. **Cell filters** at export: QC $R_c=\sum_zY_{cz}\ge R_{\min}$; ClonalBC retention with
+   probability $\psi(R_c)$ (Park Mouse1: 36% at 20–40 tapes … 83% at 140+).
+
+Mask granularity is the **whole tape**: 0.02% internal gaps in Park, and the flat per-cell depth
+profile excludes 3′ truncation (park-compatibility Fig 3d/e).
+
+## S5.2 The closed-locus latent — why each piece
+
+**Problem it solves.** In Park a minority of tapes are both rarely read and shallow — Mouse1's 15%
+with recovery < 0.3 average 3.58 filled sites against 4.86 — a **step**, not a slope ($\rho=+0.119$
+above the cut). Mechanism (park-compatibility README, "Construct and readout"): a closed integration
+site is poorly transcribed (the tape is read from RNA) and poorly reached by the prime editor.
+Drawing recovery and speed independently would delete the depth–dropout link that makes editing and
+dropout non-separately-fittable (§S3 / log session 13), and would understate censoring, since slow
+tapes are the ones left unedited. One hidden per-tape switch drives both:
+
+$$u_z=\mathbb 1[U_z<\phi],\quad \beta_z=\mu_\beta+\Delta_\beta u_z+s_\beta\varepsilon_z,\quad
+r_z=\bar r_0\,r_{\rm cl}^{\,u_z}\,e^{s_rv_z-s_r^2/2},\quad \bar r_0=\frac{1}{1-\phi+\phi r_{\rm cl}}$$
+
+- $\phi$ = fraction of closed tapes; drawn through a uniform $U_z$ so the closed set is **nested** as
+  $\phi$ rises (common random numbers).
+- $\mu_\beta$ = overall dropout level, **solved** so the panel's realised tapes give mean technical
+  missingness $\bar p=\frac1k\sum_z\mathbb E_\alpha\,\sigma(\beta_z+\alpha)$ (Gauss–Hermite
+  over $\alpha$, Brent root); $\bar p$, not $\mu_\beta$, is the swept knob.
+- $\Delta_\beta$ = closed-tape read penalty (2 logits: 30% → 76% missing); $s_\beta$ = within-class
+  recovery scatter.
+- $r_{\rm cl}^{u_z}$ switches the closed slowdown on; $e^{s_rv-s_r^2/2}$ has mean exactly 1;
+  $\bar r_0$ makes $\mathbb E[r]=1$ (**the average tape held fixed**, Justin's choice), so raising
+  $\phi$ is not confounded with less editing overall and $\Lambda_T$ keeps its meaning.
+- $\varepsilon_z\perp v_z$: the class is the only link, so
+  $\mathrm{Cov}(\beta_z,\ln r_z)=\Delta_\beta\ln r_{\rm cl}\,\phi(1-\phi)<0$ and, exactly,
+  $\mathbb E[(\beta_z-\mu_\beta)\ln r_z]=\Delta_\beta\phi\,(\ln\bar r_0+\ln r_{\rm cl}-s_r^2/2)$.
+- ⚑ **The recovery-0.3 "threshold" is not a simulator parameter.** It enters only when choosing
+  $(\phi,r_{\rm cl})$ to resemble Park; the sharpness of the simulated step is $\Delta_\beta$ vs
+  $s_\beta$ (large penalty, small scatter → two clouds; the reverse → a slope).
+- ⚑ Even at $\phi=0$ the unedited share exceeds $e^{-\Lambda_T}$ (0.079 vs 0.055 at $\Lambda_T=2.9$,
+  library manifest): $\mathbb E[e^{-r\Lambda_T}]>e^{-\Lambda_T}$ by Jensen under the $s_r$ spread.
+  Expected, not a finding.
+
+## S5.3 ⭐⭐ Depth-0 censoring makes OBSERVED missingness heritable — derived, ✅ verified in the model
+
+Two tips $c,c'$ whose last common ancestor $x$ sits at time $t_x$; write $W_x=W(t_x)$. On tape $z$:
+
+1. A tip is unedited iff its whole root-to-tip path carries no edit. Branches partition the path, so
+   by §S4.9.5 A, $P(D_c=0)=e^{-\mu_z}$.
+2. Both are unedited iff the **shared** path (to $x$, expected $\mu_zW_x$ edits) and **both private**
+   paths ($\mu_z(1-W_x)$ each) carry none — three independent Poisson events:
+   $P(D_c=0,D_{c'}=0)=e^{-\mu_zW_x}\,e^{-2\mu_z(1-W_x)}=e^{-\mu_z(2-W_x)}$.
+3. Inclusion–exclusion: $P(D_c\ge1,D_{c'}\ge1)=1-2e^{-\mu_z}+e^{-\mu_z(2-W_x)}$.
+4. The mask is independent of depth and across cells given $(\alpha,\beta)$, so with
+   $\bar O=Y$, $P(\bar O_c)=(1-\pi_c)(1-e^{-\mu_z})$ and
+   $P(\bar O_c\bar O_{c'})=(1-\pi_c)(1-\pi_{c'})\,P(D_c\ge1,D_{c'}\ge1)$.
+5. Hence, conditional on the realised $\alpha$ (the form the validation uses),
+   $$\mathbb E[O_cO_{c'}]=1-(1-\pi_c)(1-e^{-\mu_z})-(1-\pi_{c'})(1-e^{-\mu_z})
+   +(1-\pi_c)(1-\pi_{c'})\big(1-2e^{-\mu_z}+e^{-\mu_z(2-W_x)}\big),$$
+   and averaged over $\alpha$ the covariance is
+   $$\mathrm{Cov}(O_c,O_{c'}\mid t_x)=(1-\bar p_z)^2\big[e^{-\mu_z(2-W_x)}-e^{-2\mu_z}\big]
+   \;\xrightarrow{W_x\to1}\;(1-\bar p_z)^2e^{-\mu_z}(1-e^{-\mu_z}).$$
+   No-effect value 0 (unrelated tips, $W_x=0$); it rises with how late the pair split.
+
+**Why it matters.** Rung 1 has *no* silencing, yet its observed missingness co-varies along the tree,
+because "no edit yet" is itself inherited. The disjoint tape split of park-compatibility `73`/`74`/
+`77` does not defeat it — this is a shared state *within* one tape, and relatives are found
+correctly on the other half. Hand arithmetic (illustration, not a result): sister covariance
+$\le0.004$ at the mice's $\mu\approx5.5$; $\approx0.035$ at Initial's $\hat\Lambda=2.87$ (correlation
+~0.2 against a variance of $0.25\times0.75$); larger on slow tapes, which are the poorly read ones.
+⚠⚠ **Bears on the Pre-TX heritable-silencing numbers** (variogram top bin +0.2618; ladder +4.59
+nats/cell, $Q$ 7.1%; unanimity 9.77× vs 1.22×; 2,019 events / 2.46%), less on Subclone
+($\hat\Lambda=4.69$), essentially not on the mice. Direction: inflation only. **Magnitude on Park
+unknown, and conditional on $\Lambda_{\rm pre}$** — a tape edited before the clone founder cannot be
+unedited within the clone. An all-unedited small subclade also produces the Dollo test's "exactly
+all missing" excess. ⇒ the rung-1 negative control (censoring off vs on) is what measures it.
+
+**Verification.** ✅ Two-tip Monte Carlo (4 settings, $4\times10^6$ draws): $|z|\le0.87$; technical-
+only covariance 0 to $10^{-4}$. ✅ In the generator (`src/21`, 840 trees × 5 panels, pooled):
+both-unedited 0.09848 observed vs 0.09863 predicted on SLOW ($z=-0.64$); both-observed-missing
+0.22661 vs 0.22670 ($z=-0.36$). The independence prediction misses by $z=26.8$ (pooled, SLOW).
+
+## S5.4 The closed forms, and their status (`src/18`, PASS 2026-09-30)
+
+F0 the panel law (unit = panel) · F1 $P(X=1\mid\eta)=\sigma(\eta)$ · F2
+$P(O=1)=1-(1-\pi)(1-e^{-\mu_z})$ · F3 $P(D=d\mid Y=1)=P(\min(\mathrm{Pois}(\mu_z),N)=d)/(1-e^{-\mu_z})$
+by class · F4t $\mathbb E[X_cX_{c'}]=\pi_c\pi_{c'}$ (the mask never reads the tree) · F4o §S5.3 ·
+F5 retention $=\mathbb 1[R_c\ge R_{\min}]\psi(R_c)$ · H hard assertions (encoding in `23`/`44`'s
+formats, prefix-code bijection, replay). F4 pairs = one tip from each side of every internal node,
+per tape — never random tip pairs (§S4.9.5 E's lesson).
+
+⚠⚠ **A defect in my check set, found when the validation failed by rule (seed 30092026):** F4o and
+F4t coincide wherever censoring is rare ($z$ correlation 0.98–1.00 in BASE/FILTER), so one
+fluctuation counted as two trips; and the ten $W$-bins of a check share their trees, so a sign
+pattern across bins tracks the pooled value and is not independent evidence. Resolved by Justin's
+amended scoring (validation code only; generator untouched): **each F4 check counts through one
+pooled cell per fixture, and F4o only where censoring is not negligible.** ⚑ Generalises §S4.9.5's
+lesson: *two statistics that coincide in a regime must not both count toward a verdict there.*
+
+## S5.5 What rung 1 does NOT establish
+
+- ⚠ It generates a *model*: no heritable loss (rung 2), no *trans* symbol removal (row A9's untested
+  limb), no clone-level capture, no site-6 mechanism.
+- ⚠ A Park-shaped run inherits a **double count**: measured $\hat\beta_z$ already contains depth-0
+  censoring and heritable loss, so feeding it in as the *technical* rate counts both twice. To be
+  handled in the negative control's proposal.
+- ⚠ Editing and dropout must still be fitted **jointly** before any Park-calibrated claim.
