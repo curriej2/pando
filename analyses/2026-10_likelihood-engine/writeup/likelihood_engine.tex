@@ -1,0 +1,594 @@
+% !TEX program = pdflatex
+% ---------------------------------------------------------------------------
+% likelihood_engine.tex -- how the likelihood engine works: the model it scores,
+% every equation it evaluates, and how it is checked.
+%
+% Build: pdflatex likelihood_engine.tex  (twice, for cross-references).
+% Code: analyses/2026-10_likelihood-engine/src/ (01 reference twin, 02 JAX engine,
+% 03 validation, 04 timing). Design record: notes/sciphy_notes.md, H.8.
+%
+% Notation follows the house register (sciphy_notes.md, H.6.0): lambda is the
+% EDITING rate and f is reserved for functions. A branch is named by its lower
+% node (w), never b -- b is the division rate.
+% ---------------------------------------------------------------------------
+\documentclass[11pt]{article}
+\usepackage[margin=1in]{geometry}
+\usepackage{amsmath,amssymb,mathtools}
+\usepackage{booktabs}
+\usepackage{array}
+\usepackage[hidelinks]{hyperref}
+
+\newcommand{\E}{\mathbb{E}}
+\newcommand{\Prob}{\mathbb{P}}
+\newcommand{\Sil}{\mathsf{S}}               % the silenced state / slot
+\newcommand{\LamT}{\Lambda_T}
+\newcommand{\lcp}{\mathrm{lcp}}
+\newcommand{\pa}{\mathrm{pa}}
+\newcommand{\ch}{\mathrm{ch}}
+\newcommand{\Obs}{\mathrm{Obs}}
+\newcommand{\Out}{\mathrm{Out}}
+\newcommand{\miss}{\textup{?}}
+\newcommand{\Hbar}{\bar H}
+\newcommand{\GamT}{\Gamma_T}
+\newcommand{\sig}{\sigma}
+\newcommand{\note}[1]{\par\smallskip\noindent\emph{#1}\par\smallskip}
+
+\title{The likelihood engine:\\ an exact per-clone likelihood for DNA Typewriter lineage trees}
+\author{Justin}  % edit
+\date{Draft, \today}
+
+\begin{document}
+\maketitle
+
+\noindent This document explains the likelihood engine in
+\texttt{analyses/2026-10\_likelihood-engine/}: the model it scores, every quantity it computes,
+why each equation has the form it does, and how the code is checked. It is the core of our own tree
+reconstruction tool. The engine answers one question:
+
+\begin{quote}
+\emph{Given one clone's tree --- who descended from whom, and when each division happened --- and
+the parameters of editing, silencing and readout, how probable are the tapes we actually read?}
+\end{quote}
+
+\noindent Everything else (finding good trees, putting error bars on them, inferring signalling
+history) is built on top of that one function. Section~\ref{sec:prov} lists what is borrowed from
+SciPhy, LAML, LAML-Pro and ConvexML, and what is new here.
+
+% ===========================================================================
+\section*{Notation}
+% ===========================================================================
+Symbols are grouped by what they describe. Most are re-defined where they are first used.
+
+\begin{center}\small
+\begin{tabular}{@{}lp{0.60\textwidth}l@{}}
+\toprule
+symbol & meaning & units / range \\
+\midrule
+\multicolumn{3}{@{}l}{\emph{Tree and time}}\\
+$t$ & calendar time as a fraction of the experiment: clone founder at $t=0$, harvest at $t=1$ & $[0,1]$ \\
+$h=1-t$ & height: time remaining until harvest & $[0,1]$ \\
+$n$ & number of cells (tips) in the clone; the tree is rooted and binary with $n-1$ internal nodes & count \\
+$o$ & the origin: the founder cell, at $t=0$ & --- \\
+$r$ & the root: most recent common ancestor of all sampled cells, at $t_r\in(0,1)$ & --- \\
+stem & the branch from $o$ to $r$, over $[0,t_r]$ & --- \\
+$v,u,w$ & nodes; $\pa(v)$ is the parent, $\ch(v)$ the children & --- \\
+branch $w$ & the branch \emph{into} node $w$, from $\pa(w)$ down to $w$, over $[t_{\pa(w)},t_w]$ & --- \\
+$t_v$, $h_v$ & time and height of node $v$; every tip has $t=1$, $h=0$ & $[0,1]$ \\
+$x_v$ & unconstrained coordinate of internal node $v$ (Section~\ref{sec:coords}) & real \\
+\midrule
+\multicolumn{3}{@{}l}{\emph{Tapes, cells, reads, states}}\\
+$k$, $z$ & tapes per cell; $z=1,\dots,k$ indexes them & count \\
+$N$ & slots per tape & $6$ \\
+$M$ & number of distinct insert symbols; $i$ indexes them & count \\
+$c$ & a cell (a tip of the tree) & --- \\
+$d_{cz}$ & the read of tape $z$ in cell $c$: an observed string $v_{cz}=(s_1,\dots,s_m)$, $1\le m\le N$, or $\miss$ (missing) & --- \\
+$X_{vz}$ & the true, hidden state of tape $z$ at node $v$: a string of at most $N$ symbols, or $\Sil$ (silenced) & --- \\
+$d$ & a slot: the depth of a tape, i.e. how many symbols are written, $0\le d\le N$; plus the slot $\Sil$ & --- \\
+\midrule
+\multicolumn{3}{@{}l}{\emph{Editing}}\\
+$\LamT$ & expected number of edits on an average tape over the whole experiment (if it never filled) & edits / tape \\
+$\lambda_0(t)$ & time shape of the editing rate, $\ge0$, with $\int_0^1\lambda_0=1$ & --- \\
+$W(t)=\int_0^t\lambda_0$ & share of the experiment's editing spent by time $t$ & $[0,1]$ \\
+$r_z$ & speed of tape $z$ relative to the average tape & mean $1$ \\
+$\lambda_z(t)=r_z\LamT\lambda_0(t)$ & editing rate of tape $z$ at time $t$ & edits / tape / experiment \\
+$m_w$ & per-branch rate multiplier: a hook for lineage-varying editing; fixed at $1$ & --- \\
+\midrule
+\multicolumn{3}{@{}l}{\emph{Composition}}\\
+$\xi_i(t)$ & probability that an edit made at time $t$ writes symbol $i$; $\sum_i\xi_i(t)=1$ & probability \\
+$\xi^{L}$ & the background (lineage) composition, measured and fixed & probabilities \\
+\midrule
+\multicolumn{3}{@{}l}{\emph{Silencing}}\\
+$\Hbar$ & expected fraction of cell $\times$ tape entries silenced by harvest & $[0,1)$ \\
+$\GamT=-\ln(1-\Hbar)$ & total silencing exposure of one root-to-tip lineage & events / tape \\
+$\zeta_0(t)$, $W_\zeta(t)$ & time shape of silencing ($\int_0^1\zeta_0=1$) and its cumulative & --- \\
+$\Gamma(t)=\GamT W_\zeta(t)$ & silencing exposure accumulated by time $t$ & events / tape \\
+\midrule
+\multicolumn{3}{@{}l}{\emph{Readout}}\\
+$\pi_{cz}=\sig(\alpha_c+\beta_z)$ & probability that tape $z$ of cell $c$ is lost technically; $\sig(y)=1/(1+e^{-y})$ & probability \\
+$\alpha_c$, $\beta_z$ & cell and tape offsets (larger = worse captured / worse read) & logits \\
+\midrule
+\multicolumn{3}{@{}l}{\emph{Tree prior}}\\
+$b$, $\delta$, $\rho$ & division rate, death rate (per experiment), fraction of the final population sampled & --- \\
+\midrule
+\multicolumn{3}{@{}l}{\emph{Computed by the engine}}\\
+$\mu_w$, $G_w$ & expected edits on a tape, and silencing exposure, along branch $w$ & edits / tape; events / tape \\
+$\lcp_{vz}$ & longest common prefix of the tapes read below node $v$ & string \\
+$K_{wz}[d',d]$ & branch kernel: probability of going from slot $d'$ to slot $d$ along branch $w$ & probability \\
+$L_{vz}(d)$ & partial likelihood: probability of everything read below $v$, if $v$ is in slot $d$ & probability \\
+$\ell_z$ & log-likelihood of tape $z$ (the engine's output, one per tape) & nats \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+% ===========================================================================
+\section{The model the engine scores}\label{sec:model}
+% ===========================================================================
+
+The engine scores exactly the model our simulator generates (``rung 2'' of the simulator: editing,
+heritable silencing, technical dropout and depth-0 censoring). It has four parts.
+
+\paragraph{1. Tree and time.} One founder cell at $t=0$ divides at rate $b$ and dies at rate
+$\delta$. At harvest, $t=1$, a fraction $\rho$ of the population is sampled. The tree relating the
+sampled cells is rooted and binary, and every tip sits at $t=1$ (it is \emph{ultrametric}). Above the
+root runs a \emph{stem} back to the founder. Time is measured in units of the experiment, so
+calendar days are $t\times T$ with $T$ known.
+
+\paragraph{2. Editing.} Every tape starts \emph{blank} at the founder. Along every lineage, and
+independently for each tape, edits arrive at random --- a Poisson process with rate
+$\lambda_z(t)=r_z\LamT\lambda_0(t)$. Each edit \emph{appends} one symbol to the tape, the symbol being
+$i$ with probability $\xi_i(t)$. Once all $N$ slots are full, nothing more is recorded. At a
+division both daughters inherit a copy of the tape.
+
+\paragraph{3. Silencing.} Along every lineage, independently for each tape, the tape can be
+silenced, at rate $\zeta(t)=\GamT\zeta_0(t)$. Once silenced, it stays silenced in every descendant and
+is never read again (a \emph{Dollo} character: lost once, never regained).
+
+\paragraph{4. Readout.} At harvest each cell's tapes are read.
+\begin{itemize}\itemsep0pt
+\item A silenced tape is always reported missing.
+\item Otherwise the tape is lost technically with probability $\pi_{cz}=\sig(\alpha_c+\beta_z)$.
+\item A tape that was captured but is still \emph{blank} is also reported missing. This is how Park's
+  pipeline codes it (a tape whose first slot is empty is called \texttt{ABSENT}); we call it
+  \emph{censoring}.
+\item Otherwise the tape is read exactly.
+\end{itemize}
+
+\paragraph{Assumptions.} Given the tree and the parameters: tapes are independent of one another;
+silencing is independent of what is written on the tape; technical losses are independent across
+cells and tapes given $\alpha$ and $\beta$. The first is the strongest. A cell's tapes share its
+chromatin state, its prime-editor supply and its cell cycle, so in reality they are not quite
+independent; treating them as independent overstates how much evidence the data carry (rows A5/A8 of
+the project's assumption table).
+
+% ===========================================================================
+\section{What a likelihood is, and why the engine works tape by tape}\label{sec:lik}
+% ===========================================================================
+
+\subsection{One story, and its probability}
+
+Fix one tape $z$. At every node of the tree the tape had some true state --- a string of symbols, or
+$\Sil$. We see the true states only at the tips, and only through the readout; the internal states
+are hidden. Pick a complete \emph{story}: a true state for every node. Its probability is a product
+of local pieces:
+\begin{equation}
+\underbrace{P_{\rm stem}(\varnothing\to X_{rz})}_{\text{founder blank; stem}}\;
+\prod_{\text{branches }w}\underbrace{P_w\big(X_{\pa(w)z}\to X_{wz}\big)}_{\text{what happens along branch }w}\;
+\prod_{\text{cells }c}\underbrace{\mathcal O_{cz}\big(d_{cz}\mid X_{cz}\big)}_{\text{what the sequencer reported}} .
+\label{eq:story}
+\end{equation}
+Each factor answers one local question. A \emph{branch factor} asks: given the tape at the top of
+this branch, how likely is its state at the bottom? An \emph{emission factor} $\mathcal O$ asks:
+given a cell's true tape, how likely is what was reported?
+
+\subsection{The likelihood is the sum over every story}
+
+We do not know the hidden states, so the probability of the reads is the sum of~\eqref{eq:story}
+over every possible story:
+\begin{equation}
+L_z=\sum_{\text{all hidden states}}\ \eqref{eq:story},\qquad \ell_z=\log L_z .
+\label{eq:Lz}
+\end{equation}
+Because tapes are independent given the tree and parameters, the probability of all reads is the
+product over tapes, and its logarithm is a sum:
+\begin{equation}
+L=\prod_{z=1}^{k}L_z,\qquad \ell=\log L=\sum_{z=1}^{k}\ell_z .
+\label{eq:product}
+\end{equation}
+The engine returns the vector $(\ell_1,\dots,\ell_k)$, in nats; the clone's log-likelihood is its
+sum. Listing stories is impossible --- with about 100 symbols and $N=6$ there are some $10^{12}$
+possible states per node --- so Sections~\ref{sec:prune}--\ref{sec:kernel} compute the sum without
+listing anything.
+
+\subsection{Two ways of reading the same number}\label{sec:normalise}
+
+The quantity $P(\text{reads}\mid\text{tree},\theta)$, where $\theta$ stands for all the parameters,
+can be read in two ways, and only one of them adds up to 1.
+\begin{itemize}
+\item \textbf{As a function of the parameters} (reads fixed, $\theta$ varying) it is the
+  \emph{likelihood}. It does \emph{not} integrate to 1 over $\theta$ or over trees, and nothing
+  requires it to. This is the familiar statement that a likelihood is not a probability
+  distribution.
+\item \textbf{As a function of the reads} (tree and $\theta$ fixed, reads varying) it is the
+  probability distribution of what an experiment could produce. Summed over \emph{every possible set
+  of reads} --- every cell's tape reported as some string of length $1$ to $N$, or missing --- it
+  must equal exactly 1, because some set of reads always occurs.
+\end{itemize}
+The second property is what validation check V2 tests. It is not a property we impose; it is
+automatically true of a correct model, and it fails if, for example, a missing tape is counted under
+two causes at once. That makes it a sharp test of the readout and censoring terms.
+
+% ===========================================================================
+\section{Pruning: computing the sum by passing messages up the tree}\label{sec:prune}
+% ===========================================================================
+
+Look at where one internal node's state, say $X_{uz}$, appears in~\eqref{eq:story}: only in the
+branch into $u$ and the two branches out of it. Nothing else depends on it. So the sum over $X_{uz}$
+can be done locally, before anything is decided higher up. Doing this at every node, from the tips
+upward, is Felsenstein's pruning algorithm.
+
+\paragraph{Partial likelihood.} At every node $v$ keep a vector with one entry per possible state:
+\begin{equation}
+L_{vz}(x)=\Prob\big(\text{everything read on tape }z\text{ below }v\ \big|\ X_{vz}=x\big).
+\end{equation}
+Think of it as $v$'s report card: ``if I had been in state $x$, this is how well that explains what
+my descendants show.''
+
+\paragraph{Messages.} A child $w$ sends its parent a message:
+\begin{equation}
+M_{w\to\pa(w),z}(x')=\sum_{x}P_w(x'\to x)\,L_{wz}(x).
+\label{eq:message}
+\end{equation}
+In words: if the parent was in state $x'$, the child could have ended in any state $x$; weight each by
+how likely the branch was to carry $x'$ to $x$, and by how well $x$ explains the child's own subtree.
+
+\paragraph{Combining.} Once the parent's state is fixed, its two daughter lineages evolve
+independently, so their messages multiply:
+\begin{equation}
+L_{vz}(x')=\prod_{w\in\ch(v)}M_{w\to v,z}(x').
+\label{eq:combine}
+\end{equation}
+
+\paragraph{The root.} The founder is blank, so the last message comes up the stem from the blank
+state:
+\begin{equation}
+L_z=\sum_{x}P_{\rm stem}(\varnothing\to x)\,L_{rz}(x).
+\label{eq:root}
+\end{equation}
+One pass from the tips to the root computes~\eqref{eq:Lz} exactly. What remains is to say which
+states each vector needs (Section~\ref{sec:slots}), what $P_w$ is (Section~\ref{sec:kernel}) and what
+the tips start with (Section~\ref{sec:tips}).
+
+% ===========================================================================
+\section{Which states each node needs: depth slots}\label{sec:slots}
+% ===========================================================================
+
+Picture the space of all possible tape states as a tree of strings (a \emph{trie}): the blank tape at
+the top, branching into every one-symbol string, each of those into every two-symbol extension, and
+so on down to $N$ symbols. Editing only ever moves a tape \emph{down} this trie, one step per edit.
+Three facts follow, and together they shrink every node's vector from $10^{12}$ entries to $N+2=8$.
+
+\paragraph{Fact 1: a read tape pins its ancestors to one path.} If cell $c$'s tape was read as
+$v_{cz}$, every ancestor of $c$ held a \emph{prefix} of $v_{cz}$ (editing only appends). If several
+tapes were read below node $v$, $v$ held a prefix of all of them, i.e.\ a prefix of their
+\emph{longest common prefix}
+\begin{equation}
+\lcp_{vz}=\text{longest common prefix of }\{v_{cz}:c\text{ below }v,\ d_{cz}\ne\miss\}.
+\end{equation}
+There are at most $N+1$ such prefixes, from the blank tape up to $\lcp_{vz}$ itself.
+
+\paragraph{Fact 2: Dollo.} A silenced tape is never read and silencing is inherited, so a node with
+any read tape below it cannot have been silenced.
+
+\paragraph{Fact 3: a subtree with nothing read only constrains depth.} If every tape below $v$ is
+missing, the reads say nothing about \emph{which} symbols $v$'s tape held --- only whether it was
+blank (a blank tape can be censored) or silenced. Formally, $L_{vz}(x)$ depends on $x$ only through
+its depth $|x|$ (and whether $x=\Sil$). The reason: a missing tip's emission depends only on
+``blank or not''; how many edits a branch adds depends only on how many slots are open; and summing
+over which symbols were written gives 1 for every write. This was checked against exhaustive
+enumeration of all states on small trees (agreement to $3\times10^{-15}$).
+
+\paragraph{Depth slots.} So every node, for every tape, needs a vector of $N+2$ numbers, indexed by
+slot $d=0,1,\dots,N$ and $\Sil$, read in one of two ways:
+\begin{itemize}
+\item \textbf{anchored node} (some tape read below it): slot $d$ means the specific string
+  $\lcp_{vz}[1..d]$, for $0\le d\le|\lcp_{vz}|$; slots beyond are impossible (zero); $\Sil$ is
+  impossible;
+\item \textbf{floating node} (nothing read below it): slot $d$ means ``any string of depth $d$'';
+  $\Sil$ is allowed.
+\end{itemize}
+If a child is anchored, so is its parent, and the parent's lcp is a prefix of the child's --- so the
+parent's slot $d'$ and the child's slot $d$ describe the same string up to depth $d'$.
+
+\paragraph{Example.} A clone of four cells, $((c_1,c_2),(c_3,c_4))$, internal nodes $u$ (above
+$c_1,c_2$), $w$ (above $c_3,c_4$) and the root $r$. On one tape, $c_1$ read $(A,B)$, $c_2$ read
+$(A,C,A)$, and $c_3,c_4$ are missing. Then $u$ is anchored with $\lcp=(A)$ --- its tape was blank or
+held $A$; $w$ is floating; the root is anchored with $\lcp=(A)$. The two possible states of $u$ are
+two stories about the shared $A$: written before $u$ divided and inherited by both daughters, or
+written independently on both daughters' branches (a coincidence, homoplasy, weighted by
+$\xi_A$ twice). Pruning weighs both by their probability.
+
+% ===========================================================================
+\section{Time on a branch}\label{sec:time}
+% ===========================================================================
+
+A branch $w$ covers the calendar interval $[t_{\pa(w)},t_w]$. Two numbers summarise what can happen
+to a tape on it.
+
+\paragraph{Expected edits.} Integrating the editing rate over the branch,
+\begin{equation}
+\mu_{wz}=\int_{t_{\pa(w)}}^{t_w}\lambda_z(s)\,m_w\,ds=r_z\,\LamT\,m_w\,\big[W(t_w)-W(t_{\pa(w)})\big]
+\quad\text{edits per tape.}
+\label{eq:mu}
+\end{equation}
+With a constant rate, $\lambda_0\equiv1$ and $W(t)=t$, this is just
+$r_z\LamT\times(\text{branch duration})$. With a time-varying rate, two branches of equal duration can
+carry different amounts of editing, depending on where they sit in time --- which is why the engine
+works with node \emph{times}, not just branch lengths.
+
+\paragraph{Silencing exposure.} In the same way,
+\begin{equation}
+G_w=\Gamma(t_w)-\Gamma(t_{\pa(w)})=\GamT\,\big[W_\zeta(t_w)-W_\zeta(t_{\pa(w)})\big]
+\quad\text{events per tape,}
+\label{eq:G}
+\end{equation}
+and the probability that the tape is \emph{not} silenced along the branch is $e^{-G_w}$.
+
+\paragraph{Only totals matter when the composition is fixed.} If the editing rate speeds up and slows
+down within a branch but the symbol probabilities $\xi$ do not change, only the total $\mu_{wz}$
+matters, not when within the branch the editing happened: speeding a clock up or down plays the same
+film faster. The same holds for silencing and $G_w$. Breakpoints within a branch (\emph{segments})
+are needed only where the composition $\xi$ changes, because then which symbol sits in a slot depends
+on whether it was written before or after the change. In the first build the composition is
+constant, so every branch is a single segment with the totals~\eqref{eq:mu}--\eqref{eq:G}.
+
+% ===========================================================================
+\section{The branch kernel}\label{sec:kernel}
+% ===========================================================================
+
+The kernel $K_{wz}[d',d]$ is the branch factor $P_w$ written on depth slots: the probability that tape
+$z$ ends branch $w$ in slot $d$ given that it started in slot $d'$. For an anchored child it also
+includes the probability of having written exactly the symbols $\lcp_{wz}[d'+1..d]$ on the way.
+
+\subsection{One segment: three factors}
+
+On a branch (or segment) with expected edits $\mu$, silencing exposure $G$ and composition $\xi$:
+\begin{equation}
+\boxed{\;K[d',d]=\underbrace{e^{-G}}_{\text{not silenced}}\times
+\underbrace{C_N(d'\to d;\mu)}_{\text{right number of edits}}\times
+\underbrace{\Xi(d',d)}_{\text{right symbols}},\qquad d'\le d.\;}
+\label{eq:kernel}
+\end{equation}
+
+\paragraph{Right number of edits.} Edits arrive as a Poisson process, so the number attempted on
+the branch is Poisson with mean $\mu$. If the tape does not fill ($d<N$), exactly $d-d'$ edits
+happened:
+\begin{equation}
+C_N(d'\to d;\mu)=e^{-\mu}\,\frac{\mu^{\,d-d'}}{(d-d')!},\qquad d<N.
+\end{equation}
+If the tape fills ($d=N$), at least $N-d'$ edits were attempted --- any extra had nowhere to go:
+\begin{equation}
+C_N(d'\to N;\mu)=1-\sum_{j=0}^{N-d'-1}e^{-\mu}\frac{\mu^j}{j!},\qquad C_N(N\to N;\mu)=1 .
+\end{equation}
+
+\paragraph{Right symbols.} For an anchored child, each written slot must hold the symbol the lcp
+says, each chosen independently:
+\begin{equation}
+\Xi(d',d)=\prod_{j=d'+1}^{d}\xi_{\lcp_{wz}[j]} .
+\end{equation}
+For a floating child, $\Xi=1$: whatever was written is summed over, and every write's probabilities
+add up to 1.
+
+\paragraph{Not silenced.} Silencing ignores what is on the tape, so it contributes the separate
+factor $e^{-G}$. For a floating child the silenced slot gets the rest:
+$K[d',\Sil]=1-e^{-G}$, and $K[\Sil,\Sil]=1$. For an anchored child the silenced column is never used
+(Fact 2). Editing never removes symbols, so $K[d',d]=0$ when $d<d'$.
+
+\subsection{Several segments}
+
+If the composition changes along the branch, cut it at the changes into segments $k=1,\dots,K$, each
+with its own $\mu_k$, $G_k$ and $\xi^{(k)}$. The tape passes the boundaries between segments at some
+depths $j_1\le j_2\le\dots\le j_{K-1}$; write $j_0=d'$ and $j_K=d$. Then
+\begin{equation}
+K_{wz}[d',d]=e^{-\sum_kG_k}\sum_{d'\le j_1\le\cdots\le j_{K-1}\le d}\ \prod_{k=1}^{K}
+C_N\big(j_{k-1}\to j_k;\mu_k\big)\,\Xi^{(k)}(j_{k-1},j_k),
+\qquad K_{wz}[d',\Sil]=1-e^{-\sum_kG_k}.
+\label{eq:multiseg}
+\end{equation}
+The sum runs over every way the tape's growth could be split among the segments; each split scores
+segment $k$'s edits with segment $k$'s composition. Equivalently, $K_{wz}$ is the matrix product of
+the segments' kernels in time order. When the composition is the same in every segment, the sum
+collapses to one segment with $\mu=\sum_k\mu_k$ and $G=\sum_kG_k$, because Poisson counts add
+(checked numerically, to $2\times10^{-16}$).
+
+\paragraph{Segment boundaries are not inferred.} They are the knots of $\lambda_0$, $\zeta_0$ and of
+the composition schedule --- fixed by the analyst or by the experimental design. What is inferred are
+node times, and the kernel changes smoothly with them:
+$\partial\mu_{wz}/\partial t_w=r_z\LamT m_w\lambda_0(t_w)$.
+
+\paragraph{A cross-check.} The same kernel can be computed by writing the processes as rates on the
+slots and taking a matrix exponential; the two agree to $3\times10^{-15}$. The engine uses the closed
+form~\eqref{eq:kernel} and keeps the matrix exponential only as a background check.
+
+% ===========================================================================
+\section{Tips: what the readout says}\label{sec:tips}
+% ===========================================================================
+
+A tip's vector is its emission probability, written on slots:
+\begin{align}
+\text{tape read as }v_{cz}: &\quad L_{cz}(d)=(1-\pi_{cz})\,\mathbf 1\big[d=|v_{cz}|\big],\qquad L_{cz}(\Sil)=0;\\
+\text{tape missing}: &\quad L_{cz}(d)=\pi_{cz}+(1-\pi_{cz})\,\mathbf 1[d=0],\qquad L_{cz}(\Sil)=1 .
+\end{align}
+A read tape was captured (probability $1-\pi_{cz}$) and is exactly what was read. A missing tape was
+lost technically (probability $\pi_{cz}$, whatever it held), or captured but blank (probability
+$1-\pi_{cz}$, possible only at depth 0), or silenced (always missing). The blank-tape term is what
+makes missingness informative: a missing tape whose relatives show the first slot was already written
+cannot have been censored.
+
+% ===========================================================================
+\section{Coordinates for the node times}\label{sec:coords}
+% ===========================================================================
+
+Node times must be ordered: every node after its parent and before harvest. An optimiser or sampler
+that steps freely can break that order. Instead of policing it, the engine uses coordinates in which
+every value is a legal tree.
+
+\paragraph{The ratio transform.} Each internal node gets a real number $x_v$, turned into a fraction
+by $\sig(x)=1/(1+e^{-x})$. Working in heights $h=1-t$ (founder at $h=1$, cells at $h=0$):
+\begin{equation}
+h_r=\sig(x_r),\qquad h_v=\sig(x_v)\,h_{\pa(v)}\ \ \text{for every other internal node},\qquad t_v=1-h_v .
+\label{eq:ratio}
+\end{equation}
+Each node sits a fraction $\sig(x_v)$ of the way from the present up to its parent. Since
+$0<\sig<1$, every node lands strictly between its parent and the present, for any $x$. For example,
+$x_r=0$, $x_u=1$, $x_w=-1$ give $h_r=0.5$, $h_u=0.731\times0.5=0.366$, $h_w=0.269\times0.5=0.134$. Changing
+$x_r$ rescales the whole tree; each lower coordinate places a node within the room its parent leaves.
+
+\paragraph{The Jacobian.} How much time one unit of $x$ covers depends on where you are: near
+$\sig\approx0.5$ a unit of $x$ moves a node a lot, in the tails very little. The \emph{Jacobian} is that
+stretch factor; for the whole tree,
+\begin{equation}
+\Big|\frac{\partial h}{\partial x}\Big|=\prod_{v\ \text{internal}}h_{\pa(v)}\,\sig(x_v)\big(1-\sig(x_v)\big),
+\qquad h_{\pa(r)}=1 .
+\label{eq:jac}
+\end{equation}
+A density over times becomes a density over $x$ by multiplying by this factor. It matters only when
+sampling (Section~\ref{sec:objective}). Both the always-legal property and~\eqref{eq:jac} were checked
+on 200 random trees.
+
+% ===========================================================================
+\section{The tree prior}\label{sec:prior}
+% ===========================================================================
+
+The tree prior says how plausible a set of division times is if cells divide at rate $b$, die at rate
+$\delta$, and a fraction $\rho$ were sampled at harvest. For a constant-rate birth--death process with
+the founder at height 1,
+\begin{equation}
+p(\mathcal T\mid b,\delta,\rho)\ \propto\ p_1(1)\prod_{v\ \text{internal}}b\,p_1(h_v),\qquad
+p_1(h)=\frac{\rho\,(b-\delta)^2e^{-(b-\delta)h}}{\big[\rho b+\big(b(1-\rho)-\delta\big)e^{-(b-\delta)h}\big]^2},
+\label{eq:prior}
+\end{equation}
+conditioned on the clone having its observed $n$ cells. Here $p_1(h)$ is the probability that a
+lineage alive at height $h$ leaves exactly one sampled descendant; each internal node contributes ``a
+division happened here, and both resulting lineages left sampled descendants.'' The prior does two
+jobs. It keeps the ancestors of identical-looking cells from collapsing onto one instant (the
+likelihood alone would push their branches to zero length); and it carries information about
+calendar time that the edits alone do not. (The normalising constant for conditioning on $n$ is
+checked against simulated trees in validation check V8.)
+
+% ===========================================================================
+\section{The objective}\label{sec:objective}
+% ===========================================================================
+
+By Bayes' rule,
+$P(\text{tree},\theta\mid\text{reads})\propto P(\text{reads}\mid\text{tree},\theta)\,
+p(\text{tree}\mid b,\delta,\rho)\,p(\theta)$. Taking logs gives the objective the engine
+evaluates:
+\begin{equation}
+J(x,\theta)=\underbrace{\sum_{z}\ell_z\big(t(x),\theta\big)}_{\text{log-likelihood}}
++\underbrace{\log p\big(t(x)\mid b,\delta,\rho\big)}_{\text{log tree prior}}
++\underbrace{\log p(\theta)}_{\text{log parameter priors}}
+\ \Big[\ +\log\Big|\frac{\partial h}{\partial x}\Big|\ \text{when sampling}\Big].
+\label{eq:J}
+\end{equation}
+\begin{itemize}
+\item \textbf{Point estimate} (maximum a posteriori, i.e.\ maximum likelihood with the priors as a
+  penalty): maximise $J$ \emph{without} the Jacobian. Re-expressing where you look does not move the
+  highest point of a function, so the best $x$ gives the best times.
+\item \textbf{Sampling} the posterior by moving in $x$ (e.g.\ Hamiltonian Monte Carlo): include the
+  Jacobian, so the sampler spends time in proportion to probability in \emph{time}, not in $x$.
+\end{itemize}
+Every step from $x$ to $J$ --- ratio transform, branch totals, kernels, pruning, priors --- is a
+smooth formula, so automatic differentiation gives the exact gradient of $J$ with respect to every
+node coordinate and parameter.
+
+% ===========================================================================
+\section{Per-tape output and support values}\label{sec:support}
+% ===========================================================================
+
+Because the engine returns one log-likelihood per tape, any re-weighting
+$\ell_{\mathbf w}=\sum_zw_z\ell_z$ is free. A tape bootstrap uses $\mathbf w$ = counts of a
+with-replacement draw of $k$ tapes; a jackknife leaves one tape out; a weighted likelihood bootstrap
+uses $\mathbf w=k\times\mathrm{Dirichlet}(1,\dots,1)$. The tape is the right resampling unit because
+tapes, not slots, are what the model treats as independent. A tape whose $\ell_z$ is persistently out
+of line with the others flags a problem tape.
+
+% ===========================================================================
+\section{What the engine does not do (yet)}\label{sec:excl}
+% ===========================================================================
+Read or sequencing errors (would need a larger state representation); cross-tape coupling (shared
+cell-level factors; a silenced integration removing its symbol from other tapes); lineage-varying
+editing rate or composition (the hooks exist, fixed at ``nothing varies''); partial silencing;
+editing coupled to division; editing before the clone founder; pooling across clones; the different
+behaviour of slot 6 measured on Park. A \emph{posterior mode} --- posteriors of ancestral states, of
+which edits were written on which branch, and of why each missing entry is missing --- is specified
+in the design record and deferred to a later version.
+
+% ===========================================================================
+\section{Where the pieces come from}\label{sec:prov}
+% ===========================================================================
+
+\begin{center}\small
+\begin{tabular}{@{}p{0.38\textwidth}p{0.27\textwidth}p{0.29\textwidth}@{}}
+\toprule
+component & taken from / similar to & new here \\
+\midrule
+tape as the unit; prefix states; kernel (Eqs 5--7); ancestral sets (Eqs 8--9); pruning (Eq 12) & SciPhy & --- \\
+time tree with stem, fixed experiment length, birth--death-sampling prior, per-tape clocks & SciPhy / BEAST & --- \\
+absorbing silenced state; editing and readout as two layers & LAML (its kernel equals ours with $N=1$) & per tape, calendar time, timing shape, $\Hbar$ \\
+general per-tip emission & LAML-Pro & per (cell, tape) dropout; depth-0 censoring \\
+regularising branch lengths & ConvexML's lesson & via the tree prior \\
+ratio coordinates & Kishino--Thorne--Bruno; BEAST & --- \\
+depth-slot representation (anchored / floating) & extends SciPhy Eqs 8--9 & new (checked exact) \\
+time-varying rate and composition via segments & our simulator & new for these methods \\
+per-tape log-likelihood array as output & tape bootstraps (Park, Typewriter) & new as an engine output \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+% ===========================================================================
+\section{How the code is checked}\label{sec:val}
+% ===========================================================================
+
+Two implementations exist: a plain NumPy \emph{reference twin}, written to be read, and the JAX engine,
+written to be fast and differentiable. A failed check is a bug, not a finding.
+\begin{description}\itemsep2pt
+\item[V1] The twin against exhaustive enumeration of every hidden history on small trees.
+\item[V2] On the same small settings, the probability of every possible set of reads sums to 1
+  (Section~\ref{sec:normalise}).
+\item[V3] JAX against the twin on simulated data on library trees.
+\item[V4] The closed-form kernel against the matrix exponential.
+\item[V5] Automatic gradients against finite differences.
+\item[V6] The base model (no dropout or silencing) against SciPhy's own Java likelihood.
+\item[V7] The average gradient at the true parameters, over many simulated datasets, is zero.
+\item[V8] The tree prior against the library's simulated trees.
+\end{description}
+V1--V6 are exact up to rounding, each with a stated tolerance. V7--V8 are statistical: the deviation
+from zero in standard errors across trees, passing if no deviation exceeds 3.
+
+\subsection*{Results of the first full run (2026-10-06)}
+\begin{center}\small
+\begin{tabular}{@{}llrrrl@{}}
+\toprule
+check & compared against & configs & worst & tolerance & verdict\\
+\midrule
+V1 & full state space / literal enumeration & 340 / 144 & $5.8\times10^{-15}$ & $10^{-10}$ & pass\\
+V2 & sum over all possible reads $=1$ & 30 & $1.8\times10^{-14}$ & $10^{-10}$ & pass\\
+V3 & JAX vs twin, per tape & 2{,}700 & $1.9\times10^{-15}$ & $10^{-10}$ & pass\\
+V4 & closed form vs matrix exponential & 1{,}000 & $1.1\times10^{-14}$ & $10^{-12}$ & pass\\
+V5 & automatic vs finite-difference gradients & 360 & $2.5\times10^{-4}$ & $10^{-5}$ & fail (check)\\
+V7 & mean score at the truth & 12 & $|z|=1.96$ & $3$ & pass\\
+V8 & tree prior vs library trees & 198 & $|z|=3.03$ & $3$ & two trips\\
+\bottomrule
+\end{tabular}
+\end{center}
+The likelihood itself is exact: V1--V4 agree to within a few units of the last digit of double
+precision. V5 failed on one comparison of 360, a gradient taken at a boundary where silencing is
+switched off and the function curves sharply; shrinking the finite-difference step makes the
+difference converge to the automatic gradient (error $2.6\times10^{-2}$, $2.5\times10^{-4}$,
+$2.5\times10^{-6}$, $2.3\times10^{-8}$ at steps $10^{-4}$ to $10^{-7}$), so the gradient is right and
+the check's step was too coarse. V8's two trips are adjacent deciles in a single library cell (20 fixed
+trees), unresolved; a follow-up with freshly simulated trees is proposed. The per-tape likelihood costs
+$0.04$\,s at 210 cells and $2$\,s at 11{,}081 cells on one CPU core; the gradient grows faster than
+linearly at the largest sizes, which a level-by-level implementation would fix.
+
+\end{document}

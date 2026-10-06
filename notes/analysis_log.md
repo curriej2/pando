@@ -1791,3 +1791,22 @@ Library (Justin's go, $\bar H$=0.01 added): `src/24`/`25`, array 15859189, 30/30
 $\bar H$ mean +0.0002…+0.0010 by $n$. ⚠ Correction to my proposal §3: singletons are the majority of
 silenced entries only under late timing (66–80% at $\rho$=0.002); constant timing gives 34–50%. Next:
 dose–response negative control, own proposal.
+
+## 2026-10-02/06 — session 22: the likelihood engine designed, specified, built, validated (FAIL by rule)
+
+Design decisions 1–7 settled with Justin (notes §H.8.6–H.8.9 + decision records): depth slots; node
+times + ratio coordinates; rate-segment modules with a guardrail, closed-form kernels; lineage hooks
+only; JAX + NumPy twin; one clone per evaluation with a per-tape log-likelihood array (posterior mode
+deferred); large clones first, blank founder. Literature: LAML, LAML-Pro, ConvexML read in full (§H.7),
+likelihoods compared (§H.8; LAML's kernel = SciPhy N=1 × silencing survival, verified 2.7e-15).
+Checks along the way (all scratch, all passed): depth-slot lumping vs full state space (3.2e-15);
+ratio transform validity + Jacobian (2e-8); slot-chain generator vs closed form (3e-15, 5e-15);
+same-composition segments collapse to one (2e-16). ⚠ Corrections recorded: the "garbage mixture keeps
+the slot structure" claim was WRONG (it needs the descendant trie); hidden-division rate along a
+sampled lineage is 2b·p0, not b·p0 (first rung-2 draft; in no file). Write-up
+`analyses/2026-10_likelihood-engine/writeup/likelihood_engine.tex`.
+Built `src/01`–`04` in a new conda-forge env `envs/pando-jax`. **Full validation: V1–V4 exact to
+≤ 2e-14, V7 PASS (|z| ≤ 1.96); FAIL by rule on V5 (one of 360 gradients, 2.5e-4 at Γ_T = 0 —
+diagnosed as finite-difference step error: 100× smaller per 10× smaller step, converging to autodiff)
+and V8 (one deterministic library cell, two adjacent deciles at |z| 3.0).** Timing: forward linear in n;
+CPU gradient ≈ n^2.3 at large n (121 s at 11,081 cells) — scan design; level batching proposed.

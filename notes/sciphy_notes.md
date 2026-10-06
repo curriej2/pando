@@ -5616,3 +5616,304 @@ removal); per-division silencing; tape-to-tape propensity (⚠ unknowable from P
 Fig 3b's low recovery is read as integration expression, which fits both "prone to silencing" and
 "already silenced in the shared founder line", and a naive per-tape event count is biased because a
 high-baseline-missing tape gives a loss less contrast); silencing shared across clones of one line.
+
+---
+
+# §H.7 LAML, ConvexML, LAML-Pro — close read for the reconstruction tool (2026-10-01)
+
+Read in full: Chu, Mai, Schmidt & Raphael 2025 (*Genome Biol* 26:189, **LAML**); Prillo, Ravoor, Yosef &
+Song 2025 (*Syst Biol* 75:115, **ConvexML**); Chu, Schmidt & Raphael 2026 (bioRxiv 2026.03.27,
+**LAML-Pro**). PDFs in `refs/` (gitignored). Supplements not read.
+
+## H.7.1 LAML — ML time-scaled trees under the PMM model
+- **Model (per target site, sites independent).** CTMC on $\{0,1..M,-1\}$:
+  $Q_{0,0}=-(1+\nu)$, $Q_{0,m}=q_m$, $Q_{0,-1}=\nu$, $Q_{m,-1}=\nu$; edited states never change except
+  to silencing $-1$ (absorbing). With $\delta_e=\lambda t_e$ (mutation units),
+  $\Psi(0\to0)=e^{-\delta(1+\nu)}$, $\Psi(0\to m)=q_me^{-\delta\nu}(1-e^{-\delta})$,
+  $\Psi(\cdot\to-1)=1-e^{-\delta\nu}$, $\Psi(m\to m)=e^{-\delta\nu}$. ⇒ silencing hazard is $\nu\lambda$,
+  i.e. per unit *editing* time. Layer 2: $-1\to\,?$ w.p. 1, any other state $\to\,?$ w.p. one global
+  $\phi$. $q$ are **fixed hyperparameters**, never estimated.
+- **Inference.** Ultrametric constraint as path-sum equalities on $\delta_e$ ($\sum_{\rm path}\delta_e=\lambda\tau$).
+  Fixed topology: EM — E-step posterior transition counts in 5 classes per edge ($O(NK)$ via the
+  sparse $\Psi$); M-step closed form if $\nu=0$ ($\hat\rho_e=C^{z\to z}/(C^{z\to z}+C^{z\to a})$,
+  $\hat\phi=N_{\rm miss}/NK$), else block coordinate ascent (CVXPY/MOSEK). Topology: NNI + simulated
+  annealing, full EM per proposal. Multi-progenitor variant: a progenitor label is one more
+  "site" with its own silencing/dropout ⇒ each label forced to be one root clade.
+- **Results worth keeping.** Mutation-count (parsimony) branch lengths are biased low, worse toward the
+  tips, because available sites deplete — the same saturation point as §S4. On KP-tracer the
+  silencing-aware tree attributes 175 of 753 missing entries to 80 heritable events; on the Startle
+  tree the same data give $\nu=0$ and an inflated $\phi$ — **the tree and the missingness model
+  identify each other**. ⚠ Published trees for the same sample differ by normalised RF 0.58–0.81
+  between methods with comparable distance correlations: topology uncertainty is large and
+  unreported. Scale: 5,000 cells < 24 h; deduplication of identical genotypes (21,108 → 1,461) is
+  what makes the largest sample feasible.
+
+## H.7.2 ConvexML — dating a fixed topology as a convex problem
+- **Model.** Same irreversible single-hit CTMC, no silencing state; all missingness assumed
+  *missing always completely at random* (ignorable) — they state themselves that time-dependent
+  silencing is **not** ignorable but assume it anyway. Double resections encoded as two independent
+  flanking indels + missing interior.
+- **Conservative maximum parsimony (CMP).** Reconstruct only ancestral states unambiguous under all MP
+  reconstructions; ambiguous → missing. With ancestral states fixed, each edge contributes
+  $-\mathrm{uncuts}\,c\ell+\mathrm{cuts}\log(1-e^{-c\ell})$, $q$ drops out, and the MLE over branch lengths
+  is **convex**. Bias of CMP → 0 geometrically as the indel alphabet grows.
+- **Subtree-collapse theorem.** For any CTMC, the MLE can always set a homogeneous subtree's branch
+  lengths to 0 — the plateau, as a theorem. Fix: minimum branch length $\epsilon$ (≈ minimum division
+  time / $T$) plus pseudocounts $\lambda$ (= MAP under a prior). ⭐ **Regularisation mattered more than
+  marginalising ancestral states**: ConvexML beat LAML on 106/106 intMEMOIR trees, attributed to
+  LAML's lack of regularisation.
+- Uncertainty: suggests character bootstrap; argues averaging over many trees replaces per-tree
+  uncertainty. Topology is an input (Cassiopeia Maxcut in their benchmark).
+
+## H.7.3 LAML-Pro — genotypes as latent, a general emission layer
+- PMMO = PMM editing CTMC + per-leaf emission $\Gamma(x\mid z)$: $\Gamma(?\mid-1)=1$;
+  $\Gamma(?\mid z)=\phi$, else $(1-\phi)f_z(x)$, with $f_z$ a density over raw observations (imaging
+  KDE; UMI counts in their supplement). Genotypes are marginalised in pruning; MAP genotypes read off
+  the posterior afterwards.
+- Changes vs LAML: M-step solved jointly by IPOPT with exact sparse Hessian; **minimum branch length
+  $\omega_e\ge\varsigma\varrho$ adopted from ConvexML**; ultrametric or unconstrained. Still NNI +
+  annealing, still no support values ("bootstrap would be helpful" is future work), SPR/TBR and
+  constraint clades named as future scaling.
+- Results: genotype error from imaging 25–50% → 0.3%; RF vs published trees 0.54 (PEtracer), 0.96–1.0
+  (baseMEMOIR). 300 cells × 5,000 NNI ≈ 1.7 h; 3,108 cells × 25,000 NNI = 18 h, one core.
+
+## H.7.4 ⭐ What transfers to DNA Typewriter, and what does not
+1. **None of the three can represent a sequential tape.** Their unit is an independent single-hit
+   site; a Typewriter tape is one character whose state is an ordered prefix (§1a, §1c). Encoding the
+   6 slots as 6 independent sites misstates timing (slot $j$'s waiting time is Gamma($j$), not Exp) and
+   discards edit order — and **order is the only channel through which $\xi(t)$ is recorded**
+   (§S4.2, §S4.7). Decisive for the signalling goal.
+2. **The emission-layer abstraction (LAML-Pro) is exactly right for our readout**, and generalises for
+   free in pruning: per (cell, tape) technical dropout $\sigma(\alpha_c+\beta_z)$ instead of one $\phi$;
+   **depth-0 censoring as $\Gamma(?\mid\text{depth }0)=1$** (Park's `ABSENT` rule — strongly
+   non-ignorable, so ConvexML's MACAR is wrong for us); artifact symbols; silencing as the absorbing
+   hidden state (our rung 2 is LAML's $-1$, per tape, with $\zeta_0(t)$ instead of a constant).
+3. **Parameterise node times, not branch lengths in mutation units.** $\delta_e=\lambda t_e$ only holds
+   for a constant rate; a time-varying $\lambda_0(t)$, per-tape $r_z$ or a lineage multiplier
+   decouples them. The ultrametric constraint then holds by construction (no path-sum equalities).
+4. **ConvexML's convexity survives sequential editing** (derived 2026-10-01; ✅ checked numerically,
+   $\ell\in[0.01,12]$ edits/tape): given ancestral prefixes, an edge with $m$ edits and no saturation
+   contributes $\log\mathrm{Pois}(m;r\ell)$ (concave; linear at $m=0$), and one that fills its $c$ open
+   slots contributes $\log P(\mathrm{Gamma}(c,1)\le r\ell)$ (log-concave for $c\ge1$). $\ell$ is linear in
+   node times ⇒ **CMP-lcp dating is a convex problem in node times** — a cheap, globally optimal
+   initialiser. The exact SciPhy marginalisation over $\le N+1$ prefix states is cheap anyway, so CMP
+   is an initialiser, not the method.
+5. **Regularisation = a tree prior.** Their $\epsilon$ and pseudocounts are ad hoc priors; our
+   birth–death $(b,\delta,\rho)$ density on node times (already in the simulator) is the principled
+   version and also supplies calendar time (§S4.7).
+6. **Not borrowed:** EM with model-specific M-steps (LAML-Pro already had to re-derive it once; every
+   extension — $\lambda(t)$, $\xi(t)$, lineage multipliers — would need another) ⇒ autodiff gradients
+   instead; posterior ancestral states (their "imputation") come from the gradient of $\log L$ with
+   respect to the leaf emissions. NNI-only annealing without support values.
+7. **Use them as baselines** on the simulator library (LAML with slots encoded as sites; ConvexML on
+   a given topology) — measures what the sequential model buys.
+
+---
+
+# §H.8 The four likelihoods side by side, and what our engine changes (2026-10-01)
+
+*Sources: SciPhy (Seidel, Zwaans et al. 2026, Nat Commun 17:7398) Methods "Editing model for barcodes
+with ordered inserts", "Transition probabilities" (Eqs 3–7), "Likelihood calculation" (Eqs 8–12),
+"Implementation", "Validation"; Discussion on lossy data. LAML (Chu et al. 2025) Methods "The PMM
+model" (Eqs 3–7), "Likelihood computation" (Eqs 8–9), "Maximum likelihood inference" (Eqs 10–11),
+"The EM algorithm" (Eqs 12–14), "Topology search", "Multi-progenitor" (Eq 15). ConvexML (Prillo et al.
+2025) "A Statistical Model…" (Eqs 1–2), "Modeling missing data", "Encoding double-resections",
+"Maximum Likelihood Estimation of Branch Lengths" (Eqs 3–15, Prop. 1), "Regularizing the MLE"
+(Thm 1, Eq 16). LAML-Pro (Chu, Schmidt & Raphael 2026) §2 (Eq 1), §2.1.1 (Eq 2), §2.1.2 (Eq 3), §2.2.1
+(Eq 4), §2.2.2 (Eqs 5–6). Supplements not read. LAML-Pro's Greek is garbled in text extraction;
+its symbols are mapped to LAML's here.*
+
+## H.8.1 One skeleton, four fillings
+All four are instances of
+$$P(D\mid T,\theta)=\prod_{\rm characters}\ \sum_{\rm hidden}\ \pi(x_{\rm root})\prod_{e=(u,v)}P_e(x_u\to x_v)\prod_{\rm leaves\ w}\mathcal O(d_w\mid x_w),$$
+differing in the character unit, state space, kernel $P_e$, emission $\mathcal O$, branch
+parameterisation and what is marginalised vs fixed.
+- **SciPhy:** character = tape; states = ordered prefixes $\le N$; $P_e$ = Eqs 5–7; $\mathcal O$ =
+  indicator (perfect observation, missing tapes filtered out); node heights + birth–death prior; MCMC.
+- **LAML:** character = site; states $\{0,1..M,-1\}$; $P_e=\Psi$ (Eq 4); $\mathcal O=\Phi$ (Eq 6,
+  one global $\phi$); branch lengths in mutation units with path-sum constraints; EM + NNI.
+- **LAML-Pro:** LAML's $P_e$; $\mathcal O$ = general emission (Eq 3) incl. raw-observation densities;
+  IPOPT M-step; minimum branch length.
+- **ConvexML:** site; $\{0,1,2,\dots\}$; $P(t)$ (Eq 2); ancestral states FIXED by conservative
+  parsimony, missing = ignorable ⇒ Eq 14 is a complete-data likelihood, convex in branch lengths.
+
+## H.8.2 ✅ Verified identity: LAML's kernel = survival × SciPhy at $N=1$
+$\mathrm{expm}(Q_{\rm LAML}\delta)=e^{-\nu\delta}\,P^{\rm SciPhy}_{N=1}(\delta)$ on the unsilenced block and
+$1-e^{-\nu\delta}$ into $-1$; checked numerically to $2.7\times10^{-15}$ ($M=3$, 9 $(\delta,\nu)$
+pairs). ⇒ LAML = SciPhy at $N=1$ + an independent silencing clock tied to editing ($\zeta=\nu\lambda$)
++ a global dropout emission; ConvexML = SciPhy at $N=1$ with no silencing, conditional on parsimony
+ancestors. **Our engine = SciPhy at general $N$ × silencing survival (calendar-time $\zeta(t)$, §S6)
+× a per-(cell, tape) emission** — it nests all three.
+
+## H.8.3 Our kernel and emission, written out
+Tape $z$, branch $e$ on $[t^0_e,t^1_e]$, hidden state $x\in\{\text{prefixes } a,\ |a|\le N\}\cup\{\mathsf S\}$:
+$$P_e(a\to b)=e^{-[\Gamma(t^1_e)-\Gamma(t^0_e)]}\;P^{\rm SciPhy}_{a,b}\big(\Lambda_z(t^0_e),\Lambda_z(t^1_e);\xi(\cdot)\big),\qquad
+P_e(a\to\mathsf S)=1-e^{-[\Gamma(t^1_e)-\Gamma(t^0_e)]},\qquad P_e(\mathsf S\to\mathsf S)=1,$$
+with $P^{\rm SciPhy}$ the epoch forward recursion of §S4.4 (time-varying rate and composition) and
+$\Gamma(t)=\Gamma_TW_\zeta(t)$ (§S6.1). Assumes silencing independent of editing state.
+Emission, cell $c$ (= rung 1/2's observation model, §S5.1/§S6.1, $\pi_{cz}=\sigma(\alpha_c+\beta_z)$):
+$\mathcal O(?\mid\mathsf S)=1$; $\mathcal O(?\mid a)=\pi_{cz}+(1-\pi_{cz})\mathbf 1[|a|=0]$;
+$\mathcal O(v\mid a)=(1-\pi_{cz})\mathbf 1[|a|\ge1]\mathbf 1[v=a]$.
+⚠ Depth-0 censoring makes missingness non-ignorable — ConvexML's MACAR assumption does not hold here.
+
+## H.8.4 ⭐ All-missing subtrees cost $O(N)$, not $|\Omega|$ — derived; ✅ VERIFIED 2026-10-02
+A missing leaf's emission depends on $a$ only through $\mathbf 1[|a|=0]$ (and $\mathsf S$). The
+number of edits on a branch depends on $a$ only through $|a|$, and summing $\prod\xi$ over symbols
+gives 1 (also under time-varying $\xi$). By induction, **$L_i(a)$ at a node with no observed
+descendant depends on $a$ only through $(|a|,\mathsf S)$** — $N+2$ numbers. ⇒ SciPhy's Eq 8–9 state
+sets extend to dropout exactly: $A_i$ = prefixes of the lcp over **observed** descendants (no
+$\mathsf S$ if any descendant is observed — Dollo), and all-missing children enter through depth
+classes. This settles §1c.6's "wildcard representation" nuisance. To be checked against brute-force
+enumeration in the engine's validation.
+✅ **Verified 2026-10-02** (scratch check, not an analysis): depth-slot pruning vs exact enumeration over
+the full state space ($N=3$, $M=3$, 41 states incl. $\mathsf S$; 4-tip tree; 25 random parameter draws ×
+4 observation patterns incl. an all-missing subtree, nothing observed, and divergence at slot 2;
+branch-specific $\xi$, silencing, depth-0 censoring, per-tip dropout) — max relative difference
+$3.2\times10^{-15}$ over 100 configurations.
+
+## H.8.5 What each paper's choice teaches the engine
+- Node times, not branch lengths in mutation units (LAML/LAML-Pro/ConvexML use $\delta=\lambda t$,
+  valid only for one constant rate). SciPhy already does this.
+- Tree prior instead of $\epsilon$/pseudocounts (ConvexML Thm 1: the MLE collapses homogeneous
+  subtrees; LAML's unregularised dating lost to ConvexML on 106/106 intMEMOIR trees).
+- Estimate $\xi$ (LAML/LAML-Pro fix $q$; in ConvexML it drops out) — it is the signalling target.
+- Per-tape $r_z$ (SciPhy fits per-tape clocks; LAML/ConvexML have one rate).
+- Autodiff, not EM (LAML-Pro already re-derived its M-step once).
+- ~~⚑ Robustness to miscalled symbols (§1c.6 failure mode 1) without inflating state sets: a per
+  (cell, tape) mixture $\mathcal O\leftarrow(1-\varepsilon)\mathcal O+\varepsilon\,u(|a|)$ with a
+  depth-only "garbage" component keeps the §H.8.4 structure.~~
+  ⚠⚠ **CORRECTION (2026-10-02): it does NOT keep the structure.** With the mixture every leaf's
+  partial likelihood is positive for every state, so a parent's bracket is (specific part on the
+  prefixes of that child's tape) + (depth-only part); the product over children expands into terms
+  supported on the prefix chain of EACH observed descendant separately. The set of states needing
+  their own entry becomes the **trie of all observed descendant tapes** — up to (distinct prefixes
+  below the node) entries, growing with subtree diversity, not bounded by $N+2$. Error robustness is
+  therefore not free: it needs the trie representation (§H.8.6 option D) or upstream cleaning.
+  No recorded number depended on the claim.
+
+## H.8.6 Decision 1 — how a node's states are represented (discussed with Justin 2026-10-02)
+Options, all applied to the same per-tape pruning sum: (A) dense full space $\Omega\cup\{\mathsf S\}$ —
+exact for any emission, infeasible beyond toys ($\sim10^{12}$ states at $M\approx100$, $N=6$), kept as the
+validation reference; (B) SciPhy's sparse prefix lists — exact, ragged, no missing-data rule as
+published; (C) **depth slots** — $N+2$ entries per (node, tape), slot $d$ = the lcp's length-$d$ prefix
+(observed below) or the class of all depth-$d$ states (nothing observed below); exact (§H.8.4),
+fixed-shape, vectorisable; requires perfect observation of observed tapes; (D) descendant trie —
+needed for any soft emission over symbols; size grows with subtree diversity; (E) point ancestral
+states (ConvexML-style lcp) — convex, fast, no ancestral uncertainty, initialiser only; (F)
+independent slots (LAML/ConvexML encoding) — misspecified timing ($P(\text{slot }j\text{ filled})$ is
+$P(\mathrm{Pois}(\Lambda)\ge j)$, not $1-e^{-\Lambda}$) and false sharing past a divergence; baseline only.
+
+**✅ Decision 1 SETTLED (Justin, 2026-10-02): depth slots (C)** — SciPhy's prefix-chain structure,
+extended with heritable silencing and technical dropout + depth-0 censoring in the likelihood.
+Deferred, to revisit: sequencing/read error (would need the trie, D — swap in behind the same
+interface if it turns out to matter); a closer walk-through of how the Dollo state moves through
+pruning, once the rest of the structure is in place.
+Provenance of the missingness treatment: two-layer structure (absorbing heritable state in the
+editing chain + an emission layer) from LAML/LAML-Pro; modified to (i) per-tape silencing in
+calendar time $\zeta(t)$ rather than per site at $\nu\lambda$; (ii) dropout $\sigma(\alpha_c+\beta_z)$ per
+(cell, tape) rather than one $\phi$; (iii) **depth-0 censoring — in none of the four methods**
+(Cas9 arrays read an unedited site as 0); (iv) **the lumped all-missing-subtree recursion inside
+the prefix structure (§H.8.4) — new**, since LAML sums a small per-site space directly and SciPhy
+filters missing tapes.
+
+## H.8.7 Decision 2 — how time is parameterised (discussed 2026-10-02, not yet settled)
+Time enters the likelihood only through each branch's interval $[t^0_e,t^1_e]$: its editing length
+$\mu_{e,z}=\Lambda_z(t^1_e)-\Lambda_z(t^0_e)$, its silencing survival $s_e=e^{-[\Gamma(t^1_e)-\Gamma(t^0_e)]}$,
+the composition $\xi(t)$ during it, and the tree prior on branching times. With any time-varying
+rate these need ABSOLUTE times, not durations. Tips at $t=1$, origin at $t=0$ ($\Lambda_{\rm pre}=0$);
+the $n-1$ internal times are the unknowns. Options: (A) mutation-unit branch lengths + path-sum
+constraints (LAML/ConvexML) — constant rate only; (B) unconstrained branch lengths — non-ultrametric,
+useful only as a clock diagnostic; (C) node times with order constraints; (D) ratio transform
+$h_{\rm root}=\sigma(x_{\rm root})$, $h_v=\sigma(x_v)\,h_{{\rm pa}(v)}$ ($h=1-t$) — unconstrained, ultrametric by
+construction; (E) ranked inter-event intervals — needs the event ranking as a discrete variable;
+(F) the same transform in $\Lambda$-time rather than calendar time — matches what the recorder reads.
+✅ Checked 2026-10-02 (scratch, 200 random trees, 3–11 tips): (D) never violates parent-before-child,
+and $\big|\partial h/\partial x\big|=\prod_v h_{{\rm pa}(v)}\,\sigma(x_v)(1-\sigma(x_v))$ (root factor $h_{\rm pa}=1$) to
+$2\times10^{-8}$ relative (finite-difference precision).
+**Decision 2 — Justin agrees with the recommendation (2026-10-02):** node times stored; ratio transform
+(calendar time) as optimiser/sampler coordinates; (F) deferred; (B) kept as a clock diagnostic.
+- **How SciPhy does it:** BEAST 2 stores node HEIGHTS (option C) with the origin fixed at the
+  experiment length (25 d HEK293T, 11 d gastruloid); constraints are respected by the MCMC
+  *operators* (uniform node-height moves between the oldest child and the parent, scale, subtree
+  slide, exchange, Wilson–Balding, up-down along the rate–time ridge; §2a.3–2a.4), not by a
+  reparameterisation. That works for random-walk Metropolis–Hastings, which needs neither gradients
+  nor unconstrained coordinates; it does not carry over to L-BFGS/HMC, hence (D) for us.
+- **⭐ Proliferation-coupled editing — derived 2026-10-02, NOT verified.** With $h(t)=1-p_0(t)$ the
+  probability that a lineage alive at $t$ leaves a sampled descendant, conditioning a lineage on
+  $h$ (an $h$-transform) gives division events along a sampled cell's ancestry at rate
+  $b\,h^2/h=b\,h$ (both daughters sampled: the observed nodes) plus $b\cdot2h(1-h)/h=2b\,p_0(t)$
+  (hidden: one daughter unsampled); total $b(1+p_0(t))$. ⚠ My first rung-2 draft wrote the hidden
+  rate as $b\,p_0(t)$ — a factor 2 low; that draft was replaced and the line is in no file.
+  ⇒ If editing is per division, along a reconstructed branch it is a Poisson process (in a Markov
+  birth–death) with intensity $\kappa\,b\,(1+p_0(t))$ per tape: a global clock whose SHAPE is fixed by
+  $(b,\delta,\rho)$ — rising from $\approx b$ early to $\approx b(2-\rho)$ near harvest. So per-division
+  editing under homogeneous proliferation is a constrained $\lambda_0(t)$, representable in the
+  current clock module but coupling editing to the tree prior. Under state-dependent proliferation it
+  becomes a per-branch multiplier (augmentation; tapes share it). To verify against
+  full-genealogy simulation before any use (would also let per-division editing be simulated
+  exactly on the reconstructed library).
+
+## H.8.8 Decision 3 — how the modules plug together (discussed 2026-10-02)
+Coupled (per-division) editing deferred by Justin until a coupled simulator exists; the interface
+should not preclude it.
+✅ **Checked 2026-10-02 (scratch):** on the $N+2$ slot chain, the generator with edit rate
+$\lambda\,\xi_{\mathrm{lcp}[d+1]}$ from slot $d$ to $d+1$, total exit $\lambda$ (the "leak" to other symbols is
+mass that leaves the consistent set), and silencing $\zeta$ to $\mathsf S$, exponentiates to SciPhy's
+Eqs 5–7 × survival, saturation included ($N=6$, 50 draws, max $|\Delta|=3.2\times10^{-15}$). A branch on which
+rate AND composition change: the time-ordered product of per-segment exponentials equals the direct
+convolution over how the edits split between segments (50 draws, $4.6\times10^{-15}$). ⇒ rates on
+segments are a sufficient currency between process modules and the kernel builder; closed-form
+recursion and matrix exponential are two exact implementations of the same kernel.
+Consequence: with $\xi$ constant on a segment, the generators at different times are scalar
+multiples of one matrix (plus a scalar silencing term), so only the INTEGRATED rates $\int\lambda$,
+$\int\zeta$ over the segment matter — a non-piecewise $\lambda(t)$ (e.g. per-division
+$\kappa b(1+p_0(t))$) needs integrals, not discretisation; segments are forced only by changes in $\xi$.
+**Decision 3 — state 2026-10-05 (Justin):** the kernel builder uses the CLOSED FORM (SciPhy Eqs 5–7 ×
+silencing survival; segments chained by summing over the depth reached at each composition change,
+§S4.4). The matrix-exponential formulation is set aside — not needed for the current model — and is
+to be revisited only if an extension has no closed form. Modules still hand over integrated rates
+per segment ($\mu_k$, $G_k$, $\xi^{(k)}$). Remaining decision-3 questions (guardrail, shared parameter
+classes, *trans* by augmentation) still open.
+**✅ Decision 3 SETTLED (Justin, 2026-10-05):** rate-segment modules with the guardrail (forward edits +
+silencing only); closed-form kernel builder, matrix exponential kept only as an automatic background
+check; parameter classes shared with the simulator (moved to `src/` as a separate bit-identical
+change); *trans* limb later, by augmentation.
+
+## H.8.9 Decision 4 — where lineage-varying latents go (discussed 2026-10-05)
+Core fact: with a lineage latent $\sigma$ shared by all $k$ tapes of a lineage, $L=\sum_\sigma P(\sigma)\prod_zL_z(\sigma)
+\ne\prod_z\sum_\sigma P(\sigma)L_z(\sigma)$ — tapes are independent GIVEN the latent history, not after
+averaging over it. Exact joint pruning needs the joint slot state of all tapes, $(N+2)^k$ per node.
+Options: (A) exact joint marginalisation (toy-only); (B) augmentation — sample/optimise the latent
+path, engine exact given it; (C) continuous relaxation — per-branch multipliers/shares as parameters
+with a tree-structured prior (uncorrelated, autocorrelated/OU, or sparse local shifts); (D) variational
+over discrete latents; (E) two-stage plug-in (fit tree, then latent on fixed tree). ⚠ Identifiability:
+a per-branch RATE multiplier trades against branch duration (local rate–time confound, needs a
+shrinkage prior); a per-branch COMPOSITION latent does not (§S4.8: ENGRAM moves $\xi$ not $\lambda$).
+⚠ A signal symbol written independently by every "on" lineage raises homoplasy (§S4.9.4), so the
+latent and the topology are entangled — fixing the topology before inferring the latent can build
+the latent's convergence into false clades.
+**✅ Decision 4 SETTLED (Justin, 2026-10-05):** hook only for now (per-branch rate multipliers and
+composition inputs, fixed at "nothing varies"; a latent-prior slot in the objective); when lineage
+features exist in the simulator: (C) per-branch dials with a tree prior first (sparse-jump prior for
+signal latents, per Fig S4), (B) augmentation as the small-tree reference for discrete questions,
+(E) to explore/initialise, (A) for validation; composition latents before rate latents (better
+identified); the topology must not simply be fixed first when a signal latent is in play.
+**✅ Decision 5 SETTLED (Justin, 2026-10-05):** JAX backend (with a NumPy reference twin; SciPhy's Java
+likelihood as an external base-model check). Install JAX **with GPU support in a separate
+environment — on Justin's go only, after the engine is scoped** (not yet done).
+**✅ Decision 6 SETTLED (Justin, 2026-10-05):** the likelihood is computed for ONE clone (tree) at a
+time — no summing across clones for now. All tapes are used; the engine returns the per-tape
+log-likelihood array (nats; the clone's total is its sum) so tape subsets can be re-weighted for
+support (bootstrap / jackknife / weighted likelihood bootstrap). Posterior mode on request (node
+depth/prefix posteriors, per-branch edit assignment, per-missing-entry attribution); gradients via
+JAX; sampled histories later.
+**✅ Decision 7 SETTLED (Justin, 2026-10-05):** one clone at a time, starting with large simulated
+trees and Park's larger clones; small-clone strategy (pooling / priors / the large-clone bridge)
+decided later from evidence. Tapes blank at the clone founder ($\Lambda_{\rm pre}=0$). An
+identifiability-by-clone-size study is wanted. Default free/fixed table accepted; every block
+switchable. ⇒ Next: the engine proposal, part 1 = the math (`analyses/2026-10_likelihood-engine/`).
+**2026-10-06 (Justin):** posterior mode DEFERRED to a later engine version (spec kept in
+`analyses/2026-10_likelihood-engine/CLAUDE.md` §10). ✅ Checked: with the same composition in every
+segment, chained segment kernels equal one segment with summed $\mu$ and $G$ (saturation included;
+$2.2\times10^{-16}$) — in the first build every branch is one segment. Segment boundaries are fixed knots,
+not inferred; kernels are differentiable in node times.

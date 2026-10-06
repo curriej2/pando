@@ -6,9 +6,11 @@
 #
 #   scripts/submit.sh analyses/2026-08_park-compatibility/src/14_compat_sparse.py Mouse1 7200
 #   scripts/submit.sh --mem 512G --time 2-00:00:00 <script> [args...]
+#   scripts/submit.sh --py /data1/choij10/justin/envs/pando-jax/bin/python --part lesliec,gpu --gres gpu:1 <script>
 set -euo pipefail
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-MEM=16G; TIME=4:00:00; CPUS=4; DEP=""   # modest by default -- raise only from a measured MaxRSS
+MEM=16G; TIME=4:00:00; CPUS=4; DEP=""; GRES=""   # modest by default -- raise only from a measured MaxRSS
+PY=/data1/choij10/justin/envs/pando/bin/python   # --py selects another env (e.g. envs/pando-jax)
 # ⚠ --part cpu for anything that is neither GPU-bound nor ~1TB-fat, and ALWAYS for a
 # wide set of small jobs: lesliec's four nodes are the lab's only GPU nodes, and
 # pure-CPU work parked there blocks a labmate's A100 job on CPUs (CLAUDE.md, 2026-09-03).
@@ -20,12 +22,14 @@ while [[ "${1:-}" == --* ]]; do
     --cpus) CPUS="$2"; shift 2;;
     --part) PART="$2"; shift 2;;
     --dep)  DEP="--dependency=afterok:$2"; shift 2;;
+    --py)   PY="$2";   shift 2;;
+    --gres) GRES="--gres=$2"; shift 2;;
     *) echo "unknown flag $1" >&2; exit 1;;
   esac
 done
 SCRIPT="${1:?usage: submit.sh [--mem M] [--time T] [--cpus N] <script.py> [args...]}"; shift
 NAME="$(basename "$SCRIPT" .py)${1:+_$1}"
 mkdir -p "$ROOT/logs"
-sbatch $DEP -A lesliec -p "$PART" -c "$CPUS" --mem "$MEM" -t "$TIME" \
+sbatch $DEP $GRES -A lesliec -p "$PART" -c "$CPUS" --mem "$MEM" -t "$TIME" \
        -J "$NAME" -o "$ROOT/logs/%x-%j.out" --wrap \
-       "cd $ROOT && /data1/choij10/justin/envs/pando/bin/python -u $SCRIPT $*"
+       "cd $ROOT && $PY -u $SCRIPT $*"
