@@ -1834,3 +1834,17 @@ $R$, $L$); the pair's ancestor is written $A$, $t_A$ to match the editing layer,
 moves.** (i) F4t CIS pooled cell at seed 2102026 is **−0.54**, README says +0.54. (ii) Hard-assertion
 comparisons are **2.7×10⁷** (rung 1, README "~2×10⁷") and **3.1×10⁷** (rung 2, README "~4×10⁷").
 The write-up uses the JSON values.
+**Session 23, cont. — §7.1–7.3 of the write-up rewritten at Justin's request** (more on the equations,
+the notation and the scatter parameters). Added: generation order; a logit primer and the odds form
+$e^{\alpha_c}e^{\beta_z}$; why $\alpha_c=s_\alpha a_c$ (common random numbers; mean 0 for
+identifiability); the uniform-threshold mask draw; a 2×2 table of the censoring rule; $R_c$ and $\psi$
+written out; a draws-vs-parameters table for the panel; recovery and $\ln r$ each as level + class +
+scatter; the derivation of $\mathbb E[r]=1$ and of the $-s_r^2/2$ term; the covariance derived and the
+correlation it implies — the scatter terms dilute the class coupling from −1 to **−0.30 at CIS values**
+(closed form −0.3019, Monte Carlo −0.3020, 4×10⁶ tapes); and §7.3 with the integral, why the $\alpha$
+spread must be averaged over ($\sigma(\mathrm{logit}\,0.3)$ averaged at $s_\alpha=0.7$ is 0.317), and
+the solve's consequence that at fixed $\bar p$ the latent redistributes missingness rather than adding it.
+⚠ Two small corrections to the earlier text: the Jensen example is **0.075** in expectation at
+$\Lambda_T=2.9$, $s_r=0.3$ (0.079 is the library's five realised panels); and the recovery-0.3 step is
+matched by choosing $(\phi,\Delta_\beta,s_\beta)$ — §S5.2 says $(\phi,r_{\rm cl})$, but $r_{\rm cl}$ sets depth,
+not recovery. No scientific number moves. Doc now 44 pp, clean.

@@ -52,13 +52,12 @@ in the dropout sections.
 \toprule
 symbol & meaning & units / range \\
 \midrule
-$c$, $z$ & a captured cell (a tip of the tree), and a tape, $z=1,\dots,k$. \emph{In
-      \S\ref{sec:sampler} $c$ counted open slots; that use does not recur here.} & --- \\
+$c$, $z$ & a captured cell (a tip of the tree), and a tape, $z=1,\dots,k$. & --- \\
 $D_{cz}$ & true depth of tape $z$ in cell $c$ at harvest, from the editing layer & $0$--$N$ \\
 $\mu_z$ & $r_z\LamT$: tape $z$'s total expected edits over the experiment, before saturation & edits / tape \\
 $X_{cz}$ & technical missingness: $1$ if tape $z$ is not captured in cell $c$ & $\{0,1\}$ \\
 $\alpha_c$, $\beta_z$ & cell capture offset and tape recovery offset; larger means worse captured or
-      worse recovered. \emph{Not} the $\alpha,\beta$ of eq.~\eqref{eq:geom} & logits \\
+      worse recovered. & logits \\
 $\pi_{cz}$ & $\sigma(\alpha_c+\beta_z)$, the probability that $X_{cz}=1$;
       $\sigma(x)=1/(1+e^{-x})$ & probability \\
 $\pbar$, $\pbar_z$ & mean technical missingness over the panel's tapes; and for tape $z$, averaged
@@ -72,8 +71,7 @@ $\mu_\beta$, $\Delta_\beta$ & overall recovery level (solved, \S\ref{sec:pbar});
 $r_{\rm cl}$, $s_r$ & speed of a closed tape relative to an open one; lognormal speed scatter &
       dimensionless \\
 $Y_{cz}$, $O_{cz}$ & observed: $Y=1$ if the tape is read with at least one edit; $O=1-Y$ & $\{0,1\}$ \\
-$R_c$, $R_{\min}$ & tapes observed in cell $c$, $\sum_zY_{cz}$; the QC threshold on it. \emph{Not} the
-      $R$ of Fig.~\ref{fig:S1c} & tapes \\
+$R_c$, $R_{\min}$ & tapes observed in cell $c$, $\sum_zY_{cz}$; the QC threshold on it. & tapes \\
 $\psi(R_c)$ & probability that cell $c$ keeps its clone barcode (ClonalBC retention) & probability \\
 $A$, $t_A$, $W_A$ & last common ancestor of two cells, its time, and $W(t_A)$, the share of
       editing spent before it & ---, $[0,1]$, $[0,1]$ \\
@@ -89,22 +87,80 @@ that is poorly read. Rung~1 models exactly those reasons and nothing else. Every
 then explained by a property of the cell and a property of the tape, and \emph{the tree plays no
 part} --- that is the definition of the rung.
 
-\paragraph{1. The technical mask.} Each entry is missing independently, with a probability set by
-one number for the cell and one for the tape:
+\paragraph{The order things are generated in.} Each piece uses something the one before it produced:
+\begin{enumerate}
+  \item \textbf{the panel} --- every tape's class $u_z$, recovery offset $\beta_z$ and speed $r_z$
+        (\S\ref{sec:latent});
+  \item \textbf{editing} --- the editing layer of \S\ref{sec:edit}, run with tape $z$ at speed $r_z$,
+        so its expected edit count over the experiment is $\mu_z=r_z\LamT$; this produces the true
+        depths $D_{cz}$;
+  \item \textbf{the mask} --- each cell's capture offset $\alpha_c$, then $X_{cz}$ from $\alpha_c$ and
+        $\beta_z$;
+  \item \textbf{censoring} --- combine $X_{cz}$ with $D_{cz}$ into what is observed, $Y_{cz}$;
+  \item \textbf{filters} --- drop or unlabel cells by how many tapes they show.
+\end{enumerate}
+The panel comes first because the speed $r_z$ is needed by editing, and the recovery offset
+$\beta_z$ by the mask; both are properties of the same tape, which is what lets them be coupled.
+
+\paragraph{1. The technical mask.} \emph{The logit scale first,} since the mask is written on it. For
+a probability $p$, $\operatorname{logit}(p)=\ln\!\big(p/(1-p)\big)$, the log of the odds; its inverse
+is the logistic function $\sigma(x)=1/(1+e^{-x})$. A logit of $0$ is a probability of $0.5$, $-0.85$
+is $0.30$, and $+1.15$ is $0.76$. Adding $1$ to a logit multiplies the odds by $e\approx2.72$, whatever
+the starting point. Working on this scale lets effects be \emph{added} while the probability stays
+inside $(0,1)$.
+
+Each entry is missing with a probability set by one number for the cell and one for the tape:
 \begin{equation}
   \Prob(X_{cz}=1)=\pi_{cz}=\sigma(\alpha_c+\beta_z),
   \qquad \alpha_c=s_\alpha a_c,\quad a_c\sim\mathcal N(0,1)\ \text{iid over cells.}
   \label{eq:mask}
 \end{equation}
-Given $(\alpha,\beta)$, every $X_{cz}$ is independent of every other and of the tree. The
-logit-additive form is deliberate: it is the $M_3$ rung of the nested ladder (\texttt{77}), so on
-rung-1 data the ladder fits the true model, and any lineage signal it reports is a false positive.
-The mask covers the \emph{whole tape}: internal gaps are $0.02\%$ of Park's entries, and the flat
-per-cell depth profile rules out 3$'$ truncation (park-compatibility Fig.~3d/e).
+Term by term:
+\begin{itemize}
+  \item $\beta_z$ is the \emph{tape's} recovery offset: how hard tape $z$ is to read, in any cell. It
+        is set by the panel (\S\ref{sec:latent}).
+  \item $\alpha_c$ is the \emph{cell's} capture offset: how badly cell $c$ was captured, on every tape.
+        Larger means more of its tapes are missing.
+  \item $\pi_{cz}$ is the resulting probability that tape $z$ is missing from cell $c$.
+\end{itemize}
+In odds the model reads $\pi_{cz}/(1-\pi_{cz})=e^{\alpha_c}\,e^{\beta_z}$: the cell and the tape each
+contribute a \emph{factor}, and neither changes the other's. A poorly captured cell is worse on every
+tape by the same odds factor, and a poorly read tape is worse in every cell by the same factor.
 
-\paragraph{2. The tape panel} (\S\ref{sec:latent}): each tape's $\beta_z$ and speed $r_z$, drawn once
-per simulated experiment and shared by every cell of every tree in it, since all Park clones descend
-from one engineered line and share its integrations.
+\paragraph{The cell scatter $s_\alpha$.} $\alpha_c$ is written as a product of two parts. $a_c$ is a
+standard normal draw: how many standard deviations cell $c$ sits from an average cell. $s_\alpha$, in
+logits, converts that into a capture offset, so $s_\alpha$ is the standard deviation of $\alpha_c$
+across cells --- \emph{how unequal cells are in capture.} At $s_\alpha=0$ every cell is captured
+alike and a tape's missingness is the same in all of them. At $s_\alpha=0.7$, the value in the
+validation, a tape that is missing $30\%$ of the time in an average cell is missing $46\%$ of the time
+in a cell one standard deviation worse ($a_c=+1$) and $18\%$ in one a standard deviation better
+($a_c=-1$): the worse cell has $e^{0.7}=2.0$ times the odds of losing each tape. Two reasons for the
+split into $s_\alpha a_c$:
+\begin{itemize}
+  \item \emph{Common random numbers.} $a_c$ is drawn once and kept, and $s_\alpha$ only rescales it.
+        So the same cell is the poorly captured one at every value of $s_\alpha$, and switching the
+        scatter off ($s_\alpha=0$) changes nothing else in the dataset.
+  \item \emph{Mean zero.} Adding a constant to every $\alpha_c$ and subtracting it from every $\beta_z$
+        leaves every $\pi_{cz}$ unchanged, so the overall level can sit in only one of the two. It is
+        put in the tapes, as $\mu_\beta$ (\S\ref{sec:pbar}), and $\alpha_c$ averages $0$.
+\end{itemize}
+
+\paragraph{Drawing the mask.} $X_{cz}=\mathbb 1[V_{cz}<\pi_{cz}]$, with $V_{cz}\sim\Uniform(0,1)$
+drawn once per entry. That is a Bernoulli draw with probability $\pi_{cz}$, written so that raising
+$\pi_{cz}$ can only \emph{add} missing entries, never move them: masks at a higher dropout level
+contain the masks at a lower one. Given $(\alpha,\beta)$, every $X_{cz}$ is independent of every other
+and of the tree.
+
+\paragraph{Why this form.} It is the $M_3$ rung of the nested ladder (\texttt{77}), so on rung-1 data
+the ladder fits the true model, and any lineage signal it reports is a false positive. The mask covers
+the \emph{whole tape}: internal gaps are $0.02\%$ of Park's entries, and the flat per-cell depth profile
+rules out 3$'$ truncation (park-compatibility Fig.~3d/e).
+
+\paragraph{2. The tape panel.} A \emph{panel} is one draw of the $k$ tapes' properties --- for each
+tape its class $u_z$, recovery offset $\beta_z$ and speed $r_z$ (\S\ref{sec:latent}). It is drawn once
+per simulated experiment and shared by every cell of every tree in it, because all Park clones descend
+from one engineered line and carry the same integrations. Tape $z$ is therefore hard to read, or slow,
+in every cell and every clone alike; what varies between cells is $\alpha_c$ and the edits.
 
 \paragraph{3. Depth-0 censoring.} A tape that was captured but never edited is indistinguishable, in
 Park's pipeline, from a tape that was not captured: \texttt{23\_dropout\_matrix.py} codes any tape whose
@@ -113,15 +169,42 @@ first site is empty as \texttt{ABSENT}. The simulator applies the same rule:
   Y_{cz}=(1-X_{cz})\,\mathbb 1[D_{cz}\ge1],\qquad O_{cz}=1-Y_{cz}.
   \label{eq:observe1}
 \end{equation}
-A tape is \emph{read} only if it was captured \emph{and} edited at least once. Censoring is on by
-default and can be switched off; the true $X$ and $D$ are always stored, so every simulated missing
-entry knows why it is missing.
+$\mathbb 1[\cdot]$ is $1$ when the condition holds and $0$ otherwise, and $1-X_{cz}$ is $1$ when the tape
+was captured. The product of two $0/1$ factors is $1$ only if both are, so it is a logical AND: a tape
+is \emph{read} ($Y=1$) only if it was captured \emph{and} edited at least once. The four cases:
+\begin{center}\small
+\begin{tabular}{@{}lcc@{}}
+\toprule
+ & edited, $D_{cz}\ge1$ & unedited, $D_{cz}=0$ \\
+\midrule
+captured, $X_{cz}=0$     & read, $Y=1$     & \textbf{missing}, $Y=0$ (censored) \\
+not captured, $X_{cz}=1$ & missing, $Y=0$  & missing, $Y=0$ \\
+\bottomrule
+\end{tabular}
+\end{center}
+Only the top-right cell is new: a captured tape lost because it carries nothing to read. Censoring is
+on by default and can be switched off; the true $X$ and $D$ are always stored, so every simulated
+missing entry knows why it is missing.
 
-\paragraph{4. Cell filters,} applied at export, as Park's pipeline does. QC keeps a cell only if it
-shows at least $R_{\min}$ tapes ($20$ or $100$ of $166$ in Park). ClonalBC retention then keeps a
-cell with probability $\psi(R_c)$, a step table given as input (on Park's Mouse1 it runs from $36\%$
-at $20$--$40$ tapes to $83\%$ at $140$ or more); a cell that fails gets clone label $-1$, which is how
-\texttt{23}, \texttt{44} and \texttt{77} already exclude it.
+\paragraph{4. Cell filters,} applied when an arm is exported, as Park's pipeline does. Let
+\begin{equation}
+  R_c=\sum_{z=1}^kY_{cz}
+  \label{eq:Rc}
+\end{equation}
+be the number of tapes read in cell $c$. Two filters act on it:
+\begin{itemize}
+  \item \emph{QC} keeps a cell only if $R_c\ge R_{\min}$ ($20$ or $100$ of $166$ in Park).
+  \item \emph{ClonalBC retention} keeps a cell's clone barcode with probability $\psi(R_c)$, a step
+        function given as a table: $\psi(R)=p_j$ for $\ell_j\le R<\ell_{j+1}$. In the \textsc{filter}
+        fixture of \S\ref{sec:drop1val} it is $0.3$ below $12$ tapes, $0.5$ from $12$, $0.8$ from $20$
+        and $0.95$ from $25$; on Park's Mouse1 it runs from $36\%$ at $20$--$40$ tapes to $83\%$ at
+        $140$ or more. The draw is $\mathbb 1[W_c<\psi(R_c)]$ with $W_c$ uniform, and a cell that
+        fails gets clone label $-1$, which is how \texttt{23}, \texttt{44} and \texttt{77} already
+        exclude it.
+\end{itemize}
+Both filters keep cells \emph{because} they show many tapes, so the cells that survive are selected
+for low missingness. Park's data went through this selection, so Park-comparable output has to as
+well; it is also why the closed forms of \S\ref{sec:drop1cf} are scored before the filters.
 
 \paragraph{Deliberately absent from this rung:} heritable loss (rung~2), clone-level capture (cells
 of one clone sharing capture on every tape --- a cell-axis effect not yet callable as biology), the
@@ -144,50 +227,187 @@ the ones most often left unedited.
   u_z=\mathbb 1[U_z<\phi],\qquad
   \beta_z=\mu_\beta+\Delta_\beta u_z+s_\beta\varepsilon_z,\qquad
   r_z=\bar r_0\,r_{\rm cl}^{\,u_z}\,e^{s_rv_z-s_r^2/2},\qquad
-  \bar r_0=\frac{1}{1-\phi+\phi\,r_{\rm cl}},
+  \bar r_0=\frac{1}{1-\phi+\phi\,r_{\rm cl}} .
   \label{eq:panel}
 \end{equation}
-with $U_z\sim\Uniform(0,1)$ and $\varepsilon_z,v_z\sim\mathcal N(0,1)$, all independent. Each piece:
-\begin{itemize}
-  \item $u_z$ is the class coin, with $\phi$ the fraction closed. It is drawn through a uniform so
-        that the closed set is \emph{nested} as $\phi$ rises: a tape closed at $\phi=0.15$ is still
-        closed at $\phi=0.3$, and comparisons across $\phi$ are not Monte Carlo noise.
-  \item $\Delta_\beta$ is the closed-tape read penalty. At $2$ logits a tape missing $30\%$ of the
-        time when open is missing $76\%$ of the time when closed. $s_\beta\varepsilon_z$ is the
-        scatter among tapes of one class.
-  \item $r_{\rm cl}^{u_z}$ switches the closed slowdown on. The lognormal factor has mean exactly $1$
-        (hence the $-s_r^2/2$). $\bar r_0$ makes $\E[r_z]=1$ \emph{over the average tape}, so
-        raising $\phi$ is not confounded with less editing overall and $\LamT$ keeps its meaning
-        from eq.~\eqref{eq:rate}.
-  \item $\varepsilon_z$ and $v_z$ are independent, so within a class recovery and speed are
-        unrelated. The class is the only link, and the coupling it creates is
-        \begin{equation}
-          \mathrm{Cov}(\beta_z,\ln r_z)=\Delta_\beta\ln r_{\rm cl}\;\phi(1-\phi)<0 :
-          \label{eq:latentcov}
-        \end{equation}
-        closed tapes are worse read and slower.
-\end{itemize}
-The recovery-$0.3$ ``threshold'' is \emph{not} a simulator parameter. It enters only when choosing
-$(\phi,r_{\rm cl})$ to resemble Park. How sharp the simulated step is depends on $\Delta_\beta$
-against $s_\beta$: a large penalty with small scatter gives two separate clouds, the reverse a slope.
 
-\paragraph{A consequence worth knowing.} Even at $\phi=0$ the share of unedited tapes exceeds
-$e^{-\LamT}$ ($0.079$ against $0.055$ at $\LamT=2.9$ in the library). Speed scatter alone does it:
-$\E[e^{-r\LamT}]>e^{-\E[r]\LamT}$ by Jensen's inequality, so slow tapes add more unedited entries
-than fast ones remove. Expected, not a finding.
+\paragraph{How to read it: draws and parameters.} Every symbol in eq.~\eqref{eq:panel} is one of two
+kinds. Three are \emph{standard random draws}, made once per tape and kept: $U_z\sim\Uniform(0,1)$ and
+$\varepsilon_z,v_z\sim\mathcal N(0,1)$, all independent. They carry no units and no biology; they say
+where tape $z$ falls among tapes. The rest are \emph{parameters}, set before a run, which turn those
+draws into a class, a recovery and a speed. Changing a parameter rescales the same draws rather than
+redrawing them, so a tape keeps its identity across settings.
+\begin{center}\small
+\begin{tabular}{@{}llp{0.42\textwidth}ll@{}}
+\toprule
+draw & parameter & what the parameter controls & units & off when \\
+\midrule
+$U_z$           & $\phi$          & fraction of tapes that are closed               & fraction      & $\phi=0$ \\
+---             & $\Delta_\beta$  & how much harder a closed tape is to read        & logits        & $0$ \\
+$\varepsilon_z$ & $s_\beta$       & scatter in readability among tapes of one class & logits        & $0$ \\
+---             & $r_{\rm cl}$    & how fast a closed tape edits, relative to an open one & ratio   & $1$ \\
+$v_z$           & $s_r$           & scatter in speed among tapes of one class       & log-speed     & $0$ \\
+---             & $\mu_\beta$     & overall readability; \emph{solved}, not set (\S\ref{sec:pbar}) & logits & --- \\
+\bottomrule
+\end{tabular}
+\end{center}
+With every parameter at its ``off'' value, all tapes are identical: equally readable, all at speed
+$1$. Each line of eq.~\eqref{eq:panel} now in turn.
+
+\paragraph{The class.} $u_z=\mathbb 1[U_z<\phi]$ is $1$ (closed) with probability $\phi$. Drawing it
+through a uniform rather than as a fresh coin flip makes the closed set \emph{nested}: a tape closed at
+$\phi=0.15$ is still closed at $\phi=0.3$, so comparisons across $\phi$ are not Monte Carlo noise.
+
+\paragraph{Recovery,} $\beta_z=\mu_\beta+\Delta_\beta u_z+s_\beta\varepsilon_z$, has three terms:
+\begin{itemize}
+  \item $\mu_\beta$, the level every tape starts from;
+  \item $\Delta_\beta u_z$, a penalty added only to closed tapes. At $\Delta_\beta=2$, a tape that would
+        be missing $30\%$ of the time if open is missing $76\%$ of the time if closed;
+  \item $s_\beta\varepsilon_z$, the \emph{recovery scatter}: tapes of the same class still differ in
+        how well they are read, for reasons the class does not capture (sequence context, amplicon
+        efficiency). $\varepsilon_z$ says how many standard deviations tape $z$ sits from its class's
+        typical value, and $s_\beta$ is that standard deviation in logits. At $s_\beta=1$, among open
+        tapes whose typical missingness is $30\%$, a tape one standard deviation worse is missing $54\%$
+        of the time and one a standard deviation better $14\%$.
+\end{itemize}
+Together: given its class, a tape's recovery offset is normal,
+$\beta_z\mid u_z\sim\mathcal N(\mu_\beta+\Delta_\beta u_z,\;s_\beta^2)$ --- two bell curves, the closed
+one shifted by $\Delta_\beta$. \emph{The scatter decides whether the two classes look like a step or a
+slope.} The curves sit $\Delta_\beta/s_\beta$ standard deviations apart. At $s_\beta=0$ they are two
+spikes, a pure step. At the validation's $\Delta_\beta=2$, $s_\beta=1$ they are two standard deviations
+apart: still distinct (only $2.3\%$ of open tapes are worse read than the typical closed tape) but
+overlapping at the edges. As $s_\beta$ grows past $\Delta_\beta$ the two merge into one broad spread and
+the step becomes a slope. So the recovery-$0.3$ ``threshold'' seen in Park is \emph{not} a simulator
+parameter: it enters only when choosing $(\phi,\Delta_\beta,s_\beta)$ to resemble Park.
+
+\paragraph{Speed,} $r_z=\bar r_0\,r_{\rm cl}^{\,u_z}\,e^{s_rv_z-s_r^2/2}$, is easier to read after
+taking logs, where it has the same three-term shape as recovery:
+\begin{equation}
+  \ln r_z=\underbrace{\ln\bar r_0}_{\text{level}}
+  +\underbrace{u_z\ln r_{\rm cl}}_{\text{closed slowdown}}
+  +\underbrace{s_rv_z}_{\text{speed scatter}}
+  -\underbrace{s_r^2/2}_{\text{mean correction}} .
+  \label{eq:lnr}
+\end{equation}
+Speed is modelled on the log scale because it must stay positive and because tape speeds differ by
+\emph{factors}. Term by term:
+\begin{itemize}
+  \item $r_{\rm cl}^{\,u_z}$ is $1$ for an open tape and $r_{\rm cl}$ for a closed one, so it switches
+        the slowdown on only for closed tapes. At $r_{\rm cl}=0.6$ a closed tape edits at $60\%$ of an
+        open tape's rate.
+  \item $e^{s_rv_z}$ is the \emph{speed scatter}: tapes of one class still edit at different speeds.
+        $s_r$ is the standard deviation of $\ln r_z$ within a class. At $s_r=0.3$ a tape one standard
+        deviation fast edits $1.29$ times as fast as the class typical, and one a standard deviation slow
+        $0.71$ times.
+  \item $e^{-s_r^2/2}$ corrects the mean. For a standard normal $v$, $\E[e^{s_rv}]=e^{s_r^2/2}>1$:
+        multiplying by $e^{s_rv}$ on its own would make tapes faster \emph{on average}, because fast
+        draws are stretched more than slow ones are shrunk. Dividing by $e^{s_r^2/2}$ makes the factor
+        average exactly $1$, so the scatter spreads speeds without changing their mean.
+  \item $\bar r_0$ is the speed of a typical open tape, chosen so that the average tape has speed $1$.
+        Averaging over the class and the scatter,
+        \begin{equation}
+          \E[r_z]=\bar r_0\big[(1-\phi)\cdot1+\phi\,r_{\rm cl}\big]\cdot\E\big[e^{s_rv-s_r^2/2}\big]
+          =\bar r_0\,(1-\phi+\phi r_{\rm cl})\cdot1=1 .
+          \label{eq:Er}
+        \end{equation}
+        At $\phi=0.15$, $r_{\rm cl}=0.6$: $\bar r_0=1/0.94=1.064$, so open tapes run at $1.064$ and closed
+        ones at $0.638$. Why it matters: $\LamT$ is defined (eq.~\ref{eq:rate}) as the edits an
+        \emph{average} tape receives. Without $\bar r_0$, raising $\phi$ would quietly lower the total
+        amount of editing, and an effect of closed tapes would be confounded with an experiment that
+        simply edits less.
+\end{itemize}
+
+\paragraph{The coupling, and what the scatter does to it.} $\varepsilon_z$ and $v_z$ are independent,
+so \emph{within} a class recovery and speed are unrelated. The class is the only link. To see its size,
+note that in eqs.~\eqref{eq:panel} and \eqref{eq:lnr} the only random terms are $u_z$ (shared by both),
+$\varepsilon_z$ (recovery only) and $v_z$ (speed only). Covariances between independent terms vanish,
+leaving the $u_z$ terms:
+\begin{equation}
+  \mathrm{Cov}(\beta_z,\ln r_z)=\mathrm{Cov}(\Delta_\beta u_z,\;u_z\ln r_{\rm cl})
+  =\Delta_\beta\ln r_{\rm cl}\;\mathrm{Var}(u_z)
+  =\Delta_\beta\ln r_{\rm cl}\;\phi(1-\phi) .
+  \label{eq:latentcov}
+\end{equation}
+It is negative because $\ln r_{\rm cl}<0$: harder to read goes with slower. The scatter terms do not
+enter the covariance, but they do enter the variances, so they dilute the \emph{correlation}:
+\begin{equation}
+  \mathrm{Corr}(\beta_z,\ln r_z)=\frac{\Delta_\beta\ln r_{\rm cl}\;\phi(1-\phi)}
+  {\sqrt{\big[\Delta_\beta^2\phi(1-\phi)+s_\beta^2\big]\big[(\ln r_{\rm cl})^2\phi(1-\phi)+s_r^2\big]}} .
+  \label{eq:latentcorr}
+\end{equation}
+With no scatter ($s_\beta=s_r=0$) this is exactly $-1$: readability and speed are both functions of
+the class alone. At the validation's \textsc{cis} values ($\phi=0.15$, $\Delta_\beta=2$,
+$r_{\rm cl}=0.6$, $s_\beta=1$, $s_r=0.3$) the covariance is $-0.130$ and the correlation $-0.30$
+(checked by Monte Carlo, $4\times10^6$ tapes: $-0.302$). That is the role of the two scatter
+parameters: \emph{the class sets how strongly recovery and speed are tied, and the scatter sets how much
+independent variation is laid on top}, which is what makes the tie look loose when tapes are viewed
+one at a time.
+
+\paragraph{What the scatter is not.} $s_\alpha$, $s_\beta$ and $s_r$ describe fixed differences between
+cells or between tapes, drawn once. They are not measurement noise: tape $z$'s $\beta_z$ and $r_z$ are
+the same in every cell and every tree of the experiment, and cell $c$'s $\alpha_c$ is the same on every
+tape. The randomness from entry to entry is in $X_{cz}$ alone.
+
+\paragraph{A consequence worth knowing.} Even with no closed tapes, the share of unedited tapes exceeds
+$e^{-\LamT}$. Speed scatter alone does it: a tape is unedited with probability $e^{-r_z\LamT}$, which is
+curved in $r_z$, so by Jensen's inequality $\E[e^{-r\LamT}]>e^{-\E[r]\LamT}=e^{-\LamT}$ --- slow tapes
+add more unedited entries than fast ones remove. At $\LamT=2.9$, $s_r=0.3$ the expectation is $0.075$
+against $0.055$; the library's five realised panels give $0.079$. Expected, not a finding.
 
 \subsection{\texorpdfstring{Setting the level: the knob is $\pbar$}{Setting the level: the knob is pbar}}\label{sec:pbar}
 
-The quantity a user wants to set is how much technical dropout there is, not a logit offset. So the
-swept knob is the target mean technical missingness
+\paragraph{The idea.} The quantity a user wants to set is how much technical dropout there is, not a
+logit offset. So the swept knob is the target \emph{mean technical missingness} $\pbar$, and the level
+$\mu_\beta$ is solved from it. $\pbar$ counts only the mask $X$; observed missingness $O$ is higher,
+because censoring adds the unedited tapes on top.
+
+\paragraph{The definition.} For tape $z$, the expected missingness over the population of cells is
 \begin{equation}
-  \pbar=\frac1k\sum_{z=1}^k\pbar_z,\qquad
-  \pbar_z=\E_\alpha\big[\sigma(\alpha+\beta_z)\big],
+  \pbar_z=\E_\alpha\big[\sigma(\alpha+\beta_z)\big]
+  =\int_{-\infty}^{\infty}\sigma(\beta_z+s_\alpha a)\,\frac{e^{-a^2/2}}{\sqrt{2\pi}}\,da ,
+  \qquad
+  \pbar=\frac1k\sum_{z=1}^k\pbar_z .
   \label{eq:pbar}
 \end{equation}
-and $\mu_\beta$ is solved from it on each realised panel: the expectation over $\alpha$ by
-Gauss--Hermite quadrature, the root in $\mu_\beta$ by Brent's method. $\pbar$ is a target for the
-\emph{expected} rate; a finite set of cells realises it with noise.
+$\E_\alpha$ averages over the \emph{distribution} of cell offsets, $\alpha=s_\alpha a$ with $a$ standard
+normal, not over the cells a tree happens to contain; $\pbar$ then averages over the panel's $k$ tapes.
+
+\paragraph{Why the spread has to be averaged over.} One might set $\sigma(\beta_z)$ to the target and be
+done. That is wrong whenever the cells differ: $\sigma$ is curved, so averaging it over a spread of
+$\alpha$ pulls the result toward $0.5$. A tape at $\beta_z=\operatorname{logit}(0.3)$ is missing in
+$30\%$ of \emph{average} cells but in $31.7\%$ of cells \emph{overall} at $s_\alpha=0.7$. To hit a target
+below $0.5$, the logits therefore have to sit lower than the naive value.
+
+\paragraph{The solve.} Write each tape's offset from the level as $b_z=\Delta_\beta u_z+s_\beta
+\varepsilon_z$, known once the panel is drawn, so that $\beta_z=\mu_\beta+b_z$. Then $\mu_\beta$ is the
+root of
+\begin{equation}
+  F(\mu_\beta)=\frac1k\sum_{z=1}^k\int\sigma(\mu_\beta+b_z+s_\alpha a)\,
+  \frac{e^{-a^2/2}}{\sqrt{2\pi}}\,da=\pbar .
+  \label{eq:pbarsolve}
+\end{equation}
+$F$ rises steadily from $0$ to $1$ as $\mu_\beta$ runs from $-\infty$ to $+\infty$, so the root exists
+and is unique. The integral is computed by 80-point Gauss--Hermite quadrature (a weighted sum over fixed
+nodes, exact for smooth integrands against a normal weight to far beyond the precision needed) and the
+root by Brent's method on $[-80,80]$. At $\pbar=0$ the root is $\mu_\beta=-\infty$: no technical
+missingness at all.
+
+\paragraph{What follows from solving on the realised panel.}
+\begin{itemize}
+  \item \emph{$\mu_\beta$ absorbs the panel's own draws.} If a panel happens to draw many hard-to-read
+        tapes, $\mu_\beta$ moves down to compensate, so every panel delivers the target on average.
+  \item \emph{Raising $\phi$ or $\Delta_\beta$ redistributes missingness rather than adding it.} At fixed
+        $\pbar$, more closed tapes means a lower $\mu_\beta$, so the open tapes become \emph{better} read.
+        In the validation fixtures, all at $\pbar=0.3$: $\mu_\beta=-1.080$ with no closed tapes
+        (\textsc{base}), $-1.176$ with $3$ closed (\textsc{cis}), $-1.667$ with $9$ closed
+        (\textsc{slow}). The latent changes \emph{which} tapes are missing, not how much is missing.
+  \item \emph{The scatter moves the level too.} With $s_\beta=1$ and $s_\alpha=0.7$, hitting
+        $\pbar=0.3$ in expectation over panels needs $\mu_\beta=-1.089$, against the naive
+        $\operatorname{logit}(0.3)=-0.847$; with $s_\beta=0$ it needs $-0.937$.
+  \item \emph{The target is an expectation.} A finite set of cells realises it with noise: across the
+        library the realised technical missingness sits on target on average, with a spread of $0.0046$
+        at $n=25$ cells falling to $0.0005$ at $n=1{,}976$.
+\end{itemize}
 
 \subsection{Depth-0 censoring makes observed missingness heritable}\label{sec:censor}
 
