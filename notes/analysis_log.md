@@ -1810,3 +1810,27 @@ Built `src/01`–`04` in a new conda-forge env `envs/pando-jax`. **Full validati
 diagnosed as finite-difference step error: 100× smaller per 10× smaller step, converging to autodiff)
 and V8 (one deterministic library cell, two adjacent deciles at |z| 3.0).** Timing: forward linear in n;
 CPU gradient ≈ n^2.3 at large n (121 s at 11,081 cells) — scan design; level batching proposed.
+
+## 2026-10-06 — session 23: the dropout layer (rungs 1 and 2) written up in LaTeX
+
+`analyses/2026-09_simulator/writeup/dropout_layer.tex` (new), `\input` after `editing_layer.tex` from
+`simulator_figures.tex` (now "The tree, editing and dropout layers…", 40 pages, clean `pdflatex` ×2: no
+errors, overfull boxes or undefined references). Same register as the editing-layer sections — the idea
+first, then the equation, then what it means. Four sections: **rung 1 model** (ladder table; mask;
+closed-locus latent and why each piece; $\bar p$ solve; ⭐ the inherited-censoring derivation step by
+step, with the Pre-TX numbers it bears on; the cache export; F0–F5); **rung 1 validation** (fixtures,
+pre-fixed rule, check table, the FAIL → diagnosis → `21` follow-up table → amended scoring → PASS
+history in full, teeth, lessons, library); **rung 2 model** (hazard and $W_\zeta$; the $\bar H$ solve with
+a $\Gamma_T$ table; realised-fraction variance; one-slot sampler and nesting; Dollo; three-factor
+observation; G1–G5 and the heritable share with its small-$\bar H$ limit derived; censoring/silencing
+mirrored, marked derived and not run); **rung 2 validation** (fixtures, rule, table, smoke/trip/PASS,
+teeth with their numbers, library with the heritable-share table and the singleton-share correction,
+what the rungs do not represent). No figures — none exist for either rung. Every validation number was
+read from `validate_dropout.json` / `validate_silencing.json` (the PASS seeds), not from the proposals'
+mocks. Preamble gained `\pbar`, `\Hbar`, `\GamT`; editing-layer forward mentions of dropout now `\ref`
+the new sections. Letters reused across layers are disambiguated in the notation tables ($c$, $\alpha,\beta$,
+$R$, $L$); the pair's ancestor is written $A$, $t_A$ to match the editing layer, where §S5/§S6 write $x$, $t_x$.
+⚠ **Three descriptive numbers in README sessions 20/21 disagree with the JSONs; no scientific number
+moves.** (i) F4t CIS pooled cell at seed 2102026 is **−0.54**, README says +0.54. (ii) Hard-assertion
+comparisons are **2.7×10⁷** (rung 1, README "~2×10⁷") and **3.1×10⁷** (rung 2, README "~4×10⁷").
+The write-up uses the JSON values.

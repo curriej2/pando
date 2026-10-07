@@ -1,5 +1,17 @@
 # simulator — findings
 
+## Session 23 (2026-10-06) — the dropout layer written up in LaTeX
+
+`writeup/dropout_layer.tex` (new, `\input` from `simulator_figures.tex` after the editing layer; the
+document is now "The tree, editing and dropout layers…", 40 pages, clean `pdflatex` ×2). Four sections
+in the editing layer's style: rung 1 model (incl. the inherited-censoring derivation step by step),
+rung 1 validation (the FAIL → follow-up → amended-scoring → PASS history in full) and library, rung 2
+model (the $\bar H$ solve, sampler, Dollo, G1–G5, the heritable share, censoring/silencing mirrored),
+rung 2 validation and library. No figures — none exist for either rung yet. Validation numbers are read
+from the PASS JSONs. ⚠ Three descriptive numbers in Sessions 20/21 below disagree with those JSONs
+(none scientific): F4t CIS pooled is −0.54 not +0.54; hard-assertion comparisons are 2.7×10⁷ (rung 1)
+and 3.1×10⁷ (rung 2), not ~2×10⁷ and ~4×10⁷.
+
 ## ⭐ Session 21 (2026-10-01) — dropout rung 2: heritable silencing as complete Dollo loss, built and validated
 
 Approved by Justin ("PROPOSAL (2026-10-01, rev. 1)", CLAUDE.md): the knob is the **target silenced

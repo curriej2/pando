@@ -1,0 +1,855 @@
+% ---------------------------------------------------------------------------
+% dropout_layer.tex -- the dropout layer, rungs 1 and 2: equations, checks, libraries.
+% \input from simulator_figures.tex, after editing_layer.tex.
+% Code:  rung 1  src/17_dropout.py (generator + cache writer), src/18_validate_dropout.py,
+%                src/21_f4_followup.py, src/19/20 (library);
+%        rung 2  src/22_silencing.py (generator), src/23_validate_silencing.py, src/24/25 (library).
+% Numbers: ../results/validate_dropout.json (the PASS, seed 2102026),
+%          ../results/f4_followup.json, ../results/dropout_library_summary.json,
+%          ../results/validate_silencing.json (the PASS, seed 3102026),
+%          ../results/silencing_library_summary.json.
+% Theory record: notes/sciphy_notes.md S5 (rung 1) and S6 (rung 2).
+% No figures yet: neither rung has been illustrated.
+% ---------------------------------------------------------------------------
+
+% ===========================================================================
+\section{The dropout layer, rung 1: technical dropout}\label{sec:drop1}
+% ===========================================================================
+
+The editing layer says what each cell's tapes \emph{read}. The dropout layer says which of those
+tapes we actually \emph{see}. In Park's data a large share of cell $\times$ tape entries is missing,
+and earlier analyses established that the missingness has two components: a technical one (a tape
+not captured in a cell) and a heritable one (a tape silenced in a lineage and lost in all its
+descendants). The simulator adds them in two steps, so that each one's cost can be measured
+separately:
+
+\begin{center}\small
+\begin{tabular}{@{}lp{0.42\textwidth}p{0.36\textwidth}@{}}
+\toprule
+rung & what is simulated & what the step from the rung below measures \\
+\midrule
+0 & tree and editing, every tape observed (\S\ref{sec:edit}) & the pure homoplasy floor \\
+1 & $+$ technical dropout with \emph{no} lineage structure (this section) & what ordinary technical
+      dropout manufactures \\
+2 & $+$ heritable silencing, complete Dollo loss (\S\ref{sec:drop2}) & what the silencing
+      established on Park actually costs \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+Rung~1 has a second job. \textbf{No statistic in this project has been run on data known to contain
+no silencing}, and the heritable-silencing statistics
+(\texttt{2026-08\_park-compatibility/src/73}, \texttt{74}, \texttt{77}) need exactly that as a negative
+control. Rung~1 is that dataset, and it is written in the formats those scripts already read.
+
+\subsection*{Notation}
+
+Several letters here are also used elsewhere in this document. The table says which meaning applies
+in the dropout sections.
+
+\begin{center}\small
+\begin{tabular}{@{}lp{0.55\textwidth}l@{}}
+\toprule
+symbol & meaning & units / range \\
+\midrule
+$c$, $z$ & a captured cell (a tip of the tree), and a tape, $z=1,\dots,k$. \emph{In
+      \S\ref{sec:sampler} $c$ counted open slots; that use does not recur here.} & --- \\
+$D_{cz}$ & true depth of tape $z$ in cell $c$ at harvest, from the editing layer & $0$--$N$ \\
+$\mu_z$ & $r_z\LamT$: tape $z$'s total expected edits over the experiment, before saturation & edits / tape \\
+$X_{cz}$ & technical missingness: $1$ if tape $z$ is not captured in cell $c$ & $\{0,1\}$ \\
+$\alpha_c$, $\beta_z$ & cell capture offset and tape recovery offset; larger means worse captured or
+      worse recovered. \emph{Not} the $\alpha,\beta$ of eq.~\eqref{eq:geom} & logits \\
+$\pi_{cz}$ & $\sigma(\alpha_c+\beta_z)$, the probability that $X_{cz}=1$;
+      $\sigma(x)=1/(1+e^{-x})$ & probability \\
+$\pbar$, $\pbar_z$ & mean technical missingness over the panel's tapes; and for tape $z$, averaged
+      over cells & probability \\
+$s_\alpha$, $s_\beta$ & spread of $\alpha_c$ across cells; scatter of $\beta_z$ among tapes of one
+      class & logits \\
+$u_z$ & closed-locus class of tape $z$: $1$ = closed (poorly read \emph{and} slow) & $\{0,1\}$ \\
+$\phi$ & fraction of tapes that are closed & $[0,1)$ \\
+$\mu_\beta$, $\Delta_\beta$ & overall recovery level (solved, \S\ref{sec:pbar}); closed-tape read
+      penalty & logits \\
+$r_{\rm cl}$, $s_r$ & speed of a closed tape relative to an open one; lognormal speed scatter &
+      dimensionless \\
+$Y_{cz}$, $O_{cz}$ & observed: $Y=1$ if the tape is read with at least one edit; $O=1-Y$ & $\{0,1\}$ \\
+$R_c$, $R_{\min}$ & tapes observed in cell $c$, $\sum_zY_{cz}$; the QC threshold on it. \emph{Not} the
+      $R$ of Fig.~\ref{fig:S1c} & tapes \\
+$\psi(R_c)$ & probability that cell $c$ keeps its clone barcode (ClonalBC retention) & probability \\
+$A$, $t_A$, $W_A$ & last common ancestor of two cells, its time, and $W(t_A)$, the share of
+      editing spent before it & ---, $[0,1]$, $[0,1]$ \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\subsection{The model, in four parts}\label{sec:drop1-model}
+
+\paragraph{The idea.} A tape can be missing from a cell's readout for reasons that have nothing to
+do with the cell's ancestry: the cell was poorly captured, or the tape sits at an integration site
+that is poorly read. Rung~1 models exactly those reasons and nothing else. Every missing entry is
+then explained by a property of the cell and a property of the tape, and \emph{the tree plays no
+part} --- that is the definition of the rung.
+
+\paragraph{1. The technical mask.} Each entry is missing independently, with a probability set by
+one number for the cell and one for the tape:
+\begin{equation}
+  \Prob(X_{cz}=1)=\pi_{cz}=\sigma(\alpha_c+\beta_z),
+  \qquad \alpha_c=s_\alpha a_c,\quad a_c\sim\mathcal N(0,1)\ \text{iid over cells.}
+  \label{eq:mask}
+\end{equation}
+Given $(\alpha,\beta)$, every $X_{cz}$ is independent of every other and of the tree. The
+logit-additive form is deliberate: it is the $M_3$ rung of the nested ladder (\texttt{77}), so on
+rung-1 data the ladder fits the true model, and any lineage signal it reports is a false positive.
+The mask covers the \emph{whole tape}: internal gaps are $0.02\%$ of Park's entries, and the flat
+per-cell depth profile rules out 3$'$ truncation (park-compatibility Fig.~3d/e).
+
+\paragraph{2. The tape panel} (\S\ref{sec:latent}): each tape's $\beta_z$ and speed $r_z$, drawn once
+per simulated experiment and shared by every cell of every tree in it, since all Park clones descend
+from one engineered line and share its integrations.
+
+\paragraph{3. Depth-0 censoring.} A tape that was captured but never edited is indistinguishable, in
+Park's pipeline, from a tape that was not captured: \texttt{23\_dropout\_matrix.py} codes any tape whose
+first site is empty as \texttt{ABSENT}. The simulator applies the same rule:
+\begin{equation}
+  Y_{cz}=(1-X_{cz})\,\mathbb 1[D_{cz}\ge1],\qquad O_{cz}=1-Y_{cz}.
+  \label{eq:observe1}
+\end{equation}
+A tape is \emph{read} only if it was captured \emph{and} edited at least once. Censoring is on by
+default and can be switched off; the true $X$ and $D$ are always stored, so every simulated missing
+entry knows why it is missing.
+
+\paragraph{4. Cell filters,} applied at export, as Park's pipeline does. QC keeps a cell only if it
+shows at least $R_{\min}$ tapes ($20$ or $100$ of $166$ in Park). ClonalBC retention then keeps a
+cell with probability $\psi(R_c)$, a step table given as input (on Park's Mouse1 it runs from $36\%$
+at $20$--$40$ tapes to $83\%$ at $140$ or more); a cell that fails gets clone label $-1$, which is how
+\texttt{23}, \texttt{44} and \texttt{77} already exclude it.
+
+\paragraph{Deliberately absent from this rung:} heritable loss (rung~2), clone-level capture (cells
+of one clone sharing capture on every tape --- a cell-axis effect not yet callable as biology), the
+\emph{trans} limb of silencing (a silenced integration's symbol disappearing from other tapes), and
+the site-6 mechanism.
+
+\subsection{The closed-locus latent: why recovery and speed move together}\label{sec:latent}
+
+\paragraph{The problem it solves.} In Park a minority of tapes are both rarely read \emph{and}
+shallow. On Mouse1 the $15\%$ of tapes with recovery below $0.3$ average $3.58$ filled sites against
+$4.86$ for the rest, and among the rest recovery and depth are barely related (correlation
+$+0.119$). That is a \emph{step}, not a slope. The likely mechanism is a closed integration site,
+which is both poorly transcribed (Park reads tapes from RNA) and poorly reached by the prime editor.
+Drawing recovery and speed independently would delete that link, and with it the reason editing
+and dropout cannot be fitted separately. It would also understate censoring, since slow tapes are
+the ones most often left unedited.
+
+\paragraph{The construction.} One hidden switch per tape drives both quantities:
+\begin{equation}
+  u_z=\mathbb 1[U_z<\phi],\qquad
+  \beta_z=\mu_\beta+\Delta_\beta u_z+s_\beta\varepsilon_z,\qquad
+  r_z=\bar r_0\,r_{\rm cl}^{\,u_z}\,e^{s_rv_z-s_r^2/2},\qquad
+  \bar r_0=\frac{1}{1-\phi+\phi\,r_{\rm cl}},
+  \label{eq:panel}
+\end{equation}
+with $U_z\sim\Uniform(0,1)$ and $\varepsilon_z,v_z\sim\mathcal N(0,1)$, all independent. Each piece:
+\begin{itemize}
+  \item $u_z$ is the class coin, with $\phi$ the fraction closed. It is drawn through a uniform so
+        that the closed set is \emph{nested} as $\phi$ rises: a tape closed at $\phi=0.15$ is still
+        closed at $\phi=0.3$, and comparisons across $\phi$ are not Monte Carlo noise.
+  \item $\Delta_\beta$ is the closed-tape read penalty. At $2$ logits a tape missing $30\%$ of the
+        time when open is missing $76\%$ of the time when closed. $s_\beta\varepsilon_z$ is the
+        scatter among tapes of one class.
+  \item $r_{\rm cl}^{u_z}$ switches the closed slowdown on. The lognormal factor has mean exactly $1$
+        (hence the $-s_r^2/2$). $\bar r_0$ makes $\E[r_z]=1$ \emph{over the average tape}, so
+        raising $\phi$ is not confounded with less editing overall and $\LamT$ keeps its meaning
+        from eq.~\eqref{eq:rate}.
+  \item $\varepsilon_z$ and $v_z$ are independent, so within a class recovery and speed are
+        unrelated. The class is the only link, and the coupling it creates is
+        \begin{equation}
+          \mathrm{Cov}(\beta_z,\ln r_z)=\Delta_\beta\ln r_{\rm cl}\;\phi(1-\phi)<0 :
+          \label{eq:latentcov}
+        \end{equation}
+        closed tapes are worse read and slower.
+\end{itemize}
+The recovery-$0.3$ ``threshold'' is \emph{not} a simulator parameter. It enters only when choosing
+$(\phi,r_{\rm cl})$ to resemble Park. How sharp the simulated step is depends on $\Delta_\beta$
+against $s_\beta$: a large penalty with small scatter gives two separate clouds, the reverse a slope.
+
+\paragraph{A consequence worth knowing.} Even at $\phi=0$ the share of unedited tapes exceeds
+$e^{-\LamT}$ ($0.079$ against $0.055$ at $\LamT=2.9$ in the library). Speed scatter alone does it:
+$\E[e^{-r\LamT}]>e^{-\E[r]\LamT}$ by Jensen's inequality, so slow tapes add more unedited entries
+than fast ones remove. Expected, not a finding.
+
+\subsection{\texorpdfstring{Setting the level: the knob is $\pbar$}{Setting the level: the knob is pbar}}\label{sec:pbar}
+
+The quantity a user wants to set is how much technical dropout there is, not a logit offset. So the
+swept knob is the target mean technical missingness
+\begin{equation}
+  \pbar=\frac1k\sum_{z=1}^k\pbar_z,\qquad
+  \pbar_z=\E_\alpha\big[\sigma(\alpha+\beta_z)\big],
+  \label{eq:pbar}
+\end{equation}
+and $\mu_\beta$ is solved from it on each realised panel: the expectation over $\alpha$ by
+Gauss--Hermite quadrature, the root in $\mu_\beta$ by Brent's method. $\pbar$ is a target for the
+\emph{expected} rate; a finite set of cells realises it with noise.
+
+\subsection{Depth-0 censoring makes observed missingness heritable}\label{sec:censor}
+
+This is the one non-obvious property of rung~1, and it is a design result rather than a code check.
+Rung~1 contains no silencing, yet \emph{its observed missingness is correlated along the tree},
+because ``no edit yet'' is itself inherited.
+
+\paragraph{The derivation.} Take two cells $c,c'$ whose last common ancestor $A$ sits at $t_A$, and
+write $W_A=W(t_A)$. On tape $z$:
+\begin{enumerate}
+  \item A cell is unedited iff its whole root-to-cell path carries no edit. The path is one Poisson
+        process in $\Lambda$-time (\S\ref{sec:editcf}, A), so $\Prob(D_c=0)=e^{-\mu_z}$.
+  \item Both are unedited iff the \emph{shared} path down to $A$ (expected $\mu_zW_A$ edits) and the
+        \emph{two private} paths ($\mu_z(1-W_A)$ each) all carry none. These are three independent
+        stretches of the process, so
+        \begin{equation}
+          \Prob(D_c=0,\,D_{c'}=0)=e^{-\mu_zW_A}\,e^{-2\mu_z(1-W_A)}=e^{-\mu_z(2-W_A)} .
+          \label{eq:bothunedited}
+        \end{equation}
+  \item By inclusion--exclusion, both are edited with probability
+        $1-2e^{-\mu_z}+e^{-\mu_z(2-W_A)}$.
+  \item The mask is independent of depth, and across cells given $(\alpha,\beta)$, so
+        $\Prob(Y_c=1)=(1-\pi_{cz})(1-e^{-\mu_z})$ and
+        $\Prob(Y_c=1,Y_{c'}=1)=(1-\pi_{cz})(1-\pi_{c'z})\big(1-2e^{-\mu_z}+e^{-\mu_z(2-W_A)}\big)$.
+  \item Averaging over $\alpha$ and subtracting the product of the marginals,
+        \begin{equation}
+          \boxed{\;
+          \mathrm{Cov}(O_{cz},O_{c'z}\mid t_A)=(1-\pbar_z)^2\Big[e^{-\mu_z(2-W_A)}-e^{-2\mu_z}\Big]
+          \;\xrightarrow{\ W_A\to1\ }\;(1-\pbar_z)^2\,e^{-\mu_z}\big(1-e^{-\mu_z}\big). \;}
+          \label{eq:censorcov}
+        \end{equation}
+\end{enumerate}
+\emph{Reading it.} The no-effect value is $0$, for two cells that split at the founder ($W_A=0$).
+The covariance rises the later the pair split, and the sister limit on the right is its ceiling. It
+is largest on slow tapes (small $\mu_z$), which by \S\ref{sec:latent} are also the poorly read ones.
+In the slowest validation fixture ($\mu=2$, $\pbar=0.3$) the sister covariance is
+$0.49\times e^{-2}(1-e^{-2})=0.057$, against $0$ for unrelated cells. At the mouse arms' $\mu\approx5.5$
+it is at most $0.004$.
+
+\paragraph{Why it matters for the silencing results.} The heritable-silencing statistics find
+relatives on one half of the tapes and measure dropout on the other half, which defeats the
+circularity of reading relatedness from the same edits whose readability dropout controls. It does
+\emph{not} defeat this, because the shared state lives \emph{within} one tape and the relatives are
+found correctly. So depth-0 censoring alone can make dropout look heritable, and it can only push the
+silencing readings up. It bears most on the arm with the fewest edits per tape, Pre-TX (variogram
+top bin $+0.2618$; ladder $+4.59$ nats per cell, $Q=7.1\%$; unanimity $9.77\times$ against $1.22\times$;
+$2{,}019$ events, $2.46\%$ of missing entries), less on Subclone, and essentially not on the mice. Its
+size on Park is \textbf{unknown}, and depends on $\Lambda_{\rm pre}$: a tape already edited before the
+clone founder cannot be unedited within the clone. Measuring it is the job of the rung-1 negative
+control (censoring off against on), which has not yet been run.
+
+\paragraph{Status.} Verified twice: against a two-cell Monte Carlo ($4$ settings, $4\times10^6$ draws
+each, $|z|\le0.87$, technical-only covariance $0$ to $10^{-4}$), and in the generator
+(\S\ref{sec:drop1val}).
+
+\subsection{What is exported}\label{sec:export}
+
+The point of rung~1 is that simulated data go through \emph{the same code} as Park's. So the
+generator writes the two cache files the heritable-silencing scripts read, in their formats:
+\begin{itemize}
+  \item \texttt{dropout\_matrix\_*.npz}: per cell, the clone label (or $-1$), $R_c$, and per tape a
+        term code --- \texttt{ABSENT} if $Y_{cz}=0$, \texttt{COMPLETE} if the tape is full
+        ($D_{cz}=N$), \texttt{UNEDITED} otherwise (``read, not yet full'', in Park's naming);
+  \item \texttt{prefix\_codes6\_*.npz}: for each depth $j=1,\dots,6$, an integer code for the first
+        $j$ symbols of each tape, $-1$ past the tape's depth or where the tape is unobserved; two cells
+        share a code at depth $j$ iff their first $j$ symbols agree. Its rows are the cells that pass
+        QC and carry a clone label, in dropout-matrix order (\texttt{44}'s alignment rule).
+\end{itemize}
+\texttt{73}, \texttt{74} and \texttt{77} gained two arguments, \texttt{--resdir} and \texttt{--thr}
+(input and output paths only, no logic), and a simulated arm loads and runs through all three.
+
+\subsection{The closed forms rung 1 is checked against}\label{sec:drop1cf}
+
+\begin{description}
+  \item[F0 --- the panel law] (unit: one panel, $20{,}000$ panels):
+        $\E[u]=\phi$; $\E[r]=1$; the closed share of speed $\E[ru]=\phi\bar r_0r_{\rm cl}$;
+        $\E[\beta-\mu_\beta]=\Delta_\beta\phi$; and
+        $\E[(\beta-\mu_\beta)\ln r]=\Delta_\beta\phi(\ln\bar r_0+\ln r_{\rm cl}-s_r^2/2)$.
+  \item[F1 --- the mask:] $\Prob(X=1\mid\eta)=\sigma(\eta)$, $\eta=\alpha_c+\beta_z$.
+  \item[F2 --- observed missingness per tape:] $\Prob(O_{cz}=1)=1-(1-\pi_{cz})(1-e^{-\mu_z})$.
+  \item[F3 --- depth given read:]
+        $\Prob(D=d\mid Y=1,z)=\Prob\big(\min(\Poisson(\mu_z),N)=d\big)/(1-e^{-\mu_z})$, $d=1,\dots,N$,
+        by locus class. The mask is blind to depth, so closed tapes look shallower through $r_z$ alone.
+  \item[F4t --- the mask never reads the tree:] $\E[X_{cz}X_{c'z}]=\pi_{cz}\pi_{c'z}$ at every split
+        time, conditional on the realised $\alpha$.
+  \item[F4o --- inherited censoring:] the pair form of eq.~\eqref{eq:censorcov}, conditional on the
+        realised $\alpha$ (step 5 before averaging).
+  \item[F5 --- retention:] $\Prob(\text{kept}\mid R_c)=\mathbb 1[R_c\ge R_{\min}]\,\psi(R_c)$.
+\end{description}
+F1--F4 are scored \emph{before} the filters. After them the marginals are no longer
+$\sigma(\eta)$, because keeping a cell conditions on $R_c$ and $R_c$ depends on $X$. That selection is
+what Park-comparable output has to have, not a defect. F4 pairs are taken one per (internal node,
+tape), one cell from each side of the split, never random cell pairs --- the lesson of
+\S\ref{sec:editval}.
+
+% ===========================================================================
+\section{Validation of rung 1}\label{sec:drop1val}
+% ===========================================================================
+
+Validation (\texttt{18\_validate\_dropout.py}) asks whether the code generates the model of
+\S\ref{sec:drop1}. A failure is a bug, not a finding. Every entry is a deviation from a closed form of
+\S\ref{sec:drop1cf} in standard errors, eq.~\eqref{eq:z}, with the standard error taken across trees.
+
+\paragraph{Four fixtures.} $n=210$, $k=30$, $N=6$, the same 200 library trees as
+\S\ref{sec:editval} ($\capt$ = $0.0005$, $0.002$, $0.02$, $0.1$, $0.25$; $\turn$ = $0.3$, $0.7$), and one mask
+setting throughout: $\pbar=0.3$, $s_\beta=1$, $s_\alpha=0.7$. The fixtures are \emph{test cases, not
+science}: each is chosen so that one check has something to detect.
+\begin{center}\small
+\begin{tabular}{@{}lp{0.70\textwidth}@{}}
+\toprule
+name & what it sets \\
+\midrule
+\textsc{base}   & constant rate, $\LamT=5.5$; no closed tapes ($\phi=0$), no speed scatter.
+                  Censoring is rare: $0.4\%$ of tapes unedited \\
+\textsc{cis}    & \textsc{base} $+$ the latent: $\phi=0.15$, $r_{\rm cl}=0.6$, $\Delta_\beta=2$, $s_r=0.3$
+                  (3 closed tapes in the realised panel) \\
+\textsc{slow}   & the \textsc{cis} panel law at $\LamT=2$ with the \textsc{tv} pause-and-burst rate of
+                  \S\ref{sec:editval} (9 closed tapes); $2.5$--$45\%$ of a tape's entries unedited,
+                  so censoring is large \\
+\textsc{filter} & \textsc{base} $+$ $R_{\min}=12$ of $30$ and a four-step $\psi$:
+                  $0.3/0.5/0.8/0.95$ from $R_c=0/12/20/25$ \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\paragraph{The reading rule, fixed before the run.} No-effect value $|z|=0$. \textbf{Pass} means the
+worst $|z|$ over every verdict cell is at most $3.0$ \emph{and} there are no violations of the hard
+assertions. With about $220$ cells, one $|z|$ above $3$ is expected about $0.6$ times by chance, so a
+single excursion is re-run at a fresh seed before it counts; two, or a sign pattern within one check,
+is a defect. \emph{Decisive failure:} F4t not flat (the mask reads the tree), any encoding
+assertion, or F4o failing while F2 passes. That last would mean depth~0 is not inherited the way
+\S\ref{sec:editcf} says, or that \texttt{23}'s \texttt{ABSENT} rule is not what it was read to be ---
+re-derive rather than patch.
+
+\begin{center}\small
+\begin{tabular}{@{}l p{0.56\textwidth} r r@{}}
+\toprule
+check & what it tests & cells & worst $|z|$ \\
+\midrule
+F0  & the panel law, two laws (\textsc{cis}, and a stronger $\phi=0.3$, $r_{\rm cl}=0.4$)      & 10  & 1.92 \\
+F1  & technical missingness against $\sigma(\eta)$, 10 bins $\times$ 4 fixtures                & 40  & 1.84 \\
+F2  & observed missingness per tape                                                             & 120 & 2.98 \\
+F3  & depth given read, by locus class                                                          & 36  & 2.06 \\
+F4t & both relatives technically missing, one pooled cell per fixture                           & 4   & 0.91 \\
+F4o & both relatives observed missing, pooled, \textsc{cis} and \textsc{slow} only              & 2   & 1.17 \\
+F5  & retention by $R_c$                                                                        & 4   & 1.87 \\
+H   & $Y=(1-X)\mathbb 1[D\ge1]$ exactly; $Y=0$ wherever $D=0$; term codes, depths, $R_c$ and clone
+      labels in the export; prefix codes determined by the symbols and in bijection with them;
+      the solve for $\mu_\beta$; replay bit-identical
+      & --- & $0$ of $2.7{\times}10^{7}$ \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\paragraph{Result: pass, after a disclosed failure.} The verdict above is the third run. The history
+matters, because the failure was in the check set and not the generator.
+\begin{itemize}
+  \item \emph{Seed 29092026:} one trip (F2 \textsc{base}, tape 11, $z=3.16$; $0.78$ expected by
+        chance), so re-run by rule.
+  \item \emph{Seed 30092026:} two trips, F4t \textsc{base} bin 3 ($-3.54$) and F4o \textsc{base}
+        bin 3 ($-3.38$): \textsc{fail} by rule. Zero hard violations at both seeds.
+  \item \emph{Diagnosis.} The two trips were one fluctuation counted twice. Where censoring is rare,
+        observed missingness \emph{is} technical missingness, so F4o and F4t measure the same thing:
+        their $z$ values correlated $+0.98$ to $+1.00$ across bins in \textsc{base} and
+        \textsc{filter}. And F4t cannot be biased by construction --- independent uniforms, cells
+        from disjoint subtrees.
+  \item \emph{Follow-up} (\texttt{21\_f4\_followup.py}, approved separately): each F4 check pooled
+        into one pre-declared cell per fixture, on $840$ trees (all $42$ stored $(\capt,\turn)$ cells
+        at $n=210$) $\times$ $5$ fresh panels, plus a new check F4d, ``both relatives unedited'',
+        against eq.~\eqref{eq:bothunedited} --- censoring alone, no mask. Rule: $|z|\le3$ on all six
+        cells means no defect.
+\end{itemize}
+
+\begin{center}\small
+\emph{Reading rule:} each row is a probability for one (internal node, tape) comparison, pooled over
+$840$ trees and $5$ panels; obs $-$ pred near $0$ and $|z|\le3$ means the generator matches the closed
+form.\\[3pt]
+\begin{tabular}{@{}llrrrr@{}}
+\toprule
+fixture & check & observed & predicted & obs $-$ pred & $z$ \\
+\midrule
+\textsc{slow} & F4d both unedited            & 0.09848 & 0.09863 & $-0.00016$ & $-0.64$ \\
+\textsc{slow} & F4t both technically missing & 0.12425 & 0.12422 & $+0.00003$ & $+0.42$ \\
+\textsc{slow} & F4o both observed missing    & 0.22661 & 0.22670 & $-0.00009$ & $-0.36$ \\
+\textsc{cis}  & F4d                          & 0.00505 & 0.00507 & $-0.00002$ & $-0.49$ \\
+\textsc{cis}  & F4t                          & 0.12851 & 0.12849 & $+0.00002$ & $+0.31$ \\
+\textsc{cis}  & F4o                          & 0.13545 & 0.13549 & $-0.00003$ & $-0.37$ \\
+\bottomrule
+\end{tabular}
+\end{center}
+\noindent No defect: worst pooled $|z|=0.64$, with power to spare (the \textsc{slow} F4o standard error
+is $0.00026$, so the earlier seed's excess would have been about $10$ standard errors). The scoring
+was then amended, in the validation code only with the generator untouched: \textbf{each F4 check
+counts through one pooled cell per fixture}, its ten $W$-bins kept as secondary output, and
+\textbf{F4o counts only where censoring is not negligible} (\textsc{cis}, \textsc{slow}). Re-run at
+seed 2102026: $216$ verdict cells, none excluded, worst $|z|=2.98$ (F2 \textsc{cis}), none above $3$,
+zero hard violations, split-null spread $0.95$. \emph{Disclosed:} one secondary bin (F4t
+\textsc{cis}) reached $3.10$, which would have tripped under the old scoring; its pooled cell is
+$-0.54$.
+
+\paragraph{The check with teeth.} Scoring relatives' observed missingness against the
+\emph{independence} prediction --- what it would be if censoring were not inherited --- misses by
+$z=26.8$ pooled on \textsc{slow}. Eq.~\eqref{eq:censorcov} is real in the generator, and F4o sees it.
+
+\paragraph{Two lessons, both general.} \emph{Bins of one check share their trees}, so a sign pattern
+across bins tracks the pooled value and is not independent evidence. And \emph{two statistics that
+coincide in a regime must not both count toward a verdict there.} This extends the lesson of
+\S\ref{sec:editval}.
+
+\paragraph{Cost.} $0.06$~s per tree at $n=210$, $k=30$ for decoration, mask and censoring together ---
+the mask adds little to the editing layer's $0.05$~s; the whole validation runs in $76$~s on one core.
+
+\paragraph{What passing does not establish.} F1--F3 are marginals: a mask aligned with lineage would
+pass them, and only F4t and F4o see the joint. Rung~1 is a model, and a Park-shaped run of it inherits
+a \textbf{double count}: Park's measured tape offsets $\hat\beta_z$ already contain depth-0 censoring
+and heritable loss, so feeding them in as the \emph{technical} rate counts both twice. No Park
+parameter enters this build for that reason. And editing and dropout still have to be fitted jointly
+before any Park-calibrated claim.
+
+\subsection{The rung-1 library}\label{sec:drop1lib}
+
+Generated only after the pass, and built in three layers so that expensive work is reused:
+\begin{enumerate}
+  \item \textbf{Trees:} the existing tree library, no new trees --- $n$ = $25$, $64$, $210$, $626$, $1{,}976$;
+        $\capt$ = $0.002$, $0.1$, $0.25$; $\turn$ = $0.3$, $0.7$; $20$ trees each.
+  \item \textbf{Panel and editing:} for each $\LamT\in\{2.9,5.5\}$ and panel type \emph{none}
+        ($\phi=0$), \emph{park} ($\phi=0.15$, $r_{\rm cl}=0.6$) or \emph{strong} ($\phi=0.3$,
+        $r_{\rm cl}=0.4$), all with $s_r=0.3$ and $\Delta_\beta=2$: five panel replicates, each shared
+        by every tree, and one decoration of each tree. $k=30$, $N=6$, constant rate, lineage channel
+        only (Park's pooled mouse $\xi^L$), tapes empty at the founder.
+  \item \textbf{Masks:} $30$ per decorated tree, $\pbar\in\{0,0.1,0.25,0.44,0.6\}$ $\times$
+        $s_\beta\in\{0,1,2\}$ $\times$ $s_\alpha\in\{0,0.7\}$, from per-tree common random numbers, so
+        masks are nested as $\pbar$ rises.
+\end{enumerate}
+The truth ($D$, symbols, $X$, the panel) is stored; censoring and filters are applied when a dataset
+is read, so ``censoring off'' costs nothing. \emph{Result:} $180$ files, $27{,}000$ datasets, $1.9$~GB
+(regenerable from stored seeds), zero assertion violations. Nothing is concluded from it; its manifest
+checks only that realised technical missingness sits on its target (mean difference $\approx0$; spread
+$0.0046$ at $n=25$ falling to $0.0005$ at $n=1{,}976$), that $\pbar=0$ datasets carry exactly no
+technical dropout, and that the closed set is nested (\emph{park} $2$--$4$, \emph{strong} $7$--$12$
+closed tapes of $30$).
+
+% ===========================================================================
+\section{The dropout layer, rung 2: heritable silencing}\label{sec:drop2}
+% ===========================================================================
+
+\paragraph{The idea.} An integration site can be silenced in a cell, and the cell's descendants
+inherit the silence. The tape then reads as missing in that whole subclade, for good. This is row~A9
+of the assumption table, and the earlier work on Park showed it happens: related cells lose the same
+tapes, and the loss is discrete rather than graded. Rung~2 adds it on top of rung~1, in its simplest
+form: \emph{complete} Dollo loss --- a tape silenced in a cell is unreadable in every descendant, never
+returns, and no descendant escapes.
+
+\paragraph{Four design decisions.} (1) The knob is the \emph{target silenced fraction} $\Hbar$, and
+the rate is solved from it. (2) Silencing happens per unit \emph{time}, with its timing set by a shape
+$\zeta_0(t)$ swept as its own axis. (3) There is no silencing before the clone founder: one tree is
+one clone, and its tapes are intact at the founder. (4) Every tape has the same hazard, since
+tape-to-tape differences in propensity cannot be read off Park as it stands (\S\ref{sec:drop2val}).
+
+\subsection*{Notation}
+
+As \S\ref{sec:drop1}, plus the following. Three letters that would be natural here are avoided
+because they are taken: $\gamma$ (the clone $\times$ tape term fitted by \texttt{77}), $G$ and
+$\omega_g$ (the editing epochs, \S\ref{sec:piecewise}) and $h$ (eq.~\eqref{eq:G}).
+
+\begin{center}\small
+\begin{tabular}{@{}lp{0.55\textwidth}l@{}}
+\toprule
+symbol & meaning & units / range \\
+\midrule
+$e$, ${\rm pa}(e)$ & a branch --- the edge \emph{into} node $e$, on $[t_e^0,t_e^1]$; the stem is
+      $[0,t_{\rm root}]$ --- and its parent branch & --- \\
+$n_e$ & number of cells below branch $e$: its clade size & cells, $1$--$n$ \\
+$\zeta(t)$ & silencing hazard, per tape, per lineage & events / tape /\\ & & lineage / experiment \\
+$\GamT$ & expected silencing events per tape along one founder-to-cell lineage over the whole
+      experiment, counted as if every event could strike & events / tape \\
+$\zeta_0(t)$ & shape of the hazard in time, $\int_0^1\zeta_0=1$; piecewise constant on its own knots &
+      dimensionless \\
+$W_\zeta(t)$ & $\int_0^t\zeta_0$: share of the experiment's silencing hazard spent by $t$ & $[0,1]$ \\
+$\Gamma(t)$, $\Gamma_e$ & $\GamT W_\zeta(t)$, a lineage's exposure by $t$; and the hazard carried by
+      branch $e$ & events / tape \\
+$\Hbar$ & target silenced fraction: expected share of cell $\times$ tape entries silenced at harvest,
+      before the mask, censoring and filters & probability \\
+$E_{e,z}$, $L_{e,z}$, $t^*_{e,z}$ & the $\Exp(1)$ draw for branch $e$, tape $z$; $1$ if a silencing
+      event fires on that branch; and the time of the first one. \emph{$L_{e,z}$ is not the lineage
+      count $L(t)$ of Fig.~S3} & ---, $\{0,1\}$, time \\
+$H_{cz}$ & $1$ if tape $z$ is silenced in cell $c$ (also $H_{e,z}$ along branches) & $\{0,1\}$ \\
+$V_{e,z}$ & $1$ if branch $e$ carries the \emph{first} loss on its lineage: a visible event &
+      $\{0,1\}$ \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\subsection{The loss process}\label{sec:loss}
+
+Silencing strikes each tape along each lineage as a Poisson process with hazard
+\begin{equation}
+  \zeta(t)=\GamT\,\zeta_0(t),\qquad \int_0^1\!\zeta_0(u)\,du=1 .
+  \label{eq:zeta}
+\end{equation}
+$\GamT$ sets \emph{how much} silencing there is and $\zeta_0$ sets \emph{when}, exactly as $\LamT$ and
+$\lambda_0$ do for editing (eq.~\ref{eq:rate}); $\zeta_0$ has its own knots, independent of
+$\lambda_0$'s. The running total is the silencing analogue of $\Lambda$-time:
+\begin{equation}
+  \Gamma(t)=\GamT W_\zeta(t),\qquad W_\zeta(t)=\int_0^t\!\zeta_0(u)\,du,\qquad
+  \Gamma_e=\Gamma(t_e^1)-\Gamma(t_e^0).
+  \label{eq:Gamma}
+\end{equation}
+$W_\zeta$ runs from $0$ to $1$; $\Gamma_e$ is the hazard branch $e$ carries. As with editing, the tree
+only cuts one clock into branches.
+
+\subsection{\texorpdfstring{The knob: the silenced fraction $\Hbar$}{The knob: the silenced fraction}}\label{sec:Hbar}
+
+\paragraph{The solve.} Every cell's founder-to-cell path carries exposure $\Gamma(1)=\GamT$, however
+the tree branches. A cell keeps a tape iff no event struck its path, so
+\begin{equation}
+  \boxed{\;\Hbar=\Prob(H_{cz}=1)=1-e^{-\GamT}\qquad\Longleftrightarrow\qquad\GamT=-\ln(1-\Hbar).\;}
+  \label{eq:Hsolve}
+\end{equation}
+Closed form, no root-finding, and \textbf{independent of the tree}: every tree in a dataset gets the
+same $\GamT$. Also independent of $\zeta_0$: moving silencing earlier or later changes \emph{which}
+cells share a loss, not how many entries are lost.
+
+\begin{center}\small
+\begin{tabular}{@{}lrrrrrrr@{}}
+\toprule
+target $\Hbar$ (fraction of entries silenced) & 0.01 & 0.02 & 0.05 & 0.10 & 0.20 & 0.25 & 0.33 \\
+solved $\GamT$ (events per tape per lineage)  & 0.0101 & 0.0202 & 0.0513 & 0.1054 & 0.2231 & 0.2877 & 0.4005 \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\paragraph{Expected, not realised.} Silencing is shared by relatives, so the fraction realised in one
+tree fluctuates around $\Hbar$. For tape $z$, with $\hat H_z=\frac1n\sum_cH_{cz}$ and $t_A$ the split
+time of each pair ($t_A=1$ when $c=c'$),
+\begin{equation}
+  \mathrm{Var}(\hat H_z)=\frac1{n^2}\sum_{c,c'}e^{-2\GamT}\big(e^{\GamT W_\zeta(t_A)}-1\big).
+  \label{eq:Hvar}
+\end{equation}
+Early silencing hits big clades, so one event moves many entries at once and the realised fraction is
+noisier; at the extreme a loss on the stem silences the tape in the whole clone. The solve is
+therefore on the expectation, and the realised value is reported. Forcing it to hit $\Hbar$ in every
+tree would condition the Poisson process on its outcome and change the law of event sizes, which is
+what the downstream statistics read.
+
+\paragraph{$\Hbar$ is not added on top of observed missingness.} The three causes overlap:
+\begin{equation}
+  \Prob(O_{cz}=1)=1-(1-\pi_{cz})(1-\Hbar)(1-e^{-\mu_z}).
+  \label{eq:O3}
+\end{equation}
+
+\subsection{Sampling a loss on one branch}\label{sec:losssampler}
+
+The editing sampler of \S\ref{sec:sampler} with one slot instead of $N$. Per branch and tape, draw
+$E_{e,z}\sim\Exp(1)$, then
+\begin{equation}
+  L_{e,z}=\mathbb 1\big[E_{e,z}\le\Gamma_e\big],\qquad
+  t^*_{e,z}=W_\zeta^{-1}\!\Big(W_\zeta(t_e^0)+\frac{E_{e,z}}{\GamT}\Big)\quad\text{if }L_{e,z}=1 .
+  \label{eq:losssampler}
+\end{equation}
+\emph{Why it is exact.} The first event on a branch arrives an $\Exp(1)$ amount of hazard after the
+branch starts, because the process is memoryless; disjoint branches are independent; and once a tape is
+lost, later events change nothing, so only the first is needed. $W_\zeta^{-1}$ is the two-step inverse
+of eq.~\eqref{eq:Winv}, so a zero-hazard window needs no special case, just as a zero-rate pause did.
+
+\paragraph{Nesting.} For fixed draws, $L_{e,z}$ only switches on as $\GamT$ rises, and $\GamT$ rises with
+$\Hbar$. So the silenced set at a lower $\Hbar$ is a \emph{subset} of the set at a higher one, and a
+sweep over $\Hbar$ walks along one path rather than comparing independent draws. Sets are nested
+across $\Hbar$ at a fixed $\zeta_0$, \emph{not} across shapes: changing $\zeta_0$ moves hazard between
+branches. The loss layer has its own random-number stream, so switching it on never changes the rung-1
+draws.
+
+\subsection{Inheritance: the Dollo rule}\label{sec:dollo}
+
+\begin{equation}
+  H_{e,z}=H_{{\rm pa}(e),z}\;\vee\;L_{e,z},\qquad H=0\ \text{above the stem.}
+  \label{eq:dollo}
+\end{equation}
+A lineage has lost the tape if it was lost on its own branch or anywhere above it. $H$ can only switch
+\emph{on} going down the tree; that one-way property \emph{is} the Dollo character, and it is a hard
+assertion. A \emph{visible} event is the first loss on a lineage,
+$V_{e,z}=L_{e,z}\wedge\neg H_{{\rm pa}(e),z}$; a loss below an earlier one is invisible. Tapes are intact
+at the founder, but a \emph{clone-wide} loss can still happen: it is a loss on the stem, with probability
+$1-e^{-\GamT W_\zeta(t_{\rm root})}$. Trees are independent, so no silencing is shared between clones,
+even when they share a rung-1 panel.
+
+\subsection{Observation: three independent causes}\label{sec:observe2}
+
+\begin{equation}
+  Y_{cz}=(1-X_{cz})\,(1-H_{cz})\,\mathbb 1[D_{cz}\ge1],\qquad O_{cz}=1-Y_{cz}.
+  \label{eq:observe2}
+\end{equation}
+A tape is read only if it was technically captured, \emph{and} not silenced, \emph{and} edited at least
+once. Each cause has its own random-number stream and the truth triple $(X,H,D)$ is stored, so every
+missing entry knows why it is missing. \textbf{Editing is left untouched}: $D$ comes from the editing
+layer whether or not the tape was later silenced. Under complete loss with no reactivation and no
+\emph{trans} limb, edits written after silencing are never observed, so the choice cannot be seen in the
+data --- and it keeps the rung-1 library's trees, panels and decorations reusable. The export of
+\S\ref{sec:export} takes this $Y$ unchanged and writes $Y=0$ as \texttt{ABSENT}.
+
+\subsection{The closed forms rung 2 is checked against}\label{sec:drop2cf}
+
+Each is written in the knob as well, using $e^{-\GamT}=1-\Hbar$.
+
+\paragraph{G1 --- the marginal (tree-blind).} $\Prob(H_{cz}=1)=\Hbar$ for every tape and every cell.
+This is eq.~\eqref{eq:Hsolve} and tests the solve. Like the editing layer's check A, it cannot see
+\emph{which} lineage a loss landed on.
+
+\paragraph{G2 --- pairs.} Two cells both keep the tape iff three independent pieces carry no event: the
+shared path (exposure $\GamT W_\zeta(t_A)$) and the two private paths ($\GamT[1-W_\zeta(t_A)]$ each).
+So
+\begin{equation}
+\begin{gathered}
+  \Prob(H_c{=}0,H_{c'}{=}0\mid t_A)=(1-\Hbar)^{\,2-W_\zeta(t_A)},\\[2pt]
+  \mathrm{Corr}(H_c,H_{c'}\mid t_A)=\frac{(1-\Hbar)\big[(1-\Hbar)^{-W_\zeta(t_A)}-1\big]}{\Hbar}
+  \;\xrightarrow{\ \Hbar\to0\ }\;W_\zeta(t_A).
+\end{gathered}
+  \label{eq:G2}
+\end{equation}
+\emph{In words:} when silencing is rare, \textbf{the correlation between two cells' silencing equals the
+share of the silencing hazard they lived through together.} The no-effect value is $0$, for a pair split
+at the founder. Under constant $\zeta_0$ it is close to linear in split time; under a late-heavy
+$\zeta_0$ most pairs share almost nothing and only very recent relatives co-lose. The validation scores
+the equivalent ``both silenced'' form, $1-2(1-\Hbar)+(1-\Hbar)^{2-W_\zeta(t_A)}$.
+
+\paragraph{G3 --- where losses land.} This is the check that sees lineage assignment. Branch $e$ carries
+a visible event iff nothing fired above it and something fired on it:
+\begin{equation}
+  \Prob(V_{e,z}=1)=e^{-\Gamma(t_e^0)}\big(1-e^{-\Gamma_e}\big)
+  =(1-\Hbar)^{W_\zeta(t_e^0)}\Big[1-(1-\Hbar)^{W_\zeta(t_e^1)-W_\zeta(t_e^0)}\Big],
+  \label{eq:G3}
+\end{equation}
+and the expected number of visible events whose clade size falls in a bin $\mathcal B$, summed over
+tapes, is
+\begin{equation}
+  \E[\mathcal V_{\mathcal B}]=k\sum_{e:\,n_e\in\mathcal B}\Prob(V_{e,z}=1)\qquad\text{events per tree.}
+  \label{eq:G3bin}
+\end{equation}
+At small $\Hbar$, events land on branches in proportion to
+the hazard each carries. \emph{Consistency:} $\sum_en_e\Prob(V_{e,z}=1)=n\Hbar$, which is G1, since each
+silenced cell's first loss sits on exactly one branch of its path.
+
+\paragraph{The heritable share} --- the quantity to quote alongside $\Hbar$:
+\begin{equation}
+  \frac{\Hbar_{\ge2}}{\Hbar}=\frac{\sum_{e:\,n_e\ge2}n_e\Prob(V_{e,z}=1)}{n\Hbar}
+  \;\xrightarrow{\ \Hbar\to0\ }\;1-\frac1n\sum_c\Big[1-W_\zeta\big(t^0_{e(c)}\big)\Big],
+  \label{eq:hershare}
+\end{equation}
+where $e(c)$ is cell $c$'s terminal branch. It is the fraction of silenced entries that sit in a clade
+of at least two cells, which is the only silencing a relatedness-based statistic can ever see.
+\emph{Why the limit:} at small $\Hbar$ a cell is silenced on its own terminal branch with probability
+about $\GamT[1-W_\zeta(t^0_{e(c)})]$, out of $\GamT$ in total, so the singleton share is the mean of
+$1-W_\zeta(t^0_{e(c)})$ over cells --- the average share of a cell's silencing hazard spent on its own
+terminal branch. Its floor, $0$, is all silencing in singletons, where it looks exactly like technical
+dropout. \textbf{A rung-2 setting is therefore quoted with $\Hbar$, $\zeta_0$ and the heritable share,
+never with $\Hbar$ alone.}
+
+\paragraph{G4 --- loss time inside a branch.} Given $L_{e,z}=1$, the probability-integral transform of
+the first-event time, truncated to the branch, is uniform:
+\begin{equation}
+  \frac{1-e^{-\GamT[W_\zeta(t^*)-W_\zeta(t_e^0)]}}{1-e^{-\Gamma_e}}\sim\Uniform(0,1).
+  \label{eq:G4}
+\end{equation}
+It tests $W_\zeta^{-1}$ under a shaped $\zeta_0$. The stored $t^*$ is the ground truth for any later
+``when was it silenced'' estimate.
+
+\paragraph{G5 --- the composed view.} $X$, $H$ and $D$ are independent given the panel and the tree, so
+\begin{align}
+  \Prob(Y_{cz}=1)&=(1-\pi_{cz})(1-\Hbar)(1-e^{-\mu_z}),\nonumber\\
+  \Prob(Y_c{=}1,Y_{c'}{=}1\mid t_A)&=(1-\pi_{cz})(1-\pi_{c'z})\cdot(1-\Hbar)^{2-W_\zeta(t_A)}\cdot
+  \big(1-2e^{-\mu_z}+e^{-\mu_z(2-W(t_A))}\big).
+  \label{eq:G5}
+\end{align}
+The middle factor is G2 and the last is \S\ref{sec:censor}'s both-edited probability. The product says
+the three causes do not interact, which is what makes the stored truth an exact decomposition of the
+missingness.
+
+\subsection{Silencing and censoring are one object, mirrored}\label{sec:mirror}
+
+\emph{Derived; each half verified separately; the comparison itself not yet run.} Both are first-event
+processes along a lineage. Censoring is missing in the \emph{not-yet-hit} state (no first edit yet);
+silencing is missing in the \emph{hit} state (first loss has happened). Since
+$\mathrm{Cov}(H,H')=\mathrm{Cov}(1-H,1-H')$, their pair covariances are the same function,
+$e^{-\varrho(2-w)}-e^{-2\varrho}$, with $(\varrho,w)=(\mu_z,W)$ for censoring
+(eq.~\ref{eq:censorcov}) and $(\GamT,W_\zeta)$ for silencing.
+
+At a matched \emph{rate} they coincide. At a matched missing fraction $m_0$ --- the comparison data
+offer --- they come apart. With both hazards constant, so that $w$ is the pair's split time,
+\begin{equation}
+  \mathrm{Corr}_{\rm cens}(w)=\frac{m_0\big(m_0^{-w}-1\big)}{1-m_0},\qquad
+  \mathrm{Corr}_{\rm sil}(w)=\frac{(1-m_0)\big((1-m_0)^{-w}-1\big)}{m_0}.
+  \label{eq:mirror}
+\end{equation}
+\emph{Illustration, not a result:} at $m_0=0.1$ and $w=0.5$ the correlation is $0.24$ for censoring and
+$0.49$ for silencing. Rare censoring is \emph{convex} in split time --- only very recent relatives share
+it --- while rare silencing rises roughly linearly. This suggests two discriminators for the negative
+control: the \emph{convexity} of the dropout variogram, and how deep a cell's observed relatives sit on
+the same tape (shallow under censoring, ordinary under silencing). \emph{Caveat:} a late-heavy
+$\zeta_0$ also makes silencing convex, so convexity separates the two only together with a stated
+$\zeta_0$, which the rung-2 library supplies. No recorded number moves.
+
+% ===========================================================================
+\section{Validation of rung 2}\label{sec:drop2val}
+% ===========================================================================
+
+\texttt{23\_validate\_silencing.py} reuses rung~1's accumulators and pair sampler, so the scoring is
+rung~1's amended scoring: standard errors across trees, pairs one per (internal node, tape), and G2
+counted through one pooled cell per fixture with its ten $W_\zeta$-bins secondary.
+
+\paragraph{Five fixtures,} on the same 200 trees ($n=210$, $k=30$), test cases rather than science.
+\begin{center}\small
+\begin{tabular}{@{}lp{0.72\textwidth}@{}}
+\toprule
+name & what it sets \\
+\midrule
+\textsc{off}      & $\Hbar=0$ on the rung-1 \textsc{base} fixture: separability only \\
+\textsc{const}    & $\Hbar=0.25$, $\zeta_0$ constant \\
+\textsc{early}    & $\Hbar=0.25$, $\zeta_0=3$ on $[0,0.25)$, $0$ on $[0.25,0.6)$, $0.625$ on $[0.6,1]$ ---
+                    a zero-hazard window, and big clades \\
+\textsc{late}     & $\Hbar=0.25$, $\zeta_0=0$ on $[0,0.7)$, $3.33$ on $[0.7,1]$ --- mostly singletons \\
+\textsc{composed} & the rung-1 \textsc{slow} fixture with \textsc{const} silencing: all three causes
+                    large at once \\
+\bottomrule
+\end{tabular}
+\end{center}
+(The rung-2 \textsc{const} is not the editing layer's \textsc{const} of \S\ref{sec:editval}.)
+
+\paragraph{The reading rule, fixed before the run.} As rung~1: \textbf{pass} = worst $|z|\le3.0$ over
+every verdict cell and no hard violations; about $175$ cells, so one excursion ($0.46$ expected) is
+re-run at a fresh seed, while two, or a sign pattern within one check, is a defect. \emph{Decisive
+failure:} any violation of Dollo monotonicity; \textsc{off} not bit-identical to rung~1; or G3 failing
+while G1 passes --- the right amount of silencing in the wrong place. And if G1 and G4 pass but G2 or
+G3 fail in a consistent direction, the per-branch hazard and the path total are right but the
+inheritance and visibility rules of \S\ref{sec:dollo} are wrong: re-derive before writing more code.
+
+\begin{center}\small
+\begin{tabular}{@{}l p{0.58\textwidth} r r@{}}
+\toprule
+check & what it tests & cells & worst $|z|$ \\
+\midrule
+G1 & silenced fraction per tape $=\Hbar$ (tests the solve; tree-blind), 3 fixtures         & 90 & 2.79 \\
+G2 & relatives both silenced, eq.~\eqref{eq:G2}, one pooled cell per fixture                & 3  & 1.37 \\
+G3 & visible events by clade size, eq.~\eqref{eq:G3} --- \emph{where} losses land; size bins
+     $1\cdot2\cdot3$--$4\cdot5$--$16\cdot17$--$64\cdot65$--$209\cdot210$ (the stem)           & 18 & 2.22 \\
+G4 & loss-time transform inside its branch, deciles, eq.~\eqref{eq:G4}                     & 30 & 1.78 \\
+G5 & composed $\Prob(Y=1)$ per tape, and relatives both read, eq.~\eqref{eq:G5}             & 31 & 2.34 \\
+H  & \textsc{off} bit-identical to rung~1 in $Y$ and in both exported caches; Dollo monotone; cell $H$
+     recomputed independently as ``any loss on the path''; $\sum_en_eV_{e,z}=\sum_cH_{cz}$ exactly;
+     $t^*$ inside its branch and never in a zero-hazard window; silenced sets nested across
+     $\Hbar=0.02<0.10<0.25<0.33$; $Y$ identity and \texttt{ABSENT} wherever silenced in the export;
+     the solve exact; replay identical
+   & --- & $0$ of $3.1{\times}10^{7}$ \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\paragraph{Result: pass, at the second seed.} A 20-tree smoke run (not a verdict) tripped $6$ cells,
+worst G1 \textsc{early} at $6.61$, with every hard assertion holding and the pooled means on target.
+This was read as a $t$-statistic not yet calibrated at 20 trees --- the situation met in
+\S\ref{sec:editval} --- and the full run went ahead with \emph{no change to the checks or scoring}. Seed
+1102026: one trip (G1 \textsc{const}, tape 9, $|z|=3.66$; $0.46$ expected), no sign pattern ($17$ of
+$30$ tapes negative), so re-run by rule. \textbf{Seed 3102026: pass} --- $172$ verdict cells ($3$
+excluded, all G3 \textsc{late} bins of $17$ cells or more, where too few events are expected), worst
+$|z|=2.79$, none above $3$, zero hard violations, split-null spread $1.04$.
+
+\paragraph{The checks have teeth.} Two diagnostics outside the verdict, both of which must miss:
+\begin{itemize}
+  \item relatives' co-silencing scored against \emph{independence}: in \textsc{const} the observed
+        ``both silenced'' rate is $0.1763$ against $0.1775$ predicted by eq.~\eqref{eq:G2}, but against
+        $\Hbar^2=0.0625$ if losses were not inherited --- a miss by $z=34.0$;
+  \item \textsc{early}'s events scored with \textsc{const}'s prediction: in clades of $5$--$16$ cells,
+        $8.8$ visible events per tree observed against $29.9$ under constant timing ($8.5$ under the
+        right timing) --- a miss by $z=45.7$.
+\end{itemize}
+G2 and G3 can see both inheritance and timing.
+
+\paragraph{Disclosed.} The per-tape cells rest on a few rare clone-wide events (about $6$--$19$ stem
+events per tape over 200 trees), so their $t$-statistics sit near the edge of calibration: their spread
+was $1.28$ (G1 \textsc{const}) and $1.35$ (G5) at the first seed against $\approx1.0\pm0.13$, and $0.91$
+and $1.18$ at the passing seed. No bias was seen at either seed.
+
+\paragraph{What the fixtures look like} (descriptive, not science; $\Hbar=0.25$, $n=210$, the
+validation's $\capt\times\turn$ mix). Heritable share $75\%$ \textsc{const}, $86\%$ \textsc{early}, $31\%$
+\textsc{late}; visible events per tape per tree $17.6$, $9.0$, $41.8$; spread of the realised $\Hbar$
+across trees $0.036$, $0.059$, $0.008$. Early silencing makes the realised fraction about $7\times$
+noisier than late, as eq.~\eqref{eq:Hvar} predicts.
+
+\paragraph{Cost.} $28$--$45$~s on one core for the whole validation, $0.46$~GB. One $\Exp(1)$ per
+(branch, tape) is $(2n-1)k\approx1.3\times10^4$ draws per tree at $n=210$.
+
+\subsection{The rung-2 library}\label{sec:drop2lib}
+
+Built on the rung-1 library's $30$ tree cells and $5$ panel replicates, with $21$ settings:
+$\Hbar$ = $0$, $0.01$, $0.02$, $0.05$, $0.10$, $0.20$, $0.33$, crossed with three timings --- constant;
+\emph{early}, $\zeta_0=2$ on $[0,0.4)$ and $\tfrac13$ after; and \emph{late}, $\zeta_0=\tfrac13$ on
+$[0,0.6)$ and $2$ after. \emph{Early} puts
+$80\%$ of the hazard in the first $40\%$ of the experiment, \emph{late} $80\%$ in the last $40\%$. Loss
+draws are per (tree, replicate) and shared by every $\LamT$, panel, mask and setting. Because sets are
+nested, \emph{one} sparse record per tree and shape --- every (branch, tape, $E$) with $E\le\Gamma_e$ at
+$\Hbar=0.33$ --- rebuilds $H$ at any lower $\Hbar$. A dataset is composed at read time from the rung-1
+file at the same (replicate, tree): $Y=\neg X\wedge\neg H\wedge(D\ge1)$. \emph{Result:} $134$~MB, zero
+assertion violations; realised minus target $\Hbar$ averages $+0.0002$ to $+0.0010$ at every $n$.
+
+\begin{center}\small
+\emph{Reading rule:} each entry is the expected heritable share, eq.~\eqref{eq:hershare} --- the
+percentage of silenced entries that sit in a clade of at least two cells --- at $\Hbar=0.10$,
+$\turn=0.3$, for constant / early / late timing. $0\%$ means all silencing is in singletons and looks
+like technical dropout; higher means more of it is visible to a relatedness-based statistic.\\[3pt]
+\begin{tabular}{@{}lccc@{}}
+\toprule
+cells $n$ & $\capt=0.002$ & $\capt=0.1$ & $\capt=0.25$ \\
+\midrule
+25      & 50 / 80 / 20\% & 75 / 91 / 53\% & 81 / 94 / 63\% \\
+210     & 59 / 86 / 27\% & 81 / 94 / 63\% & 87 / 96 / 74\% \\
+1{,}976 & 66 / 89 / 34\% & 86 / 95 / 71\% & 90 / 97 / 80\% \\
+\bottomrule
+\end{tabular}
+\end{center}
+\noindent The heritable share rises with capture, with clade size, and with earlier timing, from $20\%$
+($n=25$, $\capt=0.002$, late) to $97\%$ ($n=1{,}976$, $\capt=0.25$, early). Capture matters because low
+$\capt$ means long terminal branches (Fig.~\ref{fig:S3ab}), and a long terminal branch collects
+hazard that only one cell can show.
+
+\paragraph{A correction to the design.} The rung-2 proposal predicted that long terminal branches at low
+capture would push \emph{most} losses into singletons. Under constant timing the singleton share at
+$\capt=0.002$ is $34$--$50\%$, a minority; it is a majority only under late timing ($66$--$80\%$). The
+direction was right --- the heritable share falls with $\capt$ in every row --- but the magnitude was
+overstated. No recorded number moves.
+
+\paragraph{One small bias, untested.} The \emph{realised} heritable share, a per-tree ratio averaged over
+trees, sits $0.5$--$2.5$ points below the expected one in all nine $n=210$ rows. Eq.~\eqref{eq:hershare}
+is a ratio of expectations, and its numerator and denominator co-vary (one big event raises both).
+Validation checks the expectations (G3), not this ratio.
+
+\subsection{What the two rungs do not represent}\label{sec:dropnot}
+
+Rung~2, like rung~1, generates a \emph{model}, and simulated data are cleaner than Park's in known ways:
+\begin{itemize}
+  \item \textbf{Complete loss only.} The rebuilt event detector puts Mouse3's partial-loss fraction at
+        $29.9\%$; in rung~2 every loss is complete, so a completeness estimate reads $1$ by construction.
+        Partial loss would be a later switch.
+  \item \textbf{No \emph{trans} limb.} A silenced integration's pegRNA symbol keeps being written on other
+        tapes, so rung~2 cannot validate the symbol-depletion test.
+  \item \textbf{Silencing per unit time.} If silencing actually happens at replication, the hazard along
+        a reconstructed branch follows the lineage's division rate, which is not constant. A shaped
+        $\zeta_0$ approximates that but does not represent it.
+  \item \textbf{The same propensity on every tape.} Park cannot yet say otherwise: a tape's low recovery
+        (park-compatibility Fig.~3b) is read as its integration's expression level, which fits both
+        ``prone to silencing'' and ``already silenced in the shared founder line'', and a naive per-tape
+        event count is biased because a tape with high baseline missingness gives a loss less contrast.
+        If propensity does vary, simulated losses are spread too evenly across tapes.
+  \item \textbf{One tree, one clone, no shared ancestry.} A multi-clone arm descends from one engineered
+        line, and Park's clone-wide loss layer is read as pre-bottleneck silencing. This build cannot
+        make a tape lost in several clones for a shared reason.
+  \item \textbf{QC selection.} Silencing lowers $R_c$, so $R_{\min}$ preferentially removes heavily
+        silenced cells. G1--G5 are scored before the filters, as in rung~1.
+\end{itemize}
+Nor is anything here calibrated to Park. Park's event catalogue is detection-limited (no events in
+clones under 20 cells, counts that depend on the threshold, Pre-TX possibly inflated by censoring), and
+its silenced shares --- $2.46$--$20.07\%$ of missing entries at the budget criterion, plus a clone-wide
+layer of $7$--$33\%$ of missing at a $10$-nat floor --- serve only to orient the grid: a share of missing
+is at most a share of entries, so a grid reaching $\Hbar=0.33$ covers them. Calibration means pushing
+rung-2 data through the same caller and matching its output, which is the next step: the negative
+control as a dose--response, rung-1 and rung-2 data through \texttt{73}, \texttt{74}, \texttt{77} and the
+event caller across $\Hbar\times\zeta_0$.

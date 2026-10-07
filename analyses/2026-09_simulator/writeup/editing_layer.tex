@@ -81,8 +81,8 @@ before $t=0$, set to $0$ throughout here. For a design study this is a definitio
 assumption --- the start of recording \emph{is} the start of the simulated experiment. For Park's data
 it remains to be checked against the protocol.
 
-\paragraph{Deliberately absent from this layer:} dropout (the next layer), heritable silencing
-(row~A9), the separate mechanism at site~6, artefact symbols, and any coupling between the tapes of
+\paragraph{Deliberately absent from this layer:} dropout (the next layer, \S\ref{sec:drop1}), heritable
+silencing (row~A9; rung~2 of the dropout layer, \S\ref{sec:drop2}), the separate mechanism at site~6, artefact symbols, and any coupling between the tapes of
 one cell beyond the tree they share. A state-dependent rate is not built; the sampler only carries a
 hook for it.
 
@@ -625,4 +625,4 @@ Two limits are visible in the figures rather than argued: the shared prefix is o
 even for cells that split at harvest (b), and a $30\%$ pulse returns as at most $\sim17\%$ in any slot
 (c). Both are recorder limits, not inference limits; what they cost a lineage-resolved signalling
 history is the subject of the switch-detectability figure, and what they cost through dropout is the
-next layer.
+next layer (\S\ref{sec:drop1}).
