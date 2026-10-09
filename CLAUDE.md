@@ -71,6 +71,24 @@ after the numbers arrived instead of before. Approval is cheaper than retraction
 - Keep those two categories distinct in the write-up. "This shifts 16.3 to 15.5 nats" and "this
   means the gradient we reported does not exist" need different headlines.
 
+### Tuva project memory — check it before starting a task
+
+This folder is a Tuva project; its `tuva-context` MCP tools hold model-written summaries
+("episodes") of past Claude Code sessions here, plus a search index over the notes, code and PDFs.
+
+- **At the start of a new task**, call `tool_project_state` and `tool_recall_episodes` (with the
+  task's topic as `query`) for workspace `/data1/choij10/justin/pando`, and `tool_recent_decisions`
+  when the task touches a design choice. Do this before re-deriving or re-planning anything.
+- **Episodes are pointers, not the record.** They summarise transcripts and can carry forward a
+  claim later retracted or miss a ⚠ correction. This file, `notes/`, and each analysis's
+  `README.md` win on any conflict — say so when you find one. Never quote a number from an
+  episode without confirming it in the files.
+- Use `tool_search_workspace` to find which note or script covers something.
+- **Do not call `tool_get_project_context` here**: it lists all ~2,900 `.npz` results (~364K
+  characters) and overflows. `tool_assemble_context` is fine.
+- If the tools error with "daemon not running", ask Justin to run `tuva start` (it idle-exits
+  and is scoped to the SLURM job).
+
 ## Repository map
 
 ```
