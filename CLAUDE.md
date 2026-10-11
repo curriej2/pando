@@ -114,9 +114,13 @@ ENGRAM extension can write $\xi_i(t)$, $\xi_i(\text{signal})$. Swept through §0
 **Read `notes/sciphy_notes.md` by section — it is long.** Section map: §0 DNA Typewriter molecular
 background · §1a–1c SciPhy model, transition probabilities, likelihood · §2/§D/§G inference
 background · §D.4/§D.4b perfect-phylogeny route and the Park compatibility protocol · §E–§F design
-notes · §H literature (§H.6 = full Mulberry & Stadler close read) · §I experimental design
-(§I.6 rate heterogeneity, §I.7 ENGRAM close read) · §S3–§S5 the simulator (§S3 tree layer, §S4
-editing layer, §S5 dropout rung 1 incl. the inherited-censoring covariance).
+notes · §H literature (§H.6 = full Mulberry & Stadler close read; §H.7 LAML/ConvexML/LAML-Pro;
+**§H.8 the four likelihoods side by side + engine decisions 1–7**; **§H.9 = full Park, Chang et al.
+2026 METHODS close read — prefix parsimony, the $\lambda$-frontier, the recorder clock and its
+resolution budget, both dating estimators, $\Lambda_{\rm pre}$, the capture-in-the-distance
+confound**) · §I experimental design (§I.6 rate heterogeneity, §I.7 ENGRAM close read) · §S3–§S6 the
+simulator (§S3 tree layer, §S4 editing layer, §S5 dropout rung 1 incl. the inherited-censoring
+covariance, §S6 rung 2 heritable Dollo silencing).
 
 ## Analysis index
 
@@ -130,7 +134,7 @@ already back at $p=1/1001$ in 5/5 arms. ⚠ Two orthogonal follow-ups are specif
 `--lam 4` re-run with a size-stratified null (the floor, not $B$, is what hides weaker events), and
 the **symbol-depletion test** of row A9's untested *trans* limb. |
 
-| `2026-10_likelihood-engine` | Exact, differentiable per-clone likelihood (SciPhy prefix chains + silencing + dropout + censoring) as the core of our own tree reconstruction. | **Design settled (§H.8, decisions 1–7); built 2026-10-06 (`src/01`–`04`, env `envs/pando-jax`); write-up `writeup/likelihood_engine.tex`. Validation FAIL by rule on two check-set issues (V5 FD step at a boundary point — engine gradient correct; V8 one library cell); V1–V4 exact, V7 PASS. Awaiting Justin's call on the amended checks.** |
+| `2026-10_likelihood-engine` | Exact, differentiable per-clone likelihood (SciPhy prefix chains + silencing + dropout + censoring) as the core of our own tree reconstruction. | **Design settled (§H.8, decisions 1–7); built 2026-10-06 (`src/01`–`04`, env `envs/pando-jax`); write-up `writeup/likelihood_engine.tex`. Validation FAIL by rule on two check-set issues (V5 FD step at a boundary point — engine gradient correct; V8 one library cell); V1–V4 exact, V7 PASS. Awaiting Justin's call on the amended checks.** ⭐⭐ **DIRECTION SET 2026-10-11 (Justin): likelihood reconstruction with POSTERIOR DATING is the method to invest in** — see "THE PROGRAMME (2026-10-11)" in its CLAUDE.md and the Park methods close read `notes/sciphy_notes.md` **§H.9**. Driver: reviewers want more support for the reconstruction algorithm (comments not yet seen). Tier 1 (support values on the three dated trees — engine can do this NOW at 194–249 tips) and Tier 2 (ground-truth benchmark of *their* pipeline on the simulator) run in parallel. |
 
 | `2026-09_simulator` | Build the forward simulator (birth–death tree → sequential editing → dropout) for the homoplasy null and the design sweep. | **Tree layer BUILT, validated, costed; library COMPLETE (1,870 cells, 37,380 trees, zero faults).** Editing-layer theory in §S4/§S4.9. ⭐⭐ **Switch detectability MEASURED (2026-09-24, Fig S4): at $k=30$ a lineage-specific switch is callable only if long ($\ge$1–2 edits/tape), strong ($\ge$15×) and early (first ~60% of $T$), in clades of 2–5 cells; branch-level timing costs little ⇒ tree side not the bottleneck.** Figs S1 (method), S3 (pull of the present), S4 and **S5 a–d (editing layer illustrated, 2026-09-28; the collision-vs-signal-share curve deferred to the homoplasy test)** built; LaTeX write-up in `writeup/` covers **both layers** (`simulator_figures.tex` + `editing_layer.tex`, 24 pp). ⭐ $L(t)$ = independent records of time $t$ — tree shape sets which timepoints are recorded well, survivorship sets whose history is. ✅ **Editing layer BUILT and VALIDATED (2026-09-27, `src/14`/`src/15`): PASS, 219 closed-form cells, worst $|z|=2.67$, 0 of $1.9\times10^8$ hard-assertion violations; tapes empty at the clone founder ($\Lambda_{\rm pre}=0$).** ✅ **Dropout rung 1 BUILT (2026-09-30, `src/17`–`21`): validation PASS (after a disclosed FAIL traced to my check set, not the generator), library of 27,000 datasets built.** ⚠⚠ Derived + verified in the model: depth-0 censoring makes observed missingness heritable — may inflate the Pre-TX silencing numbers; unmeasured on Park. ✅ **Dropout rung 2 BUILT (2026-10-01, `src/22`/`23`): heritable silencing as complete Dollo loss, knob = target silenced fraction $\bar H$ with timing $\zeta_0$; validation PASS at the re-run seed (worst |z| 2.79, 0 hard violations, $\bar H=0$ bit-identical to rung 1); rung-2 library BUILT the same day (30 cells × 21 settings, $\bar H$ 0–0.33 × const/early/late, 134 MB, 0 violations) (§S6).** State layer not started. ⚠ Editing and dropout must be fitted jointly, which is why no Park-calibrated run has been made. |
 
@@ -261,7 +265,65 @@ the **symbol-depletion test** of row A9's untested *trans* limb. |
    events $\le10$). Threshold-independent claims that survive: the 118–2,522× null comparison,
    $q\le1.9\times10^{-4}$ per event, $\hat\pi$ median 1.000 vs expected 0.11–0.41. Full audit in
    README "How events are actually called".
-0-NOW. **⭐⭐ 2026-10-01 — DROPOUT RUNG 2 BUILT AND VALIDATED.** `analyses/2026-09_simulator`,
+0-NOW. **⭐⭐ 2026-10-09/11 — PARK METHODS RE-READ FRONT-TO-BACK; TIER 3 CHOSEN. NO COMPUTE.**
+   Close read: `notes/sciphy_notes.md` **§H.9** (13 subsections). Programme:
+   `analyses/2026-10_likelihood-engine/CLAUDE.md` "THE PROGRAMME (2026-10-11)". Log: session 24.
+   Driver: **reviewers want more support for the reconstruction algorithm** — ⚠ the comments have
+   **not been seen**; three questions to put to them are listed in the programme §6.
+   **⭐⭐ Justin's decision: the destination is likelihood reconstruction with POSTERIOR DATING.**
+   Tier 1 = support values on the three dated trees (the engine can do this **now** — they are
+   **194–249 tips**, 0.039 s likelihood / 0.094 s gradient at $n$=210, $k$=30); Tier 2 = ground-truth
+   benchmark of *their* pipeline on the simulator; Tier 3 = the investment.
+   ⭐ **The whole single-founder claim is ONE clade** — a request for reconstruction support here is
+   functionally a request for support on the liver-clade node plus the few whose depth sets the date.
+   **⭐⭐ The resolution budget** (arithmetic on their $A$=4.9553, $\tau$=10.7089; share of the 4.88
+   edits/tape record vs share of 45 days): day 0–3 **24.8% / 6.7%** · day 3–10 **36.8% / 15.6%** ·
+   day 10–21 25.6% / 24.4% · day 21–34 10.0% / 28.9% · **day 34–45 2.7% / 24.4%**. ⇒ **62% of the
+   record is spent before the cells enter a mouse; the last quarter of the experiment gets 2.7% of
+   it.** Sensitivity $dX/dd=\tau/(A-d)$ = **15.4 / 51.7 / 144 days per edit·tape⁻¹** at days 21/34/45,
+   so 0.1 edits/tape of error moves the date **5.2 d at day 34** — why the two late clones are
+   "robustly late" but not datable, matching Fig S4 independently.
+   **⚠⚠ $\Lambda_{\rm pre}$ is NOT 0 — the open simulator decision, answered.** The clonal bottleneck
+   is at **day 3** and recording starts day 0, so $E(3)=1.21$ edits/tape (**~25% of realised depth**)
+   is a constant within-clone prefix. ⚠ No clock anchor before day 10, and "~8,000 cells" vs "~8,000
+   clones" differ ⇒ treat as a **per-clone parameter with a prior on $[0,1.21]$**, not a fixed 0.
+   Park adjudication only; the design sweep is unaffected.
+   **⚠⚠ $A$=4.96 < $N$=6 is a finding**: a single-rate saturating curve cannot asymptote below the
+   slot count, so the deficit is **per-tape rate heterogeneity absorbed into the asymptote** ⇒ direct
+   argument for $\lambda_z=r_z\Lambda_T\lambda_0(t)$. ✅ Their $E(10)=3.01$ vs our zero-truncated
+   Initial $\hat\Lambda\approx2.87$ agree to 5%, residual in the right direction.
+   **⚠ "Single founder" is NON-REJECTION, not demonstration** — the search penalises $k$, the claim is
+   "the second crossing buys only $\delta$ insertions, not distinguishable from 0". ⚠ KH applied to
+   two topologies selected from the same data ⇒ anti-conservative. ⭐ Untested and testable: the
+   frontier's false-negative rate on a simulated two-migration metastasis.
+   **⚠ New candidate confound (untested): capture sits INSIDE the distance that builds the tree** —
+   their validation distance is $1-\mathrm{shared}/\sqrt{L_iL_j}$ and recovery odds rise **8.6× per SD
+   of log total counts** (Supp Note 1), so the tree partly orders cells by transcriptional output and
+   any output-correlated gene can look heritable. Bears on the **349-gene set**, defined on the
+   Subclone colonies — our strongest lineage-structured dropout and essentially all the homoplasy.
+   Direction if real: **inflation**; magnitude unknown. Their defences: residualisation, two
+   statistics at $\rho$=0.86 (⚠ same tree), out-of-sample prediction in 3 mice, OXPHOS null.
+   **⚠ $\alpha_c$ is a cell state, not iid noise** — a third route to heritable observed missingness
+   beside depth-0 censoring and silencing, not in the rung ladder.
+   **⚠ Two construct issues:** "166 tapes" is recoverability-thresholded (⇒ $\beta_z$ left-truncated in
+   badness), and **no copy-number step exists** (⇒ a duplicated tape under one TargetBC + winner-take-all
+   can make a state go backwards parent→child, violating irreversibility). ⚑ Cheap untried probe:
+   does Mouse3's **diffuse** conflict concentrate by TAPE rather than by character?
+   ⚠ **ClonalBC multiplicity**: MOI 0.3 ⇒ 14.3% multi-integrants, puromycin selects for them, our
+   ground truth saw 11 groups → 8 colonies ⇒ Fig 6's logistic models have effective $n<1{,}229$.
+   ⭐ Validated fix never applied to the mouse/Pre-TX arms: merge ClonalBCs whose tape consensus matches.
+   **Priors to take from their approach:** the in vitro clock as a **prior** on $\Lambda_T$ (freezing it
+   assumes flask = lung tumour, which a prior makes testable); the parsimony tree as initialiser and
+   the $\lambda$-frontier as a candidate ladder; the birth–death prior for the clock's *regularising*
+   role. ⚠ The distance ratio is a **posterior predictive check**, not a prior (double-counts).
+   ⚠ Not the dropout parameters yet (double-count), and ⚠ never anchor on $E(45)=4.88$ (per *recovered*
+   tape ⇒ depth-biased up). ❌ Still unobtainable: mouse $\rho$ — standing ask to Jihye Park.
+   **⇒ NEXT (each its own proposal): (1) amended V5 / V8 to close engine validation; (2) level-batched
+   pruning; (3) ⭐ the first dating study, SIMULATOR ONLY — does the posterior widen or narrow at ~200
+   tips with Park-like missingness and a known dissemination day; (4) tree search; (5) heterochronous
+   tips (unlocks ATGATCATAT-M2); (6) the joint editing/dropout fit that gates anything Park-calibrated.**
+
+0-PREV12. **⭐⭐ 2026-10-01 — DROPOUT RUNG 2 BUILT AND VALIDATED.** `analyses/2026-09_simulator`,
    README "Session 21"; log session 21; theory **§S6**. Complete Dollo loss, per unit time, knob =
    target silenced fraction $\bar H$ ($\Gamma_T=-\ln(1-\bar H)$, tree-independent), timing $\zeta_0$;
    no pre-founder silencing; same hazard on every tape (propensity vs recovery not knowable from Park).
@@ -283,7 +345,7 @@ the **symbol-depletion test** of row A9's untested *trans* limb. |
    ladder +4.59, unanimity 9.77×, 2,019 events); **unmeasured on Park**.
    **⇒ NEXT: the rung-1 negative control (censoring off vs on through `73`/`74`/`77`), own proposal.**
 0-PREV10. **⭐⭐ 2026-09-27 — THE EDITING LAYER IS BUILT AND VALIDATED.** *(superseded 2026-09-30 by
-   0-NOW — dropout rung 1 is built; its "NEXT" below is done for rung 1, the state layer remains)* `analyses/2026-09_simulator`,
+   0-PREV11 — dropout rung 1 is built; its "NEXT" below is done for rung 1, the state layer remains)* `analyses/2026-09_simulator`,
    README "Session 18"; `src/14_editing.py` + `src/15_validate_editing.py`; notes §S4.9 (updated);
    log session 18. Approved with **$\Lambda_{\rm pre}=0$ — tapes empty at the clone founder; Park
    revisited later.**

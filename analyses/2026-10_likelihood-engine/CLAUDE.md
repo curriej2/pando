@@ -11,6 +11,11 @@ correct) and V8 one deterministic library cell; V1–V4 and V7 PASS. Amended V5 
 proposed to Justin; level-batched pruning proposed for gradient scaling; V6 (SciPhy Java) not done.
 Findings: README.md "Session 22". Write-up: writeup/likelihood_engine.tex.**
 
+**⭐⭐ DIRECTION SET (2026-10-11, Justin): likelihood-based reconstruction with POSTERIOR DATING is
+the method to invest in — see "THE PROGRAMME (2026-10-11)" at the end of this file, and the Park
+methods close read in `notes/sciphy_notes.md` §H.9 that motivates it. Driver: reviewers have asked
+for more support for the reconstruction algorithm (comments not yet seen).**
+
 Settled design (notes §H.8.6–H.8.9 and the decision records after them):
 1. depth-slot state representation (SciPhy prefix chains + missing data; trie later if read errors
    matter); 2. node times stored, ratio-transform coordinates; 3. rate-segment process modules with a
@@ -457,3 +462,148 @@ on `-p lesliec,gpu --gres=gpu:1`, small and short. Results JSON committed; nothi
 | V6 (SciPhy Java) | include, as a separate setup step (download BEAST 2.7 + SciPhy) | defer; rely on V1/V2 for first principles |
 | identifiability-by-clone-size study | its own proposal after this PASSes | — |
 
+
+---
+
+# ⭐⭐ THE PROGRAMME (2026-10-11) — likelihood-based reconstruction with POSTERIOR DATING
+
+**Justin's decision, recorded 2026-10-11:** this is the method he is building and the one to invest
+in. Tiers 1 and 2 below are useful and can run in parallel, but **Tier 3 is the destination.**
+
+Context: reviewers on Park, Chang et al. 2026 have asked for **more support for the reconstruction
+algorithm**. The paper's methods are read in full in `notes/sciphy_notes.md` **§H.9** — read that
+first; everything below refers to it. ⚠ The actual reviewer comments have **not been seen yet**;
+three things would change the sizing (see "What to ask the comments", below).
+
+## 1. What the paper lacks, in one sentence
+
+Four uncertainty devices (tape bootstrap on the frontier $\delta$, the Kishino–Hasegawa test, the
+$\lambda$-ladder, the distance-ratio cross-check) and **not one support value on a clade of a
+reported tree.** Figures 3a–c carry no support annotation.
+
+⭐ **And the whole single-founder claim is ONE clade.** Whether a liver metastasis had one founder
+*is* whether the liver cells are monophyletic. A request for reconstruction support on this paper is
+functionally a request for support on that one node, plus the handful whose depth sets the date. Small,
+well-defined target — not "re-validate the tree".
+
+## 2. The three tiers, and their readiness
+
+| tier | what it delivers | readiness |
+|---|---|---|
+| **1. Support values on the three dated trees** | tape bootstrap / jackknife / weighted likelihood bootstrap by re-weighting the per-tape $\ell_z$ array (decision 6); support on the liver clade | **engine can do this now.** The three clones are **194–249 tips**; measured timing at $n$=210, $k$=30: likelihood **0.039 s**, gradient **0.094 s** on one CPU core (×~5.5 for $k$=166 ⇒ still sub-second). The super-linear gradient cost (121 s at 11,081 cells) is a Subclone-scale problem and does not touch these. ⚠ No topology search: this is "score their tree and competing resolutions of the liver clade, and bootstrap the difference" — a strict upgrade on the KH test because it includes the missingness model, but not our own reconstruction. |
+| **2. Ground-truth benchmark of THEIR pipeline** | (a) reconstruction accuracy of prefix parsimony vs known truth under *structured* missingness; (b) dating bias and spread for both their estimators against a known dissemination day; (c) ⭐ **operating characteristics of the $\lambda$-frontier** — simulate a two-migration metastasis, measure how often it collapses to $k_{\min}=1$ | simulator is **built and validated** (tree library incl. $n$=210; editing at Park's $\xi^L$; rung 1 technical dropout + depth-0 censoring as Park's `ABSENT` rule + their ≥20/≥100 filters; rung 2 Dollo silencing at known $\bar H,\zeta_0$; `17.export_arm` writes caches `73`/`74`/`77` read). ⚠ **Gated on the joint editing/dropout fit** — no Park-calibrated run exists because missingness is informative for depth, so fitting $\Lambda$ on clean reads is biased upward. |
+| **3. Likelihood reconstruction + posterior dating** | replaces all four devices with one posterior | **the destination.** Mathematical half exists (likelihood, kernel, emission, ratio coordinates, tree prior). Missing: tree search, optimisation, posterior mode, heterochronous tips, level-batched pruning, end-to-end validation. |
+
+## 3. What the likelihood changes about DATING
+
+The current pipeline is a chain of point estimates, each arrow discarding uncertainty — topology (no
+CI) → liver clade (asserted) → consensus genotype (threshold 0.6–0.8) → mean depth → day (frozen
+clock). The reported interval covers only the last two arrows.
+
+1. ⭐ **The dissemination time becomes a PARAMETER, not a derived quantity.** The unknowns are node
+   times $t_v$ (ratio coordinates $x$). The metastatic founder **is a node**, so the dissemination day
+   is $t_v\times T$ and its posterior is read directly. **The entire middle of that chain disappears:
+   no ancestral genotype, no consensus threshold, no clock inversion.**
+2. **Ancestral states are marginalised, not thresholded.** The founder's tape state is summed over by
+   pruning ($N+2=8$ slots). There is no 0.6-vs-0.8 knob because there is no point estimate of the
+   genotype.
+3. **Missing data contributes evidence instead of nothing.** At ~50% missingness in the mice this is
+   not a detail. $L_{cz}(d)=\pi_{cz}+(1-\pi_{cz})\mathbf 1[d=0]$, $L_{cz}(\mathsf S)=1$ — "lost
+   technically, **or** blank, **or** silenced", correctly weighted. A missing tape in a cell whose
+   other ~150 tapes are deep is weak evidence the tape was not blank, hence against a shallow
+   ancestor. The lcp rule throws this away, and it is **lineage-structured** information (ladder
+   +1.48 to +8.31 nats/cell, 5/5 arms), not noise.
+4. **Full tapes become censored observations, not dead weight.** The kernel's
+   $C_N(d'\to N;\mu)=1-\sum_{j<N-d'}e^{-\mu}\mu^j/j!$ says "at least $N-d'$ edits were attempted" — a
+   full tape still contributes "**at least** this much time has passed". In a mean-depth clock the
+   41.4% of Mouse3 tapes that are full at harvest silently dilute the signal instead.
+5. ⭐ **Per-tape rate heterogeneity goes where it belongs — and their $A$ is the evidence.** A
+   single-rate saturating curve cannot asymptote below the slot count; $A=4.96<6$ because the pooled
+   average mixes fast tapes with slow/dead ones (§H.9.5). Our $\lambda_z(t)=r_z\Lambda_T\lambda_0(t)$
+   keeps the ceiling at $N=6$ and puts the heterogeneity in $r_z$, where it is identifiable and where
+   it also explains the measured recovery–depth coupling ($\rho$ = −0.33 to −0.63).
+6. **Topology uncertainty can reach the date** — "which cells are in the liver clade" becomes part of
+   the interval instead of being invisible.
+7. **One-founder vs two-founder becomes a comparison on the same scale as the date**, and — more
+   useful — the date can be **reported under each**, so the reader sees how much it depends on the
+   migration call.
+8. **Heterochronous tips would make ATGATCATAT-M2 dateable** (§H.9.12). Pre-TX cells sit at day 10;
+   a likelihood handles a tip at $t=10/45$ natively, the $2[E(T)-E(t)]$ distance formula cannot.
+   ⚠ **Extension, not current capability**: the engine fixes all tips at $t=1$ and the ratio transform
+   guarantees ultrametricity. Serially-sampled tips are standard in phylodynamics (BEAST does it), so
+   bounded work, not new theory.
+
+### ⚠⚠ What the likelihood does NOT fix — say this out loud
+
+**The information is not there.** Only **0.13 edits/tape** separate day 34 from day 45 (§H.9.5's
+resolution budget), so no estimator recovers a sharp late date. The likelihood will say so honestly —
+a wide posterior — rather than a bootstrap CI around a point estimate that looks tighter than it is.
+⇒ **Expect correctly calibrated intervals, which may be WIDER than the published ones.** There is a
+counterweight (we use information the parsimony route discards: missing entries, full-tape censoring,
+per-tape rates, all 166 tapes jointly), so the net is empirical — and Tier 2 can answer it on a known
+truth before Park is touched.
+⚠ Shared limitation: tapes are independent given the tree (rows A5/A8). Cells' tapes share latent
+factors, so we overstate evidence too — less than they do, but we do.
+
+## 4. Priors to take from the current approach (and two not to)
+
+✅ **(a) The in vitro clock as a PRIOR on $\Lambda_T$, $\lambda_0$ — not a constraint.** Their
+calibration is a genuinely independent measurement (bulk days 17–45 + single-cell anchors day 10 and
+24): $A=4.9553\,(4.8799,5.0443)$, $\tau=10.7089\,(10.3167,11.0886)$ from 2,000 residual bootstraps.
+⭐ **Freezing it assumes the recorder runs at the same speed in a flask and in a lung tumour** — an
+assumption the frozen-clock design cannot test and which the paper's own data make doubtful (editing
+is tied to proliferation/dNTP supply, §0.4 level 3; the in vitro pool drifts toward fast growers while
+in vivo clones sit at the pool mean). Entering it as $\log p(\Lambda_T,\lambda_0)$ makes it testable:
+**if the in vivo data pull away from the prior, that is a finding** and it would shift every published
+date.
+✅ **(b) The parsimony tree as initialiser; the $\lambda$-frontier as a candidate set.** §H.7.4 pt 4:
+CMP-lcp dating is **convex in node times**, so an lcp point estimate is a cheap globally-optimal
+initialiser — their NJ+NNI tree is exactly that, already computed. The frontier hands us a **ladder of
+topologies indexed by migration count**, far better than a cold search.
+✅ **(c) The birth–death prior replaces the clock's REGULARISING role, not its CALIBRATING role.**
+ConvexML Thm 1: an unregularised MLE collapses homogeneous subtrees. They regularise implicitly by
+forcing depth→day through a monotone curve; we use $p(\mathcal T\mid b,\delta,\rho)$ on node times,
+which is principled and also supplies calendar time. The editing clock is then freed to do only its
+own job.
+✅ **(d) $\Lambda_{\rm pre}$ as a parameter with a prior on $[0,1.21]$ edits/tape** (§H.9.6), not fixed
+at 0 — per clone, set by how many day-3 founders that clone had.
+⚠ **(e) The distance ratio is a CHECK, not a prior.** Same quantity from the same data ⇒ using it as a
+prior double-counts. But it is an excellent **posterior predictive check**: simulate from the fitted
+posterior, compute $R$, compare with observed 0.57 / 0.44 / 0.13. A test the current approach cannot
+run.
+⚠ **(f) Dropout parameters — NOT yet.** Their per-sample non-recovery rates and our fitted $\beta_z$
+are natural emission priors, but the rung-1 double-count applies: measured $\beta_z$ **already
+contains** depth-0 censoring and heritable loss, so feeding it in as the *technical* rate counts both
+twice. Needs the joint fit first.
+⚠ **(g) Do NOT anchor on $E(45)=4.88$.** Measured per *recovered* tape ⇒ conditions on recovery ⇒
+depth-biased upward. In our model that quantity falls out of $\Lambda_T$ and the emission layer with
+the conditioning handled; importing 4.88 would import the bias.
+❌ **Still unobtainable from the paper:** $\rho$ for the mice. IVIS gives relative flux. Standing ask
+to Jihye Park: total viable cells per dissociation, or tumour mass, per organ at day 45. It matters
+because $\rho$ dominates $\theta$ by 3–5× on coalescent depth, and coalescent depth is exactly the gap
+between "the founder" and "the MRCA of the sampled liver cells" (§H.9.7).
+
+## 5. Build queue toward Tier 3 (nothing here is approved; each returns as its own proposal)
+
+1. **Close out the engine's validation** — Justin's call on the amended V5 (finite-difference step at
+   a boundary point) and the V8 follow-up (fresh trees for the one library cell). V6 (SciPhy Java)
+   still not done.
+2. **Level-batched pruning** — sequential steps = tree depth, not node count. Fixes the $n^{2.3}$ CPU
+   gradient and the GPU being slower than one core. Would need V3/V5 re-run.
+3. **The first dating study, on the SIMULATOR only**: what does the dating posterior look like on a
+   tree of ~200 tips with Park-like missingness and a **known** true dissemination day? Answers "do
+   the intervals widen or narrow" before any commitment to Park. ⭐ This is the natural next proposal.
+4. **Tree search** under the likelihood (NNI/SPR; their frontier as the candidate ladder).
+5. **Heterochronous tips** (item 3.8) — unlocks ATGATCATAT-M2 and the Pre-TX anchor generally.
+6. **Posterior mode** — deferred 2026-10-06; spec kept in §10 above. Needed for per-entry missingness
+   attribution and for the bridge to signal inference.
+7. **The joint editing/dropout fit on Park** — gates Tier 2 and any Park-calibrated run.
+
+## 6. What to ask the reviewer comments when they arrive
+
+1. Is the ask for **support values on the reported trees** (Tier 1) or **benchmarking against an
+   alternative method** — Cassiopeia, LAML, NJ (Tier 2)? Different amounts of work.
+2. Does anyone question the **dating** specifically, or only the topology? The dating is where the
+   fragility lives (52 days per edit/tape at day 34) and where a posterior most changes the claim.
+3. Does anyone question the **single-founder** call? If so, the frontier's false-negative rate
+   (Tier 2c) is the answer and nothing else is.

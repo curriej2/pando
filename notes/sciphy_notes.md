@@ -5917,3 +5917,441 @@ switchable. ⇒ Next: the engine proposal, part 1 = the math (`analyses/2026-10_
 segment, chained segment kernels equal one segment with summed $\mu$ and $G$ (saturation included;
 $2.2\times10^{-16}$) — in the first build every branch is one segment. Segment boundaries are fixed knots,
 not inferred; kernels are differentiable in node times.
+
+---
+
+# §H.9 Park, Chang et al. 2026 — methods close read (2026-10-09/11)
+
+*A front-to-back re-read of `refs/metastasis_lineage_recording.pdf` (bioRxiv 2026.08.10.744013,
+posted 2026-08-11), done because reviewers have asked for more support for the reconstruction
+algorithm. Covers Abstract, Introduction, Results §§1–5, Figures 1–3, Supplementary Figures 1–4 and
+Supplementary Note 1, and the Methods sections "Plasmid design", "Cell line and lineage recorder
+engineering", "Single-cell library preparation", "Single-cell sequencing data pre-processing",
+"Clonal growth rate analysis", "Lineage-tree reconstruction", "Recorder-clock calibration and
+metastasis dating". **No compute was run.** The standing method comparison against SciPhy and the
+mouse embryo paper is the earlier section "Comparison: three tree-building approaches on DNA
+Typewriter data"; this section is the detail behind it.*
+
+## H.9.0 What the paper claims, and which claims need the tree
+
+The headline chain is: metastatic potential is a pre-existing, heritable cell state, because (i) a
+pre-transplant glycolytic state and a 349-gene lineage-heritable set each shift a clone's odds of
+colonising the lung, while (ii) hypoxia — the program most strongly associated with phylogenetic
+fitness *inside* the metastases — does not predict colonisation when scored beforehand.
+
+⚑ **Separating what the recorder is load-bearing for.** Claims (i) and the per-gene scan (ENO1, the
+16 genes) use **ClonalBC + scRNA only** — a static barcode and a prospective design, no tree. The
+TAPE tree is load-bearing for exactly four things: **(a)** single-founder + dating of the liver
+metastases; **(b)** phylogenetic fitness via the local branching index; **(c)** the *definition* of
+"heritable" — the 349-gene set is lineage autocorrelation (Hotspot + PATH) on Cassiopeia trees of the
+8 in vitro colonies; **(d)** the Metient migration reconstruction in Mouse 1. (c) is the one that
+feeds the headline, and it rests on the **Subclone** colonies — the arm where our own ladder measured
+the strongest lineage-structured dropout (+8.31 nats/cell, $Q$=15.9%) and where essentially all of
+the homoplasy lives (median level-0 clade 933 cells, 40.8% of nodes with ≥1 recurrence).
+
+⚠ Two textual slips worth knowing when quoting the paper: the Abstract says the 16 genes are
+"predictive of **colonization**" where the scan and Fig 6f use **establishment** (the paper defines
+the two as distinct and non-interchangeable); and the closing Introduction paragraph is **duplicated**
+near-verbatim across pp. 2–3.
+
+## H.9.1 The pipeline as a data-generating chain
+
+The object our likelihood is the inverse of. Lossy steps marked ★.
+
+```
+cell -> RNA (Pol II, EF1a-mRFP-TAPE transcript)      LOSSY: scales with transcriptional output
+     -> 10x GEM capture + RT                          LOSSY
+     -> cDNA split 3 ways by amplicon size            (GEX / TAPE+TargetBC / ClonalBC)
+     -> TAPE library, AVITI24, R2 260 bp, ~15k reads/cell
+     -> CellRanger; reads need fx tag + corrected CB + UB
+     -> parse: TargetBC after CATGCCCAAA; array trimmed at TGATGGTGACTACATCTA;
+        monomers located allowing <=2 mismatches; inter-monomer sequence = the insertion
+     -> count distinct UMIs per (CB, TargetBC, pattern, monomer count)
+     -> ★ keep only records with >= 2 distinct UMIs
+     -> ★ per (CB, TargetBC) keep the pattern with the HIGHEST UMI support   (winner-take-all)
+     -> ★ restrict to a curated set of 166 TargetBCs
+     -> ★ keep cells with >=100 (Initial/Subclone) or >=20 (mice) TargetBCs
+     -> pivot to cell x (TargetBC, site); unobserved OR unedited -> "None"
+```
+
+⚑ The last line is the whole of §S5/§S6 in one sentence of their Methods: **"None" is the union of
+three distinct events** — never captured, captured but blank (depth-0 censoring), heritably silenced —
+written as one token. Our emission layer (§H.8.3) exists to undo exactly this.
+
+⚠ **The ≥2 UMI rule is the mechanism behind $\alpha_c$.** A cell with low transcriptional output has
+fewer UMIs per tape, so more of its tapes fall below the threshold. Rung 1 writes this as
+$\pi_{cz}=\sigma(\alpha_c+\beta_z)$ with $\alpha_c$ iid; the true form is a Poisson tail on a count,
+and $\alpha_c$ is a **cell-state variable, not noise** (§H.9.8).
+⚠ **Winner-take-all over patterns** propagates no ambiguity. This is where LAML-Pro's general
+emission $\Gamma(x\mid z)$ would go — but **not for free**: the 2026-10-02 correction in §H.8.5 showed
+a soft emission over symbols breaks the depth-slot representation and needs the descendant trie
+(§H.8.6 option D).
+
+⚠ **"166 tapes" is a recoverability-thresholded set** ("TargetBCs detected above a coverage threshold
+in the engineered clone screen"), and Supp Fig 1a estimates copy number from *unique TargetBCs
+recovered*. So 166 is a **lower bound on integrations**, and $\beta_z$ as we fit it is estimated on a
+sample **left-truncated in badness** — the worst integrations are structurally absent. Bears on the
+closed-locus latent $(\phi, r_{\rm cl})$: "15% of tapes with recovery below 0.3" is 15% of survivors.
+
+⚠ **No copy-number step exists** (the mouse DTT pipeline has `tape/copynumber.py`; Park's does not).
+A piggyBac tandem duplication gives two independently-editing tapes under one TargetBC; winner-take-all
+then picks one per cell, so that tape's apparent state **can go backwards from parent to child** —
+a violation of irreversibility, not a perturbation of it. ⚑ Candidate fingerprint, and it may match
+something already on record: Mouse3's conflict is **diffuse** (91.3% of 55,875 characters conflict
+under missing-as-absent; top 1% of characters carry only 4.3% of edges) — the opposite of homoplasy's
+concentrated signature. A few multi-copy tapes would look exactly like that. **Cheap untried probe:
+does conflict concentrate by TAPE rather than by character?** `conflict_degrees_{as_absent,excluded}_Mouse3.npz`
+is on disk.
+
+## H.9.2 The bottleneck, and what it is for
+
+Day −11 ClonalBC lentivirus at MOI 0.3 + 10 d puromycin; **day 0** Cre (recording starts); **day 3**
+sort top 30% mRFP+/mClover3+ and bottleneck to ~8,000; expand ~20× to ~160,000; day 10 transplant;
+day 45 harvest.
+
+The stated purpose is **not** barcode uniqueness: *"expanding it ~20-fold to ~160,000 so that multiple
+siblings of each clone were represented."* The design needs a clone's **state measured before** and
+its **fate observed after**, and scRNA-seq destroys the cell it measures — so siblings are mandatory.
+Bottleneck trades clone *diversity* for clone *depth*; without it, ~160,000 cells over ~10^5 barcodes
+is ~1.6 cells/clone and the four-way split leaves no overlap.
+
+Collision suppression is a **consequence, not the purpose**: with $n$ founders from $D$ effective
+barcodes, expected colliding pairs $\approx\binom n2/D$ — at $D\approx10^6$, ~32 pairs at $n$=8,000
+against ~5,000 at $n$=10^5. They do not rely on it; the cross-clone collision screen catches the rest.
+
+⚑ **Each mouse receives ~1 cell per clone.** 5,000–10,000 cells drawn from ~160,000 over ~8,000
+clones; each clone's 20 cells each have a 6.25% draw probability, so
+$P(\text{clone absent from a mouse})=(1-0.0625)^{20}\approx 27\%$ **by chance alone**. This is why
+every Fig 6d model conditions on $\log$(pool abundance): "recovered in Mouse 1's lung" is
+(drawn into the injection) × (survived and expanded) × (recovered in sequencing), and only the middle
+term is biology.
+
+## H.9.3 Sequential (prefix) parsimony
+
+Each tape is **one ordered character**, not six sites — same choice as SciPhy (§1a.7), opposite to
+LAML/ConvexML/Cassiopeia on Cas9 arrays. For internal node $v$, tape $z$:
+$\mathrm{lcp}_{vz}$ = longest common prefix of the **non-missing** descendants; the branch into $w$
+contributes $\ell_{wz}=|\mathrm{lcp}_{wz}|-|\mathrm{lcp}_{{\rm pa}(w)z}|\ge0$; the score is
+$\mathrm{SP}(T)=\sum_w\sum_z\ell_{wz}$ = **the total number of edits the tree must posit**. Sharing a
+prefix lets the tree pay for it once. It is Camin–Sokal generalised from binary to ordered strings.
+⚑ This is literally SciPhy's $u_i=\mathrm{lcp}$ (§1c.2), taken as a **point estimate** rather than
+integrated over $A_i$ — the parsimony/likelihood distinction, now confirmed in two independent papers.
+
+⚠⚠ **The missing-data rule is what causes the next problem.** A cell whose tape $z$ is missing
+contributes nothing to $\mathrm{lcp}_{vz}$ at any ancestor ⇒ **a heavily dropped-out cell constrains
+the topology weakly and can be moved almost anywhere at almost no parsimony cost.** Felsenstein
+pruning differs *in kind*: it marginalises the missing tape rather than dropping it.
+
+Search: a sequential-aware distance (mean per-tape prefix divergence over co-observed tapes) → NJ,
+rooted on an **all-unedited outgroup** (the founder) → NNI hill climbing under the sequential
+criterion with the rooting fixed, capped at 500 rounds.
+⚠ **The validated distance is not the used distance.** The §3 subclone concordance test uses
+$d=1-\mathrm{shared}/\sqrt{L_iL_j}$ with UPGMA; the trees use prefix divergence + NJ + NNI (+ Fitch).
+
+Cross-clone collision screen, applied once upstream and inherited by every downstream analysis: a cell
+is pruned when its sequential match to its own clone's consensus falls **below 0.50** while another
+clone of the same mouse leads it by **≥0.20**, on **≥5 co-observed tapes**. ⚠ Three asserted,
+uncalibrated thresholds.
+
+## H.9.4 The transition-constrained search, the frontier, and the logical status of "single founder"
+
+**The problem**: sequential parsimony is blind to sampling organ, so (by H.9.3's missing-data rule)
+dropout-heavy cells drift across the lung–liver boundary at no edit cost and the topology implies
+spurious tissue crossings. **The bias direction is to over-state the number of migrations.**
+
+**Objective**: $S(T)=\mathrm{SP}(T)+\lambda\cdot\mathrm{Fitch}(\text{organ label})$, with $\lambda$ in
+**insertions per crossing** on the ladder {0,1,2,5,10,25,50,100,200,400,800,1600,3200}. Fitch's
+bottom-up set algorithm returns the minimum number of organ changes a topology implies; with a
+lung-rooted tree and no reseeding, that is the number of distinct liver clades = the number of
+inferred seeding events, call it $k$. Move set: NNI evaluated in place and undone (no tree copied) +
+a **guided SPR** that prunes an organ-pure block under an impure parent and regrafts it beside the
+largest same-organ clade. Three passes: $\lambda=0$ uncapped under the identical move set (so the
+comparison is not confounded by search power); the $\lambda$ ladder by continuation; then **peeling**
+one crossing at a time under a hard cap, taking the move that lowers $k$ for the smallest parsimony
+increase.
+
+**The frontier.** $P(\le k)$ = lowest parsimony reachable among topologies with at most $k$ crossings;
+**monotone non-increasing by construction**, so $\delta_k=P(\le k)-P(\le k+1)\ge0$ is unambiguously
+*the parsimony the extra crossing buys*, in insertions. Support: a **tape bootstrap** of $\delta$,
+2,000 resamples, Kishino–Hasegawa framework. The reported topology is the one at $k=k_{\min}$.
+
+⚠⚠ **What "single founder" means.** The search **penalises the quantity it reports**. That is not a
+flaw provided the claim is stated at the strength the frontier supports:
+*going from one crossing to two buys only $\delta$ insertions, and $\delta$ is not distinguishable
+from zero under a tape bootstrap, so the edit data do not require more than one migration.*
+That is **non-rejection, not demonstration**. The Results' "highly likely to be a single lung-to-liver
+migration" is a reasonable gloss but is stronger than the test.
+⚠ KH is valid for topologies chosen **independently of the data**; both trees here come from the same
+search on the same data — the classic mis-application that SH/AU tests exist to fix. Anti-conservative.
+⭐ **This is directly testable in simulation and nobody has done it**: generate a two-migration
+metastasis, run the frontier, measure how often it collapses to $k_{\min}=1$. That false-negative rate
+is the single most useful number a reviewer could be handed about this method.
+
+## H.9.5 ⭐⭐ The recorder clock, and where its resolution is spent
+
+**Model.** $E(t)=A(1-e^{-t/\tau})$, with $E$ = cumulative edit depth in **edits per recovered tape**,
+$t$ = days since Cre. Equivalently $dE/dt=(A-E)/\tau$: **the accumulation rate is proportional to the
+room left** — the deterministic mean-field version of our saturating editing model. $\tau$ is the time
+to reach $1-e^{-1}=63.2\%$ of the ceiling.
+**Fit** (Supp Fig 4d, 2,000 residual bootstraps, $\tau$ refitted holding the bulk series fixed):
+$A=4.9553$ (95% CI 4.8799–5.0443) edits/tape, $\tau=10.7089$ (10.3167–11.0886) days. $R^2=0.99$ on
+held-out day-45 cells.
+
+**Inversion.** $X=E^{-1}(d)=-\tau\ln(1-d/A)$. The bracket $1-d/A$ is **the fraction of capacity still
+unused**, so the clock counts time in $e$-foldings of remaining capacity, each costing $\tau$=10.7 d.
+
+⭐⭐ **The resolution budget — the number that explains every fragility in the section.**
+*Reading rule: a window carrying a larger share of the depth is better resolved; a window carrying
+less depth than time is under-resolved.* (Arithmetic on their own two fitted constants.)
+
+| window | edits/tape written | share of the RECORD | share of the TIME |
+|---|---|---|---|
+| day 0–3 (before the clonal bottleneck) | 1.21 | **24.8%** | 6.7% |
+| day 3–10 (in vitro, within clone) | 1.80 | **36.8%** | 15.6% |
+| day 10–21 (early in vivo) | 1.25 | 25.6% | 24.4% |
+| day 21–34 | 0.49 | 10.0% | 28.9% |
+| **day 34–45** | **0.13** | **2.7%** | **24.4%** |
+
+⇒ **62% of the record is spent before the cells enter a mouse; the last quarter of the experiment is
+recorded in 2.7% of it.** The whole 35-day in vivo experiment gets 1.87 edits/tape.
+
+**Date sensitivity.** $dX/dd=\tau/(A-d)$, i.e. days moved per unit error in the founder's depth:
+
+| at | $d$ (edits/tape) | $dX/dd$ (days per edit·tape⁻¹) | 0.1 edits/tape of error moves the date by |
+|---|---|---|---|
+| day 21 | 4.26 | 15.4 | **1.5 d** |
+| day 34 | 4.75 | 51.7 | **5.2 d** |
+| day 45 | 4.88 | 144 | 14 d |
+
+⚑ Scale for the error itself (illustrative, not their number): a consensus mean over 166 tapes with
+per-tape spread ~1 slot has se $\approx1/\sqrt{166}=0.08$ edits/tape ⇒ **~4 days at day 34**, before
+the consensus-threshold and topology contributions. Consistent with the two late clones being
+"robustly late" but not resolvable to a day.
+⚑ The dated events sit **inside** the calibrated range (day 10 to day 45), so the dating is
+interpolation, not extrapolation. The fragility is the flatness of the curve near $A$, not the fit.
+
+⚠⚠ **$A=4.9553$, not $N=6$.** A single-rate saturating curve *cannot* asymptote below the number of
+slots; ~1.04 sites per tape (17% of nominal capacity) is never reached. Candidates: array contraction;
+**per-tape rate heterogeneity with a slow or dead class** (averaging $\mathbb E[\min(\mathrm{Pois}(r_z\Lambda),6)]$
+over an $r_z$ spread including near-zero rates gives a pooled mean asymptoting below 6); silenced tapes
+still in the denominator. ⇒ **$A$ and $\tau$ are effective, not physical** — $A$ is not "the number of
+sites" and $\tau$ is not one over the rate. ⭐ This is a direct argument for our parameterisation:
+$\lambda_z(t)=r_z\Lambda_T\lambda_0(t)$ puts the heterogeneity in $r_z$ where it is identifiable and
+leaves the ceiling at the true $N=6$. It is also the same heterogeneity behind the measured
+recovery–depth coupling ($\rho$ = −0.33 to −0.63).
+
+⚠ **Three free parameters, not two**, and the level rests on two points. The bulk-amplicon series
+(day 17–45) is rescaled onto the single-cell scale by a multiplicative factor **fit jointly** with
+$A,\tau$ — so bulk contributes the *shape* and not the *level*, and the absolute depth scale is pinned
+by the **two single-cell anchors (Pre-TX day 10, Subclone day 24)**, with day-45 held out for validation.
+
+✅ **Consistency check with our own measurement.** Their $E(10)=3.01$ edits/tape at transplant against
+our zero-truncated per-tape fit on the Initial arm, $\hat\Lambda\approx2.87$ — agreeing to 5%, with the
+residual in the right direction (theirs is per *recovered* tape, conditioning on recovery, which is
+depth-biased upward; ours corrects for censoring).
+
+## H.9.6 ⚠⚠ $\Lambda_{\rm pre}$ is NOT zero — the open simulator decision, answered from the paper
+
+The editing layer was approved with $\Lambda_{\rm pre}=0$ and the decision table recorded it as
+*"genuinely open: whether Park's tapes were already editing before the clone founder. Not in the
+notes, not checked against the paper."* The paper settles the arithmetic.
+
+ClonalBC identity is fixed at day −11; recording starts at day 0; the **clonal bottleneck is at day 3**.
+A clone whose sampled descendants trace to a single day-3 survivor has its MRCA at day 3, and every
+edit written in days 0–3 is a **constant prefix shared by the whole clone** — slots consumed, zero
+within-clone information:
+
+$$E(3)=4.9553\,(1-e^{-3/10.7089})=\mathbf{1.21\ \text{edits per tape}}\quad\text{against } E(45)=4.88$$
+
+⇒ **~25% of realised recording depth is burned as an uninformative within-clone prefix**, on top of
+the 62% spent before transplant.
+
+⚠ Two caveats, both material:
+1. **The clock has no anchor before day 10** (earliest single-cell anchor; bulk starts day 17), so
+   $E(3)$ is extrapolation of the functional form. A Cre/PE expression lag pushes it down; an early
+   burst while all site-1s are empty pushes it up.
+2. **"~8,000 cells" (Methods) vs "~8,000 clones" (Fig 1a legend) are different statements.** If a clone
+   contributed several day-3 survivors whose common ancestor predates day 0, they share *no* edits and
+   $\Lambda_{\rm pre}=0$ for that clone, with days 0–3 fully informative. $\Lambda_{\rm pre}$ is
+   therefore a per-clone quantity between 0 and 1.21, set by how many day-3 founders each clone had.
+
+⇒ For Park adjudication, $\Lambda_{\rm pre}$ should be a **parameter with a prior supported on
+[0, 1.21]**, not a fixed 0. Irrelevant to the design sweep, where the start of recording defines the
+experiment.
+
+## H.9.7 Dating: the consensus-depth estimator, and its two opposing biases
+
+**Procedure.** The metastatic founder is the MRCA of the liver cells. Its depth is the **liver-only
+consensus** — per tape, the leading run agreed by at least a threshold fraction of liver cells, with
+the **threshold swept 0.6–0.8** for uncertainty — measured per recovered tape to match the clock
+scale, then $X=E^{-1}(d)$. The threshold softens a strict lcp, which a single dropout-heavy or
+homoplastic cell would truncate to nothing.
+**Uncertainty included**: tape bootstrap; consensus threshold; and in Fig 3e's horizontal bars the
+clock-parameter $(A,\tau)$ bootstrap. **Not included**: topology uncertainty; clock functional form.
+
+⚠⚠ **Two reconstruction biases of opposite sign, neither measured.**
+- **Consensus truncation ⇒ shallower ⇒ date too EARLY.** Any dropout, read error or post-founder
+  divergence breaks agreement and shortens the consensus prefix. (Homoplasy could extend it, but
+  needs agreement among 60–80% of cells — implausible at $q=0.017$ and these clade sizes.)
+- **Sample MRCA is later than the founder ⇒ deeper ⇒ date too LATE.** Set by coalescent depth, hence
+  by $\rho$ — which §S3 found **dominates $\theta$ by 3–5×** and which is unknown for the mice.
+
+They do not obviously cancel. ⇒ **A simulator target**: both are directly measurable against a known
+founding time.
+
+## H.9.8 The distance-ratio estimator, derived
+
+Under the clock, two cells coalescing at day $t$ have expected parsimony distance $2[E(T)-E(t)]$,
+$T=45$. For a single-founder metastasis, two **liver** cells coalesce at the dissemination day $X$;
+a **liver** and a **primary-lung** cell coalesce at the clone founder $T_f$. Hence
+
+$$R=\frac{\mathrm{median}\,d_{LL}}{\mathrm{median}\,d_{LP}}=\frac{E(T)-E(X)}{E(T)-E(T_f)}
+\;\Longrightarrow\; E(X)=E(T)-R\bigl[E(T)-E(T_f)\bigr],\quad X=E^{-1}(E(X)).$$
+
+In words, $R$ = (edits written after dissemination) / (edits written after the clone founded).
+**$R\to1$ = early, $R\to0$ = late.** Observed: **0.57, 0.44, 0.13** (GCATTAGCGA-M3 earliest,
+GCATTAGCGA-M2, TTTGGAAACC-M3 latest) — note this **resolves the two clones the consensus route can
+only call "near day 34"**. CI: a **cell** bootstrap, 2,000 resamples, collision cells excluded.
+
+**What cancels**: the factor of 2; dropout and homoplasy (both medians inflated similarly); any day-0
+anchoring error, since $X$ is referenced to $T_f$ not to a day-0 root.
+⚠ **What does not**: the final inversion uses the clock, and $E(T_f)$ is itself a reconstructed
+ancestral depth. The Methods are precise — *"an independent check that shares the clock but not the
+estimator."* ⇒ **the ORDERING is clock-free and reconstruction-free; the DATE is neither.**
+⭐ The real contrast with the consensus route: **distance-ratio never reconstructs the metastatic
+founder's genotype — it only uses distances between cells that were actually sequenced.**
+
+**Agreement, stated at the paper's own strength**: to within half a day for the well-resolved early
+clone, and only *"on a late dissemination"* — i.e. qualitatively — for the two near-saturation clones.
+Exactly what the $dX/dd=51.7$ sensitivity predicts.
+
+## H.9.9 The two supporting analyses
+
+1. **Per-tissue lineage growth** (Supp Fig 4f–i): peak lineage expansion at lung mean day 34.1
+   (31–36) vs liver mean 41.1 (40–42), **no overlap**; max instantaneous expansion lung 0.21/day vs
+   liver 0.40/day. Both invariant to a constant sampling fraction, which matters given liver 39% vs
+   lung 86–95% non-recovery. ⚠⚠ **The depth axis here is anchored LINEARLY from day 10 to day 45, not
+   through the saturating clock** — they say so, and say the claim is **ordinal** only.
+2. **Pre-TX cells graft basal** to the lung–liver divergence in all three clones — a known-age
+   outgroup placed blind, supporting post-transplant seeding. ⚠ Power is limited: pre-TX cells have
+   lower depth ($E(10)=3.01$ vs 4.88), hence shorter prefixes, and a prefix criterion structurally
+   favours shallower cells sitting basally.
+
+## H.9.10 Supplementary Note 1 — the low-recovery population, and what it says about $\alpha_c$
+
+12 tumour samples; each cell labelled recovered/non-recovered by whether its CB appears in that
+sample's clonal-barcode table. **77% of transcriptomically defined tumour cells yield no barcode**,
+ranging 39% (Mouse 2 liver) to 86–95% (lung). Recovered cells carry a median **27,854 UMIs against
+2,578** (10.8×). Tissue-adjusted logistic model: **recovery odds rise 8.6× per SD of log total counts**
+(95% CI 8.3–9.0); dormancy lowers recovery once output is adjusted (OR 0.65); cell-cycle score flat
+(OR 1.02). The low-recovery population shows a coordinate shutdown (cell-cycle module NES −3.0, MYC
+−3.0, E2F −2.2, G2M −1.5, DNA repair −1.6, OXPHOS −1.7); the claim rests on the *falling* axis because
+the dissociation control also rises, and of two quiescence references only the empirical one is
+enriched (NES 1.64) while the mechanistic G0 pathway is not (NES −0.87, adj $P$=0.72).
+
+⚠ **Consequence for rung 1.** $\alpha_c$ is drawn iid and independent of the tree. But recovery is a
+readout of transcriptional output, and output is a coherent cell state. If that state is itself partly
+heritable, **$\alpha_c$ is lineage-correlated** — a third route to heritable observed missingness
+beside depth-0 censoring (§S5.3) and silencing (§S6). Not in the rung ladder; no recorded number is
+known to depend on it; it sits exactly where the negative control is pointed.
+⚠ The Results sentence "*rather than technical failures in barcode capture*" inverts the emphasis of
+Supp Note 1's own "*recovery is itself largely a readout of that output*" — it is a technical failure
+with a biological cause, and both halves matter.
+
+## H.9.11 ⚠ Candidate confound: capture sits INSIDE the distance that builds the tree
+
+Stated as a hypothesis; **untested**, and the natural first use of the simulator libraries.
+
+The subclone validation distance is $d(i,j)=1-\mathrm{shared}(i,j)/\sqrt{L_iL_j}$, where $L_i$ is cell
+$i$'s **total observed edit count** — a property of how well that cell was captured, not of its
+history. By Supp Note 1 capture is a readout of transcriptional output. So capture rate enters the
+distance; the tree partly orders cells by output; and "heritable" (= varies smoothly along that tree)
+can then be satisfied by any gene correlated with output. Under random dropout the geometric-mean
+normalisation attenuates similarity by $\sqrt{f_if_j}$ (with $f$ the capture fraction), which pushes
+poorly-captured cells *apart*; under **lineage-structured** dropout — which we have measured in 5/5
+arms — the direction is not obvious and must be simulated.
+
+**What the paper does against it**: module scores residualised on mito fraction and log total counts;
+mitochondrial/ribosomal signal removed before the Hotspot run; two autocorrelation statistics agreeing
+at $\rho$=0.86 (⚠ but both consume the *same* tree); and — the strong defence — the heritable set then
+predicts **out of sample**, in three independent mice. Plus **OXPHOS is null across every outcome**
+despite its genes being highly expressed, which excludes "any abundant module predicts recovery".
+**Where the path is not severed**: *colonization is defined as recovery*, and recovery scales with
+transcriptional output, so a high-output clone is better represented pre-transplant, scores higher on
+any output-correlated signature, and is more likely to be detected in a mouse. $\log$ pool abundance
+absorbs part of this; UCell's within-cell ranking absorbs a uniform depth effect but not a
+compositional one.
+**Direction if real**: inflation — 349 would be an upper bound on genuinely heritable genes. It would
+not obviously touch glycolysis. **Magnitude**: unknown, not estimable from anything on disk.
+**The well-posed test**: simulate colonies with heritability set to **zero** and dropout at a known
+level, push them through Cassiopeia-greedy + Hotspot/PATH, and read off how much heritability the
+pipeline manufactures from missingness alone. Needs a proposal.
+
+## H.9.12 ATGATCATAT-M2 — the undateable fourth clone
+
+Mouse 2's **largest** clone (3,387 cells = **62.9%** of that arm's 5,388 barcoded cells) was recovered
+**only in the liver** and is excluded from dating.
+
+**Why excluded** — and it is not power. The consensus-depth estimator is liver-only, so a depth *could*
+be computed. What the lung is needed for is: (i) the distance ratio ($R$ needs liver×lung pairs);
+(ii) locating $T_f$; (iii) the organ penalty, which is vacuous when every cell is one organ; and most
+fundamentally (iv) **showing it is a metastasis at all** — with no lung cells, the liver MRCA is just
+the clone's MRCA, which sits near transplantation for any clone seeded as ~1 cell. The paper's wording
+("could not be dated **against a primary**") is exactly right.
+⚑ Ironically this is the clone where an MRCA would be **best** estimated: at $n$=3,387 the sample MRCA
+is almost surely the lesion's MRCA, whereas at 153–229 tips the coalescent may not reach back.
+
+**How strong is "absent from the lung"?** At most ~2,001 barcoded Mouse 2 cells belong to all other
+clones across LV + LL1 + LL2. By the rule of three, zero observations among $n_{\rm lung}$ recovered
+lung cells gives $f<3/n_{\rm lung}$: **$f<0.6\%$ at 500 cells, $<0.3\%$ at 1,000**. A clone that is 63%
+of the animal is under ~0.5% of its lung.
+
+**Does size favour immediate post-transplant seeding?** Within Mouse 2 and within the same liver
+capture (so recovery largely cancels), against GCATTAGCGA-M2 (153 tumour cells, seeded ~day 34), with
+the liver share taken as ~100 and equal net growth rate $r$: $\Delta t=\ln(3387/100)/r=3.53/r$ ⇒
+11.8 d at $r$=0.3, 8.8 d at 0.4, 7.1 d at 0.5 ⇒ **seeding ~day 22–27, not day 11**. ⚠ Illustrative:
+assumes equal growth and guesses the lung/liver split.
+
+**Four candidate explanations**, not mutually exclusive, distinguished by **one measurable number —
+the liver-only consensus depth of its MRCA**:
+
+| explanation | predicted liver MRCA depth |
+|---|---|
+| lung population regressed after seeding the liver | ~4.3–4.5 (day 22–27) |
+| **anatomical under-sampling** — Mouse 2's survey is **LV, LL1, LL2 only** (no LLL, R, LN, TH, IP) | ~4.3–4.5 (day 22–27) |
+| direct seeding at/near injection (the paper raises this caveat for Mouse 1) | $\approx E(10)=3.01$ |
+| present in the lung below detection | any |
+
+⚠ A shallow depth is strong evidence of early founding; a deep depth could also come from a bottleneck
+or sweep inside the lesion.
+⭐ **A third anchor the paper did not use**: Pre-TX cells carrying this barcode are sampled at **day 10**,
+so $d(\text{PreTX},\text{liver})=[E(10)-E(t)]+[E(45)-E(t)]$ — asymmetric, which breaks the symmetry the
+standard ratio relies on and would give $T_f$ **without any lung cells**. A small generalisation of
+their own estimator to mixed sampling times; it would make this clone dateable.
+
+## H.9.13 Flags carried forward
+
+1. ⚠ KH applied to two topologies both selected from the same data (SH/AU territory) — anti-conservative.
+2. ⚠ Collision-screen thresholds 0.50 / 0.20 / 5 tapes are asserted, not calibrated.
+3. ⚠ Dating uncertainty excludes **topology**, yet the Results name tree reconstruction as a
+   sensitivity source.
+4. ⚠ The clock's absolute level rests on **two** single-cell anchors; bulk contributes shape only.
+5. ⚠ The validated distance (subclone concordance) is not the distance used for the trees; and the
+   concordance test cuts to a **known** 8 clades, is blind to within-colony topology, and its labels
+   are partly wrong (our ground-truth rerun: ClonalBC over-splits, 11 groups → 8 colonies).
+6. ⚠ $\lambda$ is fitted on **264 of ~3,208 clones** (detected at all five bulk timepoints), so the
+   proliferation comparison lives inside a survivor-selected set. Fig 2e's in-vitro drift is a good
+   positive control; in vitro frequencies are bulk gDNA while in vivo ones are expression-weighted
+   scRNA.
+7. ⚠ Clonal sharing (Fig 2c) requires recovery in **both** organs, and non-recovery varies 39–95% by
+   site ⇒ shared-clone counts are undercounts biased **differently per organ**.
+8. ⚠ ClonalBC multiplicity: MOI 0.3 gives $P(\ge2\mid\ge1)=14.3\%$, and 10 days of puromycin
+   positively selects multi-integrants. Our ground truth saw 11 groups → 8 colonies. Consequences:
+   clone sizes biased down; pool abundance diluted; **pseudo-clones are not independent observations**
+   in the Fig 6 logistic models and the reshuffling null does not reproduce the pairing ⇒
+   anti-conservative, effective $n<1{,}229$. ⭐ **Fix exists and is validated**: merge ClonalBCs whose
+   tape consensus matches (off-diagonal median 0.048 vs 2.18–2.54 for the split pairs). Never applied
+   to the mouse or Pre-TX arms.
+9. ⚑ Every uncertainty device in §5 — the $\lambda$-frontier, the KH test, the tape bootstrap, the
+   consensus-threshold sweep, the distance-ratio cross-check — is a bespoke substitute for a
+   posterior. The frontier in particular is a hand-built profile likelihood over $k$.
