@@ -18,6 +18,13 @@
 > - SciPhy's editing model, transition probabilities, likelihood (§1a–1c), incl. the
 >   prefix-set / longest-common-prefix structure of Eqs. 8–9 and Felsenstein pruning.
 > - Inference background: MCMC, tree space, MAP vs ML, HMC, OU fields, PCM (§2a, §D, §G).
+>   **§G.4 (2026-10-12): sampler roles — HMC's complements (Laplace/Pathfinder, tempered SMC, bridge
+>   sampling, PSIS-LOO over tapes, combinatorial SMC, HMC + topology moves) and what none of them fixes.**
+>   **§G.4.9** HMC-within-Gibbs (topology in the posterior) · **§G.4.10** reporting: coordinate-free vs
+>   coordinate-dependent summaries (6 proposed rules) · **§G.4.11–G.4.16 Betancourt 2017 deep dive**
+>   (`refs/hmc.pdf`; his notation adopted, §G.4.1): density × volume, the typical set and $dq$, chain
+>   phases + run rules, pathologies + where our posterior could pinch, why random walks scale badly
+>   (≈50× at $D$=400, checked), gradient vs momentum. Teaching figures in `analyses/2026-10_likelihood-engine/figures/`.
 > - Architecture decision: **point-estimate topology + full posterior on continuous parameters** —
 >   defensible, and already published in this literature (§F.3, §H.2).
 > - **The A1–A9 table** of SciPhy assumptions vs. molecular reality — the master list of extension
@@ -1785,6 +1792,14 @@ not Bayesian. ML tree search scales to $10^5$–$10^6$ tips routinely.
 
 ## Recommended sequence
 
+> ⚠⚠ **SUPERSEDED 2026-10-12 (session 25) — item 1 below is no longer the recommendation.** It predates
+> the missingness work: SciPhy has no missing-data model and would analyse Park only after filtering to a
+> complete tape × cell submatrix — a non-random, well-captured subset — and, because Park codes blank tapes
+> as missing, the filter keeps only edited tapes, biasing the clock upward (§S5.3, §H.9.1). Disagreement
+> with Park's dates would then not separate model from filtering. SciPhy's role now: (i) the external
+> base-model check of our engine — **done, V6, agreement 1.4e-15** (`analyses/2026-10_likelihood-engine`
+> README Session 25); (ii) a baseline on the simulator against known truth, later. Items 2–3 stand.
+
 1. **Immediate — run SciPhy as-is on Park et al.'s per-clone trees.** ⚠ *not* 74×75 — see §D.4c;
    $k=166$, $N=6$, $M\approx256$, near-zero homoplasy, tapes far from saturating. Squarely in
    range, embarrassingly parallel across clones. Replaces *"day 21/34 with a bootstrap CI
@@ -2336,6 +2351,16 @@ until it doubles back, adapts $\epsilon$ by dual averaging in warmup. Stan / Num
 **Our dimension** after fixing topology: ~999 heights + 166 rates + knots + ~16,000 OU field
 $\approx d\sim1.7\times10^4$. $d^{1/4}\approx11$ vs $d\approx17{,}000$ ⇒ **~1,500×**. This is why
 $10^4$ gradient evals is realistic where $10^9$ random-walk steps was not.
+⚠ **Correction (2026-10-12, §G.4.6): the ~1,500× is an idealisation, not a prediction — do not quote
+it.** The $O(d)$ vs $O(d^{1/4})$ scaling is proved for well-conditioned, roughly independent targets.
+On a correlated posterior the cost is governed mainly by the condition number $\kappa$ (widest ÷
+narrowest posterior direction): roughly $\kappa$ for RWM vs $\kappa^{1/2}$ for HMC.
+⚠ **Re-stated 2026-10-13 (§G.4.15):** with $\kappa$ read as a ratio of posterior **SDs** (widths) the
+costs are $\kappa^2$ (RWM) vs $\kappa$ (HMC); "$\kappa$ vs $\kappa^{1/2}$" holds only for $\kappa$ as a *variance* ratio.
+Checked by Monte Carlo; the ordering and the conclusion are unchanged. Our posterior has
+named sources of large $\kappa$ (§G.4.4). The qualitative conclusion — HMC beats RWM by orders of
+magnitude — stands; the number does not. ⚠ §G.1 also uses $\rho$ (momentum), $M$ (mass matrix) and
+$L$ (steps), which clash with the house register; §G.4.1 proposes replacements.
 
 **Limitations:**
 - ⚠ **Requires continuous, differentiable parameters. Cannot touch discrete ones.** *This is why
@@ -2441,6 +2466,432 @@ far smaller. Significance wildly overstated. **Phylogenetic non-independence.**
     └── HMC    engine:     gradients → O(d^{1/4}) instead of O(d)
                            requires everything continuous ⇒ topology fixed
 ```
+
+## G.4 Sampling: HMC's place, its complements, and the alternatives (2026-10-12)
+
+*Discussion with Justin, session 26; no compute. Context: Tier 3 of the programme (posterior dating,
+`analyses/2026-10_likelihood-engine/CLAUDE.md` "THE PROGRAMME"). Citations marked (verify) are from
+memory and have not been checked against the papers.*
+
+### G.4.1 Notation for samplers — ⚠ SUPERSEDED 2026-10-12 (Justin): use Betancourt's notation
+
+**Justin's decision:** sampler discussion uses the notation of Betancourt 2017, *A Conceptual
+Introduction to Hamiltonian Monte Carlo* (arXiv 1701.02434; `refs/hmc.pdf`): $q$ position, $p$
+momentum, $\pi(q)$ target, $D$ dimension, $H=K+V$, $M$ Euclidean metric (mass matrix), $\epsilon$ step
+size, $L$ leapfrog steps, $T(q,p)$ integration time, $\phi_t$ Hamiltonian flow, $E$ energy, $z=(q,p)$,
+$t$ a numerical trajectory. ⚠ These collide with the house register ($q=\sum\xi_i^2$, $p_a$/$p_1$,
+$M$ alphabet size, $L$ likelihood, $T$ experiment length, $t$ calendar time, $E(t)$ Park's clock,
+$\rho$ capture fraction vs Betancourt's lag autocorrelation $\rho_l$). **Rule inside sampler
+discussion: Betancourt's symbols win; colliding house quantities get a subscript** ($q_\xi$,
+$M_{\rm alph}$, $\mathcal L$ for the likelihood, $T_{\rm exp}$, $t_{\rm cal}$, $\rho_{\rm cap}$,
+$E_{\rm Park}(t)$). The table below is kept only as a record of what was proposed.
+
+*Original proposal (not adopted):*
+
+Textbook HMC symbols clash with the house register ($q=\sum\xi_i^2$, $\rho$ capture fraction, $M$
+alphabet size, $L$ likelihood, $h$ height, $\bar H$ silenced fraction). Proposed:
+
+| symbol | meaning | units |
+|---|---|---|
+| $\psi\in\mathbb R^d$ | unconstrained position: node coordinates $x$ (engine ratio transform) stacked with transformed parameters $\tilde\theta$ (e.g. $\log\Lambda_T$, $\log b$) | — |
+| $U(\psi)=-J(\psi)$ | potential energy = negative log-posterior incl. all change-of-variables Jacobians | nats |
+| $\omega$ | momentum (auxiliary, dimension $d$) | — |
+| $\mathcal M$ | mass matrix; ideally ≈ inverse posterior covariance of $\psi$ | — |
+| $\mathcal H=U+\tfrac12\omega^\top\mathcal M^{-1}\omega$ | total energy | nats |
+| $\varepsilon$, $S$ | leapfrog step size ($\psi$ units), number of leapfrog steps | —, steps |
+| $\eta\in[0,1]$ | likelihood power (tempering rung in SMC; generalised-Bayes learning rate) | — |
+
+### G.4.2 Three jobs; HMC does only the first
+
+1. **The continuous posterior given a topology** (node times, $\Lambda_T$, $r_z$, …) — HMC/NUTS.
+2. **Comparing discrete alternatives** (one vs two liver founders; model variants) — HMC gives **no
+   marginal likelihood**. ⚠ But see G.4.7: less of this needs an evidence than first claimed.
+3. **Topology uncertainty reaching the date** (programme item 3.6) — HMC cannot move topology.
+Plus an engineering gap: the engine's GPU path is slower than one CPU core (sequential per-node pruning).
+
+### G.4.3 What HMC needs from the engine, against what exists
+
+- log-posterior up to a constant: ✅ the objective $J$ (engine CLAUDE.md §9).
+- gradient: ✅ JAX autodiff, validated (V5′ open as a check-set issue only; V6 = SciPhy to 1.4e-15).
+- unconstrained coordinates: ⚠ **half done** — node times have the ratio transform; $\Lambda_T>0$,
+  $\bar H\in[0,1)$, $b>\delta$, … each need a transform **and its log-Jacobian in $J$**. Not written.
+- cost: 0.094 s per gradient at $n$=210, $k$=30, one CPU core (measured); ≈0.5 s at $k$=166 if cost
+  is linear in $k$ (assumed, unmeasured). NUTS at ~64 gradients/iteration × 2,000 iterations ≈
+  $1.3\times10^5$ gradients ≈ **~18 h per chain** — an order of magnitude, nothing measured. ⇒
+  level-batched pruning (build queue item 2) is an HMC prerequisite, not a nicety.
+
+### G.4.4 Expected geometry problems (predictions, none measured)
+
+1. **Rate–time ridges** — $\Lambda_T$, $r_z$ and branch durations trade locally (fixed $T$ removes only
+   the global trade). SciPhy needs an "up-down" operator for this. ⇒ dense $\mathcal M$ or reparameterise.
+2. **Scales differ by orders of magnitude** — early node times well recorded (62% of the record by
+   day 10, §H.9.5), late ones barely (days 34–45 get 2.7%). ⇒ mass-matrix adaptation.
+3. **Weakly identified directions** — $(b,\delta,\rho)$ give two effective parameters, not three (§S3).
+   ⇒ fix or reparameterise before sampling, else a flat valley and low ESS.
+4. **Funnels** once hierarchical blocks exist ($r_z$, $\alpha_c$ with a fitted spread) ⇒ non-centred
+   parameterisation (G.1).
+5. **Boundary curvature** — V5 found $\partial J/\partial\Gamma_T$ at $\Gamma_T=0$ ≈ 2,679 nats per
+   unit, curving over ≈ 3.7e-4 in $\Gamma_T$; near $\bar H\approx0$ this will appear as divergences.
+
+### G.4.5 Complements and alternatives — roles assigned
+
+Previously in the notes (not repeated): Laplace and structured-Gaussian VI (§E/§F uncertainty), tape
+bootstrap / WLB and multiple imputation + Rubin (§F.3), NPE/SBI (Program A), VBPI/SBN (Program B),
+SciPhy MCMC as reference.
+
+| | method | job | what it adds | cost / caveat |
+|---|---|---|---|---|
+| **A** | **Laplace at the MAP + Pathfinder** (Zhang et al. 2022, verify) | front end to 1 | autodiff Hessian (cheap at $d$ of hundreds) ⇒ **dense $\mathcal M$** for the ridge, inits, a quick look; multi-start Pathfinder **detects** multimodality before HMC | an approximation if used alone (G.1 risks) — here it serves HMC |
+| **B** | **Tempered SMC with HMC moves** (BlackJAX adaptive tempered SMC, verify API) | 1 + 2 | prior → posterior through $\eta$ rungs; **marginal likelihood free**; robust to multimodality; ⭐ **batched over particles ⇒ may finally use the GPU** (expectation, unmeasured) | more gradients than NUTS on an easy unimodal posterior. Many-short-chains relative: ChEES-HMC (Hoffman et al. 2021, verify) |
+| **C** | **Bridge sampling from HMC draws** | 2 | marginal likelihood per topology ⇒ **Bayesian model averaging over a finite candidate set** — e.g. the $\lambda$-frontier ladder (§H.9) — a principled upgrade of equal-weight multiple imputation | needs draws per candidate |
+| **D** | **PSIS-LOO over tapes** (Vehtari et al., verify) | checking / comparison | the engine's per-tape array $(\ell_1..\ell_k)$ is exactly its input; leave-one-tape-out predictive nats per model variant + per-tape $\hat k$ flags problem tapes | ⚠ rows A5/A8 (tapes not independent) ⇒ overstates separation |
+| **E** | **Combinatorial (phylogenetic) SMC** (Bouchard-Côté, Sankararaman & Jordan 2012; Wang et al. 2015, verify) | 3 | builds ultrametric trees tips-up by merges; topology native; evidence estimate. ⭐ Fits our prior: under BD-sampling conditioned on $n$, node heights are iid from the V8a-verified density and the ranked topology is uniform (coalescent point process; Lambert & Stadler, verify) ⇒ exact cheap prior proposals | degenerates at ~200 tips with informative data unless merges are data-guided (e.g. long shared prefixes, as Park's parsimony) |
+| **F** | **HMC-within-Gibbs + MH topology moves** (BEAST's HMC node-height work with the same ratio transform; Ji et al., verify) | 3 | the mainstream hybrid, closest prior art to our architecture; NNI moves around the liver clade | ⚠ the ratio transform sends node collisions to infinity, so gradient-guided topology crossing (PPHMC-style) would need other coordinates |
+
+**Considered, not recommended:** SG-MCMC ($k$=166 tapes too few to gain from subsampling; loses the
+exact accept); ABC (we have the likelihood); nested sampling (poor at hundreds of dimensions); Gibbs
+(no conjugacy); Riemannian HMC (a dense $\mathcal M$ from A gets most of it); MALA (dominated by HMC).
+
+### G.4.6 ⚠ What no sampler fixes — overconfidence from rows A5/A8
+
+Every method above samples **our** posterior, which treats tapes as independent given the tree;
+cells' tapes share latent factors, so **the posterior is too narrow** (engine CLAUDE.md already says
+"we overstate evidence too"). Options outside the sampler: **generalised Bayes** — raise the
+likelihood to $\eta<1$, $\eta$ calibrated e.g. by matching posterior spread to a cell-level bootstrap
+(Lyddon, Holmes & Walker; Syring & Martin, verify) — or model the shared cell factor. ⚠ A **tape**
+bootstrap does not escape it either (resampling tapes iid misses the shared cell factor).
+Posterior-vs-bootstrap disagreement is itself a diagnostic. Also recorded: the G.1 "~1,500×" correction.
+
+### G.4.7 What any of these gives beyond plain MCMC, other than speed (Justin's question)
+
+**For the posterior itself, nothing** — every correct sampler converges to the same distribution.
+What differs in kind:
+1. **Marginal likelihoods** (B, C, E) — plain MCMC does not produce them. ⚠ **Correction to G.4.2,
+   same day:** fewer of our questions need one than first stated. One vs two liver founders is a
+   *topology* question: a sampler that moves topology reads it off directly as the posterior
+   probability that the liver cells are monophyletic. Rung 1 vs rung 2 and $\Lambda_{\rm pre}$ are
+   *nested continuous* parameters ($\bar H\ge0$; $\Lambda_{\rm pre}\in[0,1.21]$) — read their posteriors.
+   An evidence is needed only for non-nested comparisons (e.g. different $\lambda_0$ knot structures)
+   or to weight a fixed candidate set of topologies (C).
+2. **Failure detection** — HMC divergences, Pareto $\hat k$, SMC ESS collapse. Random-walk MCMC on a
+   ridge can show stable traces while having explored a fraction of the posterior; $\hat R$ across
+   chains catches only some of this. Not speed: whether the numbers can be trusted.
+3. **Per-tape predictive checks** (D) — but they run on any sampler's draws: an add-on, not an
+   alternative. Likewise generalised Bayes (G.4.6).
+⇒ The one thing **plain MCMC with topology moves** gives that fixed-topology HMC cannot is **clade
+support** — directly the reviewers' question about the liver clade.
+⚑ **Practical point:** "plain" random-walk MCMC is not less code here. The engine already exposes a
+JAX log-density, so fixed-topology NUTS (NumPyro / BlackJAX) is close to off-the-shelf with automatic
+tuning; random-walk MH needs hand-designed operators (BEAST's up-down, node slides) — the engineering
+SciPhy/BEAST spent most effort on. Topology moves are custom code under either choice.
+
+### G.4.8 Recommended roles (Justin liked all of the above, 2026-10-12)
+
+**Quick route first (proposal to come): fixed-topology NUTS (+ A for inits and $\mathcal M$, + D for
+free)** on the three dated clones, gated by the same code run on a simulated ~200-tip clone with a
+known dissemination day (programme item 3). **Robust pipeline later:** C for the founder question on
+a candidate set, B if multimodality appears or particle batching makes it cheaper, E/F when topology
+uncertainty must reach the date. Blockers for the quick route are listed in the engine CLAUDE.md
+"Sampling (2026-10-12)" — they are not about the sampler.
+
+### G.4.9 Topology in the posterior: HMC-within-Gibbs (2026-10-12)
+
+**Justin's steer (2026-10-12):** "we ultimately want our posteriors to include topologies for this
+case", so MCMC over topologies (as SciPhy does) is probably necessary. ⚠ **This revises the settled
+architecture** "point-estimate topology + full posterior on continuous parameters" (§F.3; root
+CLAUDE.md "Already settled") and G.1's "topology must leave the sampler — a hard constraint" (true for
+HMC alone, not for the hybrid below). Recorded as the **direction**, not yet as a replacement decision —
+the fixed-topology route (G.4.7/G.4.8) remains the quick first step and the hybrid's continuous block.
+Justin has asked to revisit the Gibbs mechanics later; the account below is the reference.
+
+**Gibbs, refresher (Betancourt notation, §G.4.1).** A transition $\mathcal T(q'\mid q)$ preserves $\pi$ if
+$\pi(q')=\int dq\,\pi(q)\,\mathcal T(q'\mid q)$ (Betancourt §2.1). Split $q=(q_A,q_B)$; Gibbs alternates
+$q_A'\sim\pi(q_A\mid q_B)$ and $q_B'\sim\pi(q_B\mid q_A')$. Each step preserves $\pi$ (if $(q_A,q_B)\sim\pi$
+then $q_B\sim\pi(q_B)$, and redrawing $q_A$ from its conditional returns $\pi(q_A'\mid q_B)\pi(q_B)=\pi$);
+a composition of $\pi$-preserving transitions preserves $\pi$:
+$\iint\pi(q)\mathcal T_1(q'\mid q)\mathcal T_2(q''\mid q')=\int\pi(q')\mathcal T_2(q''\mid q')=\pi(q'')$.
+Invariance is per step; reaching everything (irreducibility) needs the steps together.
+**Weakness — correlated blocks.** Bivariate Gaussian, unit variances, correlation $r$: conditionals
+$\mathcal N(r\,q_B,1-r^2)$; the $q_A$ chain is AR(1) with lag-1 autocorrelation $r^2$, so
+$\mathrm{ESS}/N=(1-r^2)/(1+r^2)$ (1 = independent draws). At $r=0.99$: **0.010**, ~100 iterations per
+independent draw. ⇒ **strongly correlated quantities go in the same block.**
+
+**Metropolis-within-Gibbs.** Replace the exact conditional draw with any transition preserving
+$\pi(q_A\mid q_B)$; the proof is unchanged. Since $\pi(q_A\mid q_B)\propto\pi(q_A,q_B)$ in $q_A$, the MH
+ratio for a block is a ratio of **joint** densities with the other block held fixed ⇒ **the engine's
+joint objective $J$ is all any block needs.**
+**HMC-within-Gibbs.** HMC preserves its target (Betancourt §5, A.2.3), so it can be the step for a
+continuous block: $V(q_A)=-\log\pi(q_A,q_B)$ with $q_B$ a constant; momentum only for $q_A$; gradient
+only w.r.t. $q_A$. Discrete blocks use MH moves (no gradient).
+
+**Our blocks and one iteration.** Unknowns: topology $\tau$, node heights $\mathbf h$, parameters $\theta$.
+Target $\pi(\tau,\mathbf h,\theta\mid D)\propto\mathcal L(D\mid\tau,\mathbf h,\theta)\,p(\tau,\mathbf h\mid b,\delta,\rho_{\rm cap})\,p(\theta)$.
+1. **Block $(\mathbf h,\theta)$ given $\tau$ — one NUTS transition** in ratio coordinates $x$ (a
+   reparameterisation inside this conditional, Jacobian included).
+2. **Block $\tau$ given $(\mathbf h,\theta)$ — $K$ MH moves** (BEAST's narrow exchange: at node $g$ with
+   children $p$, $u$, $h_p>h_u$, swap a child of $p$ with $u$; heights stay valid; symmetric proposal).
+   Subtree slide / Wilson–Balding update $(\tau,h_v)$ together and need the proposal density in the
+   ratio. Overlapping blocks, fixed or random sweep order — all valid.
+BEAST's own MCMC is already Metropolis-within-Gibbs over many operator blocks; the hybrid swaps its
+continuous operators for one NUTS transition and keeps its topology operators. Closest prior art:
+BEAST's HMC node-height work with the same ratio transform (Ji et al., verify).
+
+**Make-or-break points.**
+1. **Topology moves in height space, not in $x$.** $x_v$ = fraction of the way up to $v$'s parent;
+   change the parent and the same $x$ encodes different heights. Convert $x\to\mathbf h$, move, evaluate
+   the density **in $\mathbf h$**, convert back. A density in $x$ without its Jacobian samples the wrong
+   posterior, silently.
+2. **The tree prior's normalising constant must not depend on $\tau$.** Under BD-sampling, ranked labelled
+   histories are equally likely given heights, so it should not — but V8 checked heights, not this.
+   **A check to run, not an assumption.**
+3. **Node labels must persist** through topology moves (narrow exchange keeps them), and NUTS's $\epsilon$,
+   $M$ must be **frozen after warm-up** — the conditional it targets changes whenever $\tau$ does; a fixed
+   $M$ stays valid, just less efficient.
+4. **Not valid:** "propose $\tau$, re-optimise heights, then accept" — unless the optimisation is part of
+   the proposal density.
+
+**Where the Gibbs weakness bites.** $\tau$ and $\mathbf h$ are strongly correlated: narrow exchange
+proposes a new $\tau$ with heights tuned to the old one, so better topologies can be rejected for the
+wrong heights. Topology mixing stays a random walk — SciPhy's $10^9$ iterations are spent there; the
+hybrid moves the bottleneck, it does not remove it. Mitigations: joint $(\tau$, local $\mathbf h)$ moves
+with correct Hastings ratios; proposals concentrated near the liver clade (legal with the Hastings
+ratio); **several chains started from one-founder AND two-founder trees, split $\hat R$ on the
+liver-monophyly indicator** — disagreement ⇒ the clade probability is not yet usable.
+**Cost (arithmetic, nothing timed, assumes cost linear in $k$):** ≈0.2 s per likelihood and ≈0.5 s per
+gradient at $k$=166 ⇒ one ~64-gradient NUTS step ≈ ~150 topology moves. Partial re-pruning (only the
+changed root-ward path, BEAST's trick) would cut each topology move by roughly $n$/depth — a new
+engineering item. Topology is passed to the engine as data at fixed array shape ⇒ no recompile;
+lcps rebuilt per move, $O(nN)$ per tape.
+
+**⚠ Correction to the engine programme §3.1 (flagged, not silently edited).** It says "the metastatic
+founder is a node, so the dissemination day is $t_v\times T$". The founder is a cell on the branch
+**above** the MRCA of the sampled liver cells; that MRCA is later (§H.9.7's "date too LATE" bias). With
+no location model the posterior **brackets** dissemination between the liver MRCA's parent and the
+MRCA. And with topology sampled, the estimand must exist in every tree: "time of the MRCA of the liver
+cells" always does; "the liver-clade node" exists only when the liver cells are monophyletic.
+
+### G.4.10 Reporting: summaries that depend on the coordinates and summaries that do not (2026-10-12/13)
+
+*From the Betancourt §1.1 discussion (expectations are invariant to parameterisation; densities are
+not). Figures: `analyses/2026-10_likelihood-engine/figures/fig_coord_A_exp1.png`,
+`fig_coord_B_node.png` (script `src/07_fig_coordinates.py`, teaching figures, Justin's request).*
+
+**Principle.** Probability belongs to regions; a density is probability **per unit volume**, and the
+unit depends on the coordinates ("the ruler"). Anything defined by adding probability over regions is
+coordinate-free; anything defined by comparing densities at points is not.
+- **Coordinate-free:** probabilities of events (clade probabilities), $\mathbb E_\pi[f]$ of a *stated*
+  quantity, medians/quantiles of a scalar, **equal-tailed** intervals, posterior draws (transform each),
+  the likelihood function, the **MLE**, likelihood ratios.
+- **Coordinate-dependent:** density values, **mode / MAP**, **HPD intervals**, Laplace and Gaussian-VI
+  approximations, "flat" priors.
+- **Sharpened (corrects my own looser "optimising depends on shape"):** maximising a *function* is
+  coordinate-free; maximising a *density* is not. The MLE is invariant (the likelihood is a probability
+  of the data, not a density in $q$); the MAP is not (the prior density carries a Jacobian). The
+  optimiser's coordinates never matter — **the engine's point estimate is the mode of the density per
+  unit calendar height, whatever coordinates the optimiser uses**; engine option F (recorder time) would
+  give a different MAP tree from the identical posterior.
+- Loss-function view: mean ↔ squared error on the stated scale; median ↔ absolute error (survives any
+  monotone relabelling); MAP ↔ "within $\epsilon$" as $\epsilon\to0$, with $\epsilon$ measured by the ruler.
+- **When it matters:** when the Jacobian varies over the posterior's bulk — wide posteriors, boundaries,
+  skew, high $D$. Late, weakly recorded nodes (days 34–45 carry 2.7% of the record, §H.9.5) are in all four.
+
+**Fig A, $\lambda\sim$ Exp(1), $u=\log\lambda$** (grid computation; 2×10⁶-draw Monte Carlo agrees):
+mode 0 (in $\lambda$) vs 1.00 (in $u$); 90% HPD [0, 2.30] vs [0.084, 3.93]; median 0.693 and 90%
+equal-tailed [0.051, 3.00] in both; $\mathbb E[\lambda]=1$ in both; "average $u$, then exponentiate"
+gives 0.56.
+**Fig B, illustrative late node** — height $h\sim$ Beta(1.5, 6) as a fraction of 45 d before harvest,
+**not fitted to any data**; three rulers: calendar $h$, ratio coordinate $x=\mathrm{logit}\,h$ (parent at
+$h=1$), recorder depth under Park's clock. Same posterior, reported as calendar day:
+MAP **36.0 / 40.9 / 42.6** (ratio / calendar / recorder) — a 6.6-day spread from the ruler alone;
+90% HPD [22.2, 43.5] / [27.2, 44.9] / [27.3, 45.0]; median **37.2** and 90% equal-tailed [24.0, 43.8]
+in all three (Monte Carlo 37.24, [24.03, 43.75]); mean 36.0.
+⚠ **"Average the depth, then invert the clock" gives day 33.9 against a mean day of 36.0** — 2.1 d
+early, because $E^{-1}$ is convex. Earlier Monte Carlo (2026-10-12, depth normal around $E(34)$):
+mean day exceeds day-at-mean-depth by 0.3 d at depth SD 0.05 and 1.3 d at SD 0.10 edits/tape; the
+median is unaffected. ⚠ **Not checked against Park's procedure** — whether their point dates invert a
+mean or a median is unknown; a question to ask, not a known error. No recorded number moves.
+
+**Reporting rules adopted for the engine's outputs (proposed, for Justin's confirmation):**
+(1) clade probabilities for topology; (2) posterior **medians and equal-tailed** intervals for dates;
+(3) every derived quantity computed **per draw**, then summarised — never summarise depth then convert;
+(4) BEAST/SciPhy default **HPD** node-age intervals are ruler-dependent — prefer equal-tailed or state
+the coordinates; (5) a point tree is labelled "mode per unit calendar height" and annotated with
+posterior-median dates; (6) a large MAP-vs-median gap is reported as a diagnostic of weak
+information / skew.
+
+### G.4.11 Betancourt §1.2: density × volume (2026-10-13)
+
+**Claim.** The probability in a region is density × volume; near the mode the density is highest but
+the volume is tiny, so in more than a few dimensions the mode's neighbourhood holds almost no
+probability. Betancourt calls "focus near the mode" (the MLE / MAP / Laplace intuition) *fatally
+naive* for computing expectations. Assumption behind the framing: $f$ varies mildly (we want many
+expectations), so where $\pi$ puts its mass decides where to look; a single rare-event $f$ (e.g.
+$P$(dissemination before day 10)) would deserve a targeted method instead.
+**Three views (all checked numerically, 2026-10-13):**
+1. *2-D rings* (Fig 1): standard Gaussian, rings of width 0.5 SD; probability per ring
+   12 / 28 / 28 / 19 / 9 / 3 / 0.9 % (rings 1–7; 2×10⁶ draws agree to 3 decimals) — density falls
+   outward, ring area grows ∝ $(2k-1)$, the product peaks at $r$ = 0.5–1.5 SD, not at the mode.
+2. *Shells in $D$ dimensions* (Fig 2): mass at distance $r$ ∝ $e^{-r^2/2}\,r^{D-1}$, peak at
+   $r^*=\sqrt{D-1}$ = 0 / 1 / 3 / 9.95 SD for $D$ = 1 / 2 / 10 / 100 (draws: peaks 0.10 / 1.02 / 3.00 /
+   9.96).
+3. *All coordinates near the centre at once*: each N(0,1) coordinate is within ±1 SD w.p. 0.683; all
+   $D$ at once w.p. $0.683^D$ = 68% / 2.2% / 3×10⁻¹⁷ / 5×10⁻⁶⁷ at $D$ = 1 / 10 / 100 / 400. A typical
+   draw is unremarkable in every coordinate yet far from the mode jointly.
+**For us:** a few hundred node dates + parameters ⇒ no posterior draw looks like the MAP tree (every
+node jittered at once); nested-node correlation lowers the effective $D$, so the effect is weaker than
+the independent-Gaussian numbers, but large. Interpretation (mine, not Betancourt's): ConvexML's
+collapsed-subtree MLE is a mode on a boundary (like Exp(1)'s mode at 0) where the posterior mass is not.
+Figures: `analyses/2026-10_likelihood-engine/figures/fig_volume_1_rings2d.png`,
+`fig_volume_2_shellsD.png` (`src/08_fig_density_volume.py`).
+**View 3 as a figure** (Justin's favourite framing; `fig_volume_3_allcoords.png`, `src/09_fig_all_coordinates.py`):
+(a) $P$(all $D$ coordinates within ±$c$ SD) $=p_c^D$ — below 1% at $D$ = 12 (±1 SD), 99 (±2 SD), ~1,700
+(±3 SD); at $D$=400: 5×10⁻⁶⁷ / 8×10⁻⁹ / 0.34. Monte Carlo (2×10⁶ draws) matches for ±1 SD up to $D$=25.
+⚠ Reading note: the ±3 SD line staying high does **not** mean draws are near the mode — a ±3 SD box in
+400-D has corners 60 SD away; it only says that draws rarely have any extreme coordinate.
+(b) one seeded draw at $D$=400: 107 of 400 coordinates outside ±1 SD (expected 127 ± 9), largest
+$|q_i|$ = 3.19 — ordinary coordinate by coordinate, yet outside even the ±3 SD box. (c) the same draw's
+distance $r(k)=\sqrt{\sum_{i\le k}q_i^2}$ tracks $\sqrt k$, ending 19.5 SD from the mode.
+
+### G.4.12 Betancourt §1.4 (the typical set) and what $dq$ means (2026-10-13)
+
+**$dq$.** In $\int dq\,\pi(q)f(q)$, $dq=dq_1\cdots dq_D$ is the volume of an infinitesimal box at $q$
+(product of tiny widths, one per coordinate). $\pi(q)$ is probability **per unit volume**, so
+$\pi(q)\,dq$ = **probability in that box**, and the integral is "sum over boxes of (probability of the
+box) × $f$". Units make it concrete: for a node date, $\pi$ is per day and $dq$ is in days; switch to
+hours and $\pi$ is 24× smaller, $dq$ 24× larger, $\pi\,dq$ unchanged. A nonlinear change of coordinates
+does the same with a factor that varies from place to place — the Jacobian,
+$dq=|\partial q/\partial q'|\,dq'$, so $\pi(q)\,dq=\pi'(q')\,dq'$ — which is exactly why densities and
+modes move (§G.4.10) while probabilities do not. In Betancourt's Fig 3 the "$dq$" curve is the volume at
+distance $|q-q_{\rm mode}|$ (the shell size of Fig 2 in §G.4.11), and "$\pi(q)\,dq$" is their product.
+**§1.4 in brief.** The typical set is the region where $\pi(q)\,dq$ is non-negligible — between the
+high-density/low-volume neighbourhood of the mode and the high-volume/low-density far field. As $D$
+grows it becomes thin relative to its size ("concentration of measure"): for a standard Gaussian the
+draws sit at $r\approx\sqrt D$ with spread ≈0.71 SD, i.e. ±3.5% of the radius at $D$=400. Only it
+matters for expectations; evaluations elsewhere are wasted ⇒ grids fail ($N^D$ points, e.g. $10^{400}$
+at 10 per axis, $D$=400, almost none in the typical set). MCMC's job is to find and explore it.
+⚠ Reading note: Betancourt's "the typical set is invariant" is informal — *where draws land* is
+coordinate-free (draws transform with the coordinates), but any set defined by a density threshold
+(e.g. HPD) is not (§G.4.10).
+**Practical check for our runs (near-Gaussian posterior, $D$ effective parameters):** draws should sit
+$V(q)-V(q_{\rm MAP})\approx D/2\pm\sqrt{D/2}$ nats above the minimum of $V=-\log\pi$ — ≈200 ± 14 nats at
+$D$=400 (Monte Carlo-checked 2026-10-12). Log-posterior values of draws hugging the MAP's value mean
+the chain is stuck near the mode, not exploring; a MAP initialisation must visibly move away during
+warm-up (Betancourt §2.2 phase 1). ⚠ The $D/2$ is for a Gaussian; skew and boundaries shift it.
+
+### G.4.13 Betancourt §2.2 (ideal behaviour of a chain): practical rules for our runs (2026-10-13)
+
+**Three phases:** (1) converge from the start to the typical set — estimates biased by the start;
+(2) first sojourn across the typical set — bias falls fast; (3) refinement — error falls only as
+$1/\sqrt{\rm ESS}$ (halving it costs 4× the run). Phase 1 (and any tuning) is discarded as warm-up.
+**CLT:** $\hat f_N\sim\mathcal N(\mathbb E_\pi[f],\ \text{MCMC-SE})$, $\text{MCMC-SE}=\sqrt{\mathrm{Var}_\pi[f]/\mathrm{ESS}}$,
+$\mathrm{ESS}=N/(1+2\sum_{l\ge1}\rho_l)$; $\tau=1+2\sum\rho_l$ = iterations per independent draw (AR(1):
+$\tau=(1+r)/(1-r)$ — 19 at $r$=0.9, 199 at $r$=0.99). ESS ≈ number of sojourns across the typical set.
+**Rules for our runs:**
+1. **Two uncertainties, never confused:** posterior SD (scientific; does not shrink with run length) vs
+   MCMC-SE (computational; does). E.g. a date posterior SD of 5 d with ESS 400 ⇒ MCMC-SE 0.25 d. Target
+   MCMC-SE ≲ 10% of the posterior SD ⇒ ESS ≳ 100 per reported quantity.
+2. **ESS is per quantity.** Early, well-recorded node dates will mix fastest; late dates, $\Lambda_T$ and
+   $r_z$ (rate–time ridge) slower; the **liver-monophyly indicator slowest** (topology moves are a random
+   walk). The lowest ESS among reported quantities sets the run length.
+3. **Clade probabilities:** MCMC-SE $=\sqrt{p(1-p)/\mathrm{ESS}}$ — $p$=0.8 needs ESS ≈ 100 for ±0.04.
+   And **count the switches**: if the monophyly indicator flips only a handful of times, the run holds a
+   handful of independent looks at it, whatever $N$ is.
+4. **Interval endpoints need more than means:** the CLT above is for means; 2.5%/97.5% quantiles depend
+   on tail visits and need their own (tail) ESS (Vehtari et al. 2021, verify).
+5. **Starting at the MAP** (or Park's tree + optimised times) is fine but is *outside* the typical set
+   (§G.4.12): phase 1 must show the log-posterior falling ≈$D/2$ nats; several chains from dispersed
+   starts (one- AND two-founder trees) must reach the same band before anything is kept.
+6. **Run length** = target ESS × $\tau$ for the slowest reported quantity, times the cost per iteration
+   (≈64 gradients × ≈0.5 s at $k$=166, unmeasured) — so $\tau$ of the topology indicator, not of the
+   continuous block, is likely what decides wall-clock.
+
+### G.4.14 Betancourt §2.3 (pathological behaviour): where our posterior could pinch (2026-10-13)
+
+**Claim.** Where the typical set pinches into a region of high curvature (scale changes sharply over
+short distances), a transition tuned to the bulk cannot enter it; the chain skips it (bias), then sticks
+at its edge, then escapes — estimates **oscillate** around the truth and are biased at any finite stop.
+A single chain can look stable while missing it. Formal guarantee: geometric ergodicity (⇒ CLT); not
+checkable in practice ⇒ **split $\hat R$** over several chains from dispersed starts (variance between
+chains and chain halves vs within; ≈1 if they agree; modern threshold 1.01, Vehtari et al. 2021, verify).
+Whether a feature is pathological depends on the transition × the target.
+**Candidate pinches in our posterior (predictions, none measured):**
+1. **Silencing near zero.** V5 found $\partial J/\partial\Gamma_T\approx2{,}679$ at $\Gamma_T=0$, curving over
+   ≈3.7×10⁻⁴ in $\Gamma_T$ — behaves like $\log(a+b\Gamma_T)$, $b/a\approx2.7\times10^3$. A clone with little
+   silencing puts mass exactly there. Candidate fix (unverified): sample $\log\Gamma_T$, which turns the
+   curvature scale $a/b$ into an $O(1)$ shift.
+2. **Funnels** once spreads are fitted ($r_z$, $\alpha_c$ with free SD) ⇒ non-centred parameterisation.
+3. **Rate–time ridge** — a long thin valley; if its curvature varies along its length (banana), a pinch.
+4. **Short branches / identical reads** — nodes pressed against parent or children; flat in some
+   directions, sharply bounded in others.
+5. **Topology block** — the discrete analogue: topology modes separated by low-probability intermediate
+   trees ⇒ the monophyly estimate oscillates exactly as Betancourt's Fig 9. No divergence alarm exists
+   for this block; only split $\hat R$ on the indicator, chains started from one- AND two-founder trees,
+   and switch counting (§G.4.13).
+**Policy:** a pathology found ⇒ reparameterise or re-model, not tune-and-continue (Betancourt §6;
+matches the house rule "abandon rather than patch").
+**Teaching figure** (`analyses/2026-10_likelihood-engine/figures/fig_funnel_pathology.png`,
+`src/10_fig_funnel.py`): Neal's funnel ($v\sim N(0,3^2)$, $x_i\mid v\sim N(0,e^v)$, $D$=10; truth known,
+$P(v<-3)$ = 0.159). Random-walk Metropolis, step 0.5, acceptance 37% (looks healthy), 4 chains started
+from exact draws, 300,000 iterations, 30,000 warm-up: post-warm-up estimates of $P(v<-3)$ =
+**0.054 / 0.152 / 0.337 / 0.049**; deepest $v$ reached −4.6 (true mass below it 6.1%); split $\hat R$
+**1.08** on $v$, **1.16** on the indicator. Chain 2 ends near the truth only because it stuck at the neck's
+edge just before the stop — "right by when you stop". Same sampler, same step on the **non-centred**
+version ($x_i=e^{v/2}z_i$): 0.139–0.160, deepest $v$ −12.7, split $\hat R$ 1.00 on both. ⇒ reparameterise,
+don't tune.
+
+### G.4.15 Betancourt §2.4 (Metropolis–Hastings) and what it does and does not justify (2026-10-13)
+
+**MH:** propose $q'\sim Q(q'\mid q)$, accept w.p. $a=\min\!\big(1,\frac{Q(q\mid q')\pi(q')}{Q(q'\mid q)\pi(q)}\big)$; RWM,
+$Q=\mathcal N(q,\Sigma)$, symmetric ⇒ $a=\min(1,\pi(q')/\pi(q))$. Proposals lean toward volume (outward), the
+correction rejects low density; together they concentrate on the typical set.
+**Why it scales badly — derivation.** From a point on the shell, an isotropic step $\delta\sim\mathcal N(0,s^2I)$
+gives $\|q+\delta\|^2-\|q\|^2=2q\cdot\delta+\|\delta\|^2$, whose mean is $Ds^2>0$: every step pushes outward,
+off the shell. Keeping acceptance needs $Ds^2=O(1)$, i.e. $s\propto D^{-1/2}$ (optimum $2.38/\sqrt D$,
+acceptance 0.234 — Roberts, Gelman & Gilks 1997, verify). Each coordinate then moves $\sim D^{-1/2}$ per
+step, and a random walk needs $\sim D$ steps to cross one SD ⇒ $O(D)$ evaluations per independent draw.
+**Monte Carlo check (2026-10-13, scratch probe; standard Gaussian, ESS of $q_1$ by batch means):**
+RWM at the optimal step needs ≈**2.5 × D** likelihood evaluations per independent draw (25 / 253 / 1,136 /
+2,388 at $D$ = 10 / 100 / 400 / 1,000; acceptance 0.23–0.26). A simple static HMC (identity mass matrix,
+$\epsilon\propto D^{-1/4}$, acceptance ≈0.90) needs 3 / 8 / 10 / 18 gradients per independent draw —
+growing slowly, consistent with $D^{1/4}$ (Beskos et al. 2013, verify). At $D$=400: ≈**117× fewer
+evaluations**; our gradient costs ≈2.4× a likelihood (0.094 vs 0.039 s, $n$=210, $k$=30) ⇒ ≈**50× in
+wall-clock**, on an ideal target. (Supersedes, for our scale, the "~1,500×" of G.1, already flagged.)
+**Elongation (unpreconditioned 2-D Gaussian, SD ratio $k$):** RWM cost ∝ $k^2$ (6 / 17 / 599 / 2,280
+evaluations at $k$ = 1 / 5 / 20 / 50), HMC ∝ $k$ (1.4 / 10 / 50 / 121 gradients). A mass matrix (or an
+adapted RWM covariance) removes a *global* elongation for both; the HMC edge then rests on the $D$-scaling
+and on curvature that varies from place to place (§2.3), which no single preconditioner removes.
+**What §2.4 justifies for us — and what it does not.**
+✅ For the continuous block (node heights + parameters, $D$≈200–800): joint random-walk proposals are the
+wrong tool by roughly 50× at an ideal target, more on the rate–time ridge (∝ $k^2$ vs $k$); HMC also brings
+the divergence alarm (§2.3) that a random walk lacks.
+⚠ BEAST/SciPhy do **not** use isotropic joint RWM: they use one-node-at-a-time operators with cheap
+partial likelihood recomputation, plus ridge-aware moves (up-down). Their bottleneck is correlation
+between coordinates (the Gibbs zig-zag, §G.4.9), not $D$ per se — so "HMC is 50× faster than BEAST" is
+**not** what the probe shows. The fair claim: HMC handles correlated, high-dimensional continuous blocks
+without hand-built operators, and with diagnostics.
+⚠ **The topology block stays random-walk MH under HMC-within-Gibbs.** §2.4's argument does not reach it,
+and it is the likely bottleneck (§G.4.13). HMC is necessary for the continuous block, not sufficient for
+the whole problem.
+
+### G.4.16 Betancourt §3.1 (informing transitions): gradient ≠ exploration; momentum turns it into an orbit (2026-10-13)
+
+**Claim.** Efficient moves follow a vector field *aligned with* (tangent to) the typical set. The gradient
+$\nabla\log\pi(q)$ is the natural information to build it from, but on its own it points *across* the shells,
+toward the mode, and its direction depends on the coordinates (like the mode, §G.4.10). Physics analogy:
+mode = planet, gradient = gravity, typical set = orbit; at rest a satellite falls in; too little transverse
+momentum → falls in, too much → escapes, the right amount → stable orbit (conservative dynamics). Adding
+auxiliary momentum with the right probabilistic structure is HMC.
+**Links to us.** (i) Following the gradient alone **is the engine's MAP fit** — gradient ascent ends at the
+mode, outside the typical set (§G.4.12). Same JAX gradient, different use: an optimiser has *friction*
+(dissipative; loses energy and settles), HMC is *frictionless* (conserves energy, so falling inward builds
+speed that carries it past). Momentum optimisers sit in between. (ii) Gradient + noise (Langevin/MALA) is
+still a drifting random walk.
+**Why a momentum drawn from $\mathcal N(0,I)$ is automatically "the right amount" (my addition, standard
+Gaussian, not in Betancourt §3.1):** its component along the direction to the mode is exactly $\mathcal N(0,1)$,
+while its total size is ≈$\sqrt D$ ⇒ in high $D$ it is almost entirely **tangential**. And its kinetic energy
+$\tfrac12\|p\|^2\approx D/2$ equals the typical set's height above the mode in potential energy,
+$V-V_{\rm mode}\approx D/2$ (§G.4.12) — exactly the speed of a circular orbit at radius $\sqrt D$ in a
+quadratic potential. So random momentum lands near-circular orbits along the shell without tuning.
 
 ---
 

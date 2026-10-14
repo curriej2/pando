@@ -1,0 +1,46 @@
+{
+ "tree": 16,
+ "n": 25,
+ "rho": 0.1,
+ "theta": 0.3,
+ "setting": "const",
+ "Gam_T": 0.0,
+ "J_at_truth": -5590.479151494728,
+ "autodiff": 2679.07139773103,
+ "recorded_autodiff": 2679.07139773103,
+ "recorded_fd_h1e-5": 2679.7352913490613,
+ "tol_V5": 1e-05,
+ "err_definition": "|fd - autodiff| / max(|fd|, 1), as in V5",
+ "ladder": [
+  {
+   "h": 0.001,
+   "fd": NaN,
+   "rel_err_vs_autodiff": null
+  },
+  {
+   "h": 0.0001,
+   "fd": 2748.5189533490484,
+   "rel_err_vs_autodiff": 0.025267264587496084
+  },
+  {
+   "h": 1e-05,
+   "fd": 2679.7352913490613,
+   "rel_err_vs_autodiff": 0.00024774596960168416
+  },
+  {
+   "h": 1e-06,
+   "fd": 2679.078034361737,
+   "rel_err_vs_autodiff": 2.4772069427565454e-06
+  },
+  {
+   "h": 1e-07,
+   "fd": 2679.071458260296,
+   "rel_err_vs_autodiff": 2.2593374861901548e-08
+  },
+  {
+   "h": 1e-08,
+   "fd": 2679.0712581714615,
+   "rel_err_vs_autodiff": 5.209251834047941e-08
+  }
+ ]
+}

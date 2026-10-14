@@ -1949,7 +1949,101 @@ $d(\text{PreTX},\text{liver})=[E(10)-E(t)]+[E(45)-E(t)]$ is asymmetric and gives
 cells — a small generalisation of their own estimator to mixed sampling times.
 
 **⇒ NEXT (each its own proposal):** (1) Justin's call on the amended V5 / V8 follow-up to close the
-engine validation; (2) level-batched pruning; (3) ⭐ **the first dating study, simulator only** — what
+engine validation *(done 2026-10-12 except V5′ — session 25)*; (2) level-batched pruning; (3) ⭐ **the first dating study, simulator only** — what
 the dating posterior looks like at ~200 tips with Park-like missingness and a known dissemination day,
 i.e. do the intervals widen or narrow; (4) tree search; (5) heterochronous tips; (6) the joint
 editing/dropout fit that gates everything Park-calibrated.
+
+## 2026-10-12 — session 25: engine validation closeout (V8, V6 PASS; V5′ re-proposed); SciPhy assessed
+
+Started from the files + Tuva (16 episodes, nothing newer than session 24, no conflicts). Proposal for the
+closeout approved by Justin; full record `analyses/2026-10_likelihood-engine/README.md` "Session 25".
+**V8a PASS** — the engine's prior density, integrated, reproduces the simulator's `bds_G` to 1.3e-15 (360
+points), closing the link V8 had left implicit. **V8⁺ PASS** — 2,000 fresh trees at the cell that tripped
+(n 64, ρ 0.25, turnover 0.3) give deciles 0/1 at **+0.53/+0.35** vs −3.00/−3.03 at the library's 20 trees;
+worst |z| 2.55 over 55 statistics in 5 cells ⇒ chance. ⚠⚠ The old V8 rule was miscalibrated: at 20 trees
+$z\sim t_{19}$, so 1.46 chance trips were expected over 198 cells, not 0.53; observed SD of $z$ 1.058 vs
+$t_{19}$'s 1.057. Third instance of the 20-tree t-calibration defect (sessions 18, 21). **V6 PASS** — our
+engine equals SciPhy's own `SciPhyTreeLikelihood` (commit 2a49194, unmodified, BEAST 2.7.7, Java harness)
+to **1.4e-15 on 1,500 tape comparisons** with dropout/silencing/censoring off, blank tapes coded as observed
+blanks AND as missing; $\Lambda_T$ 1–8 edits/tape (full tapes up to 79%, blanks up to 47%); negative control
+(rates × 1.0001) detected at 1.6e-5. ⇒ our likelihood contains SciPhy's exactly.
+**⚠ V5′ NOT run**: the approved fixed step $h=10^{-4}$ cannot resolve the failing entry — from the recorded
+diagnosis it curves on a scale ≈3.7e-4 in $\Gamma_T$; probe: one-sided Richardson error 2.6e-3 at 1e-4,
+3.9e-11 at 1e-7, converging on autodiff. Gradient correct; my reference was wrong. Re-proposed (step ladder
+selected by adjacent-step agreement, never by agreement with autodiff).
+**SciPhy assessed for Justin** (no run on Park): its lacks, in order — no missing-data model (deletion to a
+complete submatrix), no depth-0 censoring (⇒ clock biased up after filtering), constant rate and
+composition, no gradients; its strengths we lack — topology search and a full tree posterior. Worth it as
+V6 (done) and as a simulator baseline later; low value on Park itself.
+⚠ Correction flagged in `sciphy_notes.md` "Comparison … Recommended sequence": "run SciPhy as-is on Park"
+is superseded. Then: optimisation vs sampling discussed at a high level (no compute).
+
+## 2026-10-12 — session 26: HMC overview; sampler alternatives assigned roles. NO COMPUTE
+
+Discussion with Justin (a deep dive of HMC is planned; only the overview given so far). Full record
+`notes/sciphy_notes.md` **§G.4**; engine programme **§7 "Sampling"**. Tuva: no HMC episodes.
+**HMC's place:** of three jobs — continuous posterior given topology, comparing discrete alternatives,
+topology uncertainty reaching the date — HMC does only the first. **Roles assigned** (Justin liked all):
+A Laplace + Pathfinder as HMC's front end (dense mass matrix for the rate–time ridge); B tempered SMC
+(evidence, multimodality, GPU via particle batching — unmeasured); C bridge sampling (model averaging
+over a finite topology candidate set, e.g. the $\lambda$-frontier); D PSIS-LOO over tapes from the
+per-tape $\ell_z$ array; E combinatorial SMC (exact prior proposals via the coalescent-point-process
+view of the BD prior); F HMC-within-Gibbs + MH topology moves. Rejected: SG-MCMC, ABC, nested
+sampling, Gibbs, Riemannian HMC, MALA.
+⚠ **Corrections flagged:** (i) §G.1's "~1,500×" HMC advantage assumes a well-conditioned target; on
+ours the condition number governs — idealisation, do not quote; the qualitative claim stands.
+(ii) My first answer said discrete comparisons need a marginal likelihood; most do not — one vs two
+founders is liver-clade monophyly under any topology-moving sampler, and rung choice / $\Lambda_{\rm pre}$
+are nested continuous parameters. (iii) §G.1's HMC symbols clash with the house register; replacements
+proposed (§G.4.1), awaiting Justin.
+⚠ No sampler fixes A5/A8 overconfidence — needs generalised Bayes or a cell-factor model.
+**Justin's question — does anything give more than plain MCMC besides speed?** For the posterior, no.
+In kind: marginal likelihoods (rarely needed, per (ii)); failure detection (divergences, $\hat k$) that
+random-walk MH lacks; and — the one thing plain MCMC *with topology moves* has over fixed-topology HMC
+— **clade support**. Fixed-topology NUTS is less code than random-walk MH here (engine is already a JAX
+log-density). **Justin's steer: quick results on the three dated clones while building the robust
+pipeline.** ⚠ Blockers found, none sampler-related: $\Lambda_{\rm pre}=0$ in the engine vs ~1.21
+edits/tape on Park; dated-clone cell sets recorded inconsistently (194–249 / 153–229 / Justin's
+153, 208, 229; barcoded cells in the delivered table, all samples, pre-filter: GCATTAGCGA-M2 221,
+GCATTAGCGA-M3 373, TTTGGAAACC-M3 240); Park's trees not on disk; parameter transforms unwritten.
+**(cont., same session)** Reference for the deep dive: Betancourt 2017, *A Conceptual Introduction to
+HMC* (`refs/hmc.pdf`), read in full; **its notation adopted** (Justin), house collisions subscripted
+(§G.4.1). Justin: posteriors should ultimately include topology ⇒ **HMC-within-Gibbs** explained and
+recorded (§G.4.9) — revises the settled "point-estimate topology" architecture (flagged in root
+CLAUDE.md, not yet replaced). ⚠ Correction flagged in the engine programme §3.1: the dissemination
+founder sits on the branch above the liver MRCA, not at it; with topology sampled the estimand is the
+liver-cell MRCA time. Justin wants the Gibbs mechanics revisited later.
+**(cont., 2026-10-13)** Betancourt §1.1 discussed (expectations invariant, densities not); principle
+recorded as **§G.4.10** with reporting rules (proposed). ⚠ Self-correction recorded: "optimising
+depends on shape" sharpened to "maximising a *density* does; maximising a *function* (MLE) does not —
+and the optimiser's coordinates never matter". Teaching figures `fig_coord_A_exp1.png` /
+`fig_coord_B_node.png` (engine analysis, `src/07`). Illustrative late node: MAP date 36.0 / 40.9 /
+42.6 d by ruler vs median 37.2 d in all; "average depth then invert Park's clock" 2.1 d early vs the
+mean date — ⚠ not checked against Park's procedure, no recorded number moves.
+**(cont., 2026-10-13)** Betancourt §1.2 (density × volume) explained three ways and recorded as
+**§G.4.11**; teaching figures `fig_volume_1_rings2d.png` (2-D rings: probability peaks at 0.5–1.5 SD,
+innermost ring 12%) and `fig_volume_2_shellsD.png` (peak at $\sqrt{D-1}$), `src/08`. Numbers checked
+against Monte Carlo.
+**(cont.)** Third §1.2 teaching figure `fig_volume_3_allcoords.png` (`src/09`): $p_c^D$ collapse (below
+1% at $D$=12/99/~1,700 for ±1/2/3 SD), one ordinary-looking $D$=400 draw 19.5 SD from the mode. Recorded
+in §G.4.11 with a reading caveat on the ±3 SD line.
+**(cont.)** Betancourt §1.3 judged covered by §G.4.11; §1.4 and the meaning of $dq$ recorded as
+**§G.4.12**, incl. a practical check for our runs (draws should sit ≈$D/2\pm\sqrt{D/2}$ nats below the
+MAP's log-posterior; hugging it = stuck at the mode).
+**(cont.)** Betancourt §2.2 discussed; six practical rules for our runs recorded as **§G.4.13** (posterior
+SD vs MCMC-SE; ESS per quantity; clade-probability MCMC-SE and switch counting; tail ESS for interval
+endpoints; MAP start must show the ≈$D/2$ drop; run length set by the slowest quantity, likely topology).
+**(cont.)** Betancourt §2.3 discussed; five candidate pinches in our posterior recorded as **§G.4.14**
+(Γ_T≈0 boundary curvature from V5 — candidate fix: sample log Γ_T, unverified; funnels; the rate–time
+ridge; short branches; the topology block's mode-hopping).
+**(cont.)** §2.3 funnel figure `fig_funnel_pathology.png` (`src/10`): healthy-looking RWM (37% acceptance)
+gives P(v<−3) 0.05–0.34 vs truth 0.159, split R̂ 1.08/1.16; non-centred with the same sampler 0.14–0.16,
+R̂ 1.00. Recorded in §G.4.14.
+**(cont.)** Betancourt §2.4 + scaling probes (scratch, Gaussian targets): RWM ≈2.5×D evaluations per
+independent draw vs HMC 3–18 gradients (D 10–1,000) ⇒ ≈117× fewer evaluations, ≈50× wall-clock at D=400
+given our gradient/likelihood cost ratio 2.4; elongation: RWM ∝ k², HMC ∝ k (k = SD ratio). Recorded as
+**§G.4.15** with what it does NOT justify (BEAST is not isotropic RWM; topology block unaffected).
+⚠ Flagged my earlier "κ vs κ^{1/2}" (§G.1 correction) as true only for κ a variance ratio — κ² vs κ for SD ratio.
+**(cont.)** Betancourt §3.1 recorded as **§G.4.16**: gradient alone = the engine's MAP fit (dissipative);
+HMC = the same gradient, frictionless; why N(0,I) momentum is nearly tangential with orbit-matching energy.

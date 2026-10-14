@@ -10,6 +10,13 @@ finite-difference comparison at a high-curvature boundary point (diagnosed: step
 correct) and V8 one deterministic library cell; V1–V4 and V7 PASS. Amended V5 + a V8 follow-up
 proposed to Justin; level-batched pruning proposed for gradient scaling; V6 (SciPhy Java) not done.
 Findings: README.md "Session 22". Write-up: writeup/likelihood_engine.tex.**
+✅ **2026-10-12 (Session 25) — closeout: V8 and V6 PASS; V5′ re-proposed.** V8a (engine prior density
+integrates to `bds_G`, 1.3e-15) and V8⁺ (2,000 fresh trees: the failing cell's deciles −3.00/−3.03 → +0.53/+0.35,
+worst |z| 2.55 of 55) ⇒ the trip was chance, and the old V8 rule was miscalibrated ($t_{19}$, not normal).
+**V6 PASS: our engine = SciPhy's own Java likelihood to 1.4e-15 on 1,500 tapes**, blank coded either way;
+negative control (rates × 1.0001) detected at 1,600× tol. **V5′ held:** a probe showed the approved step
+$h=10^{-4}$ cannot resolve the failing entry (curvature scale ~3.7e-4); step-ladder version awaits Justin.
+README "Session 25".
 
 **⭐⭐ DIRECTION SET (2026-10-11, Justin): likelihood-based reconstruction with POSTERIOR DATING is
 the method to invest in — see "THE PROGRAMME (2026-10-11)" at the end of this file, and the Park
@@ -500,7 +507,12 @@ The current pipeline is a chain of point estimates, each arrow discarding uncert
 CI) → liver clade (asserted) → consensus genotype (threshold 0.6–0.8) → mean depth → day (frozen
 clock). The reported interval covers only the last two arrows.
 
-1. ⭐ **The dissemination time becomes a PARAMETER, not a derived quantity.** The unknowns are node
+1. ⚠ **CORRECTED 2026-10-12 (`notes/sciphy_notes.md` §G.4.9):** the founder is a cell on the branch
+   *above* the liver cells' MRCA, not that node; the MRCA is later. Without a location model the
+   posterior brackets dissemination between the MRCA's parent and the MRCA; with topology sampled the
+   estimand must be "time of the liver-cell MRCA" (always defined), not "the liver-clade node". The
+   text below is kept as written.
+   ⭐ **The dissemination time becomes a PARAMETER, not a derived quantity.** The unknowns are node
    times $t_v$ (ratio coordinates $x$). The metastatic founder **is a node**, so the dissemination day
    is $t_v\times T$ and its posterior is read directly. **The entire middle of that chain disappears:
    no ancestral genotype, no consensus threshold, no clock inversion.**
@@ -607,3 +619,77 @@ between "the founder" and "the MRCA of the sampled liver cells" (§H.9.7).
    fragility lives (52 days per edit/tape at day 34) and where a posterior most changes the claim.
 3. Does anyone question the **single-founder** call? If so, the frontier's false-negative rate
    (Tier 2c) is the answer and nothing else is.
+
+## 7. Sampling (2026-10-12, session 26 — discussion only, no compute)
+
+Full record: `notes/sciphy_notes.md` **§G.4** (sampler notation proposal, the three jobs, expected
+geometry problems, method roles A–F, what no sampler fixes, the correction to §G.1's "~1,500×").
+
+**Roles (Justin liked all of them; none approved for building).** HMC/NUTS is the workhorse for the
+continuous posterior given a topology. Around it: **A** Laplace + Pathfinder (inits, dense mass matrix
+for the rate–time ridge, multimodality detection) · **B** tempered SMC with HMC moves (marginal
+likelihood, multimodality, may use the GPU by batching particles — unmeasured) · **C** bridge sampling
+from HMC draws (Bayesian model averaging over a finite candidate set of topologies, e.g. the
+$\lambda$-frontier ladder) · **D** PSIS-LOO over tapes from the per-tape $\ell_z$ array (model
+comparison, problem-tape flags) · **E** combinatorial SMC for topology (prior proposals exact under the
+coalescent-point-process view of the BD-sampling prior) · **F** HMC-within-Gibbs with MH topology moves
+(BEAST's hybrid; closest prior art).
+⚠ **None of them fixes A5/A8 overconfidence** (posterior too narrow because tapes share cell factors);
+that needs generalised Bayes ($\eta<1$, calibrated) or a cell-factor model. A tape bootstrap misses it too.
+⚠ **Corrected same day:** most of our "discrete" questions do NOT need a marginal likelihood — one vs
+two founders is the posterior probability of liver monophyly under any topology-moving sampler;
+rung 1 vs 2 and $\Lambda_{\rm pre}$ are nested continuous parameters. Evidence is needed only for
+non-nested comparisons or to weight a fixed candidate set of topologies.
+
+**Justin's steer (2026-10-12): get results quickly on the three dated clones while investing in the
+robust pipeline; plain MCMC acceptable even if slow.** Recommendation recorded (§G.4.7): the quickest
+route is **fixed-topology NUTS** (NumPyro/BlackJAX on the engine's JAX log-density, automatic tuning)
+— *less* code than hand-built random-walk MH, which needs BEAST-style operators for the ridges. What
+plain MCMC *with topology moves* adds that fixed-topology HMC cannot is **clade support** on the liver
+clade — the reviewers' likely question; that is custom code under either sampler (F, or WLB).
+
+**⚠ Blockers for the quick route — none are about the sampler. Each needs resolving before a Park run:**
+1. **$\Lambda_{\rm pre}$ is fixed at 0 in the engine**, but on Park the clone founder (day-3 bottleneck)
+   already carried $E(3)=1.21$ edits/tape, ~25% of realised depth (§H.9.6). Dating with it at 0 biases
+   every node time. Small engine change: extra editing amount on the stem with a prior on $[0,1.21]$.
+2. **Which cells form each tree is not pinned.** The record holds three inconsistent sets: "194–249
+   tips" (root CLAUDE.md, this file §2, log session 24); "153–229 tips" (§H.9.12, GCATTAGCGA-M2 = 153
+   tumour cells); Justin's **153 / 208 / 229**. Barcoded cells in the delivered table (all samples, before
+   the edit-table intersection, the ≥20-tape filter and any tumour-cell annotation): GCATTAGCGA-M2 **221**,
+   GCATTAGCGA-M3 **373**, TTTGGAAACC-M3 **240**. A cheap probe can reconcile; the mapping of 208/229 to
+   clones is unconfirmed.
+3. **Park's published trees are not on disk** (searched `/data1/choij10/justin`, 2026-10-12). Fixed
+   topology needs either their trees (ask Jihye Park) or our own starting tree (NJ on prefix distance;
+   our tree search is not built).
+4. **Parameter transforms + log-Jacobians** for every free non-time parameter are not written (§G.4.3),
+   and the per-clone free/fixed table for Park is undecided — with ~200 cells, per-tape $\beta_z$ (166)
+   and per-cell $\alpha_c$ may be weakly identified against silencing; priors needed.
+5. **Calibration gate:** run the identical sampler on a simulated ~200-tip clone with a known
+   dissemination day first (build-queue item 3) — same code, tells us whether intervals are honest.
+6. **Cost:** ~0.5 s per gradient at $k$=166 (assumed linear in $k$ from the measured 0.094 s at $k$=30)
+   ⇒ ~18 h per NUTS chain by arithmetic; chains run in parallel on separate cores. Level-batched
+   pruning would cut this.
+
+**Addendum (2026-10-12, later the same session):** Justin — posteriors should ultimately include
+topology ⇒ **HMC-within-Gibbs** (one NUTS transition on $(\mathbf h,\theta)$ given $\tau$, then $K$ MH
+topology moves given $(\mathbf h,\theta)$). Mechanics, make-or-break points, cost, and the §3.1
+estimand correction: `notes/sciphy_notes.md` **§G.4.9**. New engineering items it implies: partial
+re-pruning for topology moves; a check that the tree prior's normaliser is topology-independent.
+
+**Addendum 2 (2026-10-13): HMC deep dive (Betancourt 2017), implications for building the sampler.**
+Records: `notes/sciphy_notes.md` §G.4.10–G.4.16. None approved for building; each returns as a proposal.
+- **Reporting (§G.4.10, rules proposed, awaiting Justin):** clade probabilities; posterior medians and
+  equal-tailed intervals for dates (not HPD — coordinate-dependent); every derived quantity computed per
+  draw; the point tree labelled "mode per unit calendar height"; MAP-vs-median gap reported as a diagnostic.
+- **Run diagnostics to build in (§G.4.13–14):** ≥4 chains from dispersed starts incl. one- AND
+  two-founder trees; split $\hat R$ (≤1.01) on every reported quantity, the log-posterior and the
+  liver-monophyly indicator; bulk and tail ESS per quantity; switch count of the monophyly indicator;
+  MAP-start chains must show the log-posterior falling ≈$D/2$ nats in warm-up; divergences (continuous
+  block only).
+- **Parameterisation candidates (§G.4.14, unverified):** sample $\log\Gamma_T$ (the V5 boundary curvature at
+  $\Gamma_T=0$); non-centred form for any fitted spread ($r_z$, $\alpha_c$).
+- **Justification wording (§G.4.15):** joint random-walk proposals cost O(D) per independent draw and
+  O(k²) along elongated directions; HMC ≈117× fewer evaluations / ≈50× wall-clock at $D$=400 on an
+  ideal Gaussian with our gradient/likelihood cost ratio (2.4). ⚠ Not "50× faster than BEAST" (BEAST uses
+  one-node operators with partial recomputation); ⚠ the topology block is untouched by this argument.
+- Teaching figures and probes: `src/07`–`11`, `figures/fig_coord_*`, `fig_volume_*`, `fig_funnel_pathology.png`.

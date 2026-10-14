@@ -65,3 +65,6 @@ analyses/*/results/preblock/
 analyses/2026-09_simulator/results/dropout_library/
 analyses/2026-09_simulator/results/silencing_library/
 analyses/2026-09_simulator/results/dropout_validation/
+
+# ---- Tuva local index / session database (never commit) ----
+.entropy/

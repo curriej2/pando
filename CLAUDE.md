@@ -113,7 +113,7 @@ ENGRAM extension can write $\xi_i(t)$, $\xi_i(\text{signal})$. Swept through §0
 
 **Read `notes/sciphy_notes.md` by section — it is long.** Section map: §0 DNA Typewriter molecular
 background · §1a–1c SciPhy model, transition probabilities, likelihood · §2/§D/§G inference
-background · §D.4/§D.4b perfect-phylogeny route and the Park compatibility protocol · §E–§F design
+background (**§G.4 = samplers + the Betancourt HMC deep dive, 2026-10-12/13**) · §D.4/§D.4b perfect-phylogeny route and the Park compatibility protocol · §E–§F design
 notes · §H literature (§H.6 = full Mulberry & Stadler close read; §H.7 LAML/ConvexML/LAML-Pro;
 **§H.8 the four likelihoods side by side + engine decisions 1–7**; **§H.9 = full Park, Chang et al.
 2026 METHODS close read — prefix parsimony, the $\lambda$-frontier, the recorder clock and its
@@ -134,7 +134,7 @@ already back at $p=1/1001$ in 5/5 arms. ⚠ Two orthogonal follow-ups are specif
 `--lam 4` re-run with a size-stratified null (the floor, not $B$, is what hides weaker events), and
 the **symbol-depletion test** of row A9's untested *trans* limb. |
 
-| `2026-10_likelihood-engine` | Exact, differentiable per-clone likelihood (SciPhy prefix chains + silencing + dropout + censoring) as the core of our own tree reconstruction. | **Design settled (§H.8, decisions 1–7); built 2026-10-06 (`src/01`–`04`, env `envs/pando-jax`); write-up `writeup/likelihood_engine.tex`. Validation FAIL by rule on two check-set issues (V5 FD step at a boundary point — engine gradient correct; V8 one library cell); V1–V4 exact, V7 PASS. Awaiting Justin's call on the amended checks.** ⭐⭐ **DIRECTION SET 2026-10-11 (Justin): likelihood reconstruction with POSTERIOR DATING is the method to invest in** — see "THE PROGRAMME (2026-10-11)" in its CLAUDE.md and the Park methods close read `notes/sciphy_notes.md` **§H.9**. Driver: reviewers want more support for the reconstruction algorithm (comments not yet seen). Tier 1 (support values on the three dated trees — engine can do this NOW at 194–249 tips) and Tier 2 (ground-truth benchmark of *their* pipeline on the simulator) run in parallel. |
+| `2026-10_likelihood-engine` | Exact, differentiable per-clone likelihood (SciPhy prefix chains + silencing + dropout + censoring) as the core of our own tree reconstruction. | **Design settled (§H.8, decisions 1–7); built 2026-10-06 (`src/01`–`04`, env `envs/pando-jax`); write-up `writeup/likelihood_engine.tex`. Validation FAIL by rule on two check-set issues (V5 FD step at a boundary point — engine gradient correct; V8 one library cell); V1–V4 exact, V7 PASS.** ✅ **2026-10-12 closeout: V8 PASS (2,000 fresh trees; the trip was chance, the old rule miscalibrated), V6 PASS — our engine = SciPhy's own Java likelihood to 1.4e-15 on 1,500 tapes (base model). Only V5′ open (re-proposed: the approved step could not resolve the boundary entry).** ⭐⭐ **DIRECTION SET 2026-10-11 (Justin): likelihood reconstruction with POSTERIOR DATING is the method to invest in** — see "THE PROGRAMME (2026-10-11)" in its CLAUDE.md and the Park methods close read `notes/sciphy_notes.md` **§H.9**. Driver: reviewers want more support for the reconstruction algorithm (comments not yet seen). Tier 1 (support values on the three dated trees — engine can do this NOW at 194–249 tips) and Tier 2 (ground-truth benchmark of *their* pipeline on the simulator) run in parallel. |
 
 | `2026-09_simulator` | Build the forward simulator (birth–death tree → sequential editing → dropout) for the homoplasy null and the design sweep. | **Tree layer BUILT, validated, costed; library COMPLETE (1,870 cells, 37,380 trees, zero faults).** Editing-layer theory in §S4/§S4.9. ⭐⭐ **Switch detectability MEASURED (2026-09-24, Fig S4): at $k=30$ a lineage-specific switch is callable only if long ($\ge$1–2 edits/tape), strong ($\ge$15×) and early (first ~60% of $T$), in clades of 2–5 cells; branch-level timing costs little ⇒ tree side not the bottleneck.** Figs S1 (method), S3 (pull of the present), S4 and **S5 a–d (editing layer illustrated, 2026-09-28; the collision-vs-signal-share curve deferred to the homoplasy test)** built; LaTeX write-up in `writeup/` covers **both layers** (`simulator_figures.tex` + `editing_layer.tex`, 24 pp). ⭐ $L(t)$ = independent records of time $t$ — tree shape sets which timepoints are recorded well, survivorship sets whose history is. ✅ **Editing layer BUILT and VALIDATED (2026-09-27, `src/14`/`src/15`): PASS, 219 closed-form cells, worst $|z|=2.67$, 0 of $1.9\times10^8$ hard-assertion violations; tapes empty at the clone founder ($\Lambda_{\rm pre}=0$).** ✅ **Dropout rung 1 BUILT (2026-09-30, `src/17`–`21`): validation PASS (after a disclosed FAIL traced to my check set, not the generator), library of 27,000 datasets built.** ⚠⚠ Derived + verified in the model: depth-0 censoring makes observed missingness heritable — may inflate the Pre-TX silencing numbers; unmeasured on Park. ✅ **Dropout rung 2 BUILT (2026-10-01, `src/22`/`23`): heritable silencing as complete Dollo loss, knob = target silenced fraction $\bar H$ with timing $\zeta_0$; validation PASS at the re-run seed (worst |z| 2.79, 0 hard violations, $\bar H=0$ bit-identical to rung 1); rung-2 library BUILT the same day (30 cells × 21 settings, $\bar H$ 0–0.33 × const/early/late, 134 MB, 0 violations) (§S6).** State layer not started. ⚠ Editing and dropout must be fitted jointly, which is why no Park-calibrated run has been made. |
 
@@ -144,6 +144,8 @@ the **symbol-depletion test** of row A9's untested *trans* limb. |
 - SciPhy's editing model, transition probabilities, likelihood, prefix/lcp structure, Felsenstein
   pruning (§1a–1c).
 - Architecture decision: **point-estimate topology + full posterior on continuous parameters** (§F.3, §H.2).
+  ⚠ **Under revision 2026-10-12 (Justin):** posteriors should ultimately include topology ⇒ HMC-within-Gibbs
+  (NUTS for heights/parameters + MH topology moves), `notes/sciphy_notes.md` §G.4.9. Fixed topology stays the quick first step.
 - **The A1–A9 table** of SciPhy assumptions vs molecular reality — the master list of extension
   points, referenced throughout as "row A*n*".
 - Mulberry & Stadler 2026, every equation (§H.6), incl. three findings not in the paper.
@@ -265,6 +267,29 @@ the **symbol-depletion test** of row A9's untested *trans* limb. |
    events $\le10$). Threshold-independent claims that survive: the 118–2,522× null comparison,
    $q\le1.9\times10^{-4}$ per event, $\hat\pi$ median 1.000 vs expected 0.11–0.41. Full audit in
    README "How events are actually called".
+0-SAMPLING. **⭐ 2026-10-12 (session 26) — SAMPLER ROLES SETTLED IN DISCUSSION; NO COMPUTE.**
+   `notes/sciphy_notes.md` **§G.4**; engine programme **§7 "Sampling"**. NUTS = workhorse for the
+   continuous posterior given a topology; complements A–F (Laplace/Pathfinder, tempered SMC, bridge
+   sampling, PSIS-LOO over tapes, combinatorial SMC, HMC + topology moves) have assigned roles.
+   ⚠ None fixes A5/A8 overconfidence (generalised Bayes $\eta<1$ or a cell-factor model does).
+   ⚠ §G.1's "~1,500×" HMC advantage is an idealisation — do not quote.
+   **Justin's steer: quick results on the three dated clones first; robust pipeline in parallel.**
+   Quickest route = fixed-topology NUTS, gated on a simulated ~200-tip clone. ⚠ **Blockers (not
+   sampler-related):** $\Lambda_{\rm pre}$ fixed at 0 in the engine (Park's founder carried ~1.21
+   edits/tape); the dated clones' cell sets are recorded inconsistently (**194–249 below vs 153–229 in
+   §H.9.12 vs Justin's 153/208/229** — unreconciled); Park's trees are not on disk; parameter
+   transforms/Jacobians unwritten.
+   **⭐ HMC deep dive (2026-10-12/13), Betancourt 2017 `refs/hmc.pdf` step by step — his notation
+   adopted (§G.4.1; colliding house symbols get subscripts). Done: §1–§3.1 → notes §G.4.10–G.4.16; next §3.2.**
+   Takeaways to keep: report coordinate-free summaries (clade probabilities; medians + equal-tailed
+   intervals for dates; derive per draw) — §G.4.10, rules *proposed*; run rules (posterior SD ≠ MCMC-SE,
+   ESS per quantity, monophyly-indicator switch counting, tail ESS, MAP start must drop ≈D/2 nats) —
+   §G.4.13; candidate pinches incl. Γ_T≈0 (try sampling log Γ_T, unverified) — §G.4.14; **HMC ≈50×
+   cheaper than joint random-walk MH at D=400 on an ideal target (checked), but the topology block stays
+   random-walk MH and is the likely bottleneck** — §G.4.15. ⚠ My "κ vs κ^½" (§G.1 correction) holds only
+   for κ a variance ratio; κ² vs κ for SD ratio. Teaching figures: engine `figures/fig_coord_*`,
+   `fig_volume_*`, `fig_funnel_pathology.png` (`src/07`–`11`).
+
 0-NOW. **⭐⭐ 2026-10-09/11 — PARK METHODS RE-READ FRONT-TO-BACK; TIER 3 CHOSEN. NO COMPUTE.**
    Close read: `notes/sciphy_notes.md` **§H.9** (13 subsections). Programme:
    `analyses/2026-10_likelihood-engine/CLAUDE.md` "THE PROGRAMME (2026-10-11)". Log: session 24.
@@ -272,7 +297,7 @@ the **symbol-depletion test** of row A9's untested *trans* limb. |
    **not been seen**; three questions to put to them are listed in the programme §6.
    **⭐⭐ Justin's decision: the destination is likelihood reconstruction with POSTERIOR DATING.**
    Tier 1 = support values on the three dated trees (the engine can do this **now** — they are
-   **194–249 tips**, 0.039 s likelihood / 0.094 s gradient at $n$=210, $k$=30); Tier 2 = ground-truth
+   **194–249 tips** ⚠ *(inconsistent with §H.9.12 and Justin's 153/208/229 — see 0-SAMPLING)*, 0.039 s likelihood / 0.094 s gradient at $n$=210, $k$=30); Tier 2 = ground-truth
    benchmark of *their* pipeline on the simulator; Tier 3 = the investment.
    ⭐ **The whole single-founder claim is ONE clade** — a request for reconstruction support here is
    functionally a request for support on the liver-clade node plus the few whose depth sets the date.
