@@ -1,6 +1,6 @@
 # likelihood engine — findings
 
-## Session 26 (2026-10-12/13) — sampler discussion; HMC deep dive (Betancourt §1–§3.1); teaching figures
+## Session 26 (2026-10-12 → 10-20) — sampler design; HMC deep dive (Betancourt §1–§6, complete); teaching figures; implementation handoff
 
 No scientific run. HMC deep dive under way (Betancourt 2017, `refs/hmc.pdf`, his notation); records in
 `notes/sciphy_notes.md` §G.4 (sampler roles; HMC-within-Gibbs §G.4.9; reporting §G.4.10; Betancourt
@@ -9,6 +9,49 @@ random-walk Metropolis ≈2.5×D evaluations per independent draw vs HMC 3–18 
 (≈117× fewer at D=400, ≈50× wall-clock at our gradient/likelihood cost ratio); along an SD ratio k, RWM ∝ k²,
 HMC ∝ k. *Reading rule: evaluations per independent draw — fewer is better; the ratio is the speed-up on an
 ideal target, not against BEAST's one-node operators.*
+**Phase-plane figure** (`src/16_fig_phase_plane.py`, `figures/fig_hmc_phase_plane.png`, 2026-10-19) — Hamilton's
+equations as walking the contours of $H$: Gaussian circles with rotated-gradient arrows, the kick/drift
+staircase, a lopsided ($\log$-Exp) posterior's egg-shaped contours, the projected $q$ trace across momentum
+redraws, and the kept draws against the target (mean −0.572 vs −0.577). *Reading rule: arrows tangent to
+contours = density kept; the squares in panel d are the samples.*
+**Why-posterior figure** (`src/17_fig_why_posterior.py`, `figures/fig_hmc_why_posterior.png`) — one orbit's U-shaped
+dwell, the Rayleigh spread of orbit sizes, the stacked U's summing to the bell, head-count × dwell time (the
+fraction of orbits reaching $q$ is $e^{-q^2/2}$; average dwell among them constant at 0.399), and one kept
+endpoint per trajectory matching the target. *Reading rule: c — layers sum to the black curve; d — the flat
+lower line means the posterior's shape is all head-count.*
+**Swing figure** (`src/18_fig_swings.py`, `figures/fig_hmc_swings.png`) — swing size = pull-back + push; the push is
+the same N(0,1) wherever the chain sits (SD 0.999 near vs far) while swing size differs (median 0.73 vs 2.08);
+chains from $q_0=4$ fall in within one or two transitions; 100-D Gaussian at equal cost (3,000 evaluations):
+lag-1 correlation 0.993 random walk vs 0.295 HMC. *Reading rule: d — the flatter, faster-crossing trace
+explores more per unit cost.*
+**Mass-matrix figure** (`src/19_fig_mass_matrix.py`, `figures/fig_hmc_mass_matrix.png`) — same-cost trajectories under
+$M=I$ / diagonal / dense on an elongated valley and a tilted ridge, the rescaled/whitened views, warm-up
+windows learning $M$ (step size 0.23 → 0.85) and the adapted widths read back off $M$ (within ≈10%).
+*Reading rule: rows 1–2 — longer travel along the valley for the same cost = better $M$; h — blue bars
+matching grey = $M$ has learned the posterior's widths.* ⚠ A fixed trajectory length with a learned $M$
+returned to its start (sampling SD 1.91 vs 6) until jittered — see notes §G.4.27.
+**Leapfrog figure** (`src/20_fig_leapfrog.py`, `figures/fig_hmc_leapfrog.png`) — one annotated leapfrog step showing
+where $\epsilon$ enters (½ε per kick, ε per drift), the same time at two step sizes, Euler spiral vs leapfrog loop
+(energy 0.5→114 vs a bounded band), the stability limit ($\epsilon\omega<2$) and a divergence when stiffness
+changes. *Reading rule: c/d — staying on the dashed contour / near 0.5 = accurate; e/f — a curve that
+shoots up = a divergence.*
+**NUTS-selection figure** (`src/21_fig_nuts_selection.py`, `figures/fig_hmc_nuts_selection.png`) — pick probabilities ∝ $e^{-H}$
+on one trajectory; the crowd test (one transition from an exactly-correct crowd, ε = 1.2: SD 1.002 with
+$e^{-H}$ weights, 1.131 uniform, 1.209 endpoint uncorrected; truth 1); correlation of successive samples vs
+trajectory length (endpoint rule ±1 at half/full swings; whole-trajectory pick ≈0 beyond ¾ swing). *Reading
+rule: b — only the curve that matches black is a valid rule; c — closer to 0 is better.* ⚠ A fourth panel
+("fraction of transitions that stay put") was dropped: it contradicted my claim that re-picking the start is
+rare (notes §G.4.32).
+**Shadow-landscape figure** (`src/22_fig_shadow.py`, `figures/fig_hmc_shadow.png`) — leapfrog (ε = 0.9) lies exactly on the
+swing of a wider, shallower valley (shadow energy conserved to 1.7×10⁻¹⁵; turning point 1.442 → 1.498); the $e^{-H}$
+weight equals true ÷ shadow density at each position; uniform pick SD 1.117 (shadow 1.120) vs $e^{-H}$ pick 0.996.
+*Reading rule: c — every point on the curve means the weight depends only on position; d — only the blue histogram
+matches the true posterior.*
+**Probes recorded in the notes, not as figures (all scratch, seconds):** §4.1 E-BFMI ≈1.0 Gaussian vs 0.72 / 0.51
+Student-t (§G.4.26); §5.1 Euler drift 0.5 → 114 vs leapfrog error ∝ ε², stability limit εω < 2 (§G.4.29); §5.2
+uncorrected bias SD 1.248 → 1.008 corrected, ΔH ∝ √D (§G.4.30); §5.3 efficiency peaks at acceptance ≈0.65–0.85
+(§G.4.35); §6 HMC on the funnel: 3 divergences in 6,000 with P(v<−3) 0.066 vs 0.159, non-centred 0 and 0.152
+(§G.4.36). **Implementation handoff: CLAUDE.md §8.**
 **Teaching figures** (Justin's request; `src/07_fig_coordinates.py`, seconds, login node):
 `figures/fig_coord_A_exp1.png` — $\lambda\sim$Exp(1) summarised in $\lambda$ and $\log\lambda$;
 `figures/fig_coord_B_node.png` — an **illustrative** late node, $h\sim$Beta(1.5, 6), not fitted,

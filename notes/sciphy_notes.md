@@ -24,7 +24,12 @@
 >   coordinate-dependent summaries (6 proposed rules) · **§G.4.11–G.4.16 Betancourt 2017 deep dive**
 >   (`refs/hmc.pdf`; his notation adopted, §G.4.1): density × volume, the typical set and $dq$, chain
 >   phases + run rules, pathologies + where our posterior could pinch, why random walks scale badly
->   (≈50× at $D$=400, checked), gradient vs momentum. Teaching figures in `analyses/2026-10_likelihood-engine/figures/`.
+>   (≈50× at $D$=400, checked), gradient vs momentum · **§G.4.17–G.4.36 (2026-10-14/20)**: phase space and
+>   Hamilton's equations in swing/spring language (§G.4.17–23, every equality classified §G.4.22), topology
+>   as continuous (§G.4.24), HMC-within-Gibbs revisited (§G.4.25), energy levels/E-BFMI (§G.4.26), mass matrix
+>   (§G.4.27), NUTS trajectory length (§G.4.28), the ODE system + leapfrog (§G.4.29), accept/reject and the
+>   $e^{-H}$ pick incl. the shadow-landscape explanation (§G.4.30–34), step-size tuning (§G.4.35), diagnostics
+>   and **the run dashboard (§G.4.36)**. Teaching figures in `analyses/2026-10_likelihood-engine/figures/` (`src/07`–`22`).
 > - Architecture decision: **point-estimate topology + full posterior on continuous parameters** —
 >   defensible, and already published in this literature (§F.3, §H.2).
 > - **The A1–A9 table** of SciPhy assumptions vs. molecular reality — the master list of extension
@@ -2892,6 +2897,553 @@ while its total size is ≈$\sqrt D$ ⇒ in high $D$ it is almost entirely **tan
 $\tfrac12\|p\|^2\approx D/2$ equals the typical set's height above the mode in potential energy,
 $V-V_{\rm mode}\approx D/2$ (§G.4.12) — exactly the speed of a circular orbit at radius $\sqrt D$ in a
 quadratic potential. So random momentum lands near-circular orbits along the shell without tuning.
+
+### G.4.17 Betancourt §3.2 (phase space, $H=K+V$, Hamilton's equations), built from a 1-D example (2026-10-14)
+
+*Betancourt notation; his $t$ is the fictitious integration time, not calendar time $t_{\rm cal}$.*
+**Pieces.** (1) Phase space: each $q_n$ gets a momentum $p_n$ ($D\to2D$). (2) Canonical density
+$\pi(q,p)=\pi(p\mid q)\,\pi(q)$ — integrating out $p$ returns $\pi(q)$ exactly, so momentum is scaffolding.
+(3) Energy $H(q,p)=-\log\pi(q,p)=K(p,q)+V(q)$ in nats: $V=-\log\pi(q)$ is fixed by the model (for us
+$V=-J$, Jacobian included); $K=-\log\pi(p\mid q)$ is ours to choose (Gaussian: $K=\tfrac12p^\top M^{-1}p$).
+(4) Hamilton's equations $\dot q=\partial H/\partial p=\partial K/\partial p$, $\dot p=-\partial H/\partial q=-\partial K/\partial q-\partial V/\partial q$.
+**Worked example** ($\pi(q)\propto e^{-q^2/2}$, $K=p^2/2$): $\dot q=p$, $\dot p=-q$ ⇒
+$q(t)=q_0\cos t+p_0\sin t$, $p(t)=p_0\cos t-q_0\sin t$ — circles of radius $\sqrt{2H}$ in the $(q,p)$ plane.
+**Readings.** (a) *The gradient changes velocity, not position* — $\dot p=\nabla\log\pi(q)$ is a force; position
+follows momentum. Gradient ascent ($\dot q=\nabla\log\pi$) stops at the mode; Hamiltonian flow passes
+through it because the force is 0 there but the velocity is not. (b) *Energy is conserved*:
+$\dot H=\frac{\partial H}{\partial q}\frac{\partial H}{\partial p}-\frac{\partial H}{\partial p}\frac{\partial H}{\partial q}=0$ — $V$ and $K$ trade; lower in the
+potential ⇔ faster. (c) *Volume is preserved* (Liouville): divergence of the flow
+$\frac{\partial\dot q}{\partial q}+\frac{\partial\dot p}{\partial p}=\frac{\partial^2H}{\partial q\partial p}-\frac{\partial^2H}{\partial p\partial q}=0$; gradient ascent has
+divergence $\nabla^2\log\pi<0$ near the mode and compresses (a unit-width blob of the 1-D Gaussian
+shrinks to $e^{-t}$: 0.135 at $t$=2). (b)+(c) ⇒ the flow carries the density $e^{-H}$ unchanged, so draws
+of $\pi(q,p)$ stay draws of $\pi(q,p)$ — the §2.1 invariance condition, which is why HMC can be exact.
+(d) *Momentum is dual*: under $q'=cq$, $p'=p/c$, so $dq\,dp$ is unchanged — the canonical density and
+the flow's *validity* do not depend on the parameterisation. ⚠ Its *efficiency* does (fixed $K$/$M$ in
+chosen coordinates) — hence the funnel's non-centred fix (§G.4.14).
+**Checks (2026-10-14, Monte Carlo):** one orbit spends 1/3 of its time with $|q|<R/2$ (0.3326; arcsine
+law); start $q_0\sim\pi$, draw $p_0\sim N(0,1)$, flow a random time ⇒ $q$ mean −0.0006, SD 0.9985 (target
+0, 1); energy drift $7\times10^{-15}$; flow area factor exactly 1. Each orbit visits $q$ non-uniformly,
+but averaging over energies chosen by the momentum draw recovers $\pi$ exactly.
+**For us:** $q=(x,\tilde\theta)$; $V(q)=-J(q)$ and $\partial V/\partial q=-\nabla J$ (JAX, validated) are the
+*only* model-specific inputs; topology is not in phase space (HMC-within-Gibbs). Not yet covered: exact
+trajectories are unavailable for our $V$ (leapfrog, §5), how long to flow (§4.3), choice of $M$ (§4.2).
+
+### G.4.18 Betancourt §3.3 (the idealised Hamiltonian transition), worked by hand (2026-10-14)
+
+**One transition = lift, flow, project:** draw $p\sim\pi(p\mid q)$; follow Hamilton's equations for time
+$T$, $(q,p)\to\phi_T(q,p)$; drop $p$. (Justin found §3.2 hard to see in the equations; these traces were
+built for that. 1-D standard Gaussian, $V=q^2/2$, $K=p^2/2$.)
+**(A) the equations as an update rule** — kick $p\leftarrow p-\delta t\,\partial V/\partial q$, drift $q\leftarrow q+\delta t\,p$,
+$\delta t$=0.3, from $(q,p)=(1.2,-0.8)$: $q$ 1.200 → 0.852 → 0.427 → −0.036 (passes the mode at full
+speed, $p$=−1.54) → … → −1.555 (turns round, $p$≈0) → −1.505; $H$ wobbles 1.04–1.39 because the steps are
+finite (exact flow keeps it fixed; §5).
+**(B) six transitions, exact flow, $T$=1** (seed 3): $q$ = 1.200 → 2.366 → −0.872 → −0.119 → −0.542 → −0.674
+→ −0.546; energies 2.80 / 6.06 / 0.47 / 0.17 / 0.25 / 0.25 — each momentum draw picks a new level.
+**(C) start in the tail** ($q_0$=10, $T=\pi/2$): $H$=50.2 → flow ends at $q$=−0.65 with $K$=50.0, which the
+momentum redraw throws away ⇒ the chain is in the bulk after one transition. *Resampling momentum is
+friction between trajectories; there is none within one.* This is Betancourt's "rapidly fall in toward the
+typical set".
+**(D) flow time matters** (exact: $q_{\rm new}=q\cos T+p\sin T$ ⇒ lag-1 correlation $=\cos T$; Monte Carlo
+agrees to 0.003): $T$=0.3 → 0.955, ≈44 transitions per independent draw (a random walk again); $T$=1 → 0.54,
+3.4; $T=\pi/2$ → 0, **one transition = one independent draw**; $T$=2.5 → −0.80 (antithetic); ⚠ $T=\pi$ → −1:
+$q\to-q$ whatever $p$, the chain only ever visits $\pm q_0$ (chain SD 0.35 vs target 1) — **valid
+transition, broken exploration**. ⇒ why $T$ is tuned and jittered (§4.3).
+**For us:** $q$ ≈ 200–800 numbers; one transition = draw that many momenta, ~tens of leapfrog steps (one
+engine gradient each), drop $p$, then (HMC-within-Gibbs) the topology moves.
+
+### G.4.19 Why Hamilton's equations: "walk along the contours of $H$" (2026-10-19)
+
+*Second pass on §3.2–3.3 for Justin, deriving the equations as the answer to a design problem rather
+than quoting physics.*
+**Design problem.** Find a deterministic motion of $(q,p)$ that maps draws of $\pi(q,p)\propto e^{-H}$ to
+draws of $\pi(q,p)$. Two requirements: (R1) the density is unchanged along each path ⇔ $H$ constant ⇔
+$\dot H=\frac{\partial H}{\partial q}\dot q+\frac{\partial H}{\partial p}\dot p=0$ ⇔ the velocity in phase space is perpendicular to
+$\nabla H$; (R2) no crowding ⇔ zero divergence, $\partial\dot q/\partial q+\partial\dot p/\partial p=0$.
+**Answer:** rotate the phase-space gradient $(\partial H/\partial q,\ \partial H/\partial p)$ by 90°:
+$(\dot q,\dot p)=(\partial H/\partial p,\ -\partial H/\partial q)$ — satisfies R1 and R2 identically. That *is* Hamilton's
+equations: **move along the contour lines of $H$ in phase space.** Its $q$-component $\partial K/\partial p=p$ is the
+*drift*; its $p$-component $-\partial V/\partial q$ is the *kick*.
+**Why the extra dimension is needed.** "Keep the density constant" in $q$ alone means staying on one
+contour of $\pi(q)$ — in 1-D impossible to move at all; in $D$-D stuck at one probability level forever.
+In phase space the constant is $V+K$: $V$ may change if $K$ pays for it. Budget reading: $H$ is a fixed
+budget for the trajectory, $V(q)$ the cost of being at $q$, $K\ge0$ the change left over ⇒ the particle can
+go only where $V(q)\le H$ and turns round where $V(q)=H$ ($K=0$). The momentum draw sets a fresh budget
+each transition, from the right distribution.
+**Time** is just the distance walked along the contour; $T$ = how far. Speed = $|\nabla H|$ in phase space.
+**1-D Gaussian check ($H=\tfrac12(q^2+p^2)$, contours are circles, motion clockwise):** at $(0,1)$ velocity
+$(1,0)$ — at the mode, fastest, no force; at $(1,0)$ velocity $(0,-1)$ — turning point, pushed back; etc.
+**In $D$ dimensions** each pair obeys $\dot q_n=p_n$, $\dot p_n=-\partial V/\partial q_n$; the forces couple the
+coordinates through $V$. With typical momentum nearly tangential (§G.4.16) and the budget capped, the
+$q$-path circulates around the shell rather than diving to the mode or escaping.
+**Figure** (`analyses/2026-10_likelihood-engine/figures/fig_hmc_phase_plane.png`, `src/16_fig_phase_plane.py`):
+(a) Gaussian phase plane, contours of $H$ + rotated-gradient arrows; (b) the §G.4.18 kick/drift trace as a
+staircase (kicks vertical, drifts horizontal) hugging the $H$=1.04 circle; (c) lopsided posterior
+$V=e^q-q$ ($q=\log\lambda$, $\lambda\sim$Exp(1)): egg-shaped contours, one trajectory at $H$=2.62 swinging from
+−2.54 (gentle side, weak force) to +1.39 (steep side, sharp turn); (d) $q$ against fictitious time over 9
+transitions, momentum redraws marked; (e) 19,500 kept positions vs the target — mean −0.572 (truth
+−0.577), SD 1.260 (truth 1.283; ≈2% low, of the order of the Monte Carlo error).
+
+### G.4.20 Why the kept positions follow the posterior although the particle is fastest at the mode (2026-10-19)
+
+*Justin's checks, answered:* (1) the momentum draw sets the budget, $H=V(q_{\rm now})+K(p_{\rm drawn})$;
+(2) one draw → one deterministic trajectory of many kick/drift steps (tens in practice, one gradient each);
+(3) **only one point per trajectory is kept** (the endpoint here; NUTS picks one point along the
+trajectory with probability ∝ $e^{-H}$, Betancourt §5.2/App A). Intermediate points are not recorded: they
+are strongly correlated with each other and, with approximate steps, only the kept state is corrected (§5).
+**The puzzle and its resolution (1-D Gaussian, exact orbits of radius $R$):**
+(a) *one* orbit lingers at its edges — arcsine law, U-shaped dwell, fastest at the mode (Justin's
+intuition is right per orbit); (b) but orbit sizes vary and most are small — $R$ is Rayleigh, median 1.18,
+39% never swing past ±1 (2×10⁶ draws: 0.3934 vs 0.3935 exact); (c) stacking every orbit, weighted by how
+often its size is drawn, the U's sum to the bell (max abs error 0.004, histogram); (d) equivalently
+**head-count × dwell time**: the fraction of orbits that reach $|q|$ is exactly $e^{-q^2/2}$ (1.00 / 0.61 /
+0.135 / 0.011 at 0/1/2/3), and among those orbits the average time spent at $q$ is **the same at every
+$q$**, $1/\sqrt{2\pi}$ = 0.399 (numerical integration, constant to 5 decimals) — the speed effect cancels
+in aggregate, so the bell is entirely head-count; (e) one endpoint per trajectory, random flow time:
+mean −0.008, SD 1.002 over 50,000 transitions. Picture: a playground of swings photographed at a random
+moment — each swing lingers at its extremes, but most pushes are gentle, so most extremes sit low.
+⚠ In high $D$ the same bookkeeping produces the typical-set *shell*: trajectories rarely pass near the
+mode at all (§G.4.11–12); the 1-D picture is the mechanism, not the geometry.
+Figure: `analyses/2026-10_likelihood-engine/figures/fig_hmc_why_posterior.png` (`src/17_fig_why_posterior.py`).
+
+### G.4.21 The swing picture; the momentum draw is position-independent; no circularity (2026-10-20)
+
+*Justin's follow-ups, with the misreadings corrected.* (1) **The momentum draw does not depend on $q$**
+(Euclidean-Gaussian $K$: $\pi(p\mid q)=\mathcal N(0,M)$ everywhere; checked — push SD 0.999 near the mode
+and far out). The budget $H=V(q)+K(p)$ is larger far out because of the **pull-back** $V(q)$, not a bigger
+push. (2) Starting near the mode gives a small swing because $V(q)$ is small, not because $p$ is smaller.
+Median swing size: 0.73 when the chain sits at $|q|<0.5$, 2.08 when at $|q|>1.5$; a swing always reaches at
+least as far as its start ($R\ge|q_0|$; min 1.500 for $|q_0|>1.5$). (3) $R$ vs $H$: for $V=q^2/2$,
+$H=\tfrac12(q^2+p^2)=\tfrac12R^2$, so $R=\sqrt{2H}$ — the same information, expressed as how far $q$ reaches;
+in general the reach is where $V(q)=H$ (asymmetric for a lopsided $V$, §G.4.19 Fig c).
+(4) **No circularity.** "Starting points near the mode" are not supplied — they are the previous sample.
+If the current $q$ follows the posterior, so does the next (invariance; the fixed point every MCMC uses),
+and from a bad start the chain gets there itself: 3 chains from $q_0=4$ are inside within one or two
+transitions. (5) **The advantage over a random walk is not where samples land (both target the
+posterior) but how far apart consecutive samples are.** 100-D Gaussian, equal cost of 3,000 evaluations:
+random-walk Metropolis lag-1 correlation **0.993** (it creeps); HMC (≈4 gradients per sample, 706 samples)
+**0.295** (it jumps across). Cf. §G.4.15 (≈117× fewer evaluations per independent draw at $D$=400).
+**Swing analogy:** current $q$ = where the child is when you walk up (pull-back); momentum = a push of
+random strength given without looking; Hamilton's equations = the swing's arc (gravity = the
+posterior's gradient; a lopsided posterior = a lopsided arc); random flow time = photograph a random
+moment later; the photo is the sample and the next push starts from it; no friction during a swing,
+"catch and re-push" between photos. Random walk = nudge the child a few cm and keep it if plausible.
+Figure: `analyses/2026-10_likelihood-engine/figures/fig_hmc_swings.png` (`src/18_fig_swings.py`).
+
+### G.4.22 §3.2–3.3 equations in swing language, with the reason for every equality (2026-10-20)
+
+*Justin prefers the swing to Betancourt's satellite (which implies circling the mode; HMC goes back and
+forth across it). Each equality classified: definition / algebra / modelling choice / design.*
+- $q_n\to(q_n,p_n)$ — **choice**: a swing's state is position + velocity.
+- $\pi(q,p)=\pi(p\mid q)\,\pi(q)$ — **algebra** (joint = conditional × marginal); $\int\pi(q,p)\,dp=\pi(q)$ because
+  $\pi(p\mid q)$ integrates to 1 ⇒ photos that ignore velocity are posterior draws.
+- $\pi(q,p)=e^{-H}$, $H\equiv-\log\pi(q,p)$ — **definition** (relabelling, not physics).
+- $H=K+V$ — **algebra** (log of a product); $V\equiv-\log\pi(q)$ = height of the arc (mode = bottom);
+  $K\equiv-\log\pi(p\mid q)$ = energy of motion; Gaussian push ⇒ $K=\tfrac12p^2+$const (**choice**), and $K$ does
+  not depend on $q$ (the push ignores position, §G.4.21).
+- $\dot q=\partial H/\partial p=\partial K/\partial p=p$ — second equality **algebra** ($\partial V/\partial p=0$: height does not
+  depend on speed); first equality **design**.
+- $\dot p=-\partial H/\partial q=-\partial V/\partial q$ — second equality **algebra** ($\partial K/\partial q=0$); $-\partial V/\partial q$ =
+  slope of the arc pulling toward the bottom $=+\nabla\log\pi$ (the posterior gradient).
+- **Why the pair, and why the minus sign (design):** height lost per unit time $=\frac{\partial V}{\partial q}\dot q$ =
+  slope × speed; motion energy gained $=\frac{\partial K}{\partial p}\dot p$ = speed × $(-$slope$)$ — the same number with
+  opposite sign ⇒ $\dot H=0$. A $+$ sign would pump the swing higher every pass (escape).
+- **No crowding, in swing words:** $\partial\dot q/\partial q=\partial p/\partial q=0$ (the speed does not depend on position
+  except through $p$) and $\partial\dot p/\partial p=-\partial^2V/\partial q\,\partial p=0$ (**no air resistance**: the force does not
+  depend on speed). Adding friction, $\dot p=-\partial V/\partial q-\gamma p$, makes the divergence $-\gamma<0$: a damped
+  swing comes to rest at the bottom (checked: from $q$=2, $\gamma$=0.5, $q$=0.013 at $t$=20) — **that is an
+  optimiser finding the MAP.** HMC = the same arc without friction.
+- §3.3: lift (push without looking) keeps the joint correct by construction; flow keeps it (energy + no
+  crowding); project = take the marginal = $\pi(q)$ ⇒ each transition preserves $\pi$.
+**Many dimensions without the satellite:** each coordinate swings back and forth through its own centre,
+out of phase with the others; the distance from the mode stays nearly fixed (one full swing, relative
+spread 1.57 / 0.41 / 0.23 / **0.03** at $D$ = 1 / 10 / 100 / 400; ≈8% of coordinate-moments within 0.1 of
+centre at any time). "Staying on the typical-set shell" = many unsynchronised swings.
+
+### G.4.23 The momentum draw sets the initial velocity; speed then depends on position — and $\partial K/\partial q=0$ still holds (2026-10-20)
+
+⚠ **Correction to the swing analogy (§G.4.21):** the draw does not *add* a push to existing motion — the
+seat is **caught and relaunched** from where it is with velocity exactly $p_0$; the old velocity is
+discarded (project, then lift). So yes, $p(0)=p_0$ is the draw.
+After relaunch the speed depends on position, by energy conservation:
+$|p|=\sqrt{p_0^2+2[V(q_0)-V(q)]}$ — relaunch speed² + 2 × drop since relaunch. Gaussian arc, same draw
+$p_0$=0.5: from $q_0$=0.2, budget 0.145, speed 0.54 at the bottom, reach ±0.54; from $q_0$=2.0, budget 2.125,
+speed 2.06 at the bottom, reach ±2.06.
+**"$K$ doesn't depend on position" is about the formula** $K=\tfrac12p^2$ (no $q$ in it — given the velocity,
+the motion energy needs no position), i.e. $\partial K/\partial q=0$ with $p$ held fixed. Along a path $p(t)$ changes
+through $\dot p=-\partial V/\partial q$, so the *value* of $K$ rises near the bottom and falls near the top — the
+height-for-speed exchange. Car analogy: ½mv² has no position in it, yet a coasting car speeds up downhill.
+$q$ and $p$ are independent axes of the *state*; the dynamics, not $K$'s formula, link them along a path.
+(Riemannian HMC, Betancourt §4.2.2, is the case where $K$'s formula does contain $q$.)
+
+### G.4.24 Justin's idea: make topology continuous (pairwise distance matrix → hierarchical clustering) so HMC samples everything (2026-10-20; brainstorm, no compute)
+
+**What is exactly true and useful.** An ultrametric (time) tree on $n$ tips is *equivalent* to its matrix
+of pairwise MRCA times $d_{ij}$, which satisfies the three-point condition (for every triple, the two
+largest of $d_{ij},d_{ik},d_{jk}$ are equal); clustering an ultrametric matrix recovers the tree exactly.
+A binary tree has only $n-1$ distinct values in that matrix (one per internal node, repeated for every
+pair whose MRCA it is) — Justin's "a branching time per pair" is this representation.
+**Why it does not, as stated, give an exact all-HMC sampler.**
+1. *Dimension / flat directions:* a free matrix has $n(n-1)/2$ entries (≈20,000 at $n$=200) against $n-1$
+   that the likelihood can see. The decoder is many-to-one; most directions leave the decoded tree
+   unchanged ⇒ zero gradient, the particle drifts freely in directions the data ignore.
+2. *The prior:* the target is the birth–death prior on trees; a prior on matrices pushes forward to some
+   other, generally unknown, prior on trees, and a many-to-one map has no Jacobian to correct it.
+3. *Differentiability (Justin's worry, correct):* topology is discrete, so any parameterisation reaching
+   every topology must switch topology somewhere. Best case the landscape is **continuous with creases**
+   (at a switch the separating branch has length 0 — both sides are the same polytomy — so $-\log\pi$ is
+   continuous but its slope jumps); worst case (decoder output jumps) it has **cliffs**. Leapfrog assumes
+   a smooth landscape; creases cost energy error, cliffs break it. Soft (differentiable) clustering changes
+   the model (a "soft tree" is not a tree) ⇒ not exact.
+**The "nodes change identity" worry is milder than feared:** every binary ultrametric topology on $n$
+tips has exactly $n-1$ internal nodes ⇒ the continuous dimension is constant (no trans-dimensional
+problem); only which tips sit under which node changes. Narrow exchange keeps heights and relabels
+children (§G.4.9); ranking nodes by coalescence order makes "the $k$-th node's height" meaningful in
+every topology.
+**The version of the idea worth keeping:** HMC on node *heights* that is allowed to cross into a
+neighbouring topology when two adjacent node heights collide (a branch length reaches 0), choosing among
+the neighbouring resolutions and reflecting/refracting the momentum at the crease — probabilistic-path
+HMC (Dinh, Bilge, Zhang & Matsen 2017, verify) in the space of ultrametric/ranked trees (Gavryushkin &
+Drummond 2016, verify). Then one trajectory can pass through several topologies with no separate MH step.
+⚠ Our ratio coordinates put those boundaries at infinity (§G.4.9), so this needs height coordinates with
+walls at finite distance. Related continuous-embedding work (mostly variational, with non-differentiable
+decoders handled by gradient estimators): GeoPhy (Mimori & Hamada 2023), Dodonaphy / hyperbolic
+embeddings (Macaulay, Darling & Fourment 2023) — all verify.
+**Recommendation:** keep HMC-within-Gibbs as the baseline (exact, simple); measure topology mixing
+first (switch counts, §G.4.13); if it is the bottleneck, the crossing-HMC route is the one to prototype;
+the distance-matrix decoder is better suited to initialisation, proposals or variational inference than to
+exact sampling.
+
+### G.4.25 HMC-within-Gibbs revisited (after the HMC deep dive); why "Gibbs"; SciPhy = random-scan MH-within-Gibbs (2026-10-20)
+
+**Why "Gibbs".** Gibbs sampling = update the unknowns in blocks, each from its distribution *given the
+others*. "X-within-Gibbs" = keep the block structure but replace each exact conditional draw with any
+MCMC move X that preserves that conditional (§G.4.9 proof). No block here is an exact Gibbs draw; the
+name records the block-by-block structure.
+**Landscape picture.** Each topology $\tau$ is a separate *room* (the notes' §2a.4 calls them "pages");
+inside a room the floor is a smooth landscape over node heights + parameters ($-\log\pi$ given $\tau$).
+Rooms meet at walls where a branch length is zero (§G.4.24). One iteration: (A) **roll inside the
+room** — one HMC/NUTS transition on $(\mathbf h,\theta)$ given $\tau$ (relaunch with fresh momentum, leapfrog
+on the engine gradient, accept/reject); (B) **try to step into a neighbouring room at the same spot** —
+$K$ MH topology moves with heights and parameters frozen, no momentum, accepted with
+$\min(1,\pi(\tau',\mathbf h,\theta)/\pi(\tau,\mathbf h,\theta))$ in height space (× Hastings ratio if asymmetric).
+**Where the moves succeed:** a room-change is judged by the neighbour's floor *at the current spot*,
+not at its lowest point ⇒ accepted mainly when the heights suit both rooms — near a wall (a short
+internal branch). That is the Gibbs zig-zag (§G.4.9) in this picture; PPHMC rolls through walls instead.
+**SciPhy/BEAST** is MH-within-Gibbs, *random-scan*: each iteration picks one operator by weight and
+applies one MH accept/reject; operators act on overlapping blocks (one node height; all heights scaled;
+$r,b,\delta$; $\xi$; up-down = $\lambda$ with heights; narrow/wide exchange, subtree slide, Wilson–Balding =
+topology, some jointly with a height) — table in §2a.4. Its ~$10^9$ iterations are many tiny moves. The
+hybrid replaces every continuous operator with one joint NUTS transition and keeps the topology ones.
+**Design knobs:** $K$ (topology moves per HMC step) balances cost — an HMC step ≈ tens of gradients
+(≈0.5 s each at $k$=166, unmeasured) vs a topology move ≈ one likelihood (≈0.2 s; far less with partial
+re-pruning of the root-ward path); which topology operators (narrow exchange local, subtree slide,
+Wilson–Balding for big jumps; proposals focused near the liver clade are legal with Hastings); joint
+topology + local-height moves to soften the zig-zag; adaptation frozen after warm-up; node labels
+persistent; diagnostics as §G.4.13 (split $\hat R$ on the monophyly indicator, switch counts, chains from
+one- and two-founder starts).
+
+### G.4.26 Betancourt §4.1 (energy levels) — the two takeaways (2026-10-20)
+
+(1) **Each transition has two jobs that can fail separately:** explore *within* an energy level (the
+swing; efficiency depends on how round the level sets are and how long you swing — §4.2/§4.3) and move
+*between* levels (the relaunch). Formally $\pi(q,p)=\pi(\theta_E\mid E)\,\pi(E)$: microcanonical × marginal energy.
+(2) **The relaunch changes the energy by a limited amount** — at relaunch $V(q)$ is fixed and only the
+kinetic part is redrawn, so the budget takes random-walk steps of size ≈ spread of $K$ ($\sqrt{D/2}$ for a
+$D$-dim Gaussian momentum). If the posterior needs a much wider range of budgets (heavy tails), many
+transitions are needed to reach them and the tails are under-explored. Diagnostic: **E-BFMI** = energy
+change between successive transitions vs the spread of energies, $\sum(E_n-E_{n-1})^2/\sum(E_n-\bar E)^2$;
+Betancourt: below ≈0.3 is a problem.
+**Probe (2026-10-20, scratch, leapfrog + accept/reject):** Gaussian $D$=10 / 100 → E-BFMI 1.02 / 1.03
+(healthy); Student-t, $D$=10, $\nu$=5 → 0.72, $\nu$=2 → 0.51 — falls as tails get heavier. For us, candidates
+for heavy tails: weakly identified parameters ($b,\delta$ with broad priors; spreads of $r_z$ or $\alpha_c$).
+
+### G.4.27 Betancourt §4.2.1 — the mass matrix $M$ (Euclidean–Gaussian kinetic energy) (2026-10-20)
+
+**Formulae.** $\pi(p\mid q)=\mathcal N(0,M)$, $K=\tfrac12p^\top M^{-1}p$ (+const); Hamilton then gives $\dot q=M^{-1}p$,
+$\dot p=-\partial V/\partial q$. Equivalent to identity-mass HMC on rescaled/rotated coordinates $q'=\sqrt M\,q$,
+$p'=\sqrt{M^{-1}}\,p$. Best choice: $M^{-1}$ = posterior covariance; estimated in warm-up windows, then frozen.
+**Swing picture — "tune every swing to the same rhythm".** A seat on an arc of width $s$
+($V=q^2/2s^2$) with mass $m$ swings with period $2\pi s\sqrt m$. With unit mass a narrow arc ($s$=1) swings
+in 6.3 and a wide one ($s$=20) in 126 time units: the step size must be small enough for the fastest
+swing and the trajectory long enough for the slowest ⇒ cost ∝ width ratio. Mass $m=1/s^2$ (i.e.
+$M^{-1}=s^2$) gives every arc period $2\pi$ ⇒ one step size and one trajectory length fit all.
+Equivalently: rescale each coordinate by its posterior SD so the valley is round.
+**Diagonal vs dense.** Diagonal $M$ rescales axes (fixes different widths); a *tilted* ridge needs
+rotation ⇒ dense $M$ (full covariance), $D(D+1)/2$ entries (≈80,000 at $D$=400) to estimate in warm-up.
+**Probe (2026-10-20, scratch, 2-D Gaussians, gradients per independent draw):** widths 20 vs 1 —
+identity 46.7, diagonal $M^{-1}$=variances **1.3**; ridge (correlation 0.995) — identity 37.3, diagonal
+39.4 (no help), dense $M^{-1}$=covariance **1.0**.
+**Limits:** one global $M$ cannot fix curvature that changes from place to place (funnel, §G.4.14) ⇒
+reparameterise (or Riemannian HMC, §4.2.2, not planned).
+**For us.** Node coordinates have very different widths (early, well-recorded vs late, weak) ⇒ at least
+diagonal; the rate–time ridge ($\Lambda_T$, $r_z$ vs node times) is a tilted ridge ⇒ dense, or dense in a
+block, or a reparameterisation along the ridge. Initial $M$ from the Laplace Hessian at the MAP (method A,
+§G.4.5; autodiff Hessian is cheap at $D$≈400), refined in warm-up, frozen before sampling (and kept fixed
+across topology moves, §G.4.25). **Readout:** the adapted $M^{-1}$ diagonal is each coordinate's
+estimated posterior variance — a direct look at which node dates/parameters the data pin down.
+**Figure** (`analyses/2026-10_likelihood-engine/figures/fig_hmc_mass_matrix.png`, `src/19_fig_mass_matrix.py`):
+(a–c) elongated valley, 20 steps each — $M=I$ step 0.90 travels 8.5 along the wide axis; diagonal $M$ step
+0.90 travels 33.3 (sweeps the valley); (c) same run in units of SD = a round valley. (d–f) ridge
+(correlation 0.98) — diagonal $M$ step 0.13 travels 2.1 along the ridge; dense $M$ step 0.90 travels 4.9;
+(f) whitened = round. (g–h) warm-up on an 8-D posterior (widths 0.25–6): five windows (25/50/100/200/400),
+$M^{-1}\leftarrow$ regularised window variance, step size 0.23 → 0.85; adapted widths within ≈10% of truth.
+⚠ **Trap found while building it (teaching-relevant):** with $M$ learned, every coordinate swings at the
+same rhythm, so a *fixed* trajectory of 10 steps came to almost exactly one full swing and returned near
+its start — the widest coordinate's sampling SD was 1.91 against a true 6. Jittering the length (4–15
+steps) fixed it (5.97). Same periodicity trap as $T=\pi$ in §G.4.18; it is why NUTS chooses the length per
+trajectory (§4.3) — and a good $M$ makes the trap *more* likely, not less.
+**Justin's questions, answered (2026-10-20).** (1) *Is $M$ a normalisation?* Yes — it is equivalent to measuring
+every coordinate in units of its posterior SD (diagonal) and also decorrelating (dense): z-scoring /
+whitening, as one standardises predictors before a regression. (2) *How does mass fit the physics?* Two
+corrections to everyday intuition: (a) **in HMC the slope's pull does not scale with mass** (real gravity
+does, which is why a real pendulum's period ignores mass); the force is $-\partial V/\partial q$, fixed by the
+posterior, so mass is pure inertia: lighter ⇒ accelerates *more* on the same slope. Better picture:
+**a cart on a spring** — a wide posterior is a soft spring (stiffness $1/s^2$), a narrow one a stiff spring;
+period $2\pi s\sqrt m$. (b) **The relaunch gives every coordinate the same typical energy whatever its
+mass** ($p\sim\mathcal N(0,m)$ ⇒ $K=p^2/2m\sim\tfrac12\chi^2_1$, mean ½); lighter ⇒ that energy buys more speed.
+(c) **Mass does not change how far a coordinate swings** (reach ≈ $s\sqrt{2H}$, set by energy and posterior
+width) — only how fast. Check ($s$=20, 10⁶ draws): mass 1 → mean $K$ 0.500, launch speed 0.67, reach 23.5,
+period 126, time to cross 31; mass $1/s^2$ → $K$ 0.501, speed 13.5, reach 23.6, period 6.3, time to cross 1.6.
+So making the wide coordinate light does not let it go *further* — it lets it get *across* its range within a
+trajectory whose length (steps × step size) is dictated by the fastest coordinate.
+
+### G.4.28 Betancourt §4.3 — how long to swing; No-U-Turn; tree depth (2026-10-20)
+
+**Claim.** Too short a trajectory wastes HMC's coherent motion (a random walk again: $T$=0.3 → ≈44
+transitions per independent draw, §G.4.18); too long returns toward explored ground (half swing → mirror
+image, full swing → back to the start: the §G.4.18 $T=\pi$ trap and the §G.4.27 fixed-length trap) and
+wastes gradients. Optimum ≈ the first pass across the level set, "until it starts coming back".
+**No single length works,** because the swing time depends on the energy unless the landscape is a
+perfect spring: $\pi_\beta\propto e^{-|q|^\beta}$ gives $T_{\rm opt}\propto H^{(2-\beta)/2\beta}$ — constant only for the Gaussian
+($\beta$=2); heavier tails ⇒ high-energy swings into the tails take longer. Check: swing period at energy
+0.5 / 2 / 8 / 32 — spring 6.28 throughout; constant slope ($V=|q|$, $\beta$=1) 4 / 8 / 16 / 32. In many
+dimensions, imperfect $M$ adds further variation across directions.
+**No-U-Turn criterion (Hoffman & Gelman 2014):** grow the trajectory (doubling, forwards or backwards at
+random) until the momentum at each end points back toward the other end,
+$p_+\cdot(q_+-q_-)<0$ and $p_-\cdot(q_--q_+)<0$ — the swing has stopped spreading out and started folding
+back. Check (1-D spring, forward-only exact flow, 20,000 starts): stops at median **1.57 = ¼ of a full
+swing** (10–90%: 0.31–2.83) — exactly the flow time that gives independent Gaussian draws (§G.4.18). One
+point is then drawn from along the trajectory (weights ∝ $e^{-H}$), not necessarily the endpoint; the
+doubling + subtree checks keep it reversible (Appendix A; the library's job).
+**Diagnostic — tree depth.** Depth $j$ ⇒ up to $2^j$ leapfrog steps (gradients) per iteration; libraries cap
+it (typically 10 ⇒ 1,023). *Hitting the cap* = the trajectory never U-turned within budget: a very
+elongated or poorly scaled direction (bad $M$, the rate–time ridge, a flat weakly identified parameter).
+Average steps per iteration is the cost line in every run estimate (the "≈64 gradients" assumed in
+§G.4.3 ≈ depth 6). For us: trajectories starting at high energy (tails, late nodes) will run longer — NUTS
+adapts per trajectory.
+**One clock for all coordinates (Justin's question).** A trajectory is one path in the joint space: one
+step size, one number of steps, one stopping decision — the U-turn test is a dot product over *all*
+coordinates. Directions cannot stop separately (that would no longer be Hamiltonian motion, and
+reversibility would break). Check, posterior SDs 10 and 1, 5,000 starts: **without $M$** the shared stop
+(median 8.7) caught the wide coordinate after only 0.14 of its swing while the narrow one had done 1.38
+full swings — right for neither; **with diagonal $M$** (shared stop median 2.10) both were at 0.33 of a
+swing. ⇒ $M$ is what makes one shared stopping time suit every direction. (Splitting the continuous block
+into separately-run HMC blocks is legal — Gibbs again — but loses joint moves along correlations.)
+
+### G.4.29 Betancourt §5.1 — the ODE system we integrate, and the leapfrog integrator (2026-10-20)
+
+**The ODE system (what "following the trajectory" means).** State $(q,p)\in\mathbb R^{2D}$; $2D$ coupled
+first-order ODEs
+$$\frac{dq}{dt}=M^{-1}p,\qquad \frac{dp}{dt}=-\nabla V(q)=\nabla\log\pi(q),$$
+initial condition $q(0)$ = current sample, $p(0)\sim\mathcal N(0,M)$ (the relaunch), integrated from $t=0$ to $T$
+(chosen by NUTS). Equivalently $D$ second-order ODEs, **Newton's law**: $M\,\ddot q=\nabla\log\pi(q)$ — mass ×
+acceleration = force, the force being the gradient of the log posterior. 1-D Gaussian: $\ddot q=-q$ ⇒
+circles (closed form). Ours: $\ddot q=M^{-1}\nabla J(q)$ with $\nabla J$ from the engine (Jacobian included) —
+≈800 coupled ODEs, no closed form ⇒ numerical integration.
+**Why not a generic solver.** Euler (update $q$ and $p$ simultaneously from old values) spirals out:
+spring, start energy 0.5, three swings — energy 114 at $\epsilon$=0.3, 3.2 at $\epsilon$=0.1. Errors add coherently.
+**Leapfrog** (one gradient per step): $p\leftarrow p-\tfrac\epsilon2\nabla V(q)$; $q\leftarrow q+\epsilon M^{-1}p$; $p\leftarrow p-\tfrac\epsilon2\nabla V(q)$.
+Each sub-step changes only one of $q$, $p$, by an amount depending only on the other ⇒ a *shear* ⇒ area
+(volume) preserved exactly ⇒ the error cannot accumulate; it follows a slightly different "shadow"
+energy contour and wobbles. Checks: worst energy error over three swings 0.011 ($\epsilon$=0.3) / 0.0012
+($\epsilon$=0.1) — ∝ $\epsilon^2$; kick-then-drift (no half steps) 0.088 / 0.026 — ∝ $\epsilon$. **Exactly reversible**
+(20 steps, flip $p$, 20 steps → back to (1.0, 0.3) to 12 decimals) — needed for §5.2.
+**Stability limit and divergences.** On a spring of frequency $\omega$ leapfrog is stable only for $\epsilon\omega<2$
+(checked: $\epsilon$=1.9 bounded, worst error 0.45; $\epsilon$=2.1 → energy error $2\times10^{12}$ in 24 steps). In a posterior
+whose stiffness varies, a step fine in the bulk can exceed the limit in a sharply curved region (funnel
+neck, the $\Gamma_T\approx0$ edge) ⇒ the numerical trajectory explodes = a **divergence**; easy to detect, and a
+sign the region is not being explored.
+**Figure** (`analyses/2026-10_likelihood-engine/figures/fig_hmc_leapfrog.png`, `src/20_fig_leapfrog.py`) — built because
+Justin asked *where* $\epsilon$ is applied: (a) one step at $\epsilon$=0.6 from (1.2, −0.8): half kick $\Delta p=(\epsilon/2)\cdot$force$(q)$
+= 0.3 × (−1.20) = −0.36; drift $\Delta q=\epsilon\cdot$velocity = 0.6 × (−1.16) = −0.70; half kick at the new $q$ = 0.3 ×
+(−0.50) = −0.15 ⇒ end (0.504, −1.311) vs exact (0.539, −1.338); (b) the same time $T$=1.8 as 3 steps of 0.6 vs 9
+of 0.2 (steps = $T/\epsilon$, one gradient each); (c–d) Euler spiral vs leapfrog loop, energy 0.5→114 vs a band
+(zoom inset); (e) $\epsilon$=1.9 bounded vs 2.1 exploding; (f) one $\epsilon$=0.5 tuned for a gentle side (frequency 1)
+diverges on entering a stiff side (frequency 5, limit 0.4): energy 1.9 → 15.6 → 38.7 at the first entry.
+**Where $\epsilon$ appears:** it multiplies every update — half of it scales each kick, all of it scales the drift — so
+it is the *duration* of one step; the number of steps for a trajectory of time $T$ is $T/\epsilon$.
+
+### G.4.30 Betancourt §5.2 — correcting the integrator's error exactly (accept/reject with a momentum flip) (2026-10-20)
+
+**Problem.** Leapfrog ends on a slightly wrong energy ($H_1\ne H_0$), so its endpoints are not exactly
+distributed as $e^{-H}$. Check (1-D standard normal, $\epsilon$=1.2, 1–3 steps, 2×10⁵ transitions): sample SD
+**1.248** without correction, **1.008** with it (truth 1).
+**Fix = treat the trajectory as an MH proposal on phase space.** Target $\pi(q,p)\propto e^{-H}$, so the target
+ratio is $e^{H_0-H_1}$. MH also needs "how likely the reverse proposal is": a forward-only deterministic
+map can never propose going back ⇒ acceptance 0. Flipping the momentum at the end makes the proposal
+its own inverse — by leapfrog's exact reversibility (§G.4.29), integrating from $(q_L,-p_L)$ returns
+$(q_0,-p_0)$ — so forward and reverse proposals are equally certain and cancel; volume preservation
+removes any Jacobian. Result:
+$$a=\min\big(1,\ e^{H(q_0,p_0)-H(q_L,-p_L)}\big)=\min(1,\ e^{-\Delta H}),$$
+($K(-p)=K(p)$). The flip is bookkeeping — the momentum is discarded anyway. Swing picture: a film of a
+leapfrog swing played backwards is another leapfrog swing ⇒ A→B as likely as B→A.
+**Why acceptance stays high:** the energy error is a bounded wobble (shadow energy), ∝ $\epsilon^2$ per unit
+time and growing like $\sqrt D$ across dimensions. Checks (100-D Gaussian, ~1 time unit): $\epsilon$ 0.05 / 0.1 / 0.2
+/ 0.3 / 0.4 → acceptance 0.998 / 0.991 / 0.966 / 0.916 / 0.851, typical |ΔH| 0.004 / 0.014 / 0.057 / 0.148 /
+0.253; at $\epsilon$=0.2, SD of ΔH 0.027 / 0.085 / 0.271 for $D$ = 10 / 100 / 1,000. Keeping acceptance fixed
+therefore needs $\epsilon\propto D^{-1/4}$ — the origin of HMC's $D^{1/4}$ scaling (§G.4.15).
+**Better: use the whole trajectory.** Choose one point from all points of the trajectory (built forwards and
+backwards) with probability ∝ $e^{-H}$ (multinomial; Appendix A) — automatically favours points with
+small energy error; this is what NUTS/Stan do ("one point per trajectory, not necessarily the end").
+**Dashboard:** the *acceptance statistic* = average of $\min(1,e^{-\Delta H})$ (over the trajectory, for NUTS);
+low ⇒ $\epsilon$ too large; ≈1 ⇒ $\epsilon$ needlessly small (wasted gradients); a divergence = an enormous ΔH (Stan
+flags ΔH > 1000). A rejection repeats the current sample. **For us:** ΔH needs $J$ at the endpoint, which
+the engine's value-and-gradient call returns at no extra cost.
+
+### G.4.31 Why $e^{-\Delta H}$ is not a preference for low energy; how NUTS picks one point from the trajectory (2026-10-20)
+
+**$e^{-H}$ is the target density of a phase-space state** (§3.2), so $e^{-\Delta H}$ is just the target's ratio
+new/old. The accept rule is MH's standard *bookkeeping*, not a preference: it makes the long-run time spent
+in each state proportional to its target probability. Two-state check: A ($H$=1) and B ($H$=1.5), target
+time ratio B/A = $e^{-0.5}$ = 0.607; with symmetric proposals, accept A→B w.p. 0.607 and B→A w.p. 1 ⇒ flows
+balance exactly at that ratio. Two cautions: (i) "lower $H$" means a more probable *(position, momentum)*
+pair — it can be lower $K$ (slower), not a better $q$; it is not a push toward the MAP. (ii) In exact dynamics
+every state on a trajectory has the same $H$ ⇒ ratio 1 ⇒ always accept; the rule only bites on leapfrog's
+small errors, which it un-does on average.
+**NUTS's selection.** (1) Relaunch at $z_0=(q_0,p_0)$. (2) Build the trajectory by doubling: each round pick
+forwards or backwards in time at random and extend by as many leapfrog steps as already built (1, 2, 4,
+8…); stop at a U-turn, a divergence or the depth cap; if any sub-piece of the new half U-turned on its own,
+throw the new half away (keeps the construction symmetric — the same trajectory would have been built
+from any of its points). (3) **Pick one state $z$ from the whole list with probability $e^{-H(z)}/\sum_{z'}e^{-H(z')}$**
+(multinomial; Stan's variant favours the newer half — "biased progressive sampling", A.3.2 — to push
+away from the start). (4) Keep its $q$, drop $p$. Valid because the list does not depend on where in it you
+started and the pick is proportional to the target on the list ⇒ sampling the target restricted to the
+list (Betancourt A.2.3). The current state is in the list, so "rejection" = re-picking $z_0$ — graceful, not
+all-or-nothing. In practice the candidate is updated as halves are added (switch to the new half's
+candidate w.p. $w_{\rm new}/(w_{\rm old}+w_{\rm new})$), so the trajectory is never stored.
+**Worked example** (1-D spring, $\epsilon$=0.6, 3 steps back + start + 4 forward from (1.2, −0.8), $H_0$=1.040):
+energy errors −0.059 … +0.032 ⇒ pick probabilities 0.119–0.131 against uniform 0.125; acceptance statistic
+0.992. Swing picture: film the swing forwards and backwards from the relaunch and choose a frame almost
+uniformly — the "photo at a random moment", which also avoids the periodicity traps.
+
+### G.4.32 Why the pick is ∝ $e^{-H}$ — the crowd test; what the whole-trajectory pick does and does not buy (2026-10-20)
+
+**Intuition (the crowd test).** Imagine many chains already correctly spread ($q,p$ drawn from the
+target). Group each chain with the states of its trajectory; within that list the target says each state
+holds probability ∝ $e^{-H}$. A rule that re-picks within the list in proportion to $e^{-H}$ leaves the crowd
+exactly as spread as before — so a correct crowd stays correct (that *is* the §2.1 condition). Picking
+uniformly over-represents states where leapfrog's energy went up (less probable than they look).
+Check (1-D standard normal, 4×10⁵ chains starting exactly at the target, one transition, coarse $\epsilon$=1.2,
+4 steps): SD after one transition — pick ∝ $e^{-H}$ **1.002**; uniform pick **1.131**; endpoint with no
+correction **1.209** (truth 1). With exact dynamics all $e^{-H}$ are equal ⇒ the pick is uniform ⇒ the
+"photo at a random moment".
+**Robustness, honestly** (ε = 0.3, one full swing ≈ 21 steps; correlation of successive samples):
+endpoint + accept/reject is best at exactly a quarter swing (≈5 steps, ≈0.06) and fails at half / full
+swings (−0.99 at 10 steps, +0.999 at 21); the whole-trajectory pick needs ≈¾ swing to decorrelate (0.36
+at 10 steps, 0.004 at 21) and then stays near 0 at every longer length. Its value is robustness to not
+knowing the right length — which NUTS never knows in advance.
+⚠ **Correction to §G.4.31 / my message of the same day:** I said re-picking the current state is
+"rarely the outcome" with many candidates. Its chance is roughly 1/(number of states): measured, the
+whole-trajectory pick stayed put in 11–64% of transitions vs 0.4–39% rejections for endpoint+MH
+(ε 0.2–1.8, quarter-swing trajectories). "Fewer wasted transitions" was overstated; the gains are
+exactness and robustness to length (Stan's biased progressive sampling, A.3.2, pushes picks away from
+the start to recover efficiency — not shown). Figure:
+`analyses/2026-10_likelihood-engine/figures/fig_hmc_nuts_selection.png` (`src/21_fig_nuts_selection.py`).
+**"More likely" — in the joint, not in $q$ (Justin's check).** Lower-$H$ states are more probable in the joint
+$(q,p)$ distribution by definition, but the pick weights do not track the posterior of $q$: in the 8-state
+example the state near the mode ($q$=−0.37, $V$=0.07) has 2.7× the posterior density of the turning point
+($q$=1.46, $V$=1.07), yet their pick probabilities differ by only 1.10× (0.131 vs 0.119) — the weights see only
+leapfrog's ±0.06 energy *errors*, because along a trajectory $K$ rises exactly where $V$ falls. With exact
+dynamics they would be equal. The posterior's preference for $q$ near the mode enters elsewhere: time
+along the swing + the mix of budgets from relaunching (head-count × dwell, §G.4.20).
+**Second explanation of the $e^{-H}$ pick (2026-10-20, for Justin; no physics).** (1) Toy: target A/B/C =
+0.5/0.3/0.2, a correct crowd of 100 (50/30/20), every chain given the list {A,B,C}: pick ∝ target ⇒ 50/30/20
+again (each chain simply draws from the target); pick uniformly ⇒ 33/33/33. Restricting to a shorter list
+works the same way: draw from *the target restricted to the list*. (2) NUTS: list = the trajectory's states,
+target probability of each = $e^{-H}$ ⇒ weights $e^{-H}/\sum e^{-H}$. Exact dynamics ⇒ equal weights ⇒ uniform
+(the photo). (3) Importance-sampling view (approximate): leapfrog follows a shadow energy almost exactly;
+a uniform pick samples ≈ the shadow target; weight true/shadow ∝ $e^{-H}$ along one trajectory. (4) The
+condition: the list must be the same whichever of its states you started from (random-direction doubling
++ discarding halves that U-turn internally) — otherwise the crowd within a list is not spread ∝ target.
+
+### G.4.33 The decisive explanation: the energy error is a function of POSITION, and $e^{-H}$ corrects the $q$-distribution (2026-10-20)
+
+*Justin's objection: whether leapfrog raised or lowered the energy at a state seems unrelated to how
+probable its $q$ is — so why prefer lower energy? Answer: it is not unrelated.*
+**Spring ($V=q^2/2$, unit mass):** leapfrog exactly conserves a *shadow* energy
+$\tilde H=\tfrac12p^2+\tfrac12q^2(1-\epsilon^2/4)$ — the true swing of a slightly **wider, shallower valley**. Hence along
+one trajectory $H-H_0=\epsilon^2(q^2-q_0^2)/8$: **purely a function of position.** Checked on the 8-state
+trajectory to 4 decimals (e.g. $q$=−0.373: −0.0585 both; $q$=1.464: +0.0316 both). Leapfrog's swing overshoots
+in $q$ (turning point 1.464 vs the true 1.442) and passes the mode more slowly — positive error = "further
+out than the true swing allows", negative = "nearer the middle".
+**So the pick weight is a correction on $q$:** with $\tilde H$ constant along the trajectory,
+$e^{-H}\propto e^{-\epsilon^2q^2/8}=\dfrac{\text{true density of }q\ (e^{-q^2/2})}{\text{leapfrog's effective density }(e^{-(1-\epsilon^2/4)q^2/2})}$ —
+an importance weight from leapfrog's wider landscape back to the true one. Long-run check (4-step
+trajectories, random placement, 6×10⁴ transitions): SD of $q$ — uniform pick **1.045** (ε=0.6) / **1.253**
+(ε=1.2), matching the shadow-landscape SD $1/\sqrt{1-\epsilon^2/4}$ = 1.048 / 1.250; $e^{-H}$ pick **0.996 / 0.992**
+(truth 1). **No error type is "preferred"; the sign of the error says which way leapfrog's landscape
+misrepresents that position.** General posteriors: the shadow energy differs from $H$ by terms in the
+gradient and curvature of $V$ (approximate, not exact), same logic — and since $q$ is obtained by dropping $p$
+from the $(q,p)$ draws, a correct joint is what makes the $q$-marginal correct.
+**Figure** (`analyses/2026-10_likelihood-engine/figures/fig_hmc_shadow.png`, `src/22_fig_shadow.py`, ε = 0.9 for
+visibility): leapfrog points lie exactly on the shadow ellipse (shadow energy conserved to 1.7×10⁻¹⁵ over 60
+steps) — wider in $q$ (turning point 1.442 → 1.498), lower in $p$ through the middle; the shallower shadow
+valley drawn against the true one; $e^{-H}$ at every point equal to $e^{-\epsilon^2(q^2-q_0^2)/8}$ to 2×10⁻¹⁵; long runs: uniform
+pick SD 1.117 (shadow SD 1.120), $e^{-H}$ pick 0.996 (truth 1).
+
+### G.4.34 Why not integrate exactly? (2026-10-20)
+
+(1) **For our posterior it is impossible in closed form** — the force is the engine gradient through tree
+pruning; nonlinear ODEs like this have no formula (the Gaussian spring is a rare exception; "exact HMC"
+exists for Gaussian / truncated-Gaussian targets — Pakman & Paninski 2014, verify). (2) **A very accurate
+generic solver (e.g. adaptive Runge–Kutta) is the wrong tool:** many more gradient evaluations per unit
+time, and it is neither exactly reversible nor exactly volume-preserving — so $\min(1,e^{-\Delta H})$ would no
+longer be the correct MH ratio (it would need the trajectory map's Jacobian determinant, impractical at
+$D$≈400), and its error drifts. (3) **Exactness of the sampler does not need exactness of the integrator** —
+it needs a reversible, volume-preserving map plus the $e^{-H}$ correction. Leapfrog gives both at one gradient
+per step; its inaccuracy shows up only as a slightly lower acceptance, never as bias.
+
+### G.4.35 Betancourt §5.3 — choosing the step size (and why the target acceptance is ≈0.6–0.8) (2026-10-20)
+
+**Trade-off.** For a trajectory of time $T$, cost = $T/\epsilon$ gradients; accuracy falls as $\epsilon$ grows (energy
+error ∝ $\epsilon^2$, ∝ $\sqrt D$), so acceptance falls. Too small ⇒ near-perfect acceptance bought with many
+gradients; too large ⇒ cheap trajectories that get rejected; near the stability limit the shadow
+landscape stops being a closed valley (level sets "open up") ⇒ divergences (§G.4.29).
+**Probe (100-D standard normal, trajectory time ~U(0.8,1.6), identity mass, ESS of 5 coordinates;
+noisy):** $\epsilon$ 0.05 / 0.1 / 0.2 / 0.3 / 0.4 / 0.5 / 0.6 / 0.7 → mean acceptance 0.998 / 0.991 / 0.963 / 0.915 /
+0.843 / 0.765 / 0.651 / 0.541 → effective draws per 100 gradients 2.1 / 5.0 / 8.7 / 12.7 / 18.7 / 15.3 / 21.8 /
+16.5. Peak at acceptance ≈0.65–0.85, roughly 10× better than at 0.998. Theory (Gaussian, $D\to\infty$): optimum
+≈0.65 (Beskos et al. 2013, verify); Betancourt, Byrne & Girolami 2014 give cost–acceptance bounds ⇒
+target 0.6–0.8.
+**How it is tuned:** during warm-up, *dual averaging* (Hoffman & Gelman 2014) nudges $\log\epsilon$ up when
+recent acceptance is above the target and down when below, converging on the target; frozen for
+sampling. Stan's warm-up interleaves this with the mass-matrix windows (§G.4.27): a fast $\epsilon$-only phase,
+slow windows that update $M$ (re-tuning $\epsilon$ after each), a final fast $\epsilon$ phase. Defaults: target 0.8
+(Stan `adapt_delta`, NumPyro `target_accept_prob`). Higher-order integrators exist but add tuning; leapfrog
+is the universal default.
+**For us / dashboard:** start at target 0.8. Divergences in a stiff region (Γ_T≈0, funnels) ⇒ raising the
+target to 0.9–0.95 shrinks $\epsilon$ (more gradients per trajectory) — acceptable if mild, but persistent
+divergences ⇒ reparameterise (§6). An adapted $\epsilon$ that collapses toward 0 = the sampler fighting a stiff
+region; read it with the adapted $M$ (§G.4.27) and tree depth (§G.4.28).
+
+### G.4.36 Betancourt §6 — robustness and diagnostics; our dashboard (2026-10-20)
+
+**Claim.** HMC is geometrically ergodic for a wider class of targets than random walks (Livingstone et al.
+2016, verify), and the pathologies that break it leave visible fingerprints. **6.1 Heavy tails / poor
+kinetic energy → E-BFMI** = $\sum(E_n-E_{n-1})^2/\sum(E_n-\bar E)^2$ (energy change per relaunch vs spread of
+energies needed), plus the plot of the two energy histograms; < ≈0.3 problematic (probe §G.4.26: Gaussian
+≈1.0, Student-t ν=2 0.51). **6.2 High curvature → divergences**: the integrator explodes where the
+landscape is too stiff for $\epsilon$; *any* divergence ⇒ suspicion; mild ⇒ smaller $\epsilon$ (higher target
+acceptance), persistent ⇒ change the target (stronger priors) or its representation (non-centred).
+**6.3 Limits:** necessary, not sufficient — combine with split $\hat R$ over dispersed chains.
+**Probe (2026-10-20, HMC on Neal's funnel, $D$=10, $\epsilon$=0.2, 5–29 steps, 6,000 transitions; divergence =
+ΔH > 1000 or blow-up):** centred — acceptance 0.93, **only 3 divergences (0.05%)**, yet P(v<−3) **0.066 vs
+0.159** truth (deepest v −4.40); all three started deep in the neck (median v −3.26). Non-centred — 0
+divergences, P(v<−3) 0.152, deepest v −10.4. ⇒ **a handful of divergences can mark a large bias**: the
+chain mostly avoids the region it cannot integrate, so it rarely gets the chance to diverge there.
+**What none of the diagnostics see:** multimodality reached by no chain; slow topology mixing (outside
+HMC — use switch counts and $\hat R$ on the monophyly indicator, §G.4.13); model misspecification and A5/A8
+overconfidence (§G.4.6); a posterior that is wrong because the model is.
 
 ---
 

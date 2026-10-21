@@ -17,6 +17,8 @@ worst |z| 2.55 of 55) ⇒ the trip was chance, and the old V8 rule was miscalibr
 negative control (rates × 1.0001) detected at 1,600× tol. **V5′ held:** a probe showed the approved step
 $h=10^{-4}$ cannot resolve the failing entry (curvature scale ~3.7e-4); step-ladder version awaits Justin.
 README "Session 25".
+⭐ **2026-10-20: sampler design + HMC deep dive complete (notes §G.4). Implementation starts in a new chat —
+read §8 "IMPLEMENTATION HANDOFF" at the end of this file first; the first deliverable is a proposal.**
 
 **⭐⭐ DIRECTION SET (2026-10-11, Justin): likelihood-based reconstruction with POSTERIOR DATING is
 the method to invest in — see "THE PROGRAMME (2026-10-11)" at the end of this file, and the Park
@@ -693,3 +695,62 @@ Records: `notes/sciphy_notes.md` §G.4.10–G.4.16. None approved for building; 
   ideal Gaussian with our gradient/likelihood cost ratio (2.4). ⚠ Not "50× faster than BEAST" (BEAST uses
   one-node operators with partial recomputation); ⚠ the topology block is untouched by this argument.
 - Teaching figures and probes: `src/07`–`11`, `figures/fig_coord_*`, `fig_volume_*`, `fig_funnel_pathology.png`.
+
+---
+
+## 8. IMPLEMENTATION HANDOFF (2026-10-20) — read this first in the implementation chat
+
+**Where things stand.** The engine (`src/02_engine.py`, JAX, float64, env `/data1/choij10/justin/envs/pando-jax`)
+is validated: V1–V4 exact, V6 = SciPhy's own Java likelihood to 1.4e-15, V7 PASS, V8 PASS (README Sessions 22,
+25). V5′ (formal finite-difference ladder over all gradient entries) is still open, but the one failing entry is
+explained — `src/14_probe_grad_ladder.py` / `results/v5_ladder.json` show finite differences converging on the
+autodiff value. Sampler design and an HMC deep dive with Justin are complete: `notes/sciphy_notes.md` **§G.4**
+(roles §G.4.5–8, HMC-within-Gibbs §G.4.9/§G.4.25, reporting §G.4.10, run rules §G.4.13, candidate pinches
+§G.4.14, mass matrix §G.4.27, NUTS §G.4.28–33, step size §G.4.35, **dashboard §G.4.36**). No sampler code exists yet.
+
+**Engine API the sampler will wrap** (`02_engine.py` docstring): `prepare(parent, n, D, sym, Y, N)` → `Data`
+(topology and reads as arrays — a new topology never recompiles); `make_loglik(N, rate_knots, comp_knots,
+sil_knots)` → `loglik(t, prm, data)` = per-tape nats, shape (k,); `times_from_x(x, data)` (ratio transform, x
+has one entry per internal node in id order); `log_jacobian(x, data)`; `log_tree_prior(t, b, delta, rho, data)`
+(iid conditioned branching heights, up to an n-only constant); `make_objective(loglik)` →
+`J(x, prm, data, tree, sample)` = Σ ℓ_z + log tree prior [+ log Jacobian of x when `sample=True`]. `prm` keys:
+`Lam_T, r, m, rate_levels, Gam_T, sil_levels, logxi, alpha, beta`. **Parameter priors and the
+transforms/log-Jacobians for every free non-time parameter are NOT in the engine — the caller adds them.**
+Timing (README Session 22, k = 30, one CPU core): n = 210 likelihood 0.039 s, gradient 0.094 s; gradient cost
+super-linear at large n (level-batched pruning not built); GPU slower than CPU at these sizes.
+
+**The first deliverable is a PROPOSAL, not code** (root CLAUDE.md approval gate; four parts, < ~25 lines,
+mock output + reading rule). Agreed direction (Justin, 2026-10-12/20): an **interpretable toy** before anything
+Park-calibrated —
+1. one **simulated** ~200-cell clone from the simulator library (rung-2 data, known tree, known parameters,
+   $\Lambda_{\rm pre}=0$ as in the simulator — so the engine's $\Lambda_{\rm pre}=0$ is not a blocker for the toy);
+2. **fixed, true topology**; NUTS on $q=(x,\tilde\theta)$ with a small free set first (node coordinates +
+   $\log\Lambda_T$, maybe $\log\Gamma_T$), everything else fixed at truth, then free more blocks one at a time;
+3. NumPyro or BlackJAX with the engine's J as the potential (`sample=True` + the caller's transforms/priors);
+   target acceptance 0.8; ≥ 4 chains from dispersed starts; warm-up adapts ε and $M$ then freezes;
+   initial $M$ from the Laplace Hessian at the MAP is the planned improvement (method A, §G.4.5);
+4. the **§G.4.36 dashboard** for every run (divergences, E-BFMI, tree depth, adapted ε and $M$, acceptance, split
+   $\hat R$, bulk/tail ESS, the D/2 warm-up drop from a MAP start), plus **truth-vs-posterior** checks
+   (true node dates and parameters inside equal-tailed intervals);
+5. **failures provoked on purpose**, so each diagnostic is seen firing on a known cause: $\bar H\approx0$ (the
+   $\Gamma_T$ boundary curvature — divergences expected; compare sampling $\Gamma_T$ vs $\log\Gamma_T$), a broad
+   prior on a weakly identified parameter (E-BFMI), diagonal vs dense $M$ on the rate–time ridge (tree depth).
+Then: coverage over replicate simulated clones (SBC-style), the dating study (§5 item 3), topology moves
+(HMC-within-Gibbs), and only then Park.
+
+**Do not:** fix the trajectory length (periodicity trap, §G.4.27); adapt ε or $M$ during sampling; report HPD
+intervals or summarise-then-transform (§G.4.10 — report clade probabilities, medians and equal-tailed intervals
+computed per draw); quote a posterior SD as if it were MCMC error (§G.4.13); dismiss a few divergences (3 of
+6,000 hid a 2.4× bias on the funnel, §G.4.36); patch the sampler around a geometry problem — reparameterise.
+
+**Still blocking anything Park-calibrated** (not the toy): $\Lambda_{\rm pre}$ fixed at 0 in the engine (Park's
+founder carried ≈1.21 edits/tape, §H.9.6); the dated clones' cell sets unreconciled (194–249 / 153–229 / Justin's
+153, 208, 229); Park's trees not on disk; the per-clone free/fixed table (per-tape β_z and per-cell α_c may be
+weakly identified in a ~200-cell clone); the joint editing/dropout fit (§5 item 7).
+
+**Working with Justin on this.** He followed the HMC deep dive closely and wants to understand what the code does
+and read its diagnostics himself. Explain in his images — a particle on the −log-posterior landscape, a swing
+(catch-and-relaunch, a photo at a random moment), carts on springs for the mass matrix; not satellites — and in
+Betancourt's notation (§G.4.1). Teaching figures he has seen: `figures/fig_coord_*`, `fig_volume_*`,
+`fig_funnel_pathology.png`, `fig_hmc_*` (`src/07`–`22`). He values a small figure after each concept, numbers
+checked by quick probes before being quoted, and corrections flagged rather than buried.

@@ -2047,3 +2047,49 @@ given our gradient/likelihood cost ratio 2.4; elongation: RWM ∝ k², HMC ∝ k
 ⚠ Flagged my earlier "κ vs κ^{1/2}" (§G.1 correction) as true only for κ a variance ratio — κ² vs κ for SD ratio.
 **(cont.)** Betancourt §3.1 recorded as **§G.4.16**: gradient alone = the engine's MAP fit (dissipative);
 HMC = the same gradient, frictionless; why N(0,I) momentum is nearly tangential with orbit-matching energy.
+**(2026-10-14)** Betancourt §3.2 (phase space, H = K + V, Hamilton's equations) built from the 1-D Gaussian
+example, recorded as **§G.4.17**; orbit/invariance claims checked by Monte Carlo.
+**(cont.)** Betancourt §3.3 worked by hand on the 1-D Gaussian (update-rule trace, six transitions, a
+tail start, flow-time sweep incl. the T = π periodicity trap), recorded as **§G.4.18**.
+**(2026-10-19)** Second pass on Betancourt §3.2–3.3: Hamilton's equations derived as "move along the
+contours of H in phase space" (the rotated gradient: density kept, no crowding), with the energy-budget
+reading of why momentum is needed; recorded as **§G.4.19**.
+**(cont.)** Phase-plane teaching figure `fig_hmc_phase_plane.png` (`src/16`) for §3.2–3.3; recorded in §G.4.19.
+**(cont.)** Justin's checks on §3.2–3.3 answered (budget set by the draw; one trajectory of many steps per
+draw; one point kept per trajectory) and the "fastest at the mode" puzzle resolved as head-count × dwell
+time — fraction of orbits reaching q is e^{-q²/2}, average dwell among them constant; figure
+`fig_hmc_why_posterior.png` (`src/17`); recorded as **§G.4.20**.
+**(2026-10-20)** Justin's follow-ups on §3.2–3.3: momentum draw is position-independent (budget grows
+far out through V(q), the "pull-back"); R = √(2H); no circularity (starting points are the previous
+sample; chains from q0 = 4 fall in within 1–2 transitions); advantage over RWM = consecutive-sample
+independence (lag-1 0.993 vs 0.295 at D=100, equal cost). Swing figure `fig_hmc_swings.png` (`src/18`);
+recorded as **§G.4.21**.
+**(cont.)** §3.2–3.3 equations re-derived in swing language with every equality classified (definition /
+algebra / choice / design); friction = optimiser (damped swing → MAP); many dimensions = unsynchronised
+swings (distance from mode varies 3% over a swing at D=400). Recorded as **§G.4.22**.
+**(cont.)** Clarified for Justin: the draw sets p(0) (catch-and-relaunch, not an added push — analogy corrected); speed along the path depends on position via energy conservation; ∂K/∂q = 0 is about K's formula. **§G.4.23**.
+**(cont.)** Justin's proposal (topology as a continuous distance matrix + clustering → all-HMC) assessed, no compute: exact equivalence for ultrametric matrices, but n(n−1)/2 vs n−1 dimensions (flat directions), unknown pushforward prior, creases/cliffs at topology switches; node count is constant so the identity worry is mild; the keepable version is boundary-crossing HMC on node heights (PPHMC-style). **§G.4.24**.
+**(cont.)** HMC-within-Gibbs revisited in landscape terms (rooms = topologies, roll within / step between at the same spot), why 'Gibbs', SciPhy = random-scan MH-within-Gibbs; design knobs. **§G.4.25**.
+**(cont.)** Betancourt §4.1 summarised (two jobs per transition; relaunch changes energy by ≈ spread of K; E-BFMI); probe: Gaussian E-BFMI ≈1.0, Student-t ν=5/2 → 0.72/0.51. **§G.4.26**.
+**(cont.)** Betancourt §4.2.1 (mass matrix) recorded as **§G.4.27**: same-rhythm swing picture; probe — widths 20:1 identity 46.7 → diagonal 1.3 grads/indep; ridge corr 0.995 diagonal 39.4 (no help) → dense 1.0.
+**(cont.)** Mass-matrix figure fig_hmc_mass_matrix.png (src/19); ⚠ found while building it: fixed trajectory length + learned M → each trajectory ≈ one full swing → no progress (SD 1.91 vs 6) until jittered; recorded in §G.4.27.
+**(cont.)** M as normalisation (whitening) confirmed for Justin; physics corrected — HMC force doesn't scale with mass (spring, not pendulum), relaunch gives equal energy per coordinate, mass changes speed not reach (s=20: reach 23.5 either way, crossing time 31 vs 1.6). In §G.4.27.
+**(cont.)** Betancourt §4.3 recorded as **§G.4.28**: too short/too long, energy-dependent swing time (spring 6.28 vs constant-slope 4→32), U-turn stop at ¼ swing (median 1.57) on a spring, tree-depth diagnostic.
+**(cont.)** One trajectory clock for all coordinates; shared U-turn stop: without M wide 0.14 swing / narrow 1.38 swings, with diagonal M both 0.33. In §G.4.28.
+**(2026-10-20)** Betancourt §5.1 recorded as **§G.4.29**: the ODE system stated explicitly (Newton's law with the posterior gradient as force); Euler drift (0.5→114 in 3 swings) vs leapfrog (error 0.011→0.0012, ∝ε²), reversibility exact, stability limit εω<2 (1.9 ok, 2.1 explodes) = divergences.
+**(cont.)** Leapfrog teaching figure fig_hmc_leapfrog.png (src/20): where ε is applied, Euler vs leapfrog, stability limit, divergence on entering a stiff region. In §G.4.29.
+**(cont.)** Betancourt §5.2 recorded as **§G.4.30**: uncorrected leapfrog biased (SD 1.248 vs 1), corrected 1.008; momentum flip + reversibility ⇒ a = min(1, e^{−ΔH}); acceptance vs ε (100-D: 0.998→0.851 for ε 0.05→0.4); ΔH spread ∝ √D (0.027/0.085/0.271).
+**(cont.)** e^{-ΔH} explained as MH bookkeeping (two-state check 0.607), not a preference; NUTS doubling + multinomial pick from the whole trajectory with a worked 8-state example (pick probs 0.119–0.131 vs 0.125). **§G.4.31**.
+**(cont.)** NUTS-selection figure (src/21): crowd test SD 1.002 (e^{-H}) / 1.131 (uniform) / 1.209 (uncorrected endpoint); robustness to length honest version; ⚠ corrected my claim that re-picking the start is rare (≈1/number of states). **§G.4.32**.
+**(cont.)** Decisive explanation for Justin: on a spring leapfrog conserves a shadow energy (wider valley); energy error = ε²(q²−q0²)/8, a function of position (checked to 4 dp); uniform pick samples the shadow posterior (SD 1.045/1.253 = 1/√(1−ε²/4)), e^{-H} pick corrects to 0.996/0.992. **§G.4.33**.
+**(cont.)** Shadow figure fig_hmc_shadow.png (src/22) and 'why not integrate exactly?' recorded as §G.4.33–34.
+**(cont.)** Betancourt §5.3 recorded as **§G.4.35**: step-size trade-off; probe — efficiency peaks at acceptance ≈0.65–0.85 (≈10× better than at 0.998); dual-averaging warm-up; target 0.8, raise to 0.9–0.95 only for mild divergences.
+**(cont.)** Betancourt §6 recorded as **§G.4.36**; HMC funnel probe: 3 divergences in 6,000 (0.05%) yet P(v<−3) 0.066 vs 0.159 — non-centred 0 divergences, 0.152. Dashboard + what diagnostics cannot see.
+**(2026-10-20, session close)** HMC deep dive COMPLETE (Betancourt §1–§6; Appendix A skipped by design), notes
+§G.4.10–G.4.36; teaching figures `src/07`–`22`. Justin's later questions resolved in his images (swing,
+landscape, springs): the ODE system as Newton's law with the posterior gradient as force; where ε enters;
+why NUTS picks ∝ e^{-H} (importance correction from leapfrog's shadow landscape — energy error is a function
+of position); why not integrate exactly. ⚠ Corrections this stretch, all flagged in the notes: re-picking the
+start is not rare (≈1/number of states); the whole-trajectory pick is not better at every length; the fixed-
+length periodicity trap with a learned M. **Implementation starts in a new chat — engine CLAUDE.md §8
+"IMPLEMENTATION HANDOFF"; first deliverable is a proposal for an interpretable simulated-clone toy.**
